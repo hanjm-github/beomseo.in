@@ -1,0 +1,188 @@
+/* Footer Component Styles */
+
+.footer {
+    background-color: var(--color-neutral-900);
+    color: var(--color-neutral-300);
+    padding: var(--space-16) 0 var(--space-8);
+    margin-top: var(--space-20);
+}
+
+[data-theme="dark"] .footer {
+    background-color: #0A0C10;
+    border-top: 1px solid var(--color-border);
+}
+
+.container {
+    max-width: var(--max-width-xl);
+    margin: 0 auto;
+    padding: 0 var(--space-6);
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-10);
+}
+
+@media (min-width: 640px) {
+    .grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 1024px) {
+    .grid {
+        grid-template-columns: 2fr 1fr 1fr 1fr;
+    }
+}
+
+.section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+/* Logo Section */
+.logo {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.logoIcon {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--color-primary-400), var(--color-primary-600));
+    border-radius: var(--radius-lg);
+    font-family: var(--font-display);
+    font-size: var(--text-xl);
+    font-weight: var(--font-bold);
+    color: white;
+}
+
+.schoolName {
+    font-family: var(--font-display);
+    font-size: var(--text-xl);
+    font-weight: var(--font-bold);
+    color: white;
+    margin: 0;
+}
+
+.motto {
+    font-size: var(--text-sm);
+    color: var(--color-neutral-400);
+    margin: 0;
+}
+
+.description {
+    font-size: var(--text-sm);
+    line-height: var(--leading-relaxed);
+    color: var(--color-neutral-400);
+    max-width: 280px;
+}
+
+/* Section Title */
+.sectionTitle {
+    font-family: var(--font-display);
+    font-size: var(--text-sm);
+    font-weight: var(--font-semibold);
+    color: white;
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wider);
+    margin: 0;
+}
+
+/* Contact List */
+.contactList {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.contactList li {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--text-sm);
+    color: var(--color-neutral-400);
+}
+
+.contactList li svg {
+    color: var(--color-primary-400);
+    flex-shrink: 0;
+}
+
+/* Link List */
+.linkList {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.linkList a {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    font-size: var(--text-sm);
+    color: var(--color-neutral-400);
+    text-decoration: none;
+    transition: color var(--transition-fast);
+}
+
+.linkList a:hover {
+    color: var(--color-primary-400);
+}
+
+/* Bottom Bar */
+.bottom {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    align-items: center;
+    margin-top: var(--space-12);
+    padding-top: var(--space-8);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+@media (min-width: 640px) {
+    .bottom {
+        flex-direction: row;
+        justify-content: space-between;
+    }
+}
+
+.copyright {
+    font-size: var(--text-sm);
+    color: var(--color-neutral-500);
+    margin: 0;
+}
+
+.bottomLinks {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.bottomLinks a {
+    font-size: var(--text-sm);
+    color: var(--color-neutral-400);
+    text-decoration: none;
+    transition: color var(--transition-fast);
+}
+
+.bottomLinks a:hover {
+    color: var(--color-primary-400);
+}
+
+.divider {
+    color: var(--color-neutral-600);
+}

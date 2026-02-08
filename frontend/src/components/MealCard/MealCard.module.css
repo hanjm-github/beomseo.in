@@ -1,0 +1,149 @@
+/* MealCard Styles */
+
+.card {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-2xl);
+    padding: var(--space-6);
+    box-shadow: var(--shadow-card);
+}
+
+/* Header */
+.header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: var(--space-5);
+}
+
+.titleRow {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.icon {
+    color: var(--color-primary-500);
+}
+
+.title {
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+    font-weight: var(--font-semibold);
+    color: var(--color-text-primary);
+    margin: 0;
+}
+
+.date {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+}
+
+/* Tabs */
+.tabs {
+    display: flex;
+    gap: var(--space-2);
+    padding: var(--space-1);
+    background-color: var(--color-bg-muted);
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--space-5);
+}
+
+.tab {
+    flex: 1;
+    padding: var(--space-2) var(--space-4);
+    font-size: var(--text-sm);
+    font-weight: var(--font-medium);
+    color: var(--color-text-secondary);
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.tab:hover {
+    color: var(--color-text-primary);
+}
+
+.tab.active {
+    background-color: var(--color-surface);
+    color: var(--color-primary-600);
+    box-shadow: var(--shadow-sm);
+}
+
+[data-theme="dark"] .tab.active {
+    background-color: var(--color-bg);
+    color: var(--color-primary-400);
+}
+
+/* Menu List */
+.menuList {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    margin-bottom: var(--space-5);
+}
+
+.menuItem {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--text-base);
+    color: var(--color-text-primary);
+    padding: var(--space-2) 0;
+}
+
+.bullet {
+    color: var(--color-primary-400);
+    font-weight: var(--font-bold);
+}
+
+/* Actions */
+.actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--color-border-light);
+}
+
+.rateLabel {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+}
+
+.rateButton {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--text-sm);
+    font-weight: var(--font-medium);
+    color: var(--color-text-secondary);
+    background-color: var(--color-bg-muted);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-full);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.rateButton:hover {
+    border-color: var(--color-neutral-300);
+    background-color: var(--color-neutral-100);
+}
+
+.rateButton.liked {
+    background-color: var(--color-success-light);
+    border-color: var(--color-success);
+    color: var(--color-success);
+}
+
+.rateButton.disliked {
+    background-color: var(--color-error-light);
+    border-color: var(--color-error);
+    color: var(--color-error);
+}
