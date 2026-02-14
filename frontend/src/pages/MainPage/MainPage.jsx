@@ -14,8 +14,6 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-import Header from '../../components/Header';
-import Footer from '../../components/Footer';
 import CountdownWidget from '../../components/CountdownWidget';
 import QuickLinkCard from '../../components/QuickLinkCard';
 import AnnouncementCard from '../../components/AnnouncementCard';
@@ -73,8 +71,6 @@ export default function MainPage() {
 
     return (
         <div className={styles.page}>
-            <Header />
-
             <main className={styles.main}>
                 {/* Hero Section */}
                 <section className={styles.hero}>
@@ -304,8 +300,6 @@ export default function MainPage() {
                     </div>
                 </section>
             </main>
-
-            <Footer />
         </div>
     );
 }

@@ -46,7 +46,8 @@ body {
     color: var(--color-text-primary);
     background-color: var(--color-bg);
     min-height: 100vh;
-    transition: background-color var(--transition-base), color var(--transition-base);
+    background-image: var(--gradient-hero);
+    transition: background-color var(--transition-base), color var(--transition-base), background-image var(--transition-slow);
 }
 
 /* ===== TYPOGRAPHY DEFAULTS ===== */

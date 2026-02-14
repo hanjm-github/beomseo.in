@@ -73,6 +73,17 @@
     letter-spacing: var(--tracking-tight);
 }
 
+.logoLabels {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.1;
+}
+
+.logoMeta {
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+}
+
 /* Desktop Navigation */
 .desktopNav {
     display: none;
@@ -133,13 +144,19 @@
     top: 100%;
     left: 0;
     margin-top: var(--space-2);
-    min-width: 180px;
+    min-width: 280px;
     background-color: var(--color-surface);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-xl);
     box-shadow: var(--shadow-lg);
-    padding: var(--space-2);
+    padding: var(--space-3);
     animation: dropdownEnter 0.15s ease-out;
+}
+
+.dropdownGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: var(--space-2);
 }
 
 @keyframes dropdownEnter {
@@ -381,7 +398,7 @@
     width: 100%;
     padding: var(--space-2) var(--space-3);
     font-size: var(--text-sm);
-    color: var(--color-destructive);
+    color: var(--color-error);
     background: none;
     border: none;
     border-radius: var(--radius-md);
@@ -390,5 +407,34 @@
 }
 
 .logoutButton:hover {
-    background-color: rgba(239, 68, 68, 0.1);
+    background-color: var(--color-error-light);
+}
+
+.quickPins, .quickPinsMobile {
+    margin-top: var(--space-2);
+}
+
+.pinLabel {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    margin-bottom: var(--space-2);
+}
+
+.pinChips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+}
+
+.pinChips a {
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-full);
+    background: var(--color-bg-muted);
+    color: var(--color-text-primary);
+    text-decoration: none;
+    font-size: var(--text-sm);
+    border: 1px solid var(--color-border-light);
 }
