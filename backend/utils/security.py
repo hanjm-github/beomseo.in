@@ -75,7 +75,8 @@ def require_role(*roles: UserRole):
         def decorated_function(*args, **kwargs):
             verify_jwt_in_request()
             
-            user_id = get_jwt_identity()
+            user_id_str = get_jwt_identity()
+            user_id = int(user_id_str)  # Convert string back to int for DB query
             user = User.query.get(user_id)
             
             if not user:
@@ -96,7 +97,8 @@ def require_role(*roles: UserRole):
 
 def get_current_user():
     """Get current authenticated user from JWT."""
-    user_id = get_jwt_identity()
-    if user_id:
+    user_id_str = get_jwt_identity()
+    if user_id_str:
+        user_id = int(user_id_str)  # Convert string back to int for DB query
         return User.query.get(user_id)
     return None

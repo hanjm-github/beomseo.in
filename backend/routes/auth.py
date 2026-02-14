@@ -78,9 +78,9 @@ def register():
         db.session.rollback()
         return jsonify({'error': '회원가입 처리 중 오류가 발생했습니다.'}), 500
     
-    # Generate tokens
-    access_token = create_access_token(identity=user.id)
-    refresh_token = create_refresh_token(identity=user.id)
+    # Generate tokens (identity must be string for JWT)
+    access_token = create_access_token(identity=str(user.id))
+    refresh_token = create_refresh_token(identity=str(user.id))
     
     return jsonify({
         'message': '회원가입이 완료되었습니다.',
@@ -110,9 +110,9 @@ def login():
     if not user or not verify_password(password, user.password_hash):
         return jsonify({'error': '닉네임 또는 비밀번호가 올바르지 않습니다.'}), 401
     
-    # Generate tokens
-    access_token = create_access_token(identity=user.id)
-    refresh_token = create_refresh_token(identity=user.id)
+    # Generate tokens (identity must be string for JWT)
+    access_token = create_access_token(identity=str(user.id))
+    refresh_token = create_refresh_token(identity=str(user.id))
     
     return jsonify({
         'message': '로그인 성공',
@@ -126,13 +126,15 @@ def login():
 @jwt_required(refresh=True)
 def refresh():
     """Refresh access token using refresh token."""
-    user_id = get_jwt_identity()
+    user_id_str = get_jwt_identity()
+    user_id = int(user_id_str)  # Convert string back to int for DB query
     user = User.query.get(user_id)
     
     if not user:
         return jsonify({'error': 'User not found'}), 404
     
-    access_token = create_access_token(identity=user_id)
+    # Generate new access token with string identity
+    access_token = create_access_token(identity=str(user_id))
     
     return jsonify({
         'access_token': access_token
