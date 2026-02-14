@@ -2,10 +2,12 @@
   width: 100%;
   max-width: var(--max-width-2xl);
   margin: 0 auto;
-  padding: var(--space-10) var(--space-4) var(--space-16);
+  padding: var(--space-10) clamp(16px, 4vw, 32px) var(--space-16);
   display: flex;
   flex-direction: column;
   gap: var(--space-8);
+  box-sizing: border-box;
+  overflow-x: hidden;
 }
 
 .page-header {
@@ -35,6 +37,7 @@
   display: flex;
   gap: var(--space-2);
   flex-wrap: wrap;
+  min-width: 0;
 }
 
 .chip {
@@ -66,6 +69,7 @@
   padding: var(--space-5);
   box-shadow: var(--shadow-card);
   transition: transform var(--transition-base), box-shadow var(--transition-base);
+  box-sizing: border-box;
 }
 
 .card:hover {
@@ -106,6 +110,7 @@
   display: grid;
   gap: var(--space-4);
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  min-width: 0;
 }
 
 .list-toolbar {

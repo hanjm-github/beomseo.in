@@ -22,6 +22,7 @@ html {
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
     scroll-behavior: smooth;
+    overflow-x: hidden;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -48,6 +49,8 @@ body {
     min-height: 100vh;
     background-image: var(--gradient-hero);
     transition: background-color var(--transition-base), color var(--transition-base), background-image var(--transition-slow);
+    overflow-x: hidden;
+    padding-inline: env(safe-area-inset-left, 0px) env(safe-area-inset-right, 0px);
 }
 
 /* ===== TYPOGRAPHY DEFAULTS ===== */

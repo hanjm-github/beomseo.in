@@ -14,7 +14,7 @@
 /* Hero Section */
 .hero {
     position: relative;
-    padding: var(--space-16) 0;
+    padding: var(--space-14) 0;
     overflow: hidden;
 }
 
@@ -23,7 +23,7 @@
     z-index: 1;
     max-width: var(--max-width-xl);
     margin: 0 auto;
-    padding: 0 var(--space-6);
+    padding: 0 var(--space-4);
     display: grid;
     grid-template-columns: 1fr;
     gap: var(--space-10);
@@ -161,22 +161,24 @@
 
 .heroGradient1 {
     position: absolute;
-    width: 600px;
-    height: 600px;
+    width: 520px;
+    height: 520px;
     top: -200px;
-    right: -100px;
+    right: -60px;
     background: radial-gradient(circle, rgba(46, 125, 92, 0.15) 0%, transparent 70%);
     border-radius: 50%;
+    max-width: 120vw;
 }
 
 .heroGradient2 {
     position: absolute;
-    width: 400px;
-    height: 400px;
+    width: 340px;
+    height: 340px;
     bottom: -100px;
-    left: -100px;
+    left: -60px;
     background: radial-gradient(circle, rgba(194, 24, 91, 0.1) 0%, transparent 70%);
     border-radius: 50%;
+    max-width: 120vw;
 }
 
 [data-theme="dark"] .heroGradient1 {
@@ -203,7 +205,7 @@
 .container {
     max-width: var(--max-width-xl);
     margin: 0 auto;
-    padding: 0 var(--space-6);
+    padding: 0 var(--space-4);
 }
 
 @media (min-width: 1024px) {
@@ -240,13 +242,13 @@
 /* Quick Links Grid */
 .quickLinks {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     gap: var(--space-4);
 }
 
 @media (min-width: 640px) {
     .quickLinks {
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     }
 }
 
@@ -257,13 +259,13 @@
 }
 
 .quickLinkLarge {
-    grid-column: span 2;
+    grid-column: span 1;
 }
 
 @media (min-width: 640px) {
     .quickLinkLarge {
         grid-row: span 2;
-        grid-column: span 1;
+        grid-column: span 2;
     }
 }
 
@@ -274,7 +276,7 @@
     gap: var(--space-8);
 }
 
-@media (min-width: 768px) {
+@media (min-width: 900px) {
     .twoColumn {
         grid-template-columns: 1.2fr 0.8fr;
     }
@@ -372,12 +374,13 @@
 .searchSection {
     background: linear-gradient(135deg, var(--color-primary-600), var(--color-primary-700));
     border-radius: var(--radius-2xl);
-    padding: var(--space-10);
+    padding: var(--space-6);
     display: flex;
     flex-direction: column;
     gap: var(--space-6);
     align-items: center;
     text-align: center;
+    box-sizing: border-box;
 }
 
 @media (min-width: 768px) {
@@ -385,6 +388,7 @@
         flex-direction: row;
         text-align: left;
         justify-content: space-between;
+        padding: var(--space-10);
     }
 }
 
@@ -408,7 +412,7 @@
 .searchInputWrapper {
     position: relative;
     width: 100%;
-    max-width: 400px;
+    max-width: 480px;
 }
 
 .searchIcon {
