@@ -46,3 +46,5 @@ secrets.json
 .gemini/
 
 database_structure.md
+
+backend/uploads/*

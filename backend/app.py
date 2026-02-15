@@ -8,6 +8,7 @@ from flask_jwt_extended import JWTManager
 
 from config import config
 from models.user import db
+from models import notice  # noqa: F401 ensure models are registered
 
 
 def create_app(config_name=None):
@@ -22,11 +23,13 @@ def create_app(config_name=None):
     db.init_app(app)
     
     # CORS setup for React frontend
-    CORS(app, 
-         origins=app.config['CORS_ORIGINS'],
-         supports_credentials=True,
-         allow_headers=['Content-Type', 'Authorization'],
-         methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'])
+    CORS(
+        app,
+        origins=app.config['CORS_ORIGINS'],
+        supports_credentials=True,
+        allow_headers=['Content-Type', 'Authorization'],
+        methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
+    )
     
     # JWT setup
     jwt = JWTManager(app)
@@ -55,7 +58,9 @@ def create_app(config_name=None):
     
     # Register blueprints
     from routes.auth import auth_bp
+    from routes.notices import notices_bp
     app.register_blueprint(auth_bp)
+    app.register_blueprint(notices_bp)
     
     # Health check endpoint
     @app.route('/api/health')
@@ -73,4 +78,4 @@ def create_app(config_name=None):
 app = create_app()
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='127.0.0.1', port=5000, debug=True)

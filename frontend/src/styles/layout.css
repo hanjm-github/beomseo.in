@@ -19,6 +19,23 @@
   padding-inline: clamp(16px, 4vw, 32px);
 }
 
+.skip-link {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  top: -40px;
+  background: var(--color-primary-500);
+  color: white;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  z-index: 1000;
+  transition: top var(--transition-fast);
+}
+
+.skip-link:focus {
+  top: 8px;
+}
+
 @media (max-width: 639px) {
   .app-main {
     padding-top: calc(var(--header-height) + var(--space-4));

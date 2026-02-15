@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
     Bell,
@@ -10,7 +10,7 @@ import {
     Radio,
     Search,
     Users,
-    ChevronRight
+    ChevronRight,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -18,42 +18,56 @@ import CountdownWidget from '../../components/CountdownWidget';
 import QuickLinkCard from '../../components/QuickLinkCard';
 import AnnouncementCard from '../../components/AnnouncementCard';
 import MealCard from '../../components/MealCard';
+import { noticesApi } from '../../api/notices';
+import { useAuth } from '../../context/AuthContext';
 
 import styles from './MainPage.module.css';
-
-// Mock data - will be replaced with API calls
-const mockAnnouncements = {
-    school: [
-        { id: 1, title: '2026학년도 1학기 중간고사 시간표 안내', date: '2026-02-08', isPinned: true },
-        { id: 2, title: '3월 학교 행사 일정 안내', date: '2026-02-07', isPinned: true },
-        { id: 3, title: '신학기 교복 주문 안내', date: '2026-02-06', isPinned: false },
-        { id: 4, title: '2학년 수학여행 일정 공지', date: '2026-02-05', isPinned: false },
-        { id: 5, title: '급식실 이용 안내사항 변경', date: '2026-02-04', isPinned: false },
-    ],
-    council: [
-        { id: 101, title: '[학생회] 제35대 학생회 활동 계획 안내', date: '2026-02-08', isPinned: true },
-        { id: 102, title: '[학생회] 축제 공연팀 모집 (~2/28)', date: '2026-02-07', isPinned: false },
-        { id: 103, title: '[학생회] 교내 건의사항 접수 안내', date: '2026-02-06', isPinned: false },
-        { id: 104, title: '[학생회] 점심시간 운동장 사용 규칙', date: '2026-02-05', isPinned: false },
-    ],
-};
 
 // Next exam date - mock data
 const nextExamDate = '2026-03-15T09:00:00';
 
 export default function MainPage() {
     const [activeTab, setActiveTab] = useState('school');
+    const [announcements, setAnnouncements] = useState({ school: [], council: [] });
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
+    const { isAuthenticated } = useAuth();
 
-    const announcements = mockAnnouncements[activeTab];
+    useEffect(() => {
+        let cancelled = false;
+        const fetchData = async () => {
+            setLoading(true);
+            setError('');
+            try {
+                const [schoolRes, councilRes] = await Promise.all([
+                    noticesApi.list({ category: 'school', sort: 'recent', page: 1, pageSize: 5 }),
+                    noticesApi.list({ category: 'council', sort: 'recent', page: 1, pageSize: 5 }),
+                ]);
+                if (cancelled) return;
+                setAnnouncements({
+                    school: schoolRes.items || [],
+                    council: councilRes.items || [],
+                });
+            } catch (err) {
+                if (!cancelled) setError('공지 불러오기에 실패했습니다.');
+            } finally {
+                if (!cancelled) setLoading(false);
+            }
+        };
+        fetchData();
+        return () => {
+            cancelled = true;
+        };
+    }, []);
+
+    const activeList = useMemo(() => announcements[activeTab] || [], [announcements, activeTab]);
 
     // Animation variants
     const containerVariants = {
         hidden: { opacity: 0 },
         visible: {
             opacity: 1,
-            transition: {
-                staggerChildren: 0.1,
-            },
+            transition: { staggerChildren: 0.1 },
         },
     };
 
@@ -62,10 +76,7 @@ export default function MainPage() {
         visible: {
             opacity: 1,
             y: 0,
-            transition: {
-                duration: 0.5,
-                ease: [0.22, 1, 0.36, 1],
-            },
+            transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] },
         },
     };
 
@@ -74,12 +85,7 @@ export default function MainPage() {
             <main className={styles.main}>
                 {/* Hero Section */}
                 <section className={styles.hero}>
-                    <motion.div
-                        className={styles.heroContent}
-                        initial="hidden"
-                        animate="visible"
-                        variants={containerVariants}
-                    >
+                    <motion.div className={styles.heroContent} initial="hidden" animate="visible" variants={containerVariants}>
                         <motion.div className={styles.heroText} variants={itemVariants}>
                             <span className={styles.heroLabel}>범서고등학교 학교 홈페이지</span>
                             <h1 className={styles.heroTitle}>
@@ -95,17 +101,16 @@ export default function MainPage() {
                                     공지사항 보기
                                     <ChevronRight size={18} />
                                 </Link>
-                                <Link to="/login" className={styles.heroSecondary}>
-                                    로그인
-                                </Link>
+                                {!isAuthenticated && (
+                                    <Link to="/login" className={styles.heroSecondary}>
+                                        로그인
+                                    </Link>
+                                )}
                             </div>
                         </motion.div>
 
                         <motion.div className={styles.heroWidget} variants={itemVariants}>
-                            <CountdownWidget
-                                targetDate={nextExamDate}
-                                eventName="1학기 중간고사"
-                            />
+                            <CountdownWidget targetDate={nextExamDate} eventName="1학기 중간고사" />
                         </motion.div>
                     </motion.div>
 
@@ -126,7 +131,7 @@ export default function MainPage() {
                             viewport={{ once: true }}
                         >
                             <h2 className={styles.sectionTitle}>바로가기</h2>
-                            <p className={styles.sectionDescription}>자주 사용하는 메뉴에 빠르게 접근하세요</p>
+                            <p className={styles.sectionDescription}>자주 쓰는 메뉴로 한 번에 이동하세요.</p>
                         </motion.div>
 
                         <motion.div
@@ -141,7 +146,7 @@ export default function MainPage() {
                                     to="/notices/school"
                                     icon={Bell}
                                     title="공지사항"
-                                    description="학교 및 학생회 공지사항을 확인하세요"
+                                    description="학교·학생회 공지 한눈에 확인"
                                     variant="default"
                                     size="large"
                                 />
@@ -150,8 +155,8 @@ export default function MainPage() {
                                 <QuickLinkCard
                                     to="/community/anonymous"
                                     icon={MessageCircle}
-                                    title="익명 게시판"
-                                    description="범서고 대신 전해드립니다"
+                                    title="자유게시판"
+                                    description="범서고의 커뮤니티 공간"
                                     variant="accent"
                                 />
                             </motion.div>
@@ -159,8 +164,8 @@ export default function MainPage() {
                                 <QuickLinkCard
                                     to="/school-info/calculator"
                                     icon={Calculator}
-                                    title="점공 계산기"
-                                    description="내신 등급 예상 계산"
+                                    title="내신 계산기"
+                                    description="학기별 성적 계산"
                                     variant="info"
                                 />
                             </motion.div>
@@ -176,7 +181,7 @@ export default function MainPage() {
                                 <QuickLinkCard
                                     to="/school-info/calendar"
                                     icon={Calendar}
-                                    title="학사 일정"
+                                    title="학교 일정"
                                     variant="warning"
                                 />
                             </motion.div>
@@ -192,7 +197,7 @@ export default function MainPage() {
                                 <QuickLinkCard
                                     to="/community/radio"
                                     icon={Radio}
-                                    title="신청곡"
+                                    title="교내 방송"
                                     variant="accent"
                                 />
                             </motion.div>
@@ -200,7 +205,7 @@ export default function MainPage() {
                                 <QuickLinkCard
                                     to="/community/clubs"
                                     icon={Users}
-                                    title="동아리 모집"
+                                    title="동아리"
                                     variant="default"
                                 />
                             </motion.div>
@@ -220,7 +225,7 @@ export default function MainPage() {
                                 viewport={{ once: true }}
                             >
                                 <div className={styles.announcementsHeader}>
-                                    <h3 className={styles.cardTitle}>공지사항</h3>
+                                    <h3 className={styles.cardTitle}>최근 공지</h3>
 
                                     <div className={styles.tabs}>
                                         <button
@@ -239,23 +244,31 @@ export default function MainPage() {
                                 </div>
 
                                 <div className={styles.announcementsList}>
-                                    {announcements.map((item) => (
-                                        <AnnouncementCard
-                                            key={item.id}
-                                            id={item.id}
-                                            title={item.title}
-                                            date={item.date}
-                                            isPinned={item.isPinned}
-                                            linkBase={activeTab === 'school' ? '/notices/school' : '/notices/council'}
-                                        />
-                                    ))}
+                                    {loading ? (
+                                        <p className={styles.metaMuted}>불러오는 중...</p>
+                                    ) : error ? (
+                                        <p className={styles.metaMuted}>{error}</p>
+                                    ) : activeList.length === 0 ? (
+                                        <p className={styles.metaMuted}>표시할 공지가 없습니다.</p>
+                                    ) : (
+                                        activeList.map((item) => (
+                                            <AnnouncementCard
+                                                key={item.id}
+                                                id={item.id}
+                                                title={item.title}
+                                                date={(item.createdAt || item.updatedAt || '').slice(0, 10)}
+                                                isPinned={item.pinned}
+                                                linkBase={activeTab === 'school' ? '/notices/school' : '/notices/council'}
+                                            />
+                                        ))
+                                    )}
                                 </div>
 
                                 <Link
                                     to={activeTab === 'school' ? '/notices/school' : '/notices/council'}
                                     className={styles.viewMore}
                                 >
-                                    더보기
+                                    더 보기
                                     <ChevronRight size={16} />
                                 </Link>
                             </motion.div>
@@ -283,9 +296,9 @@ export default function MainPage() {
                             viewport={{ once: true }}
                         >
                             <div className={styles.searchContent}>
-                                <h3 className={styles.searchTitle}>무엇을 찾고 계신가요?</h3>
+                                <h3 className={styles.searchTitle}>원하는 정보를 바로 찾아보세요</h3>
                                 <p className={styles.searchDescription}>
-                                    게시판, 급식, 선생님 정보 등을 한 번에 검색하세요
+                                    게시판, 식단, 일정 등 키워드로 검색해 보세요.
                                 </p>
                             </div>
                             <div className={styles.searchInputWrapper}>

@@ -10,8 +10,13 @@ import '../styles/layout.css';
 export default function AppLayout({ children }) {
   return (
     <div className="app-shell">
+      <a className="skip-link" href="#main">
+        본문으로 바로가기
+      </a>
       <Header />
-      <main className="app-main">{children}</main>
+      <main id="main" className="app-main">
+        {children}
+      </main>
       <Footer />
     </div>
   );

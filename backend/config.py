@@ -10,6 +10,13 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
+def _parse_origins(value: str):
+    """Parse comma-separated origins into a clean list, keeping wildcard if provided."""
+    if not value:
+        return []
+    return [v.strip() for v in value.split(',') if v.strip()]
+
+
 class Config:
     """Flask configuration class."""
     
@@ -33,8 +40,15 @@ class Config:
     JWT_HEADER_NAME = 'Authorization'
     JWT_HEADER_TYPE = 'Bearer'
     
-    # CORS Settings
-    CORS_ORIGINS = os.getenv('CORS_ORIGINS', 'http://localhost:5173').split(',')
+    # CORS Settings (managed via .env CORS_ORIGINS)
+    CORS_ORIGINS_RAW = os.getenv('CORS_ORIGINS', 'http://localhost:5173')
+    CORS_ORIGINS = _parse_origins(CORS_ORIGINS_RAW)
+    
+    # Uploads
+    UPLOAD_DIR = os.getenv('UPLOAD_DIR', './uploads')
+    UPLOAD_BASE_URL = os.getenv('UPLOAD_BASE_URL', '')  # optional absolute URL
+    MAX_ATTACH_SIZE = int(os.getenv('MAX_ATTACH_SIZE', 10 * 1024 * 1024))  # 10MB
+    MAX_ATTACH_COUNT = int(os.getenv('MAX_ATTACH_COUNT', 5))
     
     # IP Restriction for signup (Ulsan Education Office network)
     # Add actual IP ranges as needed
