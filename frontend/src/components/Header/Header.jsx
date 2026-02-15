@@ -14,6 +14,7 @@ import {
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import styles from './Header.module.css';
+import RoleName from '../RoleName/RoleName';
 
 const navigationItems = [
   {
@@ -181,21 +182,13 @@ export default function Header() {
                   aria-expanded={showUserMenu}
                 >
                   <User size={18} />
-                  <span className={user.is_teacher ? styles.teacherName : ''}>{user.nickname}</span>
+                  <RoleName nickname={user.nickname} role={user.role} size="sm" />
                   <ChevronDown size={14} className={showUserMenu ? styles.rotated : ''} />
                 </button>
                 {showUserMenu && (
                   <div className={styles.userDropdown}>
                     <div className={styles.userInfo}>
-                      <span className={styles.userRole}>
-                        {user.role === 'admin'
-                          ? '관리자'
-                          : user.role === 'student_council'
-                          ? '학생회'
-                          : user.role === 'teacher'
-                          ? '교사'
-                          : '학생'}
-                      </span>
+                      <RoleName nickname={user.nickname} role={user.role} size="sm" />
                     </div>
                     <button onClick={handleLogout} className={styles.logoutButton}>
                       <LogOut size={16} />

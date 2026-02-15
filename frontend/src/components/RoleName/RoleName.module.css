@@ -1,0 +1,73 @@
+.roleName {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    font-weight: var(--role-font-weight);
+    line-height: 1.2;
+}
+
+.prefix {
+    display: inline-flex;
+    align-items: center;
+    padding: 0 var(--space-1);
+    border-radius: var(--role-badge-radius);
+    font-size: 0.85em;
+    font-weight: var(--role-font-weight);
+}
+
+.name {
+    display: inline-block;
+}
+
+.size-sm {
+    font-size: var(--text-sm);
+}
+
+.size-md {
+    font-size: var(--text-base);
+}
+
+.size-lg {
+    font-size: var(--text-lg);
+}
+
+.role-admin {
+    color: var(--role-admin);
+}
+
+.role-student-council {
+    color: var(--role-student-council);
+}
+
+.role-teacher {
+    background-image: var(--role-teacher-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .role-teacher {
+        background-image: var(--role-teacher-gradient);
+    }
+}
+
+.role-student {
+    color: var(--color-text-primary);
+}
+
+.ellipsis {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+@keyframes gradientShift {
+    0% {
+        background-position: 0% 50%;
+    }
+    100% {
+        background-position: 100% 50%;
+    }
+}

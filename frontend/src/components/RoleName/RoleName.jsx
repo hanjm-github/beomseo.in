@@ -1,0 +1,40 @@
+import React from 'react';
+import { getRoleDisplay } from '../../utils/roleDisplay';
+import styles from './RoleName.module.css';
+
+const cx = (...args) => args.filter(Boolean).join(' ');
+
+/**
+ * Role-aware name renderer with prefixes and styling.
+ * Usage:
+ *   <RoleName nickname="홍길동" role="admin" />
+ *   <RoleName nickname="김교사" role="teacher" showPrefix={false} size="sm" />
+ */
+export default function RoleName({
+  nickname,
+  role,
+  showPrefix = true,
+  size = 'md',
+  className,
+  as: Component = 'span',
+  prefixOverride,
+  ellipsis = false,
+}) {
+  const { displayPrefix, ariaLabel, roleClassName, safeNickname } = getRoleDisplay({
+    role,
+    nickname,
+    showPrefix,
+    prefixOverride,
+  });
+
+  return (
+    <Component className={cx(styles.roleName, styles[`size-${size}`], className)} aria-label={ariaLabel}>
+      {displayPrefix && (
+        <span className={cx(styles.prefix, styles[roleClassName])}>{displayPrefix}</span>
+      )}
+      <span className={cx(styles.name, styles[roleClassName], ellipsis && styles.ellipsis)} title={safeNickname}>
+        {safeNickname}
+      </span>
+    </Component>
+  );
+}

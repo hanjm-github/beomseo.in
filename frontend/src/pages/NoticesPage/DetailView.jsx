@@ -5,6 +5,7 @@ import styles from '../../components/notices/notices.module.css';
 import { noticesApi } from '../../api/notices';
 import Attachments from '../../components/notices/Attachments';
 import { useAuth } from '../../context/AuthContext';
+import RoleName from '../../components/RoleName/RoleName';
 
 const VALID_CATEGORIES = ['school', 'council'];
 
@@ -90,7 +91,7 @@ export default function DetailView() {
         </div>
         <h1 className={styles.detailTitle}>{notice.title}</h1>
         <div className={styles.detailMeta}>
-          <span>{notice.author?.name || '관리자'}</span>
+          <RoleName nickname={notice.author?.name || '관리자'} role={notice.author?.role || 'admin'} size="sm" />
           <span className={styles.metaDivider}>•</span>
           <span>{new Date(notice.createdAt).toLocaleString()}</span>
           {notice.views != null && (

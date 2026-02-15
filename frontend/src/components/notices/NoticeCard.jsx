@@ -1,5 +1,6 @@
 import { Paperclip, Eye, Pin, AlertTriangle, GraduationCap } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import RoleName from '../RoleName/RoleName';
 import styles from './notices.module.css';
 
 function Badge({ icon: Icon, label, tone = 'neutral' }) {
@@ -22,7 +23,11 @@ export default function NoticeCard({ notice, to }) {
           <h3 className={styles.cardTitle}>{notice.title}</h3>
         </div>
         <div className={styles.metaRow}>
-          <span className={styles.meta}>{notice.author?.name || '관리자'}</span>
+          <RoleName
+            nickname={notice.author?.name || '관리자'}
+            role={notice.author?.role || 'admin'}
+            size="sm"
+          />
           <span className={styles.metaDivider}>•</span>
           <span className={styles.meta}>{new Date(notice.createdAt).toLocaleDateString()}</span>
           {notice.views != null && (
@@ -59,4 +64,3 @@ export default function NoticeCard({ notice, to }) {
     </Link>
   );
 }
-
