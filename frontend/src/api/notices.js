@@ -79,13 +79,23 @@ function applyListFilters(data, params) {
 
   switch (sort) {
     case 'views':
-      result.sort((a, b) => (b.views || 0) - (a.views || 0));
+      result.sort((a, b) => {
+        if (a.pinned !== b.pinned) return b.pinned - a.pinned;
+        return (b.views || 0) - (a.views || 0) || new Date(b.createdAt) - new Date(a.createdAt);
+      });
       break;
     case 'important':
-      result.sort((a, b) => Number(b.important) - Number(a.important));
+      result.sort((a, b) => {
+        if (a.pinned !== b.pinned) return b.pinned - a.pinned;
+        if (a.important !== b.important) return Number(b.important) - Number(a.important);
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      });
       break;
     default:
-      result.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      result.sort((a, b) => {
+        if (a.pinned !== b.pinned) return b.pinned - a.pinned;
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      });
   }
 
   return result;

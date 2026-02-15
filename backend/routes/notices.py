@@ -81,10 +81,10 @@ def apply_filters(query, category, query_text, pinned, important, exam, tags=Non
 
 def apply_sort(query, sort):
     if sort == 'views':
-        return query.order_by(Notice.views.desc(), Notice.created_at.desc())
+        return query.order_by(Notice.pinned.desc(), Notice.views.desc(), Notice.created_at.desc())
     if sort == 'important':
-        return query.order_by(Notice.important.desc(), Notice.pinned.desc(), Notice.created_at.desc())
-    return query.order_by(Notice.created_at.desc())
+        return query.order_by(Notice.pinned.desc(), Notice.important.desc(), Notice.created_at.desc())
+    return query.order_by(Notice.pinned.desc(), Notice.created_at.desc())
 
 
 def validate_notice_payload(data, is_update=False):
