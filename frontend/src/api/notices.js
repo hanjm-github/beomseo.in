@@ -24,6 +24,9 @@ let mockNotices = [
     createdAt: '2026-03-02T09:00:00Z',
     updatedAt: '2026-03-02T09:00:00Z',
     views: 129,
+    likes: 12,
+    dislikes: 1,
+    myReaction: null,
     attachments: [
       {
         id: 'f-1',
@@ -49,9 +52,28 @@ let mockNotices = [
     createdAt: '2026-03-05T12:00:00Z',
     updatedAt: '2026-03-05T12:00:00Z',
     views: 88,
+    likes: 5,
+    dislikes: 0,
+    myReaction: null,
     attachments: [],
   },
 ];
+
+const mockComments = {
+  'n-1': [
+    {
+      id: 'c-1',
+      noticeId: 'n-1',
+      body: '시험 범위 감사합니다!',
+      author: { id: 'u-1', name: '학생1', role: 'student' },
+      createdAt: '2026-03-06T08:00:00Z',
+      updatedAt: '2026-03-06T08:00:00Z',
+    },
+  ],
+  'n-2': [],
+};
+
+const mockMyReactions = {};
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -133,6 +155,10 @@ async function mockCreate(payload) {
     createdAt: now,
     updatedAt: now,
     summary: payload.summary || summarize(payload.body || ''),
+    likes: 0,
+    dislikes: 0,
+    myReaction: null,
+    views: payload.views || 0,
   };
   mockNotices = [withMeta, ...mockNotices];
   return withMeta;
@@ -156,6 +182,71 @@ async function mockUpdate(id, payload) {
 async function mockDelete(id) {
   await delay(80);
   mockNotices = mockNotices.filter((n) => n.id !== id);
+  return { success: true };
+}
+
+function resolveReactionState(noticeId) {
+  const notice = mockNotices.find((n) => n.id === noticeId);
+  if (!notice) throw new Error('Not found');
+  const current = mockMyReactions[noticeId] || null;
+  return { notice, current };
+}
+
+async function mockReact(noticeId, type) {
+  await delay(60);
+  const { notice, current } = resolveReactionState(noticeId);
+  if (current === type) {
+    mockMyReactions[noticeId] = null;
+    if (type === 'like' && notice.likes > 0) notice.likes -= 1;
+    if (type === 'dislike' && notice.dislikes > 0) notice.dislikes -= 1;
+  } else {
+    if (current === 'like' && notice.likes > 0) notice.likes -= 1;
+    if (current === 'dislike' && notice.dislikes > 0) notice.dislikes -= 1;
+    mockMyReactions[noticeId] = type;
+    if (type === 'like') notice.likes += 1;
+    else notice.dislikes += 1;
+  }
+  notice.myReaction = mockMyReactions[noticeId];
+  return {
+    likes: notice.likes,
+    dislikes: notice.dislikes,
+    myReaction: notice.myReaction,
+  };
+}
+
+async function mockListComments(noticeId, params) {
+  await delay(60);
+  const comments = mockComments[noticeId] || [];
+  const pageSize = params.pageSize || 20;
+  const page = params.page || 1;
+  const start = (page - 1) * pageSize;
+  const items = comments.slice(start, start + pageSize);
+  return {
+    items,
+    total: comments.length,
+    page,
+    pageSize,
+  };
+}
+
+async function mockCreateComment(noticeId, body) {
+  await delay(60);
+  const now = new Date().toISOString();
+  const comment = {
+    id: `c-${Date.now()}`,
+    noticeId,
+    body,
+    author: { id: 'me', name: '나', role: 'student' },
+    createdAt: now,
+    updatedAt: now,
+  };
+  mockComments[noticeId] = [comment, ...(mockComments[noticeId] || [])];
+  return comment;
+}
+
+async function mockDeleteComment(noticeId, commentId) {
+  await delay(40);
+  mockComments[noticeId] = (mockComments[noticeId] || []).filter((c) => c.id !== commentId);
   return { success: true };
 }
 
@@ -202,6 +293,42 @@ export const noticesApi = {
       return response.data;
     } catch (error) {
       return mockDelete(id);
+    }
+  },
+
+  async react(id, type) {
+    try {
+      const response = await api.post(`/api/notices/${id}/reactions`, { type });
+      return response.data;
+    } catch (error) {
+      return mockReact(id, type);
+    }
+  },
+
+  async listComments(id, params = {}) {
+    try {
+      const response = await api.get(`/api/notices/${id}/comments`, { params });
+      return response.data;
+    } catch (error) {
+      return mockListComments(id, params);
+    }
+  },
+
+  async createComment(id, body) {
+    try {
+      const response = await api.post(`/api/notices/${id}/comments`, { body });
+      return response.data;
+    } catch (error) {
+      return mockCreateComment(id, body);
+    }
+  },
+
+  async deleteComment(noticeId, commentId) {
+    try {
+      const response = await api.delete(`/api/notices/${noticeId}/comments/${commentId}`);
+      return response.data;
+    } catch (error) {
+      return mockDeleteComment(noticeId, commentId);
     }
   },
 

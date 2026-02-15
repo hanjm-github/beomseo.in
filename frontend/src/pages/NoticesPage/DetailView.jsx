@@ -1,18 +1,29 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import { Pin, AlertTriangle, GraduationCap, Eye, Pencil, ArrowLeft, Trash2 } from 'lucide-react';
+import {
+  Pin,
+  AlertTriangle,
+  GraduationCap,
+  Eye,
+  Pencil,
+  ArrowLeft,
+  Trash2,
+  ThumbsUp,
+  ThumbsDown,
+} from 'lucide-react';
 import styles from '../../components/notices/notices.module.css';
 import { noticesApi } from '../../api/notices';
 import Attachments from '../../components/notices/Attachments';
 import { useAuth } from '../../context/AuthContext';
 import RoleName from '../../components/RoleName/RoleName';
+import CommentsPanel from '../../components/notices/CommentsPanel';
 
 const VALID_CATEGORIES = ['school', 'council'];
 
 export default function DetailView() {
   const { category = 'school', id } = useParams();
   const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, isAuthenticated } = useAuth();
   const canEdit = ['admin', 'council', 'student_council'].includes(user?.role);
 
   const [notice, setNotice] = useState(null);
@@ -42,6 +53,38 @@ export default function DetailView() {
       cancelled = true;
     };
   }, [category, id, navigate]);
+
+  const handleReact = async (type) => {
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
+    if (!notice) return;
+    const prev = notice;
+    // optimistic update
+    const next = { ...notice };
+    const current = notice.myReaction;
+    if (current === type) {
+      next.myReaction = null;
+      if (type === 'like' && next.likes > 0) next.likes -= 1;
+      if (type === 'dislike' && next.dislikes > 0) next.dislikes -= 1;
+    } else {
+      if (current === 'like' && next.likes > 0) next.likes -= 1;
+      if (current === 'dislike' && next.dislikes > 0) next.dislikes -= 1;
+      next.myReaction = type;
+      if (type === 'like') next.likes += 1;
+      else next.dislikes += 1;
+    }
+    setNotice(next);
+    try {
+      const res = await noticesApi.react(id, type);
+      setNotice({ ...next, ...res });
+      setError('');
+    } catch (err) {
+      setNotice(prev);
+      setError('리액션 처리에 실패했습니다.');
+    }
+  };
 
   useEffect(() => {
     // ensure scroll top when notice is loaded
@@ -103,12 +146,33 @@ export default function DetailView() {
           )}
         </div>
 
+        <div className={styles.reactionBar}>
+          <button
+            type="button"
+            className={`${styles.reactionButton} ${notice.myReaction === 'like' ? styles.reactionButtonActive : ''}`}
+            onClick={() => handleReact('like')}
+          >
+            <ThumbsUp size={14} />
+            <span className={styles.reactionCount}>{notice.likes ?? 0}</span>
+          </button>
+          <button
+            type="button"
+            className={`${styles.reactionButton} ${notice.myReaction === 'dislike' ? styles.reactionButtonActive : ''}`}
+            onClick={() => handleReact('dislike')}
+          >
+            <ThumbsDown size={14} />
+            <span className={styles.reactionCount}>{notice.dislikes ?? 0}</span>
+          </button>
+        </div>
+
         <div
           className={styles.detailContent}
           dangerouslySetInnerHTML={{ __html: notice.body || '<p>본문이 없습니다.</p>' }}
         />
 
         <Attachments items={notice.attachments} />
+
+        <CommentsPanel noticeId={id} currentUser={user} isAuthenticated={isAuthenticated} />
       </div>
 
       <aside className={styles.sidePanel}>

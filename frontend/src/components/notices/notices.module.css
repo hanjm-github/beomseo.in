@@ -482,6 +482,137 @@
   gap: var(--space-2);
 }
 
+.reactionBar {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  margin-top: var(--space-3);
+}
+
+.reactionButton {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-muted);
+  cursor: pointer;
+  color: var(--color-text-primary);
+}
+
+.reactionButtonActive {
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--color-primary-500), var(--color-accent-500));
+  color: white;
+  box-shadow: var(--shadow-sm);
+}
+
+.reactionCount {
+  font-weight: var(--font-medium);
+}
+
+.commentsPanel {
+  margin-top: var(--space-6);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  background: var(--color-surface);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.commentsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.commentsTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: var(--font-semibold);
+}
+
+.commentsMeta {
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+}
+
+.commentForm form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.commentInput {
+  width: 100%;
+  min-height: 110px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  padding: var(--space-3);
+  background: var(--color-bg-muted);
+  resize: vertical;
+}
+
+.commentFormActions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.commentLocked {
+  padding: var(--space-3);
+  background: var(--color-bg-muted);
+  border-radius: var(--radius-lg);
+  color: var(--color-text-secondary);
+  border: 1px dashed var(--color-border);
+}
+
+.commentList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.commentItem {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3);
+  background: var(--color-bg-muted);
+}
+
+.commentMeta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+  margin-bottom: var(--space-1);
+}
+
+.commentBody {
+  white-space: pre-wrap;
+  line-height: 1.6;
+  color: var(--color-text-primary);
+}
+
+.commentPlaceholder {
+  padding: var(--space-3);
+  color: var(--color-text-secondary);
+}
+
+.spinner {
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 @media (max-width: 1024px) {
   .detail,
   .composeShell {

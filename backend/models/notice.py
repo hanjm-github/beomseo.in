@@ -4,6 +4,8 @@ Notice and Attachment models for school / student council announcements.
 from datetime import datetime
 from enum import Enum
 from sqlalchemy import func
+from sqlalchemy.schema import UniqueConstraint
+
 from .user import db, User, UserRole
 
 
@@ -35,6 +37,53 @@ class Attachment(db.Model):
         }
 
 
+class ReactionType(str, Enum):
+    LIKE = 'like'
+    DISLIKE = 'dislike'
+
+
+class NoticeReaction(db.Model):
+    __tablename__ = 'notice_reactions'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    notice_id = db.Column(db.Integer, db.ForeignKey('notices.id', ondelete='CASCADE'), nullable=False, index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False, index=True)
+    type = db.Column(db.Enum(ReactionType), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint('notice_id', 'user_id', name='uq_notice_user_reaction'),
+    )
+
+
+class Comment(db.Model):
+    __tablename__ = 'comments'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    notice_id = db.Column(db.Integer, db.ForeignKey('notices.id', ondelete='CASCADE'), nullable=False, index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False, index=True)
+    body = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    deleted_at = db.Column(db.DateTime, nullable=True, index=True)
+
+    user = db.relationship('User', backref=db.backref('comments', lazy='dynamic'))
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'noticeId': self.notice_id,
+            'body': self.body,
+            'author': {
+                'id': self.user_id,
+                'name': self.user.nickname if self.user else None,
+                'role': self.user.role.value if self.user else None,
+            },
+            'createdAt': self.created_at.isoformat() if self.created_at else None,
+            'updatedAt': self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
 class Notice(db.Model):
     __tablename__ = 'notices'
 
@@ -48,11 +97,27 @@ class Notice(db.Model):
     exam_related = db.Column(db.Boolean, default=False, nullable=False)
     tags = db.Column(db.Text, nullable=True)  # comma-separated
     views = db.Column(db.Integer, default=0, nullable=False)
+    like_count = db.Column(db.Integer, default=0, nullable=False)
+    dislike_count = db.Column(db.Integer, default=0, nullable=False)
     deleted_at = db.Column(db.DateTime, nullable=True, index=True)
 
     author_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
     author_role = db.Column(db.String(50), nullable=False)
     author = db.relationship('User', backref=db.backref('notices', lazy='dynamic'))
+
+    reactions = db.relationship(
+        'NoticeReaction',
+        backref='notice',
+        cascade='all, delete-orphan',
+        lazy='dynamic'
+    )
+    comments = db.relationship(
+        'Comment',
+        backref='notice',
+        cascade='all, delete-orphan',
+        lazy='dynamic',
+        order_by='Comment.created_at.asc()'
+    )
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
@@ -78,7 +143,7 @@ class Notice(db.Model):
     def tags_list(self):
         return [t.strip() for t in (self.tags or '').split(',') if t.strip()]
 
-    def to_dict(self):
+    def to_dict(self, my_reaction=None):
         role_alias = 'council' if self.author_role == UserRole.STUDENT_COUNCIL.value else self.author_role
         return {
             'id': self.id,
@@ -101,6 +166,9 @@ class Notice(db.Model):
         'attachments': [a.to_dict() for a in self.attachments],
         'body': self.body,
         'deletedAt': self.deleted_at.isoformat() if self.deleted_at else None,
+        'likes': self.like_count,
+        'dislikes': self.dislike_count,
+        'myReaction': my_reaction,
     }
 
 

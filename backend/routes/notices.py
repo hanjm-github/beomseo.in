@@ -1,12 +1,26 @@
 """
-Notice and attachment routes.
+Notice, attachment, comment, and reaction routes.
 """
 from flask import Blueprint, request, jsonify, current_app, send_from_directory
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import (
+    jwt_required,
+    get_jwt_identity,
+    verify_jwt_in_request,
+)
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import or_
 
-from models import db, Notice, Attachment, NoticeCategory, User, UserRole
+from models import (
+    db,
+    Notice,
+    Attachment,
+    NoticeCategory,
+    User,
+    UserRole,
+    Comment,
+    NoticeReaction,
+    ReactionType,
+)
 from utils.pagination import parse_pagination
 from utils.files import save_upload, ensure_dir
 from utils.security import require_role, get_current_user
@@ -18,6 +32,19 @@ def parse_bool(val):
     if val is None:
         return None
     return str(val).lower() in {'1', 'true', 'yes', 'on'}
+
+
+def optional_current_user_id():
+    """
+    Return current user id if JWT is present; otherwise None.
+    Uses optional verification to avoid raising for anonymous requests.
+    """
+    try:
+        verify_jwt_in_request(optional=True)
+        user_id_str = get_jwt_identity()
+        return int(user_id_str) if user_id_str else None
+    except Exception:
+        return None
 
 
 @notices_bp.route('/', methods=['GET'])
@@ -38,8 +65,19 @@ def list_notices():
     q = apply_sort(q, sort)
     items = q.offset((page - 1) * page_size).limit(page_size).all()
 
+    current_user_id = optional_current_user_id()
+    reactions_map = {}
+    if current_user_id:
+        notice_ids = [n.id for n in items]
+        if notice_ids:
+            reactions = NoticeReaction.query.filter(
+                NoticeReaction.user_id == current_user_id,
+                NoticeReaction.notice_id.in_(notice_ids)
+            ).all()
+            reactions_map = {r.notice_id: r.type.value for r in reactions}
+
     return jsonify({
-        'items': [n.to_dict() for n in items],
+        'items': [n.to_dict(my_reaction=reactions_map.get(n.id)) for n in items],
         'total': total,
         'page': page,
         'page_size': page_size
@@ -272,6 +310,16 @@ def get_notice(notice_id):
     if notice.deleted_at:
         return jsonify({'error': '삭제된 공지입니다.'}), 404
 
+    current_user_id = optional_current_user_id()
+    my_reaction = None
+    if current_user_id:
+        reaction = NoticeReaction.query.filter_by(
+            notice_id=notice_id,
+            user_id=current_user_id
+        ).first()
+        if reaction:
+            my_reaction = reaction.type.value
+
     # Increment views (best-effort)
     try:
         notice.views += 1
@@ -279,7 +327,7 @@ def get_notice(notice_id):
     except SQLAlchemyError:
         db.session.rollback()
 
-    return jsonify(notice.to_dict())
+    return jsonify(notice.to_dict(my_reaction=my_reaction))
 
 
 @notices_bp.route('/uploads', methods=['POST'])
@@ -328,3 +376,151 @@ def serve_upload(filename):
         as_attachment=True,
         download_name=download_name
     )
+
+
+# ----- Comments -----
+
+
+@notices_bp.route('/<int:notice_id>/comments', methods=['GET'])
+def list_comments(notice_id):
+    notice = Notice.query.get(notice_id)
+    if not notice or notice.deleted_at:
+        return jsonify({'error': '공지 를 찾을 수 없습니다.'}), 404
+
+    page, page_size = parse_pagination(request)
+    order = request.args.get('order', 'asc')
+    q = Comment.query.filter(
+        Comment.notice_id == notice_id,
+        Comment.deleted_at.is_(None)
+    )
+    total = q.count()
+    if order == 'desc':
+        q = q.order_by(Comment.created_at.desc())
+    else:
+        q = q.order_by(Comment.created_at.asc())
+    items = q.offset((page - 1) * page_size).limit(page_size).all()
+
+    return jsonify({
+        'items': [c.to_dict() for c in items],
+        'total': total,
+        'page': page,
+        'page_size': page_size
+    })
+
+
+@notices_bp.route('/<int:notice_id>/comments', methods=['POST'])
+@jwt_required()
+def create_comment(notice_id):
+    notice = Notice.query.get(notice_id)
+    if not notice or notice.deleted_at:
+        return jsonify({'error': '공지 를 찾을 수 없습니다.'}), 404
+
+    data = request.get_json() or {}
+    body = (data.get('body') or '').strip()
+    if not body or len(body) < 1 or len(body) > 1000:
+        return jsonify({'error': '댓글은 1~1000자로 입력해주세요.'}), 422
+
+    user = get_current_user()
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+
+    comment = Comment(
+        notice_id=notice_id,
+        user_id=user.id,
+        body=body
+    )
+
+    try:
+        db.session.add(comment)
+        db.session.commit()
+    except SQLAlchemyError:
+        db.session.rollback()
+        return jsonify({'error': '댓글 작성 중 오류가 발생했습니다.'}), 500
+
+    return jsonify(comment.to_dict()), 201
+
+
+@notices_bp.route('/<int:notice_id>/comments/<int:comment_id>', methods=['DELETE'])
+@jwt_required()
+@require_role(UserRole.ADMIN)
+def delete_comment(notice_id, comment_id):
+    comment = Comment.query.filter_by(id=comment_id, notice_id=notice_id).first()
+    if not comment or comment.deleted_at:
+        return jsonify({'error': '댓글을 찾을 수 없습니다.'}), 404
+
+    try:
+        comment.deleted_at = db.func.now()
+        db.session.commit()
+    except SQLAlchemyError:
+        db.session.rollback()
+        return jsonify({'error': '댓글 삭제 중 오류가 발생했습니다.'}), 500
+
+    return jsonify({'message': '삭제되었습니다.'}), 200
+
+
+# ----- Reactions -----
+
+
+@notices_bp.route('/<int:notice_id>/reactions', methods=['POST'])
+@jwt_required()
+def react_notice(notice_id):
+    notice = Notice.query.get(notice_id)
+    if not notice or notice.deleted_at:
+        return jsonify({'error': '공지 를 찾을 수 없습니다.'}), 404
+
+    data = request.get_json() or {}
+    reaction_type = data.get('type')
+    if reaction_type not in (ReactionType.LIKE.value, ReactionType.DISLIKE.value):
+        return jsonify({'error': 'type은 like 또는 dislike 이어야 합니다.'}), 422
+
+    user = get_current_user()
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+
+    existing = NoticeReaction.query.filter_by(
+        notice_id=notice_id,
+        user_id=user.id
+    ).first()
+
+    try:
+        if existing and existing.type.value == reaction_type:
+            # Toggle off
+            if reaction_type == ReactionType.LIKE.value and notice.like_count > 0:
+                notice.like_count -= 1
+            if reaction_type == ReactionType.DISLIKE.value and notice.dislike_count > 0:
+                notice.dislike_count -= 1
+            db.session.delete(existing)
+            my_reaction = None
+        else:
+            # Switch or add
+            if existing:
+                if existing.type == ReactionType.LIKE and notice.like_count > 0:
+                    notice.like_count -= 1
+                if existing.type == ReactionType.DISLIKE and notice.dislike_count > 0:
+                    notice.dislike_count -= 1
+                existing.type = ReactionType(reaction_type)
+                my_reaction = reaction_type
+            else:
+                new_reaction = NoticeReaction(
+                    notice_id=notice_id,
+                    user_id=user.id,
+                    type=ReactionType(reaction_type)
+                )
+                db.session.add(new_reaction)
+                my_reaction = reaction_type
+
+            if reaction_type == ReactionType.LIKE.value:
+                notice.like_count += 1
+            else:
+                notice.dislike_count += 1
+
+        db.session.commit()
+    except SQLAlchemyError:
+        db.session.rollback()
+        return jsonify({'error': '리액션 처리 중 오류가 발생했습니다.'}), 500
+
+    return jsonify({
+        'likes': notice.like_count,
+        'dislikes': notice.dislike_count,
+        'myReaction': my_reaction
+    })
