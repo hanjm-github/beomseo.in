@@ -3,6 +3,9 @@ import CommunityPage from './CommunityPage';
 import FreeBoardListView from './FreeBoard/FreeBoardListView';
 import FreeBoardDetailView from './FreeBoard/FreeBoardDetailView';
 import FreeBoardComposeView from './FreeBoard/FreeBoardComposeView';
+import ClubRecruitListPage from './ClubRecruit/ClubRecruitListPage';
+import ClubRecruitDetailPage from './ClubRecruit/ClubRecruitDetailPage';
+import ClubRecruitComposePage from './ClubRecruit/ClubRecruitComposePage';
 
 export default function CommunityRouter() {
   return (
@@ -12,6 +15,9 @@ export default function CommunityRouter() {
       <Route path="free/new" element={<FreeBoardComposeView mode="create" />} />
       <Route path="free/:id" element={<FreeBoardDetailView />} />
       <Route path="free/:id/edit" element={<FreeBoardComposeView mode="edit" />} />
+      <Route path="club-recruit" element={<ClubRecruitListPage />} />
+      <Route path="club-recruit/new" element={<ClubRecruitComposePage />} />
+      <Route path="club-recruit/:id" element={<ClubRecruitDetailPage />} />
       <Route path="*" element={<Navigate to="/community" replace />} />
     </Routes>
   );

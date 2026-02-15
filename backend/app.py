@@ -10,6 +10,7 @@ from config import config
 from models.user import db
 from models import notice  # noqa: F401 ensure models are registered
 from models import free_post  # noqa: F401 ensure models are registered
+from models import club_recruit  # noqa: F401 ensure models are registered
 
 
 def create_app(config_name=None):
@@ -61,9 +62,11 @@ def create_app(config_name=None):
     from routes.auth import auth_bp
     from routes.notices import notices_bp
     from routes.free import free_bp
+    from routes.club_recruit import club_recruit_bp
     app.register_blueprint(auth_bp)
     app.register_blueprint(notices_bp)
     app.register_blueprint(free_bp)
+    app.register_blueprint(club_recruit_bp)
     
     # Health check endpoint
     @app.route('/api/health')

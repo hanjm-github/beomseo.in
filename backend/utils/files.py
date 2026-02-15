@@ -20,13 +20,8 @@ def save_upload(file_storage, upload_dir: str, base_url: str = None):
     filepath = os.path.join(upload_dir, filename)
     file_storage.save(filepath)
 
-    if base_url:
-        url = f"{base_url.rstrip('/')}/{filename}"
-    else:
-        url = f"/api/notices/uploads/{filename}"
-
     return {
         'filename': filename,
         'path': filepath,
-        'url': url,
+        'url': f"{(base_url.rstrip('/') if base_url else '/api/notices/uploads')}/{filename}"
     }

@@ -17,6 +17,11 @@ from .free_post import (
     FreeCategory,
     FreeStatus,
 )
+from .club_recruit import (
+    ClubRecruit,
+    GradeGroup,
+    RecruitStatus,
+)
 
 __all__ = [
     'User',
@@ -35,5 +40,8 @@ __all__ = [
     'FreeBookmark',
     'FreeCategory',
     'FreeStatus',
+    'ClubRecruit',
+    'GradeGroup',
+    'RecruitStatus',
     'db',
 ]

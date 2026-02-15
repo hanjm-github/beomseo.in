@@ -25,6 +25,7 @@ export default function Editor({ value, onChange, placeholder, onUploadImage, up
 
   const apply = (command) => {
     document.execCommand(command, false, null);
+    editorRef.current?.focus();
     handleInput();
   };
 
@@ -32,6 +33,7 @@ export default function Editor({ value, onChange, placeholder, onUploadImage, up
     const url = window.prompt('링크 URL을 입력하세요');
     if (url) {
       document.execCommand('createLink', false, url);
+      editorRef.current?.focus();
       handleInput();
     }
   };
@@ -47,6 +49,7 @@ export default function Editor({ value, onChange, placeholder, onUploadImage, up
     const range = window.getSelection().getRangeAt(0);
     range.insertNode(img);
     range.collapse(false);
+    editorRef.current?.focus();
     handleInput();
   };
 
@@ -71,23 +74,23 @@ export default function Editor({ value, onChange, placeholder, onUploadImage, up
   return (
     <div className={styles.editorShell}>
       <div className={styles.editorToolbar}>
-        <button type="button" onClick={() => apply('bold')}>
+        <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => apply('bold')}>
           <Bold size={14} />
         </button>
-        <button type="button" onClick={() => apply('italic')}>
+        <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => apply('italic')}>
           <Italic size={14} />
         </button>
-        <button type="button" onClick={() => apply('underline')}>
+        <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => apply('underline')}>
           <Underline size={14} />
         </button>
-        <button type="button" onClick={() => apply('insertUnorderedList')}>
+        <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => apply('insertUnorderedList')}>
           <List size={14} />
         </button>
-        <button type="button" onClick={addLink}>
+        <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={addLink}>
           <LinkIcon size={14} />
         </button>
         {onUploadImage && (
-          <button type="button" onClick={handleImageClick} disabled={uploading}>
+          <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={handleImageClick} disabled={uploading}>
             <ImageIcon size={14} />
           </button>
         )}
@@ -97,8 +100,10 @@ export default function Editor({ value, onChange, placeholder, onUploadImage, up
         ref={editorRef}
         className={styles.editorArea}
         contentEditable
+        tabIndex={0}
         suppressContentEditableWarning
         onInput={handleInput}
+        onClick={() => editorRef.current?.focus()}
         data-placeholder={placeholder}
       />
       {onUploadImage && (

@@ -194,7 +194,7 @@ export default function MainPage() {
                             </motion.div>
                             <motion.div variants={itemVariants}>
                                 <QuickLinkCard
-                                    to="/community/clubs"
+                                    to="/community/club-recruit"
                                     icon={Users}
                                     title="동아리"
                                     variant="default"

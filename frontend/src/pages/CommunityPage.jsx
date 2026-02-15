@@ -4,13 +4,13 @@ import { MessageCircle, Users, Shuffle, Vote, PlugZap, ShieldCheck } from 'lucid
 import './page-shell.css';
 
 const boards = [
-  { key: 'free', label: '자유 게시판', icon: MessageCircle },
-  { key: 'clubs', label: '동아리 모집', icon: Users },
-  { key: 'subjects', label: '선택과목 변경', icon: Shuffle },
-  { key: 'petition', label: '학생 청원', icon: ShieldCheck },
-  { key: 'survey', label: '설문 품앗이', icon: PlugZap },
-  { key: 'vote', label: '실시간 투표', icon: Vote },
-  { key: 'lost-found', label: '분실물 센터', icon: ShieldCheck },
+  { key: 'free', path: 'free', label: '자유 게시판', icon: MessageCircle },
+  { key: 'club-recruit', path: 'club-recruit', label: '동아리 모집', icon: Users },
+  { key: 'subjects', path: 'subjects', label: '선택과목 변경', icon: Shuffle },
+  { key: 'petition', path: 'petition', label: '학생 청원', icon: ShieldCheck },
+  { key: 'survey', path: 'survey', label: '설문 품앗이', icon: PlugZap },
+  { key: 'vote', path: 'vote', label: '실시간 투표', icon: Vote },
+  { key: 'lost-found', path: 'lost-found', label: '분실물 센터', icon: ShieldCheck },
 ];
 
 export default function CommunityPage() {
@@ -33,9 +33,9 @@ export default function CommunityPage() {
       </div>
 
       <div className="grid-cards">
-        {boards.map(({ key, label, icon: Icon }) => (
+        {boards.map(({ key, path, label, icon: Icon }) => (
           <Link
-            to={`/community/${key}`}
+            to={`/community/${path}`}
             key={key}
             className={`card card-link ${active === key ? 'card-active' : ''}`}
           >
