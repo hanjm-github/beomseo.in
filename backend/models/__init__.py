@@ -22,6 +22,13 @@ from .club_recruit import (
     GradeGroup,
     RecruitStatus,
 )
+from .subject_change import (
+    SubjectChange,
+    MatchStatus,
+    ApprovalStatus,
+    ContactType,
+    SubjectChangeComment,
+)
 
 __all__ = [
     'User',
@@ -43,5 +50,10 @@ __all__ = [
     'ClubRecruit',
     'GradeGroup',
     'RecruitStatus',
+    'SubjectChange',
+    'MatchStatus',
+    'ApprovalStatus',
+    'ContactType',
+    'SubjectChangeComment',
     'db',
 ]

@@ -63,10 +63,12 @@ def create_app(config_name=None):
     from routes.notices import notices_bp
     from routes.free import free_bp
     from routes.club_recruit import club_recruit_bp
+    from routes.subject_changes import subject_changes_bp
     app.register_blueprint(auth_bp)
     app.register_blueprint(notices_bp)
     app.register_blueprint(free_bp)
     app.register_blueprint(club_recruit_bp)
+    app.register_blueprint(subject_changes_bp)
     
     # Health check endpoint
     @app.route('/api/health')
