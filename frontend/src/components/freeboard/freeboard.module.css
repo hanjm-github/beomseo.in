@@ -156,6 +156,12 @@
   color: #b00046;
 }
 
+.badgePending {
+  background: #fff4e5;
+  border-color: #ffd7a3;
+  color: #c67c00;
+}
+
 .cardTitle {
   font-size: var(--text-lg);
   margin: 0;
@@ -183,17 +189,6 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-}
-
-.avatarCircle {
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  background: var(--color-bg-muted);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: var(--text-sm);
 }
 
 .placeholder,
@@ -295,10 +290,17 @@
   cursor: pointer;
 }
 
-.reactionButton.active {
-  border-color: var(--color-primary-400);
-  color: var(--color-primary-700);
-  background: #eef2ff;
+.reactionButtonActive {
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--color-primary-500), var(--color-accent-500));
+  color: #fff;
+  box-shadow: var(--shadow-md);
+}
+
+.reactionButtonActiveNegative {
+  border-color: #ffb8ce;
+  background: #ffe8ef;
+  color: #b00046;
 }
 
 .commentPanel {

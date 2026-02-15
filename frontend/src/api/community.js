@@ -13,6 +13,7 @@ const CATEGORIES = ['chat', 'info', 'qna'];
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const categoryLabel = {
+  all: '전체',
   chat: '잡담',
   info: '정보',
   qna: 'QnA',
@@ -24,6 +25,7 @@ let mockPosts = [
     title: '오늘 급식 미쳤다 ㅋㅋ',
     body: '<p>치킨마요덮밥에 탕수육이라니... 이런 날 또 오나요?</p>',
     category: 'chat',
+    status: 'approved',
     createdAt: '2026-03-03T02:00:00Z',
     updatedAt: '2026-03-03T02:00:00Z',
     views: 320,
@@ -40,6 +42,7 @@ let mockPosts = [
     title: '수학 내신 3-1 미적분 미리보기 요약',
     body: '<p>교과서 72~95쪽, 삼각함수 그래프 파트. <strong>로그 유도</strong> 꼭 보세요.</p>',
     category: 'info',
+    status: 'approved',
     createdAt: '2026-03-04T07:30:00Z',
     updatedAt: '2026-03-04T07:30:00Z',
     views: 210,
@@ -56,6 +59,7 @@ let mockPosts = [
     title: '물리 수행평가 실험 질문',
     body: '<p>수조에 물 채워서 파동 속도 측정할 때, 센서 위치 어떻게 잡나요?</p>',
     category: 'qna',
+    status: 'pending',
     createdAt: '2026-03-06T10:15:00Z',
     updatedAt: '2026-03-06T10:15:00Z',
     views: 88,
@@ -96,9 +100,12 @@ function applyFilters(params) {
     sort = 'recent',
     mine = false,
     bookmarked = false,
+    status,
   } = params;
 
   let data = [...mockPosts];
+  if (status === 'pending') data = data.filter((p) => p.status === 'pending');
+  else if (status === 'approved') data = data.filter((p) => p.status === 'approved');
   if (category && CATEGORIES.includes(category)) {
     data = data.filter((p) => p.category === category);
   }
@@ -158,6 +165,7 @@ async function mockCreate(payload) {
     id: `p-${Date.now()}`,
     createdAt: now,
     updatedAt: now,
+    status: 'pending',
     views: 0,
     likes: 0,
     dislikes: 0,
@@ -207,7 +215,8 @@ async function mockReact(id, type) {
 async function mockToggleBookmark(id) {
   await delay(40);
   mockPosts = mockPosts.map((p) => (p.id === id ? { ...p, bookmarked: !p.bookmarked } : p));
-  return mockPosts.find((p) => p.id === id);
+  const post = mockPosts.find((p) => p.id === id);
+  return { bookmarked: post.bookmarked, bookmarkedCount: post.bookmarked ? 1 : 0 };
 }
 
 async function mockListComments(postId, params = {}) {
@@ -300,6 +309,16 @@ export const communityApi = {
     } catch (err) {
       return mockUpdate(id, { ...payload, summary: summarize(payload.body) });
     }
+  },
+
+  async approve(id) {
+    const res = await api.post(`/api/community/free/${id}/approve`);
+    return res.data;
+  },
+
+  async unapprove(id) {
+    const res = await api.post(`/api/community/free/${id}/unapprove`);
+    return res.data;
   },
 
   async remove(id) {

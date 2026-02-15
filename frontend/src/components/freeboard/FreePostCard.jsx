@@ -1,7 +1,8 @@
-import { MessageCircle, Eye, Heart, Paperclip, Flame } from 'lucide-react';
+import { MessageCircle, Eye, Heart, Paperclip, Flame, ShieldAlert } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import styles from './freeboard.module.css';
 import { communityApi } from '../../api/community';
+import RoleName from '../RoleName/RoleName';
 
 const formatRelative = (iso) => {
   const diff = Date.now() - new Date(iso).getTime();
@@ -26,13 +27,20 @@ export default function FreePostCard({ post, to }) {
   const badgeClass = categoryTone[post.category] || styles.badgeInfo;
 
   const authorName = post.author?.name || '작성자';
-  const authorInitial = authorName.charAt(0) || '?';
+  const authorRole = post.author?.role || 'student';
+  const isPending = post.status === 'pending';
 
   return (
     <Link to={to} className={styles.card}>
       <div className={styles.cardBody}>
         <div className={styles.cardTitleRow}>
           <span className={`${styles.badge} ${badgeClass}`}>{communityApi.categoryLabel[post.category]}</span>
+          {isPending ? (
+            <span className={`${styles.badge} ${styles.badgePending}`}>
+              <ShieldAlert size={12} />
+              미승인
+            </span>
+          ) : null}
           {hot ? (
             <span className={`${styles.badge} ${styles.badgeHot}`}>
               <Flame size={12} />
@@ -44,8 +52,7 @@ export default function FreePostCard({ post, to }) {
         <p className={styles.cardSummary}>{post.summary || '내용 미리보기가 없습니다.'}</p>
         <div className={styles.metaRow}>
           <span className={styles.metaItem}>
-            <div className={styles.avatarCircle}>{authorInitial}</div>
-            {authorName}
+            <RoleName nickname={authorName} role={authorRole} size="sm" />
           </span>
           <span className={styles.metaItem}>{formatRelative(post.createdAt)}</span>
           <span className={styles.metaItem}>

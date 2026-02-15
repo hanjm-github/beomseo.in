@@ -9,6 +9,7 @@ import { useAuth } from '../../context/AuthContext';
 import '../page-shell.css';
 
 const CATEGORIES = [
+  { key: 'all', label: '전체' },
   { key: 'chat', label: '잡담' },
   { key: 'info', label: '정보' },
   { key: 'qna', label: 'QnA' },
@@ -22,7 +23,7 @@ export default function FreeBoardListView() {
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
 
-  const initialCategory = params.get('category') || 'chat';
+  const initialCategory = params.get('category') || 'all';
 
   const [category, setCategory] = useState(initialCategory);
   const [search, setSearch] = useState(params.get('q') || '');
@@ -36,7 +37,7 @@ export default function FreeBoardListView() {
   // keep URL in sync
   useEffect(() => {
     const next = new URLSearchParams();
-    if (category) next.set('category', category);
+    if (category && category !== 'all') next.set('category', category);
     if (search) next.set('q', search);
     if (sort !== 'recent') next.set('sort', sort);
     if (mine) next.set('mine', '1');
@@ -49,8 +50,19 @@ export default function FreeBoardListView() {
     let cancelled = false;
     setLoading(true);
     const timer = setTimeout(() => {
+      const categoryParam = category === 'all' ? undefined : category;
+      const statusParam = user?.role === 'admin' ? 'all' : undefined;
       communityApi
-        .list({ category, query: search, sort, mine, bookmarked, page, pageSize: PAGE_SIZE })
+        .list({
+          category: categoryParam,
+          status: statusParam,
+          query: search,
+          sort,
+          mine,
+          bookmarked,
+          page,
+          pageSize: PAGE_SIZE,
+        })
         .then((res) => {
           if (cancelled) return;
           setData(res);
@@ -76,6 +88,7 @@ export default function FreeBoardListView() {
   const totalPages = useMemo(() => Math.max(1, Math.ceil((data.total || 0) / PAGE_SIZE)), [data.total]);
   const basePath = '/community/free';
   const canWrite = !!user; // allow any logged-in user to write; backend enforces further
+  const isAdmin = user?.role === 'admin';
 
   return (
     <div className="page-shell">

@@ -7,6 +7,16 @@ from .notice import (
     ReactionType,
     Comment,
 )
+from .free_post import (
+    FreePost,
+    FreeAttachment,
+    FreeReaction,
+    FreeReactionType,
+    FreeComment,
+    FreeBookmark,
+    FreeCategory,
+    FreeStatus,
+)
 
 __all__ = [
     'User',
@@ -17,5 +27,13 @@ __all__ = [
     'NoticeReaction',
     'ReactionType',
     'Comment',
+    'FreePost',
+    'FreeAttachment',
+    'FreeReaction',
+    'FreeReactionType',
+    'FreeComment',
+    'FreeBookmark',
+    'FreeCategory',
+    'FreeStatus',
     'db',
 ]

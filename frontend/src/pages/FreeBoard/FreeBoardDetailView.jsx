@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import { Bookmark, BookmarkCheck, Heart, ThumbsDown, Eye, MessageCircle, ArrowLeft } from 'lucide-react';
+import { Bookmark, BookmarkCheck, Heart, ThumbsDown, Eye, MessageCircle, ArrowLeft, ShieldAlert } from 'lucide-react';
 import styles from '../../components/freeboard/freeboard.module.css';
 import { communityApi } from '../../api/community';
 import FreeCommentsPanel from '../../components/freeboard/FreeCommentsPanel';
 import '../page-shell.css';
 import { useAuth } from '../../context/AuthContext';
+import RoleName from '../../components/RoleName/RoleName';
 
 export default function FreeBoardDetailView() {
   const { id } = useParams();
@@ -53,7 +54,15 @@ export default function FreeBoardDetailView() {
     setBookmarking(true);
     try {
       const res = await communityApi.toggleBookmark(post.id);
-      setPost(res);
+      setPost((p) =>
+        p
+          ? {
+              ...p,
+              bookmarked: res.bookmarked ?? p.bookmarked,
+              bookmarkedCount: res.bookmarkedCount ?? p.bookmarkedCount,
+            }
+          : p
+      );
     } finally {
       setBookmarking(false);
     }
@@ -78,6 +87,9 @@ export default function FreeBoardDetailView() {
     );
   }
 
+  const isAdmin = user?.role === 'admin';
+  const isOwner = user?.id && post?.author?.id && Number(user.id) === Number(post.author.id);
+
   return (
     <div className="page-shell">
       <Link to="/community/free" className="btn btn-secondary" style={{ alignSelf: 'flex-start' }}>
@@ -91,10 +103,16 @@ export default function FreeBoardDetailView() {
             <span className={`${styles.badge} ${styles.badgeInfo}`}>
               {communityApi.categoryLabel[post.category] || '카테고리'}
             </span>
+            {post.status === 'pending' ? (
+              <span className={`${styles.badge} ${styles.badgePending}`}>
+                <ShieldAlert size={12} />
+                미승인
+              </span>
+            ) : null}
             <h1>{post.title}</h1>
           </div>
           <div className={styles.detailMeta}>
-            <span>{post.author?.name || '작성자'}</span>
+            <RoleName nickname={post.author?.name || '작성자'} role={post.author?.role || 'student'} size="sm" />
             <span>•</span>
             <span>{new Date(post.createdAt).toLocaleString()}</span>
             <span>•</span>
@@ -110,7 +128,9 @@ export default function FreeBoardDetailView() {
           <div className={styles.reactionBar}>
             <button
               type="button"
-              className={`${styles.reactionButton} ${post.myReaction === 'like' ? 'active' : ''}`}
+              className={`${styles.reactionButton} ${
+                post.myReaction === 'like' ? styles.reactionButtonActive : ''
+              }`}
               onClick={() => handleReact('like')}
             >
               <Heart size={14} />
@@ -118,7 +138,9 @@ export default function FreeBoardDetailView() {
             </button>
             <button
               type="button"
-              className={`${styles.reactionButton} ${post.myReaction === 'dislike' ? 'active' : ''}`}
+              className={`${styles.reactionButton} ${
+                post.myReaction === 'dislike' ? styles.reactionButtonActiveNegative : ''
+              }`}
               onClick={() => handleReact('dislike')}
             >
               <ThumbsDown size={14} />
@@ -128,9 +150,36 @@ export default function FreeBoardDetailView() {
               {post.bookmarked ? <BookmarkCheck size={14} /> : <Bookmark size={14} />}
               {post.bookmarked ? '북마크됨' : '북마크'}
             </button>
-            <Link to={`/community/free/${post.id}/edit`} className={styles.reactionButton}>
-              수정
-            </Link>
+            {isAdmin || isOwner ? (
+              <Link to={`/community/free/${post.id}/edit`} className={styles.reactionButton}>
+                수정
+              </Link>
+            ) : null}
+            {isAdmin ? (
+              post.status === 'pending' ? (
+                <button
+                  type="button"
+                  className={styles.reactionButton}
+                  onClick={async () => {
+                    const res = await communityApi.approve(post.id);
+                    setPost(res);
+                  }}
+                >
+                  승인하기
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className={styles.reactionButton}
+                  onClick={async () => {
+                    const res = await communityApi.unapprove(post.id);
+                    setPost(res);
+                  }}
+                >
+                  승인 취소
+                </button>
+              )
+            ) : null}
           </div>
         </div>
 
