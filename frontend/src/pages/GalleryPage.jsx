@@ -1,11 +1,7 @@
-import { Camera, Palette, ShieldCheck } from 'lucide-react';
+import { Hammer } from 'lucide-react';
 import './page-shell.css';
 
-const gallerySections = [
-  { icon: Palette, title: '공모전', desc: '진행/완료 상태 배지와 카드 뷰' },
-  { icon: Camera, title: '행사 사진', desc: '권한 필터가 적용된 보호 갤러리' },
-  { icon: ShieldCheck, title: '교육청 IP 보호', desc: '민감 사진은 흐림/안내 라벨' },
-];
+const pendingFeatures = ['공모전 갤러리', '행사 사진', '보호 뷰(민감 사진 흐림 처리)'];
 
 export default function GalleryPage() {
   return (
@@ -13,26 +9,26 @@ export default function GalleryPage() {
       <div className="page-header">
         <div>
           <p className="eyebrow">갤러리</p>
-          <h1>beomseo.in 사진 아카이브</h1>
-          <p className="lede">공모전과 행사 순간을 카드/메이슨리로 감상하세요.</p>
-        </div>
-        <div className="header-actions">
-          <button className="btn btn-primary">사진 업로드</button>
+          <h1>갤러리 준비 중</h1>
+          <p className="lede">행사 사진과 공모전 아카이브를 안정화하고 있습니다. 조금만 기다려 주세요!</p>
         </div>
       </div>
 
-      <div className="grid-cards">
-        {gallerySections.map(({ icon: Icon, title, desc }) => (
-          <div key={title} className="card">
-            <div className="card-icon">
-              <Icon size={18} />
-            </div>
-            <div className="card-body">
-              <h3>{title}</h3>
-              <p className="muted">{desc}</p>
-            </div>
-          </div>
-        ))}
+      <div className="card">
+        <div className="card-icon">
+          <Hammer size={18} />
+        </div>
+        <div className="card-body">
+          <h3>작업 현황</h3>
+          <p className="muted">
+            업로드, 권한별 보기, 민감 사진 보호 기능을 마무리하는 중입니다. 업데이트 시 홈/공지에서 안내드릴게요.
+          </p>
+          <ul className="muted">
+            {pendingFeatures.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        </div>
       </div>
     </div>
   );
