@@ -169,6 +169,28 @@
   backdrop-filter: blur(8px);
 }
 
+.statusBadge {
+  position: absolute;
+  left: 10px;
+  top: 10px;
+  padding: 6px 10px;
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.statusApproved {
+  background: rgba(0, 160, 90, 0.8);
+}
+
+.statusPending {
+  background: rgba(230, 140, 30, 0.85);
+}
+
 .cardBody {
   padding: 0 var(--space-4) var(--space-4);
   display: flex;

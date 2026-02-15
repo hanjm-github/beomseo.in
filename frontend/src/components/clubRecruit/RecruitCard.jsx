@@ -22,8 +22,8 @@ function initials(name) {
   return name.slice(0, 2).toUpperCase();
 }
 
-export default function RecruitCard({ item, basePath = '/community/club-recruit' }) {
-  const { id, clubName, field, gradeGroup, posterUrl, extraNote, applyPeriod } = item;
+export default function RecruitCard({ item, basePath = '/community/club-recruit', showStatus = false }) {
+  const { id, clubName, field, gradeGroup, posterUrl, extraNote, applyPeriod, status } = item;
 
   const dateLabel = applyPeriod?.end
     ? `${formatDate(applyPeriod.start)} ~ ${formatDate(applyPeriod.end)}`
@@ -42,6 +42,15 @@ export default function RecruitCard({ item, basePath = '/community/club-recruit'
           </div>
         )}
         <span className={styles.gradeBadge}>{gradeLabel[gradeGroup] || '학년 구분'}</span>
+        {showStatus ? (
+          <span
+            className={`${styles.statusBadge} ${
+              status === 'approved' ? styles.statusApproved : styles.statusPending
+            }`}
+          >
+            {status === 'approved' ? '승인됨' : '승인 대기'}
+          </span>
+        ) : null}
       </div>
       <div className={styles.cardBody}>
         <div className={styles.cardChips}>

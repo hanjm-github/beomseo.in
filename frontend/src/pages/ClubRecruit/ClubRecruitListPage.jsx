@@ -121,7 +121,11 @@ export default function ClubRecruitListPage() {
         <>
           <RecruitGrid>
             {items.map((item) => (
-              <RecruitCard key={item.id} item={item} />
+              <RecruitCard
+                key={item.id}
+                item={item}
+                showStatus={user?.role === 'admin'}
+              />
             ))}
           </RecruitGrid>
 
