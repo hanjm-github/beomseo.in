@@ -29,7 +29,7 @@ const navigationItems = [
     label: '소통',
     path: '/community',
     children: [
-      { label: '익명 게시판', path: '/community/anonymous' },
+      { label: '자유 게시판', path: '/community/free' },
       { label: '동아리 모집', path: '/community/clubs' },
       { label: '선택과목 변경', path: '/community/subjects' },
       { label: '학생 청원', path: '/community/petition' },
@@ -138,7 +138,7 @@ export default function Header() {
                           </p>
                           <div className={styles.pinChips}>
                             <Link to="/notices/school">학교 공지</Link>
-                            <Link to="/community/anonymous">익명</Link>
+                            <Link to="/community/free">자유</Link>
                             <Link to="/school-info/meal">급식</Link>
                             <Link to="/community/vote">투표</Link>
                           </div>
@@ -245,17 +245,17 @@ export default function Header() {
               )}
             </div>
           ))}
-          <div className={styles.quickPinsMobile}>
-            <p className={styles.pinLabel}>
-              <Star size={14} /> 즐겨찾는 메뉴
-            </p>
-            <div className={styles.pinChips}>
-              <Link to="/notices/school">학교 공지</Link>
-              <Link to="/community/anonymous">익명</Link>
-              <Link to="/school-info/meal">급식</Link>
-              <Link to="/community/vote">투표</Link>
+            <div className={styles.quickPinsMobile}>
+              <p className={styles.pinLabel}>
+                <Star size={14} /> 즐겨찾는 메뉴
+              </p>
+              <div className={styles.pinChips}>
+                <Link to="/notices/school">학교 공지</Link>
+                <Link to="/community/free">자유</Link>
+                <Link to="/school-info/meal">급식</Link>
+                <Link to="/community/vote">투표</Link>
+              </div>
             </div>
-          </div>
         </nav>
       )}
     </header>

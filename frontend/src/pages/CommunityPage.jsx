@@ -4,7 +4,7 @@ import { MessageCircle, Users, Shuffle, Vote, Radio, PlugZap, ShieldCheck } from
 import './page-shell.css';
 
 const boards = [
-  { key: 'anonymous', label: '익명 게시판', icon: MessageCircle },
+  { key: 'free', label: '자유 게시판', icon: MessageCircle },
   { key: 'clubs', label: '동아리 모집', icon: Users },
   { key: 'subjects', label: '선택과목 변경', icon: Shuffle },
   { key: 'petition', label: '학생 청원', icon: ShieldCheck },
@@ -24,10 +24,12 @@ export default function CommunityPage() {
         <div>
           <p className="eyebrow">소통 허브</p>
           <h1>범서고 커뮤니티</h1>
-          <p className="lede">익명, 투표, 설문, 라디오 신청까지 하나의 허브에서.</p>
+          <p className="lede">자유 게시판, 투표, 설문, 라디오 신청까지 하나의 허브에서.</p>
         </div>
         <div className="header-actions">
-          <button className="btn btn-primary">글쓰기</button>
+          <Link className="btn btn-primary" to="/community/free/new">
+            글쓰기
+          </Link>
         </div>
       </div>
 

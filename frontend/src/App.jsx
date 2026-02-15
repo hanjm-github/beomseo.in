@@ -9,7 +9,7 @@ import MainPage from './pages/MainPage';
 import LoginPage from './pages/LoginPage';
 import SignUpPage from './pages/SignUpPage';
 import NoticesPage from './pages/NoticesPage';
-import CommunityPage from './pages/CommunityPage';
+import CommunityRouter from './pages/CommunityRouter';
 import SchoolInfoPage from './pages/SchoolInfoPage';
 import GalleryPage from './pages/GalleryPage';
 
@@ -38,7 +38,7 @@ function App() {
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<SignUpPage />} />
               <Route path="/notices/*" element={<NoticesPage />} />
-              <Route path="/community/*" element={<CommunityPage />} />
+              <Route path="/community/*" element={<CommunityRouter />} />
               <Route path="/school-info/*" element={<SchoolInfoPage />} />
               <Route path="/gallery/*" element={<GalleryPage />} />
             </Routes>

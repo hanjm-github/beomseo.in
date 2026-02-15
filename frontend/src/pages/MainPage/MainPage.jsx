@@ -153,7 +153,7 @@ export default function MainPage() {
                             </motion.div>
                             <motion.div variants={itemVariants}>
                                 <QuickLinkCard
-                                    to="/community/anonymous"
+                                    to="/community/free"
                                     icon={MessageCircle}
                                     title="자유게시판"
                                     description="범서고의 커뮤니티 공간"
