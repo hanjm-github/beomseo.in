@@ -225,6 +225,11 @@ export const subjectChangesApi = {
     const res = await api.delete(`/api/subject-changes/${id}/comments/${commentId}`);
     return res.data;
   },
+
+  async changeStatus(id, status) {
+    const res = await api.post(`/api/subject-changes/${id}/status`, { status });
+    return res.data;
+  },
 };
 
 export default subjectChangesApi;

@@ -14,6 +14,7 @@ export default function SubjectDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [approving, setApproving] = useState(false);
+  const [statusChanging, setStatusChanging] = useState(false);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -52,6 +53,20 @@ export default function SubjectDetailPage() {
     }
   };
 
+  const toggleMatchStatus = async () => {
+    if (!item) return;
+    const next = item.status === "matched" ? "open" : "matched";
+    setStatusChanging(true);
+    try {
+      const res = await subjectChangesApi.changeStatus(id, next);
+      setItem(res);
+    } catch (err) {
+      setError(err);
+    } finally {
+      setStatusChanging(false);
+    }
+  };
+
   if (loading) return <InfiniteLoader />;
   if (error) return <ErrorState onRetry={() => window.location.reload()} />;
   if (!item) return null;
@@ -71,6 +86,15 @@ export default function SubjectDetailPage() {
           {user?.role === "admin" ? (
             <button className="btn btn-primary" onClick={toggleApprove} disabled={approving}>
               {item.approvalStatus === "approved" ? "승인 해제" : "승인 대기 → 승인"}
+            </button>
+          ) : null}
+          {(user?.role === "admin" || user?.id === item?.author?.id) ? (
+            <button
+              className="btn btn-tertiary"
+              onClick={toggleMatchStatus}
+              disabled={statusChanging}
+            >
+              {item.status === "matched" ? "매칭 취소 (모집중으로 전환)" : "매칭 완료로 전환"}
             </button>
           ) : null}
         </div>
