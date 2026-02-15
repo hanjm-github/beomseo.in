@@ -7,7 +7,6 @@ import {
     Utensils,
     Calendar,
     ImageIcon,
-    Radio,
     Search,
     Users,
     ChevronRight,
@@ -191,14 +190,6 @@ export default function MainPage() {
                                     icon={ImageIcon}
                                     title="갤러리"
                                     variant="default"
-                                />
-                            </motion.div>
-                            <motion.div variants={itemVariants}>
-                                <QuickLinkCard
-                                    to="/community/radio"
-                                    icon={Radio}
-                                    title="교내 방송"
-                                    variant="accent"
                                 />
                             </motion.div>
                             <motion.div variants={itemVariants}>

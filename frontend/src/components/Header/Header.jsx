@@ -33,7 +33,6 @@ const navigationItems = [
       { label: '동아리 모집', path: '/community/clubs' },
       { label: '선택과목 변경', path: '/community/subjects' },
       { label: '학생 청원', path: '/community/petition' },
-      { label: '라디오 신청곡', path: '/community/radio' },
       { label: '설문 품앗이', path: '/community/survey' },
       { label: '실시간 투표', path: '/community/vote' },
       { label: '분실물 센터', path: '/community/lost-found' },
