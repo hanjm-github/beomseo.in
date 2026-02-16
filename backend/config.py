@@ -49,6 +49,10 @@ class Config:
     UPLOAD_BASE_URL = os.getenv('UPLOAD_BASE_URL', '')  # optional absolute URL
     MAX_ATTACH_SIZE = int(os.getenv('MAX_ATTACH_SIZE', 10 * 1024 * 1024))  # 10MB
     MAX_ATTACH_COUNT = int(os.getenv('MAX_ATTACH_COUNT', 5))
+
+    # Petition settings
+    DEFAULT_PETITION_THRESHOLD = int(os.getenv('DEFAULT_PETITION_THRESHOLD', 50))
+    MAX_PETITION_BODY = int(os.getenv('MAX_PETITION_BODY', 10_000))
     
     # IP Restriction for signup (Ulsan Education Office network)
     # Add actual IP ranges as needed

@@ -22,6 +22,12 @@ from .club_recruit import (
     GradeGroup,
     RecruitStatus,
 )
+from .petition import (
+    Petition,
+    PetitionStatus,
+    PetitionVote,
+    PetitionAnswer,
+)
 from .subject_change import (
     SubjectChange,
     MatchStatus,
@@ -50,6 +56,10 @@ __all__ = [
     'ClubRecruit',
     'GradeGroup',
     'RecruitStatus',
+    'Petition',
+    'PetitionStatus',
+    'PetitionVote',
+    'PetitionAnswer',
     'SubjectChange',
     'MatchStatus',
     'ApprovalStatus',

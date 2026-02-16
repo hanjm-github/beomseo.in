@@ -9,6 +9,9 @@ import ClubRecruitComposePage from './ClubRecruit/ClubRecruitComposePage';
 import SubjectsListPage from './Subjects/SubjectsListPage';
 import SubjectDetailPage from './Subjects/SubjectDetailPage';
 import SubjectComposePage from './Subjects/SubjectComposePage';
+import PetitionListView from './Petition/PetitionListView';
+import PetitionDetailView from './Petition/PetitionDetailView';
+import PetitionComposeView from './Petition/PetitionComposeView';
 
 export default function CommunityRouter() {
   return (
@@ -24,6 +27,9 @@ export default function CommunityRouter() {
       <Route path="subjects" element={<SubjectsListPage />} />
       <Route path="subjects/new" element={<SubjectComposePage />} />
       <Route path="subjects/:id" element={<SubjectDetailPage />} />
+      <Route path="petition" element={<PetitionListView />} />
+      <Route path="petition/new" element={<PetitionComposeView />} />
+      <Route path="petition/:id" element={<PetitionDetailView />} />
       <Route path="*" element={<Navigate to="/community" replace />} />
     </Routes>
   );
