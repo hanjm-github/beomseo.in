@@ -1,4 +1,5 @@
 ﻿import api from './auth';
+import { normalizePaginatedResponse } from './normalizers';
 
 const PAGE_SIZE_DEFAULT = 12;
 
@@ -82,7 +83,6 @@ function filterItems(items, params) {
   const {
     grade,
     q,
-    onlyMine,
     hideClosed,
     subjectTag,
   } = params;
@@ -167,11 +167,12 @@ export const subjectChangesApi = {
   async list(params = {}) {
     try {
       const res = await api.get('/api/subject-changes', { params });
-      return res.data;
+      return normalizePaginatedResponse(res.data, PAGE_SIZE_DEFAULT);
     } catch (err) {
       // Only fallback when backend is unreachable in local dev.
       if (!err.response) {
-        return mockList(params);
+        const mock = await mockList(params);
+        return normalizePaginatedResponse(mock, PAGE_SIZE_DEFAULT);
       }
       throw err;
     }
@@ -213,7 +214,7 @@ export const subjectChangesApi = {
 
   async listComments(id, params = {}) {
     const res = await api.get(`/api/subject-changes/${id}/comments`, { params });
-    return res.data;
+    return normalizePaginatedResponse(res.data, Number(params.pageSize) || 100);
   },
 
   async createComment(id, body) {
@@ -233,3 +234,4 @@ export const subjectChangesApi = {
 };
 
 export default subjectChangesApi;
+

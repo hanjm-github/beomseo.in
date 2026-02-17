@@ -17,18 +17,17 @@ export default function SurveyExchangeComposePage() {
     title: '',
     description: '',
     expiresAt: '',
-    responseQuota: 10,
   });
   const [formJson, setFormJson] = useState([]);
   const [preview, setPreview] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [loading, setLoading] = useState(isEdit);
+  const loading = isEdit;
 
   useEffect(() => {
     if (!isEdit) return;
     alert('설문 수정 기능이 비활성화되었습니다.');
     navigate(`/community/survey/${id}`, { replace: true });
-  }, [id, isEdit]);
+  }, [id, isEdit, navigate]);
 
   const handleSaveForm = (data) => {
     setFormJson(data.task_data || data);
@@ -50,7 +49,6 @@ export default function SurveyExchangeComposePage() {
       title: meta.title,
       description: meta.description,
       expiresAt: meta.expiresAt || null,
-      responseQuota: Number(meta.responseQuota) || 10,
       formJson,
     };
 
@@ -58,7 +56,7 @@ export default function SurveyExchangeComposePage() {
       const res = isEdit ? await surveyApi.update(id, payload) : await surveyApi.create(payload);
       alert('저장되었습니다.');
       navigate(`/community/survey/${res.id}`, { replace: true, state: { from: location.pathname } });
-    } catch (err) {
+    } catch {
       alert('저장에 실패했습니다.');
     } finally {
       setSaving(false);
@@ -71,7 +69,7 @@ export default function SurveyExchangeComposePage() {
         <div>
           <p className="eyebrow">설문 {isEdit ? '수정' : '작성'}</p>
           <h1>{isEdit ? '설문 수정' : '새 설문 만들기'}</h1>
-          <p className="lede">react-form-builder2로 질문을 구성하고 미리보기로 확인하세요.</p>
+          <p className="lede">승인 후 응답권 30개가 부여됩니다. 질문을 구성하고 미리보기로 확인하세요.</p>
         </div>
         <button className="btn btn-secondary" type="button" onClick={() => navigate(-1)}>
           <ArrowLeft size={16} /> 뒤로가기
@@ -99,16 +97,6 @@ export default function SurveyExchangeComposePage() {
               className={styles.search}
               value={meta.expiresAt}
               onChange={(e) => setMeta((m) => ({ ...m, expiresAt: e.target.value }))}
-            />
-          </label>
-          <label>
-            목표 응답 수
-            <input
-              type="number"
-              min={10}
-              className={styles.search}
-              value={meta.responseQuota}
-              onChange={(e) => setMeta((m) => ({ ...m, responseQuota: e.target.value }))}
             />
           </label>
         </section>

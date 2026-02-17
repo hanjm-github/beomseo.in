@@ -1,4 +1,5 @@
-import api from './auth';
+﻿import api from './auth';
+import { normalizePaginatedResponse, normalizeUploadResponse } from './normalizers';
 
 const PAGE_SIZE_DEFAULT = 12;
 
@@ -133,9 +134,10 @@ export const clubRecruitApi = {
   async list(params = {}) {
     try {
       const res = await api.get('/api/club-recruit', { params });
-      return res.data;
-    } catch (err) {
-      return mockList(params);
+      return normalizePaginatedResponse(res.data, PAGE_SIZE_DEFAULT);
+    } catch {
+      const mock = await mockList(params);
+      return normalizePaginatedResponse(mock, PAGE_SIZE_DEFAULT);
     }
   },
 
@@ -143,7 +145,7 @@ export const clubRecruitApi = {
     try {
       const res = await api.get(`/api/club-recruit/${id}`);
       return res.data;
-    } catch (err) {
+    } catch {
       return mockGet(id);
     }
   },
@@ -152,7 +154,7 @@ export const clubRecruitApi = {
     try {
       const res = await api.post('/api/club-recruit', payload);
       return res.data;
-    } catch (err) {
+    } catch {
       return mockCreate(payload);
     }
   },
@@ -164,8 +166,8 @@ export const clubRecruitApi = {
       const res = await api.post('/api/club-recruit/uploads', form, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-      return res.data;
-    } catch (err) {
+      return normalizeUploadResponse(res.data);
+    } catch {
       return mockUpload(file);
     }
   },
@@ -182,3 +184,4 @@ export const clubRecruitApi = {
 };
 
 export default clubRecruitApi;
+

@@ -24,8 +24,8 @@ from models import (
     FreeCategory,
     FreeStatus,
 )
-from utils.pagination import parse_pagination
-from utils.files import save_upload, ensure_dir
+from utils.pagination import parse_pagination, build_paginated_response
+from utils.files import save_upload_for_scope, resolve_scope_upload_dir, ensure_dir
 from utils.security import require_role, get_current_user
 
 free_bp = Blueprint('free', __name__, url_prefix='/api/community/free')
@@ -128,12 +128,14 @@ def list_posts():
             ).all()]
             bookmarks_map = {pid: True for pid in bookmarked_ids}
 
-    return jsonify({
-        'items': [p.to_dict(my_reaction=reactions_map.get(p.id), bookmarked=bookmarks_map.get(p.id, False)) for p in items],
-        'total': total,
-        'page': page,
-        'page_size': page_size
-    })
+    return jsonify(
+        build_paginated_response(
+            [p.to_dict(my_reaction=reactions_map.get(p.id), bookmarked=bookmarks_map.get(p.id, False)) for p in items],
+            total,
+            page,
+            page_size,
+        )
+    )
 
 
 def apply_filters(query, category, status, query_text, mine, bookmarked, user_id):
@@ -457,12 +459,14 @@ def list_comments(post_id):
         q = q.order_by(FreeComment.created_at.asc())
     items = q.offset((page - 1) * page_size).limit(page_size).all()
 
-    return jsonify({
-        'items': [c.to_dict() for c in items],
-        'total': total,
-        'page': page,
-        'page_size': page_size
-    })
+    return jsonify(
+        build_paginated_response(
+            [c.to_dict() for c in items],
+            total,
+            page,
+            page_size,
+        )
+    )
 
 
 @free_bp.route('/<int:post_id>/comments', methods=['POST'])
@@ -535,10 +539,7 @@ def upload_file():
     if size > max_size:
         return jsonify({'error': '첨부파일 용량은 10MB 이하만 가능합니다.'}), 422
 
-    upload_dir = current_app.config.get('UPLOAD_DIR', './uploads')
-    upload_dir = f"{upload_dir}/free"
-    upload_base_url = current_app.config.get('UPLOAD_BASE_URL')
-    saved = save_upload(file, upload_dir, upload_base_url)
+    saved = save_upload_for_scope(file, current_app.config, 'free')
     kind = 'image' if (file.mimetype or '').startswith('image/') else 'file'
 
     return jsonify({
@@ -554,9 +555,8 @@ def upload_file():
 @free_bp.route('/uploads/<path:filename>', methods=['GET'])
 @free_bp.route('/uploads/<path:filename>/', methods=['GET'])
 def serve_upload(filename):
-    upload_dir = current_app.config.get('UPLOAD_DIR', './uploads')
-    upload_dir = f"{upload_dir}/free"
+    upload_dir = resolve_scope_upload_dir(current_app.config, 'free')
     ensure_dir(upload_dir)
     attachment = FreeAttachment.query.filter(FreeAttachment.url.like(f"%/{filename}")).first()
     download_name = attachment.name if attachment else filename
-    return send_from_directory(upload_dir, filename, as_attachment=True, download_name=download_name)
+    return send_from_directory(upload_dir, filename, as_attachment=False, download_name=download_name)

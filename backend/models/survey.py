@@ -108,7 +108,7 @@ class SurveyResponse(db.Model):
 class SurveyCredit(db.Model):
     __tablename__ = 'survey_credits'
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
-    base = db.Column(db.Integer, nullable=False, default=10)
+    base = db.Column(db.Integer, nullable=False, default=0)
     earned = db.Column(db.Integer, nullable=False, default=0)
     used = db.Column(db.Integer, nullable=False, default=0)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)

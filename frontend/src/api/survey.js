@@ -1,9 +1,11 @@
-/**
+﻿/**
  * Survey exchange API with mock fallback and Korean-localized toolbar helpers.
  */
 import api from './auth';
+import { normalizePaginatedResponse } from './normalizers';
 
-export const BASE_RESPONSE_QUOTA = 30;
+export const BASE_RESPONSE_QUOTA = 0;
+export const SURVEY_APPROVAL_GRANT = 30;
 const PAGE_SIZE_DEFAULT = 12;
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -147,7 +149,9 @@ async function mockCreate(payload) {
     thumbnailUrl: payload.thumbnailUrl,
     formJson: payload.formJson || [],
     responsesReceived: 0,
-    responseQuota: payload.responseQuota || BASE_RESPONSE_QUOTA,
+    responseQuota: BASE_RESPONSE_QUOTA,
+    approvalStatus: 'pending',
+    status: 'closed',
     expiresAt: payload.expiresAt || null,
     owner: payload.owner || { id: 'me', name: '나', role: 'student' },
     createdAt: now,
@@ -167,7 +171,7 @@ async function mockSubmitResponse(id, answers = {}) {
   await delay(60);
   mockSurveys = mockSurveys.map((s) =>
     s.id === id
-      ? { ...s, responsesReceived: (s.responsesReceived || 0) + 1, responseQuota: s.responseQuota || BASE_RESPONSE_QUOTA }
+      ? { ...s, responsesReceived: (s.responsesReceived || 0) + 1, responseQuota: s.responseQuota || SURVEY_APPROVAL_GRANT }
       : s
   );
   mockCredits = { ...mockCredits, earned: mockCredits.earned + 5, available: undefined };
@@ -211,9 +215,10 @@ export const surveyApi = {
     };
     try {
       const res = await api.get('/api/surveys', { params: normalized });
-      return res.data;
-    } catch (err) {
-      return mockList(params);
+      return normalizePaginatedResponse(res.data, PAGE_SIZE_DEFAULT);
+    } catch {
+      const mock = await mockList(params);
+      return normalizePaginatedResponse(mock, PAGE_SIZE_DEFAULT);
     }
   },
 
@@ -221,7 +226,7 @@ export const surveyApi = {
     try {
       const res = await api.get(`/api/surveys/${id}`);
       return res.data;
-    } catch (err) {
+    } catch {
       return mockDetail(id);
     }
   },
@@ -230,7 +235,7 @@ export const surveyApi = {
     try {
       const res = await api.post('/api/surveys', payload);
       return res.data;
-    } catch (err) {
+    } catch {
       return mockCreate(payload);
     }
   },
@@ -239,7 +244,7 @@ export const surveyApi = {
     try {
       const res = await api.patch(`/api/surveys/${id}`, payload);
       return res.data;
-    } catch (err) {
+    } catch {
       return mockUpdate(id, payload);
     }
   },
@@ -258,7 +263,7 @@ export const surveyApi = {
     try {
       const res = await api.post(`/api/surveys/${id}/responses`, { answers });
       return res.data;
-    } catch (err) {
+    } catch {
       return mockSubmitResponse(id, answers);
     }
   },
@@ -267,7 +272,7 @@ export const surveyApi = {
     try {
       const res = await api.get(`/api/surveys/${id}/summary`);
       return res.data;
-    } catch (err) {
+    } catch {
       return mockGetSummary(id);
     }
   },
@@ -276,7 +281,7 @@ export const surveyApi = {
     try {
       const res = await api.get(`/api/surveys/${id}/responses`, { params: { ...params, view: 'raw' } });
       return res.data;
-    } catch (err) {
+    } catch {
       return mockGetRaw(id);
     }
   },
@@ -285,7 +290,7 @@ export const surveyApi = {
     try {
       const res = await api.get('/api/surveys/credits/me');
       return res.data;
-    } catch (err) {
+    } catch {
       return mockGetCredits();
     }
   },
@@ -294,3 +299,4 @@ export const surveyApi = {
 };
 
 export default surveyApi;
+

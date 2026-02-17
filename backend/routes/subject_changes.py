@@ -17,7 +17,7 @@ from models import (
     ApprovalStatus,
     ContactType,
 )
-from utils.pagination import parse_pagination
+from utils.pagination import parse_pagination, build_paginated_response
 from utils.security import require_role, get_current_user
 
 subject_changes_bp = Blueprint('subject_changes', __name__, url_prefix='/api/subject-changes')
@@ -183,13 +183,14 @@ def list_subject_changes():
     total = query.count()
     items = query.order_by(SubjectChange.updated_at.desc()).offset((page - 1) * page_size).limit(page_size).all()
 
-    return jsonify({
-        'items': [i.to_dict(include_note=True) for i in items],
-        'total': total,
-        'page': page,
-        'page_size': page_size,
-        'pageSize': page_size,
-    })
+    return jsonify(
+        build_paginated_response(
+            [i.to_dict(include_note=True) for i in items],
+            total,
+            page,
+            page_size,
+        )
+    )
 
 
 @subject_changes_bp.route('', methods=['POST'])
@@ -394,12 +395,14 @@ def list_comments(item_id):
         q = q.order_by(SubjectChangeComment.created_at.asc())
     items = q.offset((page - 1) * page_size).limit(page_size).all()
 
-    return jsonify({
-        'items': [c.to_dict() for c in items],
-        'total': total,
-        'page': page,
-        'page_size': page_size
-    })
+    return jsonify(
+        build_paginated_response(
+            [c.to_dict() for c in items],
+            total,
+            page,
+            page_size,
+        )
+    )
 
 
 @subject_changes_bp.route('/<int:item_id>/comments', methods=['POST'])

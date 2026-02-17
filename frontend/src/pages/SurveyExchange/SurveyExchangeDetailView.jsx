@@ -61,7 +61,7 @@ export default function SurveyExchangeDetailView() {
       setSurvey(res);
       alert('응답이 기록됐어요. +5 응답권이 적립됩니다.');
       setModalOpen(false);
-    } catch (err) {
+    } catch {
       alert('응답을 제출하지 못했어요.');
     } finally {
       setSubmitting(false);
@@ -72,7 +72,7 @@ export default function SurveyExchangeDetailView() {
     try {
       const res = await surveyApi.approve(id);
       setSurvey(res);
-    } catch (e) {
+    } catch {
       alert('승인 처리 중 오류가 발생했습니다.');
     }
   };
@@ -81,7 +81,7 @@ export default function SurveyExchangeDetailView() {
     try {
       const res = await surveyApi.unapprove(id);
       setSurvey(res);
-    } catch (e) {
+    } catch {
       alert('승인 해제 중 오류가 발생했습니다.');
     }
   };
@@ -172,6 +172,7 @@ export default function SurveyExchangeDetailView() {
       <section style={{ marginTop: 18 }}>
         <h3>설문 안내</h3>
         <ul style={{ color: '#4b5563', lineHeight: 1.6 }}>
+          <li>설문은 관리자 승인 후 응답권 30개가 부여됩니다.</li>
           <li>응답하면 내 설문 응답권 +5</li>
           <li>작성자/관리자는 결과 페이지에서 개별/그래프/다운로드 확인</li>
           <li>응답권이 0이 되거나 마감일이 지나면 자동으로 마감됩니다.</li>

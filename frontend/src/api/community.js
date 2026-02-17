@@ -1,8 +1,9 @@
-/**
+﻿/**
  * Community (free/anonymous) board API with mock fallback.
  * Reuses the shared axios instance from auth.js for authenticated calls.
  */
 import api from './auth';
+import { normalizePaginatedResponse, normalizeUploadResponse } from './normalizers';
 
 const PAGE_SIZE_DEFAULT = 20;
 const MAX_ATTACHMENTS = 5;
@@ -278,9 +279,10 @@ export const communityApi = {
   async list(params = {}) {
     try {
       const res = await api.get('/api/community/free', { params });
-      return res.data;
-    } catch (err) {
-      return mockList(params);
+      return normalizePaginatedResponse(res.data, PAGE_SIZE_DEFAULT);
+    } catch {
+      const mock = await mockList(params);
+      return normalizePaginatedResponse(mock, PAGE_SIZE_DEFAULT);
     }
   },
 
@@ -288,7 +290,7 @@ export const communityApi = {
     try {
       const res = await api.get(`/api/community/free/${id}`);
       return res.data;
-    } catch (err) {
+    } catch {
       return mockGet(id);
     }
   },
@@ -297,7 +299,7 @@ export const communityApi = {
     try {
       const res = await api.post('/api/community/free', payload);
       return res.data;
-    } catch (err) {
+    } catch {
       return mockCreate({ ...payload, summary: summarize(payload.body) });
     }
   },
@@ -306,7 +308,7 @@ export const communityApi = {
     try {
       const res = await api.put(`/api/community/free/${id}`, payload);
       return res.data;
-    } catch (err) {
+    } catch {
       return mockUpdate(id, { ...payload, summary: summarize(payload.body) });
     }
   },
@@ -325,7 +327,7 @@ export const communityApi = {
     try {
       const res = await api.delete(`/api/community/free/${id}`);
       return res.data;
-    } catch (err) {
+    } catch {
       return mockRemove(id);
     }
   },
@@ -334,7 +336,7 @@ export const communityApi = {
     try {
       const res = await api.post(`/api/community/free/${id}/reactions`, { type });
       return res.data;
-    } catch (err) {
+    } catch {
       return mockReact(id, type);
     }
   },
@@ -343,7 +345,7 @@ export const communityApi = {
     try {
       const res = await api.post(`/api/community/free/${id}/bookmark`);
       return res.data;
-    } catch (err) {
+    } catch {
       return mockToggleBookmark(id);
     }
   },
@@ -351,9 +353,10 @@ export const communityApi = {
   async listComments(id, params = {}) {
     try {
       const res = await api.get(`/api/community/free/${id}/comments`, { params });
-      return res.data;
-    } catch (err) {
-      return mockListComments(id, params);
+      return normalizePaginatedResponse(res.data, 50);
+    } catch {
+      const mock = await mockListComments(id, params);
+      return normalizePaginatedResponse(mock, 50);
     }
   },
 
@@ -361,7 +364,7 @@ export const communityApi = {
     try {
       const res = await api.post(`/api/community/free/${id}/comments`, { body });
       return res.data;
-    } catch (err) {
+    } catch {
       return mockCreateComment(id, body);
     }
   },
@@ -370,7 +373,7 @@ export const communityApi = {
     try {
       const res = await api.delete(`/api/community/free/${postId}/comments/${commentId}`);
       return res.data;
-    } catch (err) {
+    } catch {
       return mockDeleteComment(postId, commentId);
     }
   },
@@ -383,8 +386,8 @@ export const communityApi = {
       const res = await api.post('/api/community/free/uploads', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-      return res.data;
-    } catch (err) {
+      return normalizeUploadResponse(res.data);
+    } catch {
       return mockUpload(file);
     }
   },
@@ -396,3 +399,4 @@ export const communityApi = {
 };
 
 export default communityApi;
+

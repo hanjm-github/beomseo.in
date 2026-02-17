@@ -21,8 +21,8 @@ from models import (
     NoticeReaction,
     ReactionType,
 )
-from utils.pagination import parse_pagination
-from utils.files import save_upload, ensure_dir
+from utils.pagination import parse_pagination, build_paginated_response
+from utils.files import save_upload_for_scope, resolve_scope_upload_dir, ensure_dir
 from utils.security import require_role, get_current_user
 
 notices_bp = Blueprint('notices', __name__, url_prefix='/api/notices')
@@ -76,12 +76,14 @@ def list_notices():
             ).all()
             reactions_map = {r.notice_id: r.type.value for r in reactions}
 
-    return jsonify({
-        'items': [n.to_dict(my_reaction=reactions_map.get(n.id)) for n in items],
-        'total': total,
-        'page': page,
-        'page_size': page_size
-    })
+    return jsonify(
+        build_paginated_response(
+            [n.to_dict(my_reaction=reactions_map.get(n.id)) for n in items],
+            total,
+            page,
+            page_size,
+        )
+    )
 
 
 def apply_filters(query, category, query_text, pinned, important, exam, tags=None):
@@ -347,9 +349,7 @@ def upload_file():
     if size > max_size:
         return jsonify({'error': '첨부파일 용량은 10MB 이하만 가능합니다.'}), 422
 
-    upload_dir = current_app.config.get('UPLOAD_DIR', './uploads')
-    upload_base_url = current_app.config.get('UPLOAD_BASE_URL')
-    saved = save_upload(file, upload_dir, upload_base_url)
+    saved = save_upload_for_scope(file, current_app.config, 'notices')
     kind = 'image' if (file.mimetype or '').startswith('image/') else 'file'
 
     return jsonify({
@@ -365,7 +365,7 @@ def upload_file():
 @notices_bp.route('/uploads/<path:filename>', methods=['GET'])
 @notices_bp.route('/uploads/<path:filename>/', methods=['GET'])
 def serve_upload(filename):
-    upload_dir = current_app.config.get('UPLOAD_DIR', './uploads')
+    upload_dir = resolve_scope_upload_dir(current_app.config, 'notices')
     ensure_dir(upload_dir)
     # Try to recover original name for Content-Disposition
     attachment = Attachment.query.filter(Attachment.url.like(f"%/{filename}")).first()
@@ -373,7 +373,7 @@ def serve_upload(filename):
     return send_from_directory(
         upload_dir,
         filename,
-        as_attachment=True,
+        as_attachment=False,
         download_name=download_name
     )
 
@@ -400,12 +400,14 @@ def list_comments(notice_id):
         q = q.order_by(Comment.created_at.asc())
     items = q.offset((page - 1) * page_size).limit(page_size).all()
 
-    return jsonify({
-        'items': [c.to_dict() for c in items],
-        'total': total,
-        'page': page,
-        'page_size': page_size
-    })
+    return jsonify(
+        build_paginated_response(
+            [c.to_dict() for c in items],
+            total,
+            page,
+            page_size,
+        )
+    )
 
 
 @notices_bp.route('/<int:notice_id>/comments', methods=['POST'])

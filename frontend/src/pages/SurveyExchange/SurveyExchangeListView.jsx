@@ -93,7 +93,7 @@ export default function SurveyExchangeListView() {
         <div>
           <p className="eyebrow">소통하는 범서고</p>
           <h1>설문조사 품앗이</h1>
-          <p className="lede">설문을 올리고 서로 응답을 주고받아요. 응답하면 +5 응답권!</p>
+          <p className="lede">설문을 올리고 서로 응답을 주고받아요. 내 설문은 승인 후 응답권 30개로 시작합니다.</p>
         </div>
         <Link className="btn btn-primary" to="/community/survey/new">
           <Plus size={16} />
@@ -108,7 +108,7 @@ export default function SurveyExchangeListView() {
           <SurveyCreditBadge credits={credits} />
         </div>
         <div className={styles.badgeRow} style={{ justifyContent: 'flex-end', alignItems: 'flex-start' }}>
-          <span className={`${styles.chip} ${styles.chipActive}`}><Sparkles size={14} />새 설문은 기본 30</span>
+          <span className={`${styles.chip} ${styles.chipActive}`}><Sparkles size={14} />승인 시 응답권 +30</span>
         </div>
       </div>
 

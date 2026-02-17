@@ -20,7 +20,7 @@ from models import (
     SurveyResponse,
     SurveyCredit,
 )
-from utils.pagination import parse_pagination
+from utils.pagination import parse_pagination, build_paginated_response
 from utils.security import require_role, get_current_user
 
 surveys_bp = Blueprint('surveys', __name__, url_prefix='/api/surveys')
@@ -47,7 +47,7 @@ def parse_date(value):
 
 def ensure_credit(user_id: int):
     """Lazy-create survey credit row."""
-    base = current_app.config.get('SURVEY_BASE_QUOTA', 10)
+    base = current_app.config.get('SURVEY_BASE_QUOTA', 0)
     credit = SurveyCredit.query.get(user_id)
     if not credit:
         credit = SurveyCredit(user_id=user_id, base=base, earned=0, used=0)
@@ -202,7 +202,7 @@ def build_quota_map(surveys):
         return {}
     credits = SurveyCredit.query.filter(SurveyCredit.user_id.in_(owner_ids)).all()
     credit_map = {c.user_id: c for c in credits}
-    base = current_app.config.get('SURVEY_BASE_QUOTA', 10)
+    base = current_app.config.get('SURVEY_BASE_QUOTA', 0)
     for uid in owner_ids:
         if uid not in credit_map:
             c = SurveyCredit(user_id=uid, base=base, earned=0, used=0)
@@ -268,7 +268,7 @@ def list_surveys():
 
     def remaining_quota(s: Survey):
         c = credit_map.get(s.owner_id)
-        available = c.available if c else current_app.config.get('SURVEY_BASE_QUOTA', 10)
+        available = c.available if c else current_app.config.get('SURVEY_BASE_QUOTA', 0)
         return max(0, available)
 
     if sort == 'quota-asc':
@@ -291,7 +291,7 @@ def list_surveys():
     items = []
     for s in paged:
         credit = credit_map.get(s.owner_id)
-        available = credit.available if credit else current_app.config.get('SURVEY_BASE_QUOTA', 10)
+        available = credit.available if credit else current_app.config.get('SURVEY_BASE_QUOTA', 0)
         total_quota = max(0, available) + (s.responses_received or 0)
         items.append(
             s.to_dict(
@@ -302,12 +302,14 @@ def list_surveys():
             )
         )
 
-    return jsonify({
-        'items': items,
-        'total': total,
-        'page': page,
-        'page_size': page_size,
-    })
+    return jsonify(
+        build_paginated_response(
+            items,
+            total,
+            page,
+            page_size,
+        )
+    )
 
 
 @surveys_bp.route('/<survey_id>', methods=['GET'])
@@ -330,7 +332,7 @@ def get_survey(survey_id):
         ).first() is not None
 
     credit = ensure_credit(survey.owner_id)
-    available = credit.available if credit else current_app.config.get('SURVEY_BASE_QUOTA', 10)
+    available = credit.available if credit else current_app.config.get('SURVEY_BASE_QUOTA', 0)
     total_quota = max(0, available) + (survey.responses_received or 0)
 
     return jsonify(
@@ -375,7 +377,7 @@ def create_survey():
         return jsonify({'error': '등록 중 오류가 발생했습니다.'}), 500
 
     credit = ensure_credit(user.id)
-    available = credit.available if credit else current_app.config.get('SURVEY_BASE_QUOTA', 10)
+    available = credit.available if credit else current_app.config.get('SURVEY_BASE_QUOTA', 0)
     return jsonify(survey.to_dict(quota_available=available)), 201
 
 
@@ -407,7 +409,7 @@ def approve_survey(survey_id):
     survey.approved_at = datetime.utcnow()
 
     # 승인 시 최초 1회 응답권 30 추가
-    grant_amount = 30
+    grant_amount = current_app.config.get('SURVEY_APPROVAL_GRANT', 30)
     owner_credit = ensure_credit(survey.owner_id)
     if owner_credit and not survey.credit_granted:
         owner_credit.earn(grant_amount)
@@ -420,7 +422,7 @@ def approve_survey(survey_id):
         return jsonify({'error': '승인 처리 중 오류가 발생했습니다.'}), 500
 
     credit = ensure_credit(survey.owner_id)
-    available = credit.available if credit else current_app.config.get('SURVEY_BASE_QUOTA', 10)
+    available = credit.available if credit else current_app.config.get('SURVEY_BASE_QUOTA', 0)
     total_quota = max(0, available) + (survey.responses_received or 0)
     return jsonify(survey.to_dict(quota_available=total_quota))
 
@@ -444,7 +446,7 @@ def unapprove_survey(survey_id):
         return jsonify({'error': '승인 해제 중 오류가 발생했습니다.'}), 500
 
     credit = ensure_credit(survey.owner_id)
-    available = credit.available if credit else current_app.config.get('SURVEY_BASE_QUOTA', 10)
+    available = credit.available if credit else current_app.config.get('SURVEY_BASE_QUOTA', 0)
     total_quota = max(0, available) + (survey.responses_received or 0)
     return jsonify(survey.to_dict(quota_available=total_quota))
 

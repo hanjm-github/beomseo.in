@@ -16,7 +16,7 @@ from models import (
     PetitionVote,
     PetitionAnswer,
 )
-from utils.pagination import parse_pagination
+from utils.pagination import parse_pagination, build_paginated_response
 from utils.security import require_role, get_current_user
 
 petitions_bp = Blueprint('petitions', __name__, url_prefix='/api/community/petitions')
@@ -126,12 +126,14 @@ def list_petitions():
         ).all()
         voted_map = {v.petition_id: True for v in votes}
 
-    return jsonify({
-        'items': [p.to_dict(include_body=False, is_voted_by_me=voted_map.get(p.id, False)) for p in items],
-        'total': total,
-        'page': page,
-        'page_size': page_size,
-    })
+    return jsonify(
+        build_paginated_response(
+            [p.to_dict(include_body=False, is_voted_by_me=voted_map.get(p.id, False)) for p in items],
+            total,
+            page,
+            page_size,
+        )
+    )
 
 
 @petitions_bp.route('/', methods=['POST'])
@@ -367,4 +369,3 @@ def answer_petition(petition_id):
         return jsonify({'error': '답변 저장 중 오류가 발생했습니다.'}), 500
 
     return jsonify(petition.to_dict())
-

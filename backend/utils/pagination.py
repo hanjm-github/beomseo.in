@@ -24,3 +24,16 @@ def parse_pagination(request, default_page=1, default_page_size=10, max_page_siz
         page_size = max_page_size
 
     return page, page_size
+
+
+def build_paginated_response(items, total, page, page_size, extra=None):
+    payload = {
+        'items': items,
+        'total': total,
+        'page': page,
+        'page_size': page_size,
+        'pageSize': page_size,
+    }
+    if extra:
+        payload.update(extra)
+    return payload

@@ -4,6 +4,7 @@
  * Uses shared axios instance from auth api for authenticated operations.
  */
 import api from './auth';
+import { normalizePaginatedResponse, normalizeUploadResponse } from './normalizers';
 
 const MAX_ATTACHMENTS = 5;
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
@@ -254,9 +255,10 @@ export const noticesApi = {
   async list(params) {
     try {
       const response = await api.get('/api/notices', { params });
-      return response.data;
-    } catch (error) {
-      return mockList(params);
+      return normalizePaginatedResponse(response.data, 10);
+    } catch {
+      const mock = await mockList(params);
+      return normalizePaginatedResponse(mock, 10);
     }
   },
 
@@ -264,7 +266,7 @@ export const noticesApi = {
     try {
       const response = await api.get(`/api/notices/${id}`);
       return response.data;
-    } catch (error) {
+    } catch {
       return mockGet(id);
     }
   },
@@ -273,7 +275,7 @@ export const noticesApi = {
     try {
       const response = await api.post('/api/notices', payload);
       return response.data;
-    } catch (error) {
+    } catch {
       return mockCreate(payload);
     }
   },
@@ -282,7 +284,7 @@ export const noticesApi = {
     try {
       const response = await api.put(`/api/notices/${id}`, payload);
       return response.data;
-    } catch (error) {
+    } catch {
       return mockUpdate(id, payload);
     }
   },
@@ -291,7 +293,7 @@ export const noticesApi = {
     try {
       const response = await api.delete(`/api/notices/${id}`);
       return response.data;
-    } catch (error) {
+    } catch {
       return mockDelete(id);
     }
   },
@@ -300,7 +302,7 @@ export const noticesApi = {
     try {
       const response = await api.post(`/api/notices/${id}/reactions`, { type });
       return response.data;
-    } catch (error) {
+    } catch {
       return mockReact(id, type);
     }
   },
@@ -308,9 +310,10 @@ export const noticesApi = {
   async listComments(id, params = {}) {
     try {
       const response = await api.get(`/api/notices/${id}/comments`, { params });
-      return response.data;
-    } catch (error) {
-      return mockListComments(id, params);
+      return normalizePaginatedResponse(response.data, 20);
+    } catch {
+      const mock = await mockListComments(id, params);
+      return normalizePaginatedResponse(mock, 20);
     }
   },
 
@@ -318,7 +321,7 @@ export const noticesApi = {
     try {
       const response = await api.post(`/api/notices/${id}/comments`, { body });
       return response.data;
-    } catch (error) {
+    } catch {
       return mockCreateComment(id, body);
     }
   },
@@ -327,7 +330,7 @@ export const noticesApi = {
     try {
       const response = await api.delete(`/api/notices/${noticeId}/comments/${commentId}`);
       return response.data;
-    } catch (error) {
+    } catch {
       return mockDeleteComment(noticeId, commentId);
     }
   },
@@ -336,22 +339,14 @@ export const noticesApi = {
     if (file.size > MAX_FILE_SIZE) {
       throw new Error('첨부 용량은 10MB 이하만 가능합니다.');
     }
-    const ensureAbsolute = (url) => {
-      if (!url) return url;
-      if (url.startsWith('http://') || url.startsWith('https://')) return url;
-      const base = api.defaults.baseURL?.replace(/\/$/, '') || '';
-      const prefix = url.startsWith('/') ? '' : '/';
-      return `${base}${prefix}${url}`;
-    };
     try {
       const formData = new FormData();
       formData.append('file', file);
       const response = await api.post('/api/notices/uploads', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-      const data = response.data;
-      return { ...data, url: ensureAbsolute(data.url) };
-    } catch (error) {
+      return normalizeUploadResponse(response.data);
+    } catch {
       // Mock upload
       await delay(120);
       const url = URL.createObjectURL(file);
@@ -371,3 +366,4 @@ export const noticesApi = {
 };
 
 export default noticesApi;
+

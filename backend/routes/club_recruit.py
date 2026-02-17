@@ -15,8 +15,8 @@ from models import (
     GradeGroup,
     RecruitStatus,
 )
-from utils.pagination import parse_pagination
-from utils.files import save_upload, ensure_dir
+from utils.pagination import parse_pagination, build_paginated_response
+from utils.files import save_upload_for_scope, resolve_scope_upload_dir, ensure_dir
 from utils.security import require_role, get_current_user
 
 club_recruit_bp = Blueprint('club_recruit', __name__, url_prefix='/api/club-recruit')
@@ -150,12 +150,14 @@ def list_recruits():
     total = query.count()
     items = apply_sort(query, sort).offset((page - 1) * page_size).limit(page_size).all()
 
-    return jsonify({
-        'items': [i.to_dict(include_body=False) for i in items],
-        'total': total,
-        'page': page,
-        'page_size': page_size
-    })
+    return jsonify(
+        build_paginated_response(
+            [i.to_dict(include_body=False) for i in items],
+            total,
+            page,
+            page_size,
+        )
+    )
 
 
 @club_recruit_bp.route('', methods=['POST'])
@@ -329,22 +331,14 @@ def upload_poster():
     if size > max_size:
         return jsonify({'error': '첨부파일 용량은 10MB 이하만 가능합니다.'}), 422
 
-    upload_dir = f"{current_app.config.get('UPLOAD_DIR', './uploads')}/club_recruit"
-    upload_base_url = current_app.config.get('UPLOAD_BASE_URL')
-    saved = save_upload(file, upload_dir, upload_base_url)
-    if upload_base_url:
-        url = f"{upload_base_url.rstrip('/')}/{saved['filename']}"
-    else:
-        # absolute URL using host of the backend
-        host = request.host_url.rstrip('/')
-        url = f"{host}/api/club-recruit/uploads/{saved['filename']}"
+    saved = save_upload_for_scope(file, current_app.config, 'club_recruit')
     kind = 'image' if (file.mimetype or '').startswith('image/') else 'file'
 
     return jsonify({
         'id': saved['filename'],
         'name': file.filename,
         'size': size,
-        'url': url,
+        'url': saved['url'],
         'mime': file.mimetype,
         'kind': kind
     }), 201
@@ -353,7 +347,7 @@ def upload_poster():
 @club_recruit_bp.route('/uploads/<path:filename>', methods=['GET'])
 @club_recruit_bp.route('/uploads/<path:filename>/', methods=['GET'])
 def serve_poster(filename):
-    upload_dir = f"{current_app.config.get('UPLOAD_DIR', './uploads')}/club_recruit"
+    upload_dir = resolve_scope_upload_dir(current_app.config, 'club_recruit')
     ensure_dir(upload_dir)
     download_name = filename
     return send_from_directory(upload_dir, filename, as_attachment=False, download_name=download_name)

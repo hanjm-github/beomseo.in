@@ -4,10 +4,13 @@ Loads environment variables and provides config class for Flask.
 """
 import os
 from datetime import timedelta
+from pathlib import Path
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
+
+BACKEND_DIR = Path(__file__).resolve().parent
 
 
 def _parse_origins(value: str):
@@ -25,7 +28,7 @@ class Config:
     DB_PORT = os.getenv('DB_PORT', '3306')
     DB_USER = os.getenv('DB_USER', 'root')
     DB_PASSWORD = os.getenv('DB_PASSWORD', '')
-    DB_NAME = os.getenv('DB_NAME', 'school_website')
+    DB_NAME = os.getenv('DB_NAME', 'app_db')
     
     SQLALCHEMY_DATABASE_URI = (
         f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
@@ -45,8 +48,18 @@ class Config:
     CORS_ORIGINS = _parse_origins(CORS_ORIGINS_RAW)
     
     # Uploads
-    UPLOAD_DIR = os.getenv('UPLOAD_DIR', './uploads')
-    UPLOAD_BASE_URL = os.getenv('UPLOAD_BASE_URL', '')  # optional absolute URL
+    UPLOAD_ROOT = os.getenv('UPLOAD_ROOT', str(BACKEND_DIR / 'uploads'))
+    UPLOAD_DIR = UPLOAD_ROOT  # Backward-compatible alias
+    UPLOAD_SCOPE_DIRS = {
+        'notices': os.getenv('UPLOAD_NOTICES_DIR', 'notices'),
+        'free': os.getenv('UPLOAD_FREE_DIR', 'free'),
+        'club_recruit': os.getenv('UPLOAD_CLUB_RECRUIT_DIR', 'club_recruit'),
+    }
+    UPLOAD_ROUTE_PREFIXES = {
+        'notices': '/api/notices/uploads',
+        'free': '/api/community/free/uploads',
+        'club_recruit': '/api/club-recruit/uploads',
+    }
     MAX_ATTACH_SIZE = int(os.getenv('MAX_ATTACH_SIZE', 10 * 1024 * 1024))  # 10MB
     MAX_ATTACH_COUNT = int(os.getenv('MAX_ATTACH_COUNT', 5))
 
@@ -55,7 +68,8 @@ class Config:
     MAX_PETITION_BODY = int(os.getenv('MAX_PETITION_BODY', 10_000))
 
     # Survey exchange
-    SURVEY_BASE_QUOTA = int(os.getenv('SURVEY_BASE_QUOTA', 10))
+    SURVEY_BASE_QUOTA = int(os.getenv('SURVEY_BASE_QUOTA', 0))
+    SURVEY_APPROVAL_GRANT = int(os.getenv('SURVEY_APPROVAL_GRANT', 30))
     
     # IP Restriction for signup (Ulsan Education Office network)
     # Add actual IP ranges as needed
