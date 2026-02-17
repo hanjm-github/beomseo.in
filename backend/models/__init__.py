@@ -53,6 +53,7 @@ from .lost_found import (
     LostFoundStatus,
     LostFoundCategory,
 )
+from .countdown_event import CountdownEvent
 
 __all__ = [
     'User',
@@ -95,5 +96,6 @@ __all__ = [
     'LostFoundComment',
     'LostFoundStatus',
     'LostFoundCategory',
+    'CountdownEvent',
     'db',
 ]

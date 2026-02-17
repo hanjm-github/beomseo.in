@@ -13,6 +13,7 @@ from models import free_post  # noqa: F401 ensure models are registered
 from models import club_recruit  # noqa: F401 ensure models are registered
 from models import vote  # noqa: F401 ensure models are registered
 from models import lost_found  # noqa: F401 ensure models are registered
+from models import countdown_event  # noqa: F401 ensure models are registered
 
 
 def create_app(config_name=None):

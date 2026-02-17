@@ -5,6 +5,7 @@ import axios from 'axios';
 
 // API base URL - Flask backend
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const ISO_DATETIME_WITHOUT_TZ_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?$/;
 
 // Create axios instance
 const api = axios.create({
@@ -14,6 +15,26 @@ const api = axios.create({
     },
     withCredentials: true,
 });
+
+function normalizeUtcDateString(value) {
+    if (typeof value !== 'string') return value;
+    if (!ISO_DATETIME_WITHOUT_TZ_RE.test(value)) return value;
+    return `${value}Z`;
+}
+
+function normalizeResponseDates(payload) {
+    if (Array.isArray(payload)) {
+        return payload.map((item) => normalizeResponseDates(item));
+    }
+    if (payload && typeof payload === 'object') {
+        const normalized = {};
+        for (const [key, value] of Object.entries(payload)) {
+            normalized[key] = normalizeResponseDates(value);
+        }
+        return normalized;
+    }
+    return normalizeUtcDateString(payload);
+}
 
 // Request interceptor - add JWT token to requests
 api.interceptors.request.use(
@@ -31,7 +52,12 @@ api.interceptors.request.use(
 
 // Response interceptor - handle token refresh
 api.interceptors.response.use(
-    (response) => response,
+    (response) => {
+        if (response?.data && typeof response.data === 'object') {
+            response.data = normalizeResponseDates(response.data);
+        }
+        return response;
+    },
     async (error) => {
         const originalRequest = error.config;
 

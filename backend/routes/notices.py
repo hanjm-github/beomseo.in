@@ -1,6 +1,9 @@
 """
 Notice, attachment, comment, and reaction routes.
 """
+from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+
 from flask import Blueprint, request, jsonify, current_app, send_from_directory
 from flask_jwt_extended import (
     jwt_required,
@@ -20,12 +23,23 @@ from models import (
     Comment,
     NoticeReaction,
     ReactionType,
+    CountdownEvent,
 )
 from utils.pagination import parse_pagination, build_paginated_response
 from utils.files import save_upload_for_scope, resolve_scope_upload_dir, ensure_dir
 from utils.security import require_role, get_current_user
 
 notices_bp = Blueprint('notices', __name__, url_prefix='/api/notices')
+
+
+def resolve_kst_timezone():
+    try:
+        return ZoneInfo('Asia/Seoul')
+    except ZoneInfoNotFoundError:
+        return timezone(timedelta(hours=9))
+
+
+KST = resolve_kst_timezone()
 
 
 def parse_bool(val):
@@ -45,6 +59,17 @@ def optional_current_user_id():
         return int(user_id_str) if user_id_str else None
     except Exception:
         return None
+
+
+def get_next_countdown_event():
+    now_kst_naive = datetime.now(KST).replace(tzinfo=None)
+    event = (
+        CountdownEvent.query
+        .filter(CountdownEvent.event_at >= now_kst_naive)
+        .order_by(CountdownEvent.event_at.asc(), CountdownEvent.id.asc())
+        .first()
+    )
+    return event.to_dict() if event else None
 
 
 @notices_bp.route('/', methods=['GET'])
@@ -76,12 +101,17 @@ def list_notices():
             ).all()
             reactions_map = {r.notice_id: r.type.value for r in reactions}
 
+    extra = None
+    if category in {NoticeCategory.SCHOOL.value, NoticeCategory.SCHOOL}:
+        extra = {'countdownEvent': get_next_countdown_event()}
+
     return jsonify(
         build_paginated_response(
             [n.to_dict(my_reaction=reactions_map.get(n.id)) for n in items],
             total,
             page,
             page_size,
+            extra=extra,
         )
     )
 

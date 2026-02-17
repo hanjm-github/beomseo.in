@@ -21,12 +21,11 @@ import { useAuth } from '../../context/AuthContext';
 
 import styles from './MainPage.module.css';
 
-// Next exam date - mock data
-const nextExamDate = '2026-03-15T09:00:00';
-
 export default function MainPage() {
     const [activeTab, setActiveTab] = useState('school');
     const [announcements, setAnnouncements] = useState({ school: [], council: [] });
+    const [countdownEvent, setCountdownEvent] = useState(null);
+    const [countdownLoadError, setCountdownLoadError] = useState(false);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const { isAuthenticated } = useAuth();
@@ -36,6 +35,7 @@ export default function MainPage() {
         const fetchData = async () => {
             setLoading(true);
             setError('');
+            setCountdownLoadError(false);
             try {
                 const [schoolRes, councilRes] = await Promise.all([
                     noticesApi.list({ category: 'school', sort: 'recent', page: 1, pageSize: 5 }),
@@ -46,8 +46,14 @@ export default function MainPage() {
                     school: schoolRes.items || [],
                     council: councilRes.items || [],
                 });
+                setCountdownEvent(schoolRes.countdownEvent || null);
+                setCountdownLoadError(Boolean(schoolRes.fromMock));
             } catch (err) {
-                if (!cancelled) setError('공지 불러오기에 실패했습니다.');
+                if (!cancelled) {
+                    setError('공지 불러오기에 실패했습니다.');
+                    setCountdownEvent(null);
+                    setCountdownLoadError(true);
+                }
             } finally {
                 if (!cancelled) setLoading(false);
             }
@@ -108,7 +114,18 @@ export default function MainPage() {
                         </motion.div>
 
                         <motion.div className={styles.heroWidget} variants={itemVariants}>
-                            <CountdownWidget targetDate={nextExamDate} eventName="1학기 중간고사" />
+                            {countdownLoadError ? (
+                                <div className={`${styles.countdownPlaceholder} ${styles.countdownError}`}>
+                                    카운트다운을 불러오지 못했습니다.
+                                </div>
+                            ) : countdownEvent ? (
+                                <CountdownWidget
+                                    targetDate={countdownEvent.eventAt}
+                                    eventName={countdownEvent.eventName}
+                                />
+                            ) : (
+                                <div className={styles.countdownPlaceholder}>예정된 행사가 없습니다.</div>
+                            )}
                         </motion.div>
                     </motion.div>
 

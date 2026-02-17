@@ -4,7 +4,7 @@ import styles from './CountdownWidget.module.css';
 
 export default function CountdownWidget({
     targetDate,
-    eventName = '시험',
+    eventName = '다가오는 일정',
     showDetails = true
 }) {
     const [timeLeft, setTimeLeft] = useState(calculateTimeLeft(targetDate));
@@ -57,7 +57,7 @@ export default function CountdownWidget({
                     <span>{eventName}</span>
                 </div>
                 <div className={styles.overMessage}>
-                    시험이 끝났습니다! 수고하셨습니다 🎉
+                    해당 일정이 종료되었습니다.
                 </div>
             </div>
         );

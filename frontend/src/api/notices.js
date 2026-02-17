@@ -136,6 +136,7 @@ async function mockList(params) {
     total: filtered.length,
     page,
     pageSize,
+    countdownEvent: null,
   };
 }
 
@@ -255,10 +256,20 @@ export const noticesApi = {
   async list(params) {
     try {
       const response = await api.get('/api/notices', { params });
-      return normalizePaginatedResponse(response.data, 10);
+      const normalized = normalizePaginatedResponse(response.data, 10);
+      return {
+        ...normalized,
+        countdownEvent: normalized.countdownEvent ?? null,
+        fromMock: false,
+      };
     } catch {
       const mock = await mockList(params);
-      return normalizePaginatedResponse(mock, 10);
+      const normalizedMock = normalizePaginatedResponse(mock, 10);
+      return {
+        ...normalizedMock,
+        countdownEvent: normalizedMock.countdownEvent ?? null,
+        fromMock: true,
+      };
     }
   },
 
