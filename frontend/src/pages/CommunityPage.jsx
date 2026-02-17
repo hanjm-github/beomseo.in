@@ -1,6 +1,6 @@
 import { createElement, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { MessageCircle, Users, Shuffle, Vote, PlugZap, ShieldCheck, Package } from 'lucide-react';
+import { MessageCircle, Users, Shuffle, Vote, PlugZap, ShieldCheck, Package, Store } from 'lucide-react';
 import './page-shell.css';
 
 const boards = [
@@ -52,6 +52,13 @@ const boards = [
     label: '분실물 센터',
     description: '사진, 상태 배지, 보관 장소를 확인해 주인을 찾습니다.',
     icon: Package,
+  },
+  {
+    key: 'gomsol-market',
+    path: 'gomsol-market',
+    label: '곰솔마켓',
+    description: '교내 중고거래 글을 승인 기반으로 안전하게 확인해요.',
+    icon: Store,
   },
 ];
 

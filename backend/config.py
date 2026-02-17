@@ -55,12 +55,14 @@ class Config:
         'free': os.getenv('UPLOAD_FREE_DIR', 'free'),
         'club_recruit': os.getenv('UPLOAD_CLUB_RECRUIT_DIR', 'club_recruit'),
         'lost_found': os.getenv('UPLOAD_LOST_FOUND_DIR', 'lost_found'),
+        'gomsol_market': os.getenv('UPLOAD_GOMSOL_MARKET_DIR', 'gomsol_market'),
     }
     UPLOAD_ROUTE_PREFIXES = {
         'notices': '/api/notices/uploads',
         'free': '/api/community/free/uploads',
         'club_recruit': '/api/club-recruit/uploads',
         'lost_found': '/api/community/lost-found/uploads',
+        'gomsol_market': '/api/community/gomsol-market/uploads',
     }
     MAX_ATTACH_SIZE = int(os.getenv('MAX_ATTACH_SIZE', 10 * 1024 * 1024))  # 10MB
     MAX_ATTACH_COUNT = int(os.getenv('MAX_ATTACH_COUNT', 5))

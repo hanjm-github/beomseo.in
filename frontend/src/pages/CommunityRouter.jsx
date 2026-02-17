@@ -21,6 +21,9 @@ import VoteComposeView from './Vote/VoteComposeView';
 import LostFoundListView from './LostFound/LostFoundListView';
 import LostFoundDetailView from './LostFound/LostFoundDetailView';
 import LostFoundComposeView from './LostFound/LostFoundComposeView';
+import GomsolMarketListView from './GomsolMarket/GomsolMarketListView';
+import GomsolMarketDetailView from './GomsolMarket/GomsolMarketDetailView';
+import GomsolMarketComposeView from './GomsolMarket/GomsolMarketComposeView';
 
 export default function CommunityRouter() {
   return (
@@ -50,6 +53,9 @@ export default function CommunityRouter() {
       <Route path="lost-found" element={<LostFoundListView />} />
       <Route path="lost-found/new" element={<LostFoundComposeView />} />
       <Route path="lost-found/:id" element={<LostFoundDetailView />} />
+      <Route path="gomsol-market" element={<GomsolMarketListView />} />
+      <Route path="gomsol-market/new" element={<GomsolMarketComposeView />} />
+      <Route path="gomsol-market/:id" element={<GomsolMarketDetailView />} />
       <Route path="*" element={<Navigate to="/community/free/" replace />} />
     </Routes>
   );

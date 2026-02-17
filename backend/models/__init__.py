@@ -53,6 +53,13 @@ from .lost_found import (
     LostFoundStatus,
     LostFoundCategory,
 )
+from .gomsol_market import (
+    GomsolMarketPost,
+    GomsolMarketImage,
+    GomsolMarketCategory,
+    GomsolMarketSaleStatus,
+    GomsolMarketApprovalStatus,
+)
 from .countdown_event import CountdownEvent
 
 __all__ = [
@@ -96,6 +103,11 @@ __all__ = [
     'LostFoundComment',
     'LostFoundStatus',
     'LostFoundCategory',
+    'GomsolMarketPost',
+    'GomsolMarketImage',
+    'GomsolMarketCategory',
+    'GomsolMarketSaleStatus',
+    'GomsolMarketApprovalStatus',
     'CountdownEvent',
     'db',
 ]

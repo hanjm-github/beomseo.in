@@ -14,6 +14,7 @@ from models import club_recruit  # noqa: F401 ensure models are registered
 from models import vote  # noqa: F401 ensure models are registered
 from models import lost_found  # noqa: F401 ensure models are registered
 from models import countdown_event  # noqa: F401 ensure models are registered
+from models import gomsol_market  # noqa: F401 ensure models are registered
 
 
 def create_app(config_name=None):
@@ -71,6 +72,7 @@ def create_app(config_name=None):
     from routes.surveys import surveys_bp
     from routes.votes import votes_bp
     from routes.lost_found import lost_found_bp
+    from routes.gomsol_market import gomsol_market_bp
     app.register_blueprint(auth_bp)
     app.register_blueprint(notices_bp)
     app.register_blueprint(free_bp)
@@ -80,6 +82,7 @@ def create_app(config_name=None):
     app.register_blueprint(surveys_bp)
     app.register_blueprint(votes_bp)
     app.register_blueprint(lost_found_bp)
+    app.register_blueprint(gomsol_market_bp)
     
     # Health check endpoint
     @app.route('/api/health')
