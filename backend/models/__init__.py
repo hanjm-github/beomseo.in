@@ -46,6 +46,13 @@ from .vote import (
     VoteOption,
     VoteResponse,
 )
+from .lost_found import (
+    LostFoundPost,
+    LostFoundImage,
+    LostFoundComment,
+    LostFoundStatus,
+    LostFoundCategory,
+)
 
 __all__ = [
     'User',
@@ -83,5 +90,10 @@ __all__ = [
     'Vote',
     'VoteOption',
     'VoteResponse',
+    'LostFoundPost',
+    'LostFoundImage',
+    'LostFoundComment',
+    'LostFoundStatus',
+    'LostFoundCategory',
     'db',
 ]
