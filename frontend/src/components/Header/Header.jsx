@@ -16,7 +16,7 @@ import RoleName from '../RoleName/RoleName';
 
 const navigationItems = [
   {
-    label: '공지',
+    label: '공지사항',
     path: '/notices',
     children: [
       { label: '학교 공지', path: '/notices/school' },
@@ -24,7 +24,7 @@ const navigationItems = [
     ],
   },
   {
-    label: '소통',
+    label: '소통하는 범서고',
     path: '/community',
     children: [
       { label: '자유 게시판', path: '/community/free' },
@@ -38,7 +38,7 @@ const navigationItems = [
     ],
   },
   {
-    label: '생활정보',
+    label: '학교 생활 정보',
     path: '/school-info',
     children: [
       { label: '교무실 찾기', path: '/school-info/teachers' },
@@ -47,7 +47,7 @@ const navigationItems = [
       { label: '학사 캘린더', path: '/school-info/calendar' },
     ],
   },
-  { label: '갤러리', path: '/gallery' },
+  { label: '범서고 갤러리', path: '/gallery' },
 ];
 
 export default function Header() {
@@ -87,7 +87,7 @@ export default function Header() {
       <div className={styles.container}>
         <Link to="/" className={styles.logo}>
           <div className={styles.logoIcon}>
-            <span className={styles.logoText}>be</span>
+            <span className={styles.logoText}>in</span>
           </div>
           <div className={styles.logoLabels}>
             <span className={styles.logoName}>beomseo.in</span>
@@ -101,9 +101,8 @@ export default function Header() {
               {item.children ? (
                 <>
                   <button
-                    className={`${styles.navLink} ${
-                      location.pathname.startsWith(item.path) ? styles.active : ''
-                    }`}
+                    className={`${styles.navLink} ${location.pathname.startsWith(item.path) ? styles.active : ''
+                      }`}
                     onClick={() => handleDropdownToggle(index)}
                     aria-expanded={activeDropdown === index}
                     aria-haspopup="true"
@@ -111,9 +110,8 @@ export default function Header() {
                     {item.label}
                     <ChevronDown
                       size={16}
-                      className={`${styles.chevron} ${
-                        activeDropdown === index ? styles.rotated : ''
-                      }`}
+                      className={`${styles.chevron} ${activeDropdown === index ? styles.rotated : ''
+                        }`}
                     />
                   </button>
                   {activeDropdown === index && (
@@ -123,9 +121,8 @@ export default function Header() {
                           <Link
                             key={child.path}
                             to={child.path}
-                            className={`${styles.dropdownItem} ${
-                              location.pathname.startsWith(child.path) ? styles.active : ''
-                            }`}
+                            className={`${styles.dropdownItem} ${location.pathname.startsWith(child.path) ? styles.active : ''
+                              }`}
                           >
                             {child.label}
                           </Link>
@@ -137,9 +134,8 @@ export default function Header() {
               ) : (
                 <Link
                   to={item.path}
-                  className={`${styles.navLink} ${
-                    location.pathname.startsWith(item.path) ? styles.active : ''
-                  }`}
+                  className={`${styles.navLink} ${location.pathname.startsWith(item.path) ? styles.active : ''
+                    }`}
                 >
                   {item.label}
                 </Link>
