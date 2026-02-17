@@ -13,7 +13,7 @@ export default function SurveyCreditBadge({ credits }) {
       <span className={styles.chip}>사용 {used}</span>
       <span className={`${styles.chip} ${styles.chipActive}`}>잔여 {available}</span>
       <span className={styles.chip} style={{ background: '#ecfeff', color: '#0ea5e9', borderColor: '#bae6fd' }}>
-        응답하면 +1
+        응답하면 +5
       </span>
     </div>
   );

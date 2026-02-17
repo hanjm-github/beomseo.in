@@ -93,7 +93,7 @@ export default function SurveyExchangeListView() {
         <div>
           <p className="eyebrow">소통하는 범서고</p>
           <h1>설문조사 품앗이</h1>
-          <p className="lede">설문을 올리고 서로 응답을 주고받아요. 응답하면 +1 응답권!</p>
+          <p className="lede">설문을 올리고 서로 응답을 주고받아요. 응답하면 +5 응답권!</p>
         </div>
         <Link className="btn btn-primary" to="/community/survey/new">
           <Plus size={16} />

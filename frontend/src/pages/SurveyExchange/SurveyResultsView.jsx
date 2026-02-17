@@ -54,7 +54,7 @@ export default function SurveyResultsView() {
       if (typeof v === 'object') {
         try {
           s = JSON.stringify(v);
-        } catch (e) {
+        } catch {
           s = String(v);
         }
       }
@@ -83,6 +83,26 @@ export default function SurveyResultsView() {
     a.download = `survey-${id}.${isXlsx ? 'xls' : 'csv'}`;
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  const formatResponseValue = (value) => {
+    if (value == null || value === '') return '-';
+    if (Array.isArray(value)) {
+      return value.map((item) => String(item)).join(', ');
+    }
+    if (typeof value === 'object') {
+      const entries = Object.entries(value);
+      const active = entries
+        .filter(([, v]) => Boolean(v))
+        .map(([k, v]) => (typeof v === 'boolean' ? k : `${k}: ${v}`));
+      if (active.length) return active.join(', ');
+      try {
+        return JSON.stringify(value);
+      } catch {
+        return String(value);
+      }
+    }
+    return String(value);
   };
 
   if (loading) {
@@ -155,7 +175,7 @@ export default function SurveyResultsView() {
                     <td>{row.id}</td>
                     <td>{new Date(row.submittedAt).toLocaleString()}</td>
                     {summary?.questions?.map((q) => (
-                      <td key={q.id}>{row[q.id]}</td>
+                      <td key={q.id}>{formatResponseValue(row[q.id])}</td>
                     ))}
                   </tr>
                 ))

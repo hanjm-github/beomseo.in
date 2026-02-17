@@ -17,8 +17,7 @@
     "react-dom": "^19.2.0",
     "react-form-builder2": "^0.20.3",
     "react-router-dom": "^7.13.0",
-    "recharts": "^2.13.0",
-    "xlsx": "^0.18.5"
+    "recharts": "^2.15.4"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

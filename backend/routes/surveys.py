@@ -86,6 +86,44 @@ def normalize_answers(raw):
     return {}
 
 
+OPTION_KEY_PREFIXES = (
+    'checkboxes_option_',
+    'radiobuttons_option_',
+    'dropdown_option_',
+    'select_option_',
+    'selectboxes_option_',
+)
+
+
+def option_key_candidates(raw_value):
+    """Build normalized candidate keys for option matching."""
+    if raw_value is None:
+        return []
+
+    token = str(raw_value).strip()
+    if not token:
+        return []
+
+    candidates = {token, token.lower(), token.upper()}
+    token_lower = token.lower()
+
+    for prefix in OPTION_KEY_PREFIXES:
+        if token_lower.startswith(prefix):
+            suffix = token[len(prefix):]
+            if suffix:
+                candidates.update({suffix, suffix.lower(), suffix.upper()})
+        else:
+            candidates.update(
+                {
+                    f'{prefix}{token}',
+                    f'{prefix}{token.lower()}',
+                    f'{prefix}{token.upper()}',
+                }
+            )
+
+    return [candidate for candidate in candidates if candidate]
+
+
 def build_option_maps(form_items):
     """
     Build mapping per question id: value/key -> human-readable text.
@@ -98,10 +136,19 @@ def build_option_maps(form_items):
         options = item.get('options') or []
         mapping = {}
         for opt in options:
-            val = opt.get('value') or opt.get('key')
-            text = opt.get('text') or opt.get('label') or str(val)
-            if val is not None:
-                mapping[str(val)] = text
+            id_sources = [
+                opt.get('value'),
+                opt.get('key'),
+                opt.get('id'),
+                opt.get('option_id'),
+                opt.get('name'),
+            ]
+            fallback_id = next((source for source in id_sources if source not in (None, '')), None)
+            text = opt.get('text') or opt.get('label') or (str(fallback_id) if fallback_id is not None else '')
+
+            for source in id_sources:
+                for candidate in option_key_candidates(source):
+                    mapping[candidate] = text
         if mapping:
             option_maps[qid] = mapping
     return option_maps
@@ -110,7 +157,12 @@ def build_option_maps(form_items):
 def map_value(option_map, value):
     if option_map is None:
         return value
-    return option_map.get(str(value), value)
+
+    for candidate in option_key_candidates(value):
+        if candidate in option_map:
+            return option_map[candidate]
+
+    return value
 
 
 def validate_payload(data: dict):
