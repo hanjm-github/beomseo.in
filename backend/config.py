@@ -70,6 +70,15 @@ class Config:
     # Survey exchange
     SURVEY_BASE_QUOTA = int(os.getenv('SURVEY_BASE_QUOTA', 0))
     SURVEY_APPROVAL_GRANT = int(os.getenv('SURVEY_APPROVAL_GRANT', 30))
+
+    # Realtime vote board
+    VOTE_MIN_TITLE_LENGTH = int(os.getenv('VOTE_MIN_TITLE_LENGTH', 2))
+    VOTE_MAX_TITLE_LENGTH = int(os.getenv('VOTE_MAX_TITLE_LENGTH', 120))
+    VOTE_MAX_DESCRIPTION_LENGTH = int(os.getenv('VOTE_MAX_DESCRIPTION_LENGTH', 1000))
+    VOTE_MIN_OPTIONS = int(os.getenv('VOTE_MIN_OPTIONS', 2))
+    VOTE_MAX_OPTIONS = int(os.getenv('VOTE_MAX_OPTIONS', 8))
+    VOTE_MAX_OPTION_LENGTH = int(os.getenv('VOTE_MAX_OPTION_LENGTH', 80))
+    VOTE_REWARD_CREDITS = int(os.getenv('VOTE_REWARD_CREDITS', 1))
     
     # IP Restriction for signup (Ulsan Education Office network)
     # Add actual IP ranges as needed

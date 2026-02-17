@@ -3,6 +3,7 @@
  */
 import api from './auth';
 import { normalizePaginatedResponse } from './normalizers';
+import { earnMockSurveyCredits, getMockSurveyCredits } from './mockSurveyCreditStore';
 
 export const BASE_RESPONSE_QUOTA = 0;
 export const SURVEY_APPROVAL_GRANT = 30;
@@ -95,8 +96,6 @@ let mockSurveys = [
   },
 ];
 
-let mockCredits = { base: BASE_RESPONSE_QUOTA, earned: 10, used: 2 };
-
 const mockSummary = {
   questions: [
     { id: 'q1', text: '점수 선택', type: 'choice', counts: { 1: 0, 2: 1, 3: 2, 4: 2, 5: 1 } },
@@ -174,14 +173,18 @@ async function mockSubmitResponse(id, answers = {}) {
       ? { ...s, responsesReceived: (s.responsesReceived || 0) + 1, responseQuota: s.responseQuota || SURVEY_APPROVAL_GRANT }
       : s
   );
-  mockCredits = { ...mockCredits, earned: mockCredits.earned + 5, available: undefined };
-  return { responseId: `resp-${Date.now()}`, creditsEarned: 5, creditAvailable: mockCredits.available || 0, answers };
+  const nextCredits = earnMockSurveyCredits(5);
+  return {
+    responseId: `resp-${Date.now()}`,
+    creditsEarned: 5,
+    creditAvailable: nextCredits.available,
+    answers,
+  };
 }
 
 async function mockGetCredits() {
   await delay(40);
-  const available = mockCredits.base + mockCredits.earned - (mockCredits.used || 0);
-  return { ...mockCredits, available };
+  return getMockSurveyCredits();
 }
 
 async function mockGetSummary(id) {

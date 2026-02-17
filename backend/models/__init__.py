@@ -41,6 +41,11 @@ from .survey import (
     SurveyResponse,
     SurveyCredit,
 )
+from .vote import (
+    Vote,
+    VoteOption,
+    VoteResponse,
+)
 
 __all__ = [
     'User',
@@ -75,5 +80,8 @@ __all__ = [
     'SurveyStatus',
     'SurveyResponse',
     'SurveyCredit',
+    'Vote',
+    'VoteOption',
+    'VoteResponse',
     'db',
 ]

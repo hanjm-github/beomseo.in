@@ -16,6 +16,9 @@ import SurveyExchangeListView from './SurveyExchange/SurveyExchangeListView';
 import SurveyExchangeDetailView from './SurveyExchange/SurveyExchangeDetailView';
 import SurveyExchangeComposePage from './SurveyExchange/SurveyExchangeComposePage';
 import SurveyResultsView from './SurveyExchange/SurveyResultsView';
+import VoteListView from './Vote/VoteListView';
+import VoteDetailView from './Vote/VoteDetailView';
+import VoteComposeView from './Vote/VoteComposeView';
 
 export default function CommunityRouter() {
   return (
@@ -39,6 +42,9 @@ export default function CommunityRouter() {
       <Route path="survey/:id" element={<SurveyExchangeDetailView />} />
       <Route path="survey/:id/edit" element={<SurveyExchangeComposePage />} />
       <Route path="survey/:id/results" element={<SurveyResultsView />} />
+      <Route path="vote" element={<VoteListView />} />
+      <Route path="vote/new" element={<VoteComposeView />} />
+      <Route path="vote/:id" element={<VoteDetailView />} />
       <Route path="*" element={<Navigate to="/community" replace />} />
     </Routes>
   );
