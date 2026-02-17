@@ -1,0 +1,11 @@
+.shell { display: grid; gap: 16px; }
+.toolbar { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+.card { border: 1px solid #dfe7ff; border-radius: 14px; padding: 14px; background: white; text-decoration: none; color: inherit; display: grid; gap: 8px; }
+.meta { font-size: 13px; color: #667085; display: flex; gap: 10px; flex-wrap: wrap; }
+.badge { width: fit-content; padding: 4px 8px; border-radius: 999px; font-size: 12px; background: #edf2ff; color: #1e3a8a; }
+.error { color: #b42318; }
+.formWrap { background: #fff; border: 1px solid #dfe7ff; border-radius: 14px; padding: 16px; display: grid; gap: 12px; }
+.input, .textarea { width: 100%; border: 1px solid #c9d7ff; border-radius: 10px; padding: 10px; }
+.textarea { min-height: 90px; resize: vertical; }
+.actions { display: flex; justify-content: flex-end; gap: 8px; }

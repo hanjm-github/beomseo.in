@@ -11,6 +11,7 @@ from models.user import db
 from models import notice  # noqa: F401 ensure models are registered
 from models import free_post  # noqa: F401 ensure models are registered
 from models import club_recruit  # noqa: F401 ensure models are registered
+from models import survey_exchange  # noqa: F401 ensure models are registered
 
 
 def create_app(config_name=None):
@@ -65,12 +66,14 @@ def create_app(config_name=None):
     from routes.club_recruit import club_recruit_bp
     from routes.subject_changes import subject_changes_bp
     from routes.petitions import petitions_bp
+    from routes.survey_exchange import survey_exchange_bp
     app.register_blueprint(auth_bp)
     app.register_blueprint(notices_bp)
     app.register_blueprint(free_bp)
     app.register_blueprint(club_recruit_bp)
     app.register_blueprint(subject_changes_bp)
     app.register_blueprint(petitions_bp)
+    app.register_blueprint(survey_exchange_bp)
     
     # Health check endpoint
     @app.route('/api/health')
