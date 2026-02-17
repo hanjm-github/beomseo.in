@@ -22,6 +22,18 @@ from utils.security import (
 auth_bp = Blueprint('auth', __name__, url_prefix='/api/auth')
 
 
+def find_banned_word_in_nickname(nickname, banned_words):
+    """Return first banned word found in nickname, case-insensitive."""
+    normalized_nickname = nickname.casefold()
+    for word in banned_words or []:
+        candidate = str(word).strip()
+        if not candidate:
+            continue
+        if candidate.casefold() in normalized_nickname:
+            return candidate
+    return None
+
+
 @auth_bp.route('/register', methods=['POST'])
 def register():
     """
@@ -52,7 +64,14 @@ def register():
     
     if len(nickname) < 2 or len(nickname) > 50:
         return jsonify({'error': '닉네임은 2-50자 사이로 입력해주세요.'}), 400
-    
+
+    banned_word = find_banned_word_in_nickname(
+        nickname,
+        current_app.config.get('NICKNAME_BANNED_WORDS', []),
+    )
+    if banned_word:
+        return jsonify({'error': '사용할 수 없는 닉네임입니다.'}), 400
+
     if not password:
         return jsonify({'error': '비밀번호를 입력해주세요.'}), 400
     

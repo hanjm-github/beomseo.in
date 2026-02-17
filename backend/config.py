@@ -7,10 +7,10 @@ from datetime import timedelta
 from pathlib import Path
 from dotenv import load_dotenv
 
-# Load environment variables from .env file
-load_dotenv()
-
 BACKEND_DIR = Path(__file__).resolve().parent
+
+# Load environment variables from backend/.env regardless of process cwd.
+load_dotenv(BACKEND_DIR / '.env')
 
 
 def _parse_origins(value: str):
@@ -18,6 +18,14 @@ def _parse_origins(value: str):
     if not value:
         return []
     return [v.strip() for v in value.split(',') if v.strip()]
+
+
+def _parse_nickname_banned_words(value: str):
+    """Parse comma-separated banned words for nickname moderation."""
+    if not value:
+        return []
+    words = [v.strip() for v in value.split(',') if v.strip()]
+    return list(dict.fromkeys(words))
 
 
 class Config:
@@ -46,6 +54,13 @@ class Config:
     # CORS Settings (managed via .env CORS_ORIGINS)
     CORS_ORIGINS_RAW = os.getenv('CORS_ORIGINS', 'http://localhost:5173')
     CORS_ORIGINS = _parse_origins(CORS_ORIGINS_RAW)
+
+    # Nickname moderation
+    NICKNAME_BANNED_WORDS_RAW = os.getenv(
+        'NICKNAME_BANNED_WORDS',
+        os.getenv('BANNED_NICKNAME_WORDS', ''),
+    )
+    NICKNAME_BANNED_WORDS = _parse_nickname_banned_words(NICKNAME_BANNED_WORDS_RAW)
     
     # Uploads
     UPLOAD_ROOT = os.getenv('UPLOAD_ROOT', str(BACKEND_DIR / 'uploads'))
