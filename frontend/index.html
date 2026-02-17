@@ -1,15 +1,27 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="ko">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="범서고등학교 - 지혜로운 눈으로 꿈을 이루고 따뜻한 가슴으로 인류에 봉사하자" />
-    <meta name="theme-color" content="#1B4D3E" />
-    <title>범서고등학교</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="범서고등학교 - 지혜로운 눈으로 꿈을 이루고 따뜻한 가슴으로 인류에 봉사하자" />
+  <meta name="theme-color" content="#1B4D3E" />
+  <title>범서고등학교</title>
+  <!-- Font Awesome 5 - Required by react-form-builder2 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+    integrity="sha512-1ycn6IcaQQ40/MKBW2W4Rhis/DbILU74C1vSrLJxCq57o941Ym01SwNsOMqvEBFlcgUa6xLiPY/NS5R+E6ztJQ=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <script>
+    // Polyfills for packages expecting Node globals (react-form-builder2/draft-js)
+    window.global = window;
+    window.process = window.process || { env: { NODE_ENV: 'development' } };
+  </script>
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.jsx"></script>
+</body>
+
 </html>

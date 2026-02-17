@@ -12,6 +12,10 @@ import SubjectComposePage from './Subjects/SubjectComposePage';
 import PetitionListView from './Petition/PetitionListView';
 import PetitionDetailView from './Petition/PetitionDetailView';
 import PetitionComposeView from './Petition/PetitionComposeView';
+import SurveyExchangeListView from './SurveyExchange/SurveyExchangeListView';
+import SurveyExchangeDetailView from './SurveyExchange/SurveyExchangeDetailView';
+import SurveyExchangeComposePage from './SurveyExchange/SurveyExchangeComposePage';
+import SurveyResultsView from './SurveyExchange/SurveyResultsView';
 
 export default function CommunityRouter() {
   return (
@@ -30,6 +34,11 @@ export default function CommunityRouter() {
       <Route path="petition" element={<PetitionListView />} />
       <Route path="petition/new" element={<PetitionComposeView />} />
       <Route path="petition/:id" element={<PetitionDetailView />} />
+      <Route path="survey" element={<SurveyExchangeListView />} />
+      <Route path="survey/new" element={<SurveyExchangeComposePage />} />
+      <Route path="survey/:id" element={<SurveyExchangeDetailView />} />
+      <Route path="survey/:id/edit" element={<SurveyExchangeComposePage />} />
+      <Route path="survey/:id/results" element={<SurveyResultsView />} />
       <Route path="*" element={<Navigate to="/community" replace />} />
     </Routes>
   );

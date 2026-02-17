@@ -35,6 +35,12 @@ from .subject_change import (
     ContactType,
     SubjectChangeComment,
 )
+from .survey import (
+    Survey,
+    SurveyStatus,
+    SurveyResponse,
+    SurveyCredit,
+)
 
 __all__ = [
     'User',
@@ -65,5 +71,9 @@ __all__ = [
     'ApprovalStatus',
     'ContactType',
     'SubjectChangeComment',
+    'Survey',
+    'SurveyStatus',
+    'SurveyResponse',
+    'SurveyCredit',
     'db',
 ]

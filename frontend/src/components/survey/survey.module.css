@@ -1,0 +1,438 @@
+.pageHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.hero {
+  background: linear-gradient(135deg, #eef2ff, #ecfeff);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  border-radius: 18px;
+  padding: 18px 20px;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.heroLeft h2 {
+  margin: 0 0 6px;
+  font-size: 20px;
+}
+
+.heroLeft p {
+  margin: 0;
+  color: #4b5563;
+}
+
+.badgeRow {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.chip {
+  border: 1px solid #e5e7eb;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  color: #374151;
+  font-weight: 500;
+}
+
+.chipActive {
+  border-color: #6366f1;
+  background: #eef2ff;
+  color: #4338ca;
+}
+
+.chipToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  position: relative;
+  padding: 16px;
+  border-radius: 16px;
+  color: #0f172a;
+  overflow: hidden;
+  border: 1px solid rgba(15, 23, 42, 0.05);
+  background: #fff;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.03);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.06);
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.cardTags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.tag {
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 999px;
+  padding: 4px 8px;
+  font-size: 12px;
+  color: #0f172a;
+}
+
+.cardTitle {
+  margin: 10px 0 6px;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.cardDesc {
+  margin: 0 0 12px;
+  color: #475467;
+  min-height: 40px;
+}
+
+.metaRow {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  color: #475467;
+  font-size: 13px;
+}
+
+.progressWrap {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 999px;
+  height: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.progressBar {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #6366f1, #22d3ee);
+}
+
+.empty {
+  text-align: center;
+  padding: 32px;
+  color: #6b7280;
+  border: 1px dashed #e5e7eb;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.select {
+  border: 1px solid #e5e7eb;
+  padding: 9px 12px;
+  border-radius: 10px;
+  background: #fff;
+  font-weight: 500;
+}
+
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin: 12px 0 8px;
+}
+
+.search {
+  width: 100%;
+  max-width: 320px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.modal {
+  background: #fff;
+  width: min(960px, 90vw);
+  max-height: 90vh;
+  overflow: auto;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.12);
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.modalFooter {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.resultTabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.table th,
+.table td {
+  border: 1px solid #e5e7eb;
+  padding: 8px 10px;
+}
+
+.skeleton {
+  height: 180px;
+  border-radius: 14px;
+  background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+
+  100% {
+    background-position: -100% 0;
+  }
+}
+
+
+/* ===== react-form-builder2 Global Overrides ===== */
+:global(.react-form-builder) {
+  font-family: var(--font-body) !important;
+}
+
+/* Inner wrapper: toolbar + preview side-by-side */
+:global(.react-form-builder > div) {
+  display: flex !important;
+  flex-direction: row !important;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+/* Toolbar: fixed-width left column */
+:global(.react-form-builder-toolbar) {
+  order: -1 !important;
+  float: none !important;
+  width: 260px !important;
+  min-width: 260px !important;
+  flex-shrink: 0 !important;
+  position: sticky;
+  top: 80px;
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-border);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.04);
+}
+
+/* Preview: fill remaining space */
+:global(.react-form-builder-preview) {
+  flex: 1 !important;
+  width: auto !important;
+  min-width: 0;
+}
+
+:global(.react-form-builder .Sortable) {
+  min-height: 300px;
+  padding: var(--space-4);
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  border: 2px dashed var(--color-border);
+}
+
+:global(.react-form-builder .rfb-item) {
+  background: var(--color-surface) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: var(--radius-lg) !important;
+  padding: var(--space-3) !important;
+  margin-bottom: var(--space-2) !important;
+  color: var(--color-text-primary) !important;
+}
+
+:global(.react-form-builder .rfb-item:hover) {
+  border-color: var(--color-primary-400) !important;
+  box-shadow: var(--shadow-md);
+}
+
+:global(.react-form-builder-toolbar) {
+  background: var(--color-surface) !important;
+  padding: var(--space-3) !important;
+}
+
+:global(.react-form-builder-toolbar h4) {
+  color: var(--color-text-primary) !important;
+  font-size: var(--text-lg) !important;
+  margin-bottom: var(--space-3) !important;
+}
+
+:global(.react-form-builder-toolbar ul) {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+:global(.react-form-builder-toolbar li) {
+  margin-bottom: var(--space-1);
+}
+
+:global(.react-form-builder-toolbar .btn) {
+  width: 100%;
+  text-align: left;
+  padding: var(--space-2) var(--space-3) !important;
+  background: var(--color-bg-muted) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: var(--radius-md) !important;
+  color: var(--color-text-primary) !important;
+  transition: all var(--transition-fast);
+}
+
+:global(.react-form-builder-toolbar .btn:hover) {
+  background: var(--color-primary-100) !important;
+  border-color: var(--color-primary-400) !important;
+  transform: translateX(2px);
+}
+
+:global(.react-form-builder .form-control),
+:global(.react-form-builder input[type="text"]),
+:global(.react-form-builder input[type="number"]),
+:global(.react-form-builder input[type="email"]),
+:global(.react-form-builder textarea),
+:global(.react-form-builder select) {
+  background: var(--color-surface) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: var(--radius-md) !important;
+  color: var(--color-text-primary) !important;
+  padding: var(--space-2) var(--space-3) !important;
+}
+
+:global(.react-form-builder .form-control:focus),
+:global(.react-form-builder input:focus),
+:global(.react-form-builder textarea:focus),
+:global(.react-form-builder select:focus) {
+  outline: 2px solid var(--color-primary-500) !important;
+  outline-offset: -1px;
+  border-color: var(--color-primary-500) !important;
+}
+
+:global(.react-form-builder label) {
+  color: var(--color-text-primary) !important;
+  font-weight: var(--font-medium);
+  margin-bottom: var(--space-1);
+}
+
+:global(.react-form-builder .btn-primary) {
+  background: linear-gradient(135deg, var(--color-primary-500), var(--color-accent-500)) !important;
+  border: none !important;
+  color: white !important;
+  padding: var(--space-3) var(--space-5) !important;
+  border-radius: var(--radius-lg) !important;
+  font-weight: var(--font-medium);
+}
+
+:global(.react-form-builder .btn-primary:hover) {
+  box-shadow: var(--shadow-lg);
+}
+
+:global(.react-form-builder .btn-default),
+:global(.react-form-builder .btn-secondary) {
+  background: var(--color-bg-muted) !important;
+  border: 1px solid var(--color-border) !important;
+  color: var(--color-text-primary) !important;
+  padding: var(--space-3) var(--space-4) !important;
+  border-radius: var(--radius-lg) !important;
+}
+
+:global(.react-form-builder .modal-content) {
+  background: var(--color-surface) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: var(--radius-xl) !important;
+}
+
+:global(.react-form-builder .modal-header) {
+  border-bottom: 1px solid var(--color-border) !important;
+  background: var(--color-bg-muted) !important;
+}
+
+:global(.react-form-builder .modal-title) {
+  color: var(--color-text-primary) !important;
+}
+
+:global(.react-form-builder .modal-body) {
+  color: var(--color-text-primary) !important;
+}
+
+:global(.react-form-builder .checkbox label),
+:global(.react-form-builder .radio label) {
+  color: var(--color-text-primary) !important;
+}
+
+:global(.rdw-editor-main) {
+  background: var(--color-surface) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: var(--radius-md) !important;
+  color: var(--color-text-primary) !important;
+  min-height: 200px;
+  padding: var(--space-3) !important;
+}
+
+:global(.rdw-editor-toolbar) {
+  background: var(--color-bg-muted) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: var(--radius-md) !important;
+  margin-bottom: 0 !important;
+}
+
+:global(.public-DraftStyleDefault-block) {
+  color: var(--color-text-primary) !important;
+}
