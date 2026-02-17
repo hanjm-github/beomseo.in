@@ -7,7 +7,6 @@ import {
     Utensils,
     Calendar,
     ImageIcon,
-    Search,
     Users,
     ChevronRight,
 } from 'lucide-react';
@@ -274,33 +273,6 @@ export default function MainPage() {
                                 <MealCard />
                             </motion.div>
                         </div>
-                    </div>
-                </section>
-
-                {/* Search Section */}
-                <section className={styles.section}>
-                    <div className={styles.container}>
-                        <motion.div
-                            className={styles.searchSection}
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            whileInView={{ opacity: 1, scale: 1 }}
-                            viewport={{ once: true }}
-                        >
-                            <div className={styles.searchContent}>
-                                <h3 className={styles.searchTitle}>원하는 정보를 바로 찾아보세요</h3>
-                                <p className={styles.searchDescription}>
-                                    게시판, 식단, 일정 등 키워드로 검색해 보세요.
-                                </p>
-                            </div>
-                            <div className={styles.searchInputWrapper}>
-                                <Search size={20} className={styles.searchIcon} />
-                                <input
-                                    type="text"
-                                    className={styles.searchInput}
-                                    placeholder="검색어를 입력하세요..."
-                                />
-                            </div>
-                        </motion.div>
                     </div>
                 </section>
             </main>

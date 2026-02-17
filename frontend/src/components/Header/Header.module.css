@@ -410,32 +410,3 @@
 .logoutButton:hover {
     background-color: var(--color-error-light);
 }
-
-.quickPins, .quickPinsMobile {
-    margin-top: var(--space-2);
-}
-
-.pinLabel {
-    display: flex;
-    align-items: center;
-    gap: var(--space-1);
-    font-size: var(--text-xs);
-    color: var(--color-text-muted);
-    margin-bottom: var(--space-2);
-}
-
-.pinChips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-2);
-}
-
-.pinChips a {
-    padding: var(--space-1) var(--space-2);
-    border-radius: var(--radius-full);
-    background: var(--color-bg-muted);
-    color: var(--color-text-primary);
-    text-decoration: none;
-    font-size: var(--text-sm);
-    border: 1px solid var(--color-border-light);
-}

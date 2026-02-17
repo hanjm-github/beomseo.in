@@ -8,8 +8,6 @@ import {
   User,
   ChevronDown,
   LogOut,
-  Search,
-  Star,
 } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
@@ -131,17 +129,6 @@ export default function Header() {
                             {child.label}
                           </Link>
                         ))}
-                        <div className={styles.quickPins}>
-                          <p className={styles.pinLabel}>
-                            <Star size={14} /> 즐겨찾는 메뉴
-                          </p>
-                          <div className={styles.pinChips}>
-                            <Link to="/notices/school">학교 공지</Link>
-                            <Link to="/community/free">자유</Link>
-                            <Link to="/school-info/meal">급식</Link>
-                            <Link to="/community/vote">투표</Link>
-                          </div>
-                        </div>
                       </div>
                     </div>
                   )}
@@ -161,9 +148,6 @@ export default function Header() {
         </nav>
 
         <div className={styles.actions}>
-          <button className={styles.iconButton} aria-label="전체 검색 열기">
-            <Search size={20} />
-          </button>
           <button
             onClick={toggleTheme}
             className={styles.iconButton}
@@ -244,17 +228,6 @@ export default function Header() {
               )}
             </div>
           ))}
-            <div className={styles.quickPinsMobile}>
-              <p className={styles.pinLabel}>
-                <Star size={14} /> 즐겨찾는 메뉴
-              </p>
-              <div className={styles.pinChips}>
-                <Link to="/notices/school">학교 공지</Link>
-                <Link to="/community/free">자유</Link>
-                <Link to="/school-info/meal">급식</Link>
-                <Link to="/community/vote">투표</Link>
-              </div>
-            </div>
         </nav>
       )}
     </header>

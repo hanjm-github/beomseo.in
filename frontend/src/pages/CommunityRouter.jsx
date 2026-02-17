@@ -1,5 +1,4 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
-import CommunityPage from './CommunityPage';
 import FreeBoardListView from './FreeBoard/FreeBoardListView';
 import FreeBoardDetailView from './FreeBoard/FreeBoardDetailView';
 import FreeBoardComposeView from './FreeBoard/FreeBoardComposeView';
@@ -26,7 +25,7 @@ import LostFoundComposeView from './LostFound/LostFoundComposeView';
 export default function CommunityRouter() {
   return (
     <Routes>
-      <Route index element={<CommunityPage />} />
+      <Route index element={<Navigate to="/community/free/" replace />} />
       <Route path="free" element={<FreeBoardListView />} />
       <Route path="free/new" element={<FreeBoardComposeView mode="create" />} />
       <Route path="free/:id" element={<FreeBoardDetailView />} />
@@ -51,7 +50,7 @@ export default function CommunityRouter() {
       <Route path="lost-found" element={<LostFoundListView />} />
       <Route path="lost-found/new" element={<LostFoundComposeView />} />
       <Route path="lost-found/:id" element={<LostFoundDetailView />} />
-      <Route path="*" element={<Navigate to="/community" replace />} />
+      <Route path="*" element={<Navigate to="/community/free/" replace />} />
     </Routes>
   );
 }
