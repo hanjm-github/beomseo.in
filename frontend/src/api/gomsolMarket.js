@@ -4,6 +4,7 @@ import {
   normalizeUploadResponse,
   toAbsoluteApiUrl,
 } from './normalizers';
+import { shouldUseMockFallback } from './mockPolicy';
 
 const PAGE_SIZE_DEFAULT = 12;
 const MAX_IMAGES = 5;
@@ -319,7 +320,8 @@ export const gomsolMarketApi = {
         ...normalized,
         items: (normalized.items || []).map(normalizePost),
       };
-    } catch {
+    } catch (err) {
+      if (!shouldUseMockFallback(err)) throw err;
       const mock = await mockList(params);
       return normalizePaginatedResponse(mock, PAGE_SIZE_DEFAULT);
     }
@@ -329,7 +331,8 @@ export const gomsolMarketApi = {
     try {
       const res = await api.get(`/api/community/gomsol-market/${id}`, { params });
       return normalizePost(res.data);
-    } catch {
+    } catch (err) {
+      if (!shouldUseMockFallback(err)) throw err;
       return mockDetail(id);
     }
   },
@@ -338,7 +341,8 @@ export const gomsolMarketApi = {
     try {
       const res = await api.post('/api/community/gomsol-market', payload);
       return normalizePost(res.data);
-    } catch {
+    } catch (err) {
+      if (!shouldUseMockFallback(err)) throw err;
       return mockCreate(payload);
     }
   },
@@ -347,7 +351,8 @@ export const gomsolMarketApi = {
     try {
       const res = await api.post(`/api/community/gomsol-market/${id}/approve`);
       return normalizePost(res.data);
-    } catch {
+    } catch (err) {
+      if (!shouldUseMockFallback(err)) throw err;
       return mockApprove(id);
     }
   },
@@ -356,7 +361,8 @@ export const gomsolMarketApi = {
     try {
       const res = await api.post(`/api/community/gomsol-market/${id}/unapprove`);
       return normalizePost(res.data);
-    } catch {
+    } catch (err) {
+      if (!shouldUseMockFallback(err)) throw err;
       return mockUnapprove(id);
     }
   },
@@ -365,7 +371,8 @@ export const gomsolMarketApi = {
     try {
       const res = await api.post(`/api/community/gomsol-market/${id}/status`, { status });
       return normalizePost(res.data);
-    } catch {
+    } catch (err) {
+      if (!shouldUseMockFallback(err)) throw err;
       return mockUpdateStatus(id, status);
     }
   },
@@ -380,7 +387,8 @@ export const gomsolMarketApi = {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       return normalizeUploadResponse(res.data);
-    } catch {
+    } catch (err) {
+      if (!shouldUseMockFallback(err)) throw err;
       return mockUpload(file);
     }
   },

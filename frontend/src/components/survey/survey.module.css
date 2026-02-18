@@ -1,4 +1,4 @@
-.pageHeader {
+﻿.pageHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -7,8 +7,8 @@
 }
 
 .hero {
-  background: linear-gradient(135deg, #eef2ff, #ecfeff);
-  border: 1px solid rgba(0, 0, 0, 0.04);
+  background: linear-gradient(135deg, var(--color-status-info-bg), var(--color-alert-info-bg));
+  border: 1px solid var(--color-card-border);
   border-radius: 18px;
   padding: 18px 20px;
   display: flex;
@@ -23,7 +23,7 @@
 
 .heroLeft p {
   margin: 0;
-  color: #4b5563;
+  color: var(--color-text-secondary);
 }
 
 .badgeRow {
@@ -34,20 +34,20 @@
 }
 
 .chip {
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-card-border);
   padding: 8px 12px;
   border-radius: 999px;
-  background: #fff;
+  background: var(--color-card-bg);
   cursor: pointer;
   transition: all 0.15s ease;
-  color: #374151;
+  color: var(--color-text-primary);
   font-weight: 500;
 }
 
 .chipActive {
-  border-color: #6366f1;
-  background: #eef2ff;
-  color: #4338ca;
+  border-color: var(--color-chart-1);
+  background: var(--color-status-info-bg);
+  color: var(--color-status-info-text);
 }
 
 .chipToggle {
@@ -66,18 +66,19 @@
   position: relative;
   padding: 16px;
   border-radius: 16px;
-  color: #0f172a;
+  color: var(--color-text-primary);
   overflow: hidden;
-  border: 1px solid rgba(15, 23, 42, 0.05);
-  background: #fff;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.03);
+  border: 1px solid var(--color-card-border);
+  background: var(--color-card-bg);
+  box-shadow: var(--shadow-sm);
   cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
 }
 
 .card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.06);
+  border-color: var(--color-card-border-hover);
+  box-shadow: var(--shadow-card-hover);
 }
 
 .cardHeader {
@@ -93,11 +94,12 @@
 }
 
 .tag {
-  background: rgba(255, 255, 255, 0.6);
+  background: var(--color-status-neutral-bg);
+  border: 1px solid var(--color-status-neutral-border);
   border-radius: 999px;
   padding: 4px 8px;
   font-size: 12px;
-  color: #0f172a;
+  color: var(--color-status-neutral-text);
 }
 
 .cardTitle {
@@ -108,7 +110,7 @@
 
 .cardDesc {
   margin: 0 0 12px;
-  color: #475467;
+  color: var(--color-text-secondary);
   min-height: 40px;
 }
 
@@ -117,32 +119,32 @@
   gap: 12px;
   align-items: center;
   flex-wrap: wrap;
-  color: #475467;
+  color: var(--color-text-secondary);
   font-size: 13px;
 }
 
 .progressWrap {
   width: 100%;
-  background: rgba(255, 255, 255, 0.6);
+  background: var(--color-form-bg-muted);
   border-radius: 999px;
   height: 8px;
   overflow: hidden;
-  border: 1px solid rgba(0, 0, 0, 0.04);
+  border: 1px solid var(--color-card-border-muted);
 }
 
 .progressBar {
   height: 100%;
   border-radius: 999px;
-  background: linear-gradient(90deg, #6366f1, #22d3ee);
+  background: linear-gradient(90deg, var(--color-chart-1), var(--color-chart-3));
 }
 
 .empty {
   text-align: center;
   padding: 32px;
-  color: #6b7280;
-  border: 1px dashed #e5e7eb;
+  color: var(--color-text-muted);
+  border: 1px dashed var(--color-card-border);
   border-radius: 12px;
-  background: #f8fafc;
+  background: var(--color-form-bg-muted);
 }
 
 .filters {
@@ -153,10 +155,11 @@
 }
 
 .select {
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-form-border);
   padding: 9px 12px;
   border-radius: 10px;
-  background: #fff;
+  background: var(--color-form-bg);
+  color: var(--color-form-text);
   font-weight: 500;
 }
 
@@ -171,15 +174,21 @@
 .search {
   width: 100%;
   max-width: 320px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-form-border);
   border-radius: 10px;
   padding: 10px 12px;
+  background: var(--color-form-bg);
+  color: var(--color-form-text);
+}
+
+.search::placeholder {
+  color: var(--color-form-placeholder);
 }
 
 .modalBackdrop {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.5);
+  background: var(--color-overlay-backdrop);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -187,13 +196,18 @@
 }
 
 .modal {
-  background: #fff;
+  background: var(--color-card-bg);
   width: min(960px, 90vw);
   max-height: 90vh;
   overflow: auto;
   border-radius: 16px;
   padding: 20px;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.12);
+  box-shadow: var(--shadow-xl);
+}
+
+.modalDescription {
+  color: var(--color-text-secondary);
+  margin-top: 0;
 }
 
 .modalHeader {
@@ -224,14 +238,14 @@
 
 .table th,
 .table td {
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-card-border);
   padding: 8px 10px;
 }
 
 .skeleton {
   height: 180px;
   border-radius: 14px;
-  background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+  background: linear-gradient(90deg, var(--color-form-bg-muted) 25%, var(--color-card-border) 50%, var(--color-form-bg-muted) 75%);
   background-size: 400% 100%;
   animation: shimmer 1.4s ease infinite;
 }
@@ -443,11 +457,11 @@
 }
 
 .chartCard {
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  background: var(--color-card-bg);
+  border: 1px solid var(--color-card-border);
   border-radius: 14px;
   padding: 14px 14px 16px;
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+  box-shadow: var(--shadow-card);
 }
 
 .chartHeader {
@@ -463,13 +477,13 @@
   text-transform: uppercase;
   font-size: 11px;
   letter-spacing: 0.08em;
-  color: #6b7280;
+  color: var(--color-text-muted);
 }
 
 .chartTitle {
   margin: 0 0 6px;
   font-size: 17px;
-  color: #0f172a;
+  color: var(--color-text-primary);
 }
 
 .chartMeta {
@@ -488,26 +502,26 @@
   border-radius: 999px;
   font-size: 12px;
   font-weight: 600;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-card-border);
 }
 
 .chartBadge {
-  background: #eef2ff;
-  color: #4338ca;
-  border-color: #c7d2fe;
+  background: var(--color-status-info-bg);
+  color: var(--color-status-info-text);
+  border-color: var(--color-status-info-border);
 }
 
 .chartBadgeMuted {
-  background: #f8fafc;
-  color: #94a3b8;
+  background: var(--color-form-bg-muted);
+  color: var(--color-text-muted);
 }
 
 .chartToggle {
   display: inline-flex;
   padding: 4px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-card-border);
   border-radius: 10px;
-  background: #f8fafc;
+  background: var(--color-form-bg-muted);
   gap: 4px;
 }
 
@@ -516,25 +530,25 @@
   background: transparent;
   padding: 6px 10px;
   border-radius: 8px;
-  color: #334155;
+  color: var(--color-text-secondary);
   font-weight: 600;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .toggleBtn:hover {
-  background: #e2e8f0;
+  background: var(--color-card-border-muted);
 }
 
 .toggleBtn:focus-visible {
-  outline: 2px solid #6366f1;
+  outline: 2px solid var(--color-chart-1);
   outline-offset: 1px;
 }
 
 .toggleActive {
-  background: linear-gradient(135deg, #6366f1, #22d3ee);
-  color: #fff;
-  box-shadow: 0 6px 14px rgba(79, 70, 229, 0.22);
+  background: linear-gradient(135deg, var(--color-chart-1), var(--color-chart-3));
+  color: var(--color-chip-text-active);
+  box-shadow: var(--shadow-md);
 }
 
 .chartBody {
@@ -542,12 +556,12 @@
 }
 
 .chartEmpty {
-  border: 1px dashed #e2e8f0;
+  border: 1px dashed var(--color-card-border-muted);
   border-radius: 10px;
   padding: 16px;
   text-align: center;
-  color: #94a3b8;
-  background: #f8fafc;
+  color: var(--color-text-muted);
+  background: var(--color-form-bg-muted);
 }
 
 .textList {
@@ -555,7 +569,7 @@
   padding-left: 16px;
   display: grid;
   gap: 8px;
-  color: #1f2937;
+  color: var(--color-text-primary);
 }
 
 .textList li {
@@ -576,7 +590,7 @@
   align-items: center;
   gap: 8px;
   font-size: 12px;
-  color: #334155;
+  color: var(--color-text-secondary);
 }
 
 .legendDot {
@@ -592,6 +606,28 @@
 }
 
 .legendValue {
-  color: #64748b;
+  color: var(--color-text-muted);
   font-weight: 600;
 }
+
+.previewCard {
+  margin-top: 16px;
+  border: 1px solid var(--color-card-border);
+  border-radius: 12px;
+  padding: 12px;
+  background: var(--color-card-bg);
+}
+
+.chipInfo {
+  background: var(--color-status-accent-bg);
+  color: var(--color-status-accent-text);
+  border-color: var(--color-status-accent-border);
+}
+
+.chipBonus {
+  background: var(--color-status-info-bg);
+  color: var(--color-status-info-text);
+  border-color: var(--color-status-info-border);
+}
+
+

@@ -176,7 +176,7 @@ export default function VoteListView() {
         </div>
       )}
 
-      <div className="list-toolbar" style={{ justifyContent: 'center' }}>
+      <div className="list-toolbar u-justify-center">
         <button
           className="btn btn-secondary"
           type="button"
@@ -199,7 +199,7 @@ export default function VoteListView() {
       </div>
 
       {loading ? (
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, color: 'var(--color-text-muted)' }}>
+        <div className="u-inline-flex-center-gap-2-muted">
           <Loader2 size={16} className="spin" />
           불러오는 중…
         </div>

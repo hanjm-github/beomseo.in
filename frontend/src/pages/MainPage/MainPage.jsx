@@ -1,5 +1,5 @@
 ﻿import { useEffect, useMemo, useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion as Motion } from 'framer-motion';
 import {
     Bell,
     MessageCircle,
@@ -48,7 +48,7 @@ export default function MainPage() {
                 });
                 setCountdownEvent(schoolRes.countdownEvent || null);
                 setCountdownLoadError(Boolean(schoolRes.fromMock));
-            } catch (err) {
+            } catch {
                 if (!cancelled) {
                     setError('공지 불러오기에 실패했습니다.');
                     setCountdownEvent(null);
@@ -89,8 +89,8 @@ export default function MainPage() {
             <main className={styles.main}>
                 {/* Hero Section */}
                 <section className={styles.hero}>
-                    <motion.div className={styles.heroContent} initial="hidden" animate="visible" variants={containerVariants}>
-                        <motion.div className={styles.heroText} variants={itemVariants}>
+                    <Motion.div className={styles.heroContent} initial="hidden" animate="visible" variants={containerVariants}>
+                        <Motion.div className={styles.heroText} variants={itemVariants}>
                             <span className={styles.heroLabel}>범서고등학교 학교 홈페이지</span>
                             <h1 className={styles.heroTitle}>
                                 <span className={styles.heroHighlight}>지혜로운 눈</span>으로 꿈을 이루고
@@ -111,9 +111,9 @@ export default function MainPage() {
                                     </Link>
                                 )}
                             </div>
-                        </motion.div>
+                        </Motion.div>
 
-                        <motion.div className={styles.heroWidget} variants={itemVariants}>
+                        <Motion.div className={styles.heroWidget} variants={itemVariants}>
                             {countdownLoadError ? (
                                 <div className={`${styles.countdownPlaceholder} ${styles.countdownError}`}>
                                     카운트다운을 불러오지 못했습니다.
@@ -126,8 +126,8 @@ export default function MainPage() {
                             ) : (
                                 <div className={styles.countdownPlaceholder}>예정된 행사가 없습니다.</div>
                             )}
-                        </motion.div>
-                    </motion.div>
+                        </Motion.div>
+                    </Motion.div>
 
                     {/* Decorative elements */}
                     <div className={styles.heroBg}>
@@ -139,7 +139,7 @@ export default function MainPage() {
                 {/* Quick Links Bento Grid */}
                 <section className={styles.section}>
                     <div className={styles.container}>
-                        <motion.div
+                        <Motion.div
                             className={styles.sectionHeader}
                             initial={{ opacity: 0, y: 20 }}
                             whileInView={{ opacity: 1, y: 0 }}
@@ -147,16 +147,16 @@ export default function MainPage() {
                         >
                             <h2 className={styles.sectionTitle}>바로가기</h2>
                             <p className={styles.sectionDescription}>자주 쓰는 메뉴로 한 번에 이동하세요.</p>
-                        </motion.div>
+                        </Motion.div>
 
-                        <motion.div
+                        <Motion.div
                             className={styles.quickLinks}
                             initial="hidden"
                             whileInView="visible"
                             viewport={{ once: true }}
                             variants={containerVariants}
                         >
-                            <motion.div variants={itemVariants} className={styles.quickLinkLarge}>
+                            <Motion.div variants={itemVariants} className={styles.quickLinkLarge}>
                                 <QuickLinkCard
                                     to="/notices/school"
                                     icon={Bell}
@@ -165,8 +165,8 @@ export default function MainPage() {
                                     variant="default"
                                     size="large"
                                 />
-                            </motion.div>
-                            <motion.div variants={itemVariants}>
+                            </Motion.div>
+                            <Motion.div variants={itemVariants}>
                                 <QuickLinkCard
                                     to="/community/free"
                                     icon={MessageCircle}
@@ -174,8 +174,8 @@ export default function MainPage() {
                                     description="범서고의 커뮤니티 공간"
                                     variant="accent"
                                 />
-                            </motion.div>
-                            <motion.div variants={itemVariants}>
+                            </Motion.div>
+                            <Motion.div variants={itemVariants}>
                                 <QuickLinkCard
                                     to="/school-info/calculator"
                                     icon={Calculator}
@@ -183,40 +183,40 @@ export default function MainPage() {
                                     description="학기별 성적 계산"
                                     variant="info"
                                 />
-                            </motion.div>
-                            <motion.div variants={itemVariants}>
+                            </Motion.div>
+                            <Motion.div variants={itemVariants}>
                                 <QuickLinkCard
                                     to="/school-info/meal"
                                     icon={Utensils}
                                     title="오늘의 급식"
                                     variant="success"
                                 />
-                            </motion.div>
-                            <motion.div variants={itemVariants}>
+                            </Motion.div>
+                            <Motion.div variants={itemVariants}>
                                 <QuickLinkCard
                                     to="/school-info/calendar"
                                     icon={Calendar}
                                     title="학교 일정"
                                     variant="warning"
                                 />
-                            </motion.div>
-                            <motion.div variants={itemVariants}>
+                            </Motion.div>
+                            <Motion.div variants={itemVariants}>
                                 <QuickLinkCard
                                     to="/gallery"
                                     icon={ImageIcon}
                                     title="갤러리"
                                     variant="default"
                                 />
-                            </motion.div>
-                            <motion.div variants={itemVariants}>
+                            </Motion.div>
+                            <Motion.div variants={itemVariants}>
                                 <QuickLinkCard
                                     to="/community/club-recruit"
                                     icon={Users}
                                     title="동아리"
                                     variant="default"
                                 />
-                            </motion.div>
-                        </motion.div>
+                            </Motion.div>
+                        </Motion.div>
                     </div>
                 </section>
 
@@ -225,7 +225,7 @@ export default function MainPage() {
                     <div className={styles.container}>
                         <div className={styles.twoColumn}>
                             {/* Announcements */}
-                            <motion.div
+                            <Motion.div
                                 className={styles.announcementsCard}
                                 initial={{ opacity: 0, y: 20 }}
                                 whileInView={{ opacity: 1, y: 0 }}
@@ -278,17 +278,17 @@ export default function MainPage() {
                                     더 보기
                                     <ChevronRight size={16} />
                                 </Link>
-                            </motion.div>
+                            </Motion.div>
 
                             {/* Meal Card */}
-                            <motion.div
+                            <Motion.div
                                 initial={{ opacity: 0, y: 20 }}
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true }}
                                 transition={{ delay: 0.1 }}
                             >
                                 <MealCard />
-                            </motion.div>
+                            </Motion.div>
                         </div>
                     </div>
                 </section>
@@ -296,3 +296,4 @@ export default function MainPage() {
         </div>
     );
 }
+

@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useReducer, useState } from 'react';
+﻿import { useEffect, useMemo, useReducer, useState } from 'react';
 import { useNavigate, useParams, useLocation, Link } from 'react-router-dom';
 import styles from '../../components/notices/notices.module.css';
 import Editor from '../../components/notices/Editor';
 import Attachments from '../../components/notices/Attachments';
 import { noticesApi } from '../../api/notices';
+import { sanitizeRichHtml, toPlainText } from '../../security/htmlSanitizer';
 import { useAuth } from '../../context/AuthContext';
 
 const VALID_CATEGORIES = ['school', 'council'];
@@ -91,7 +92,7 @@ export default function ComposeView({ mode = 'create' }) {
       try {
         const parsed = JSON.parse(saved);
         dispatch({ type: 'SET', payload: parsed });
-      } catch (e) {
+      } catch {
         /* ignore */
       }
     }
@@ -124,22 +125,24 @@ export default function ComposeView({ mode = 'create' }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    if (!state.title.trim() || !state.body.trim()) {
+    const sanitizedBody = sanitizeRichHtml(state.body);
+    if (!state.title.trim() || !toPlainText(sanitizedBody)) {
       setError('제목과 본문을 입력해주세요.');
       return;
     }
     setSubmitting(true);
     const payload = {
       ...state,
+      body: sanitizedBody,
       category,
-      summary: state.summary || state.body.replace(/<[^>]+>/g, '').slice(0, 120),
+      summary: state.summary || toPlainText(sanitizedBody).slice(0, 120),
     };
     try {
       const res =
         mode === 'edit' && id ? await noticesApi.update(id, payload) : await noticesApi.create(payload);
       localStorage.removeItem(draftKey);
       navigate(`/notices/${category}/${res.id}`, { replace: true });
-    } catch (err) {
+    } catch {
       setError('저장에 실패했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setSubmitting(false);

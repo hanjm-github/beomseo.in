@@ -10,7 +10,7 @@ function formatDate(value) {
   if (!value) return null;
   try {
     return new Date(value).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
-  } catch (e) {
+  } catch {
     return value;
   }
 }

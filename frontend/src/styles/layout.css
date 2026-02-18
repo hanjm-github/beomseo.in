@@ -1,5 +1,5 @@
 :root {
-  --app-shell-bg: var(--color-bg);
+  --app-shell-bg: var(--color-page-bg);
 }
 
 .app-shell {
@@ -14,9 +14,11 @@
 .app-main {
   flex: 1;
   width: 100%;
-  margin: 0 auto;
-  padding-top: calc(var(--header-height) + var(--space-6));
-  padding-inline: clamp(16px, 4vw, 32px);
+  padding-top: calc(var(--header-height) + var(--space-5));
+  padding-bottom: var(--space-8);
+  max-width: 100%;
+  margin: 0;
+  box-sizing: border-box;
 }
 
 .skip-link {
@@ -39,6 +41,6 @@
 @media (max-width: 639px) {
   .app-main {
     padding-top: calc(var(--header-height) + var(--space-4));
-    padding-bottom: var(--space-12);
+    padding-bottom: var(--space-10);
   }
 }

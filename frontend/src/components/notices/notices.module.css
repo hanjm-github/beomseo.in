@@ -1,4 +1,4 @@
-.toolbar {
+﻿.toolbar {
   display: flex;
   justify-content: space-between;
   gap: var(--space-3);
@@ -29,7 +29,7 @@
 
 .chipActive {
   background: linear-gradient(135deg, var(--color-primary-500), var(--color-accent-400));
-  color: #fff;
+  color: var(--color-chip-text-active);
   border-color: transparent;
 }
 
@@ -183,12 +183,12 @@
 
 .badge-warn {
   background: rgba(255, 158, 27, 0.16);
-  color: #b25c00;
+  color: var(--color-status-warning-text);
 }
 
 .badge-info {
   background: rgba(0, 184, 148, 0.14);
-  color: #008f73;
+  color: var(--color-status-success-text);
 }
 
 .badge-neutral {
@@ -472,7 +472,7 @@
 }
 
 .errorText {
-  color: #d64545;
+  color: var(--color-alert-danger-text);
   font-size: var(--text-sm);
 }
 
@@ -619,3 +619,5 @@
     grid-template-columns: 1fr;
   }
 }
+
+

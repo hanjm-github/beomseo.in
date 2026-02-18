@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Loader2, X } from 'lucide-react';
 import { gomsolMarketApi } from '../../api/gomsolMarket';
+import { toSafeOpenChatHref } from '../../security/urlPolicy';
 import { useAuth } from '../../context/AuthContext';
 import styles from '../../components/gomsolmarket/gomsolmarket.module.css';
 import '../page-shell.css';
@@ -37,6 +38,19 @@ export default function GomsolMarketComposeView() {
     }
 
     const queue = files.slice(0, remaining);
+    for (const file of queue) {
+      if (!file.type?.startsWith('image/')) {
+        setError('이미지 파일만 업로드할 수 있습니다.');
+        event.target.value = '';
+        return;
+      }
+      if (file.size > gomsolMarketApi.MAX_FILE_SIZE) {
+        setError('이미지는 10MB 이하만 업로드할 수 있습니다.');
+        event.target.value = '';
+        return;
+      }
+    }
+
     setUploading(true);
     setError('');
     try {
@@ -79,6 +93,9 @@ export default function GomsolMarketComposeView() {
     if (!studentId.trim() && !openChatUrl.trim() && !extraContact.trim()) {
       return '학번, 오픈채팅, 기타 연락 방법 중 최소 1개를 입력해주세요.';
     }
+    if (openChatUrl.trim() && !toSafeOpenChatHref(openChatUrl.trim())) {
+      return '오픈채팅 링크는 open.kakao.com 형식의 안전한 URL만 사용할 수 있습니다.';
+    }
     return '';
   };
 
@@ -95,6 +112,7 @@ export default function GomsolMarketComposeView() {
     setSubmitting(true);
     setError('');
     try {
+      const safeOpenChatUrl = openChatUrl.trim() ? toSafeOpenChatHref(openChatUrl.trim()) : '';
       const created = await gomsolMarketApi.create({
         title: title.trim(),
         description: description.trim(),
@@ -104,7 +122,7 @@ export default function GomsolMarketComposeView() {
         images,
         contact: {
           studentId: studentId.trim(),
-          openChatUrl: openChatUrl.trim(),
+          openChatUrl: safeOpenChatUrl || '',
           extra: extraContact.trim(),
         },
         author: {

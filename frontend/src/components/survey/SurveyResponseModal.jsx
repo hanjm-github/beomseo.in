@@ -11,15 +11,15 @@ export default function SurveyResponseModal({ survey, open, onClose, onSubmit, s
   };
 
   return (
-    <div className={styles.modalBackdrop} role="dialog" aria-modal="true">
+    <div className={styles.modalBackdrop} role="dialog" aria-modal="true" aria-busy={submitting}>
       <div className={styles.modal}>
         <div className={styles.modalHeader}>
           <h3>{survey?.title} 응답하기</h3>
-          <button className="btn btn-ghost" onClick={onClose}>
+          <button type="button" className="btn btn-ghost" onClick={onClose} disabled={submitting}>
             <X size={18} />
           </button>
         </div>
-        <p style={{ color: '#4b5563', marginTop: 0 }}>{survey?.description}</p>
+        <p className={styles.modalDescription}>{survey?.description}</p>
 
         <ReactFormGenerator
           data={survey?.formJson || []}

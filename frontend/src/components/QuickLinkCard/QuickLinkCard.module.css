@@ -1,4 +1,4 @@
-/* QuickLinkCard Styles */
+﻿/* QuickLinkCard Styles */
 
 .card {
     display: block;
@@ -72,18 +72,21 @@
 }
 
 .success .iconWrapper {
-    background: linear-gradient(135deg, var(--color-success-light), #ECFDF5);
-    color: var(--color-success);
+    background: var(--color-status-success-bg);
+    border: 1px solid var(--color-status-success-border);
+    color: var(--color-status-success-text);
 }
 
 .info .iconWrapper {
-    background: linear-gradient(135deg, var(--color-info-light), #EFF6FF);
-    color: var(--color-info);
+    background: var(--color-status-info-bg);
+    border: 1px solid var(--color-status-info-border);
+    color: var(--color-status-info-text);
 }
 
 .warning .iconWrapper {
-    background: linear-gradient(135deg, var(--color-warning-light), #FFFBEB);
-    color: var(--color-warning);
+    background: var(--color-status-warning-bg);
+    border: 1px solid var(--color-status-warning-border);
+    color: var(--color-status-warning-text);
 }
 
 /* Icon Wrapper */

@@ -1,6 +1,5 @@
 /**
- * Sign Up page component for 범서고등학교 website.
- * Registration is IP-restricted to Ulsan Education Office network.
+ * Sign Up page component for beomseo.in website.
  */
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';

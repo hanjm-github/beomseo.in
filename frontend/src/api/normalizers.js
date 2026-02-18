@@ -1,10 +1,14 @@
+import { toSafeAssetUrl } from '../security/urlPolicy';
 const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000').replace(/\/$/, '');
 
 export function toAbsoluteApiUrl(url) {
-  if (!url) return url;
-  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('blob:')) return url;
-  const prefix = url.startsWith('/') ? '' : '/';
-  return `${API_BASE_URL}${prefix}${url}`;
+  const safeUrl = toSafeAssetUrl(url);
+  if (!safeUrl) return '';
+  if (safeUrl.startsWith('http://') || safeUrl.startsWith('https://') || safeUrl.startsWith('blob:')) {
+    return safeUrl;
+  }
+  const prefix = safeUrl.startsWith('/') ? '' : '/';
+  return `${API_BASE_URL}${prefix}${safeUrl}`;
 }
 
 export function normalizePaginatedResponse(data, fallbackPageSize = 0) {

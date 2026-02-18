@@ -1,12 +1,9 @@
-:root {
-  --fb-chip-bg: var(--color-bg-muted);
-  --fb-chip-active: linear-gradient(135deg, var(--color-primary-500), var(--color-accent-400));
-  --fb-badge-info: #e7f1ff;
-  --fb-badge-chat: #fff4e6;
-  --fb-badge-qna: #e9f7ef;
-}
-
-.listShell {
+﻿.listShell {
+  --fb-chip-bg: var(--color-chip-bg);
+  --fb-chip-active: var(--color-chip-bg-active);
+  --fb-badge-info: var(--color-status-info-bg);
+  --fb-badge-chat: var(--color-status-warning-bg);
+  --fb-badge-qna: var(--color-status-success-bg);
   display: flex;
   flex-direction: column;
   gap: var(--space-5);
@@ -50,10 +47,10 @@
 }
 
 .chipActive {
-  background: var(--fb-chip-active);
-  color: #fff;
-  border-color: transparent;
   box-shadow: var(--shadow-md);
+  color: var(--color-chip-text-active);
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--color-primary-500), var(--color-accent-500));
 }
 
 .toolbar {
@@ -133,33 +130,37 @@
   border-radius: var(--radius-full);
   font-size: var(--text-xs);
   border: 1px solid transparent;
+  color: var(--color-text-primary);
 }
 
 .badgeChat {
   background: var(--fb-badge-chat);
-  border-color: #ffdebe;
+  border-color: var(--color-status-warning-border);
+  color: var(--color-status-warning-text);
 }
 
 .badgeInfo {
   background: var(--fb-badge-info);
-  border-color: #c7ddff;
+  border-color: var(--color-status-info-border);
+  color: var(--color-status-info-text);
 }
 
 .badgeQna {
   background: var(--fb-badge-qna);
-  border-color: #c8eed9;
+  border-color: var(--color-status-success-border);
+  color: var(--color-status-success-text);
 }
 
 .badgeHot {
-  background: #ffe8ef;
-  border-color: #ffb8ce;
-  color: #b00046;
+  background: var(--color-status-accent-bg);
+  border-color: var(--color-status-accent-border);
+  color: var(--color-status-accent-text);
 }
 
 .badgePending {
-  background: #fff4e5;
-  border-color: #ffd7a3;
-  color: #c67c00;
+  background: var(--color-status-warning-bg);
+  border-color: var(--color-status-warning-border);
+  color: var(--color-status-warning-text);
 }
 
 .cardTitle {
@@ -293,14 +294,14 @@
 .reactionButtonActive {
   border-color: transparent;
   background: linear-gradient(135deg, var(--color-primary-500), var(--color-accent-500));
-  color: #fff;
+  color: var(--color-chip-text-active);
   box-shadow: var(--shadow-md);
 }
 
 .reactionButtonActiveNegative {
-  border-color: #ffb8ce;
-  background: #ffe8ef;
-  color: #b00046;
+  border-color: var(--color-status-accent-border);
+  background: var(--color-status-accent-bg);
+  color: var(--color-status-accent-text);
 }
 
 .commentPanel {
@@ -322,7 +323,13 @@
   min-height: 100px;
   padding: var(--space-3);
   border-radius: var(--radius-lg);
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-form-border);
+  background: var(--color-form-bg);
+  color: var(--color-form-text);
+}
+
+.commentInput::placeholder {
+  color: var(--color-form-placeholder);
 }
 
 .commentList {
@@ -367,7 +374,7 @@
 }
 
 .errorText {
-  color: #d1433f;
+  color: var(--color-alert-danger-text);
   font-size: var(--text-sm);
 }
 
@@ -379,6 +386,7 @@
   0% {
     transform: rotate(0deg);
   }
+
   100% {
     transform: rotate(360deg);
   }
@@ -411,9 +419,9 @@
 }
 
 .danger {
-  background: #fff2f0;
-  color: #d1433f;
-  border-color: #f3c1be;
+  background: var(--color-alert-danger-bg);
+  color: var(--color-alert-danger-text);
+  border-color: var(--color-alert-danger-border);
 }
 
 @media (max-width: 900px) {

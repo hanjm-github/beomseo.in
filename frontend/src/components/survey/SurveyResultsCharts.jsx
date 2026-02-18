@@ -15,8 +15,22 @@ import {
 } from "recharts";
 import styles from "./survey.module.css";
 
-const donutPalette = ["#4f46e5", "#06b6d4", "#0ea5e9", "#14b8a6", "#6366f1", "#22c55e", "#0f172a"];
-const gradient = "linear-gradient(90deg, #6366f1, #22d3ee)";
+const donutPalette = [
+  "var(--color-chart-1)",
+  "var(--color-chart-2)",
+  "var(--color-chart-3)",
+  "var(--color-chart-4)",
+  "var(--color-chart-5)",
+  "var(--color-chart-6)",
+];
+const chartTooltipStyle = {
+  backgroundColor: "var(--color-card-bg)",
+  border: "1px solid var(--color-card-border)",
+  borderRadius: 10,
+  color: "var(--color-text-primary)",
+};
+const chartTooltipLabelStyle = { color: "var(--color-text-secondary)" };
+const chartTooltipItemStyle = { color: "var(--color-text-primary)" };
 
 const formatTooltip = (value, name, props) => {
   const pct = props?.payload?.pct ?? 0;
@@ -43,7 +57,7 @@ const renderDonutLabel = (props) => {
     <text
       x={x}
       y={y}
-      fill="#0f172a"
+      fill="var(--color-text-primary)"
       fontSize={12}
       textAnchor={textAnchor}
       dominantBaseline="middle"
@@ -89,6 +103,7 @@ export default function SurveyResultsCharts({ summary }) {
         const view = viewModes[q.id] || "bar";
         const info = computedData[q.id] || { total: 0, data: [] };
         const hasData = info.total > 0 && info.data.length > 0;
+        const barGradientId = `survey-bar-gradient-${q.id}`;
 
         return (
           <div key={q.id} className={styles.chartCard}>
@@ -126,18 +141,36 @@ export default function SurveyResultsCharts({ summary }) {
                 {view === "bar" ? (
                   <ResponsiveContainer width="100%" height={260}>
                     <BarChart data={info.data} layout="vertical" margin={{ left: 8, right: 8, top: 8, bottom: 8 }}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                      <defs>
+                        <linearGradient id={barGradientId} x1="0" y1="0" x2="1" y2="0">
+                          <stop offset="0%" stopColor="var(--color-chart-1)" />
+                          <stop offset="100%" stopColor="var(--color-chart-3)" />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-card-border-muted)" />
                       <XAxis type="number" hide domain={[0, "dataMax"]} />
                       <YAxis
                         type="category"
                         dataKey="label"
                         width={120}
-                        tick={{ fontSize: 12, fill: "#334155" }}
+                        tick={{ fontSize: 12, fill: "var(--color-text-secondary)" }}
                         tickFormatter={(v) => (v?.length > 18 ? `${v.slice(0, 18)}…` : v)}
                       />
-                      <Tooltip formatter={formatTooltip} cursor={{ fill: "#f8fafc" }} />
-                      <Bar dataKey="value" radius={[6, 6, 6, 6]} fill={gradient}>
-                        <LabelList dataKey="pct" position="insideRight" formatter={percentLabelFormatter} fill="#fff" fontSize={12} />
+                      <Tooltip
+                        formatter={formatTooltip}
+                        cursor={{ fill: "var(--color-form-bg-muted)" }}
+                        contentStyle={chartTooltipStyle}
+                        labelStyle={chartTooltipLabelStyle}
+                        itemStyle={chartTooltipItemStyle}
+                      />
+                      <Bar dataKey="value" radius={[6, 6, 6, 6]} fill={`url(#${barGradientId})`}>
+                        <LabelList
+                          dataKey="pct"
+                          position="insideRight"
+                          formatter={percentLabelFormatter}
+                          fill="var(--color-chip-text-active)"
+                          fontSize={12}
+                        />
                       </Bar>
                     </BarChart>
                   </ResponsiveContainer>
@@ -154,7 +187,7 @@ export default function SurveyResultsCharts({ summary }) {
                           paddingAngle={2}
                           isAnimationActive={false}
                           label={renderDonutLabel}
-                          labelLine={{ stroke: "#cbd5e1", strokeWidth: 1 }}
+                          labelLine={{ stroke: "var(--color-card-border)", strokeWidth: 1 }}
                         >
                           {info.data.map((entry, index) => (
                             <Cell key={`cell-${q.id}-${index}`} fill={donutPalette[index % donutPalette.length]} />
@@ -170,7 +203,7 @@ export default function SurveyResultsCharts({ summary }) {
                                   y={viewBox.cy}
                                   textAnchor="middle"
                                   dominantBaseline="middle"
-                                  fill="#0f172a"
+                                  fill="var(--color-text-primary)"
                                   fontSize={14}
                                   fontWeight={600}
                                 >
@@ -180,7 +213,12 @@ export default function SurveyResultsCharts({ summary }) {
                             }}
                           />
                         </Pie>
-                        <Tooltip formatter={formatTooltip} />
+                        <Tooltip
+                          formatter={formatTooltip}
+                          contentStyle={chartTooltipStyle}
+                          labelStyle={chartTooltipLabelStyle}
+                          itemStyle={chartTooltipItemStyle}
+                        />
                       </PieChart>
                     </ResponsiveContainer>
                     <ul className={styles.donutLegend}>

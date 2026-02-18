@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { CalendarDays, Eye, ShieldCheck, Store, UserRound } from 'lucide-react';
 import { gomsolMarketApi } from '../../api/gomsolMarket';
+import { toSafeExternalHref } from '../../security/urlPolicy';
 import { useAuth } from '../../context/AuthContext';
 import RoleName from '../../components/RoleName/RoleName';
 import styles from '../../components/gomsolmarket/gomsolmarket.module.css';
@@ -48,7 +49,12 @@ export default function GomsolMarketDetailView() {
       next.push({ label: '학번 연락', value: post.contact.studentId, type: 'text' });
     }
     if (post.contact.openChatUrl) {
-      next.push({ label: '오픈채팅', value: post.contact.openChatUrl, type: 'link' });
+      next.push({
+        label: '오픈채팅',
+        value: post.contact.openChatUrl,
+        safeHref: toSafeExternalHref(post.contact.openChatUrl),
+        type: 'link',
+      });
     }
     if (post.contact.extra) {
       next.push({ label: '기타 연락', value: post.contact.extra, type: 'text' });
@@ -209,8 +215,8 @@ export default function GomsolMarketDetailView() {
                   <li key={`${item.label}-${item.value}`} className={styles.contactItem}>
                     <span className={styles.contactLabel}>{item.label}</span>
                     <span className={styles.contactValue}>
-                      {item.type === 'link' ? (
-                        <a href={item.value} target="_blank" rel="noopener noreferrer">
+                      {item.type === 'link' && item.safeHref ? (
+                        <a href={item.safeHref} target="_blank" rel="noopener noreferrer">
                           {item.value}
                         </a>
                       ) : (

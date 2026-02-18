@@ -130,7 +130,7 @@ export default function SurveyExchangeComposePage() {
       </form>
 
       {preview ? (
-        <div style={{ marginTop: 16, border: '1px solid #e5e7eb', borderRadius: 12, padding: 12, background: '#fff' }}>
+        <div className={styles.previewCard}>
           <h4 style={{ marginTop: 0 }}>미리보기</h4>
           <ReactFormGenerator data={formJson} answer_data={[]} />
         </div>

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+﻿import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { CheckCircle2, Loader2, Lock, Vote as VoteIcon } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -83,7 +83,7 @@ export default function VoteDetailView() {
 
   if (loading) {
     return (
-      <div className="page-shell" style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+      <div className="page-shell u-inline-flex-center-gap-2">
         <Loader2 size={18} className="spin" />
         불러오는 중…
       </div>
@@ -107,7 +107,7 @@ export default function VoteDetailView() {
     <div className="page-shell">
       <div className={styles.detailShell}>
         <div className={styles.detailHeader}>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+          <div className="u-flex-wrap-gap-2">
             <span className={`${styles.statusBadge} ${post.status === 'open' ? styles.statusOpen : styles.statusClosed}`}>
               {post.status === 'open' ? '진행중' : '마감'}
             </span>
@@ -194,3 +194,4 @@ export default function VoteDetailView() {
     </div>
   );
 }
+

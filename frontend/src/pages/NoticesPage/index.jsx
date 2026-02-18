@@ -6,7 +6,6 @@ import DetailView from './DetailView';
 import ComposeView from './ComposeView';
 import '../page-shell.css';
 import { useAuth } from '../../context/AuthContext';
-import styles from '../../components/notices/notices.module.css';
 
 const tabs = [
   { key: 'school', label: '학교 공지', path: '/notices/school' },

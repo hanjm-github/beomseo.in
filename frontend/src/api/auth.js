@@ -2,10 +2,13 @@
  * Auth API utilities with axios interceptors for JWT handling.
  */
 import axios from 'axios';
+import tokenStore from '../security/tokenStore';
 
 // API base URL - Flask backend
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 const ISO_DATETIME_WITHOUT_TZ_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?$/;
+export const AUTH_EXPIRED_EVENT = 'auth:expired';
+let refreshPromise = null;
 
 // Create axios instance
 const api = axios.create({
@@ -13,7 +16,7 @@ const api = axios.create({
     headers: {
         'Content-Type': 'application/json',
     },
-    withCredentials: true,
+    withCredentials: false,
 });
 
 function normalizeUtcDateString(value) {
@@ -36,10 +39,29 @@ function normalizeResponseDates(payload) {
     return normalizeUtcDateString(payload);
 }
 
+function emitAuthExpired(reason = 'session_expired') {
+    if (typeof window === 'undefined') return;
+    window.dispatchEvent(
+        new CustomEvent(AUTH_EXPIRED_EVENT, {
+            detail: { reason },
+        })
+    );
+}
+
+function shouldSkipRefresh(requestUrl = '') {
+    const authPaths = [
+        '/api/auth/login',
+        '/api/auth/register',
+        '/api/auth/refresh',
+        '/api/auth/logout',
+    ];
+    return authPaths.some((path) => requestUrl.includes(path));
+}
+
 // Request interceptor - add JWT token to requests
 api.interceptors.request.use(
     (config) => {
-        const token = localStorage.getItem('access_token');
+        const token = tokenStore.getAccessToken();
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
@@ -59,45 +81,73 @@ api.interceptors.response.use(
         return response;
     },
     async (error) => {
-        const originalRequest = error.config;
+        const originalRequest = error?.config || {};
+        const requestUrl = originalRequest.url || '';
+        const status = error?.response?.status;
+        const errorCode = error?.response?.data?.error_code;
 
-        // If 401 and not already retrying
-        if (error.response?.status === 401 && !originalRequest._retry) {
-            // Check if it's a token expiry error
-            if (error.response?.data?.error_code === 'token_expired') {
-                originalRequest._retry = true;
-
-                try {
-                    const refreshToken = localStorage.getItem('refresh_token');
-                    if (refreshToken) {
-                        const response = await axios.post(
-                            `${API_BASE_URL}/api/auth/refresh`,
-                            {},
-                            {
-                                headers: {
-                                    Authorization: `Bearer ${refreshToken}`,
-                                },
-                            }
-                        );
-
-                        const { access_token } = response.data;
-                        localStorage.setItem('access_token', access_token);
-
-                        // Retry original request with new token
-                        originalRequest.headers.Authorization = `Bearer ${access_token}`;
-                        return api(originalRequest);
-                    }
-                } catch (refreshError) {
-                    // Refresh failed - clear tokens and redirect to login
-                    localStorage.removeItem('access_token');
-                    localStorage.removeItem('refresh_token');
-                    window.location.href = '/login';
-                    return Promise.reject(refreshError);
-                }
-            }
+        if (status !== 401) {
+            return Promise.reject(error);
         }
 
-        return Promise.reject(error);
+        if (shouldSkipRefresh(requestUrl) || originalRequest._retry) {
+            if (!requestUrl.includes('/api/auth/login') && !requestUrl.includes('/api/auth/register')) {
+                tokenStore.clearTokens();
+                emitAuthExpired('unauthorized');
+            }
+            return Promise.reject(error);
+        }
+
+        if (errorCode !== 'token_expired') {
+            tokenStore.clearTokens();
+            emitAuthExpired('unauthorized');
+            return Promise.reject(error);
+        }
+
+        const refreshToken = tokenStore.getRefreshToken();
+        if (!refreshToken) {
+            tokenStore.clearTokens();
+            emitAuthExpired('missing_refresh_token');
+            return Promise.reject(error);
+        }
+
+        originalRequest._retry = true;
+
+        try {
+            if (!refreshPromise) {
+                refreshPromise = axios
+                    .post(
+                        `${API_BASE_URL}/api/auth/refresh`,
+                        {},
+                        {
+                            headers: {
+                                Authorization: `Bearer ${refreshToken}`,
+                            },
+                            withCredentials: false,
+                        }
+                    )
+                    .then((response) => {
+                        const accessToken = response?.data?.access_token;
+                        if (!accessToken) {
+                            throw new Error('Access token was not returned from refresh endpoint.');
+                        }
+                        tokenStore.setAccessToken(accessToken);
+                        return accessToken;
+                    })
+                    .finally(() => {
+                        refreshPromise = null;
+                    });
+            }
+
+            const accessToken = await refreshPromise;
+            originalRequest.headers = originalRequest.headers || {};
+            originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+            return api(originalRequest);
+        } catch (refreshError) {
+            tokenStore.clearTokens();
+            emitAuthExpired('refresh_failed');
+            return Promise.reject(refreshError);
+        }
     }
 );
 

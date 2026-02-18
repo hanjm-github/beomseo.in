@@ -4,6 +4,7 @@ import { Bookmark, BookmarkCheck, Heart, ThumbsDown, Eye, MessageCircle, ArrowLe
 import styles from '../../components/freeboard/freeboard.module.css';
 import { communityApi } from '../../api/community';
 import FreeCommentsPanel from '../../components/freeboard/FreeCommentsPanel';
+import SafeHtml from '../../components/security/SafeHtml';
 import '../page-shell.css';
 import { useAuth } from '../../context/AuthContext';
 import RoleName from '../../components/RoleName/RoleName';
@@ -183,7 +184,7 @@ export default function FreeBoardDetailView() {
           </div>
         </div>
 
-        <div className={styles.detailBody} dangerouslySetInnerHTML={{ __html: post.body || '' }} />
+        <SafeHtml className={styles.detailBody} html={post.body || ''} />
 
         <FreeCommentsPanel postId={post.id} currentUser={user} isAuthenticated={isAuthenticated} />
       </div>

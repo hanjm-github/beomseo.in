@@ -16,10 +16,12 @@ export default function RoleName({
   showPrefix = true,
   size = 'md',
   className,
-  as: Component = 'span',
+  as = 'span',
   prefixOverride,
   ellipsis = false,
 }) {
+  const Component = as;
+
   const { displayPrefix, ariaLabel, roleClassName, safeNickname } = getRoleDisplay({
     role,
     nickname,

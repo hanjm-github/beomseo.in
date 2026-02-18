@@ -58,6 +58,21 @@
   --color-surface-hover: var(--color-neutral-100);
   --color-surface-muted: #f7f7fa;
   --color-surface-contrast: #111827;
+  --color-page-bg: var(--color-bg);
+  --color-page-bg-alt: var(--color-bg-muted);
+  --color-page-bg-elevated: var(--color-bg-elevated);
+  --color-page-overlay: rgba(255, 255, 255, 0.55);
+  --color-card-bg: var(--color-surface);
+  --color-card-border: var(--color-border);
+  --color-card-border-muted: var(--color-border-light);
+  --color-card-border-hover: var(--color-primary-300);
+  --color-card-highlight-bg: var(--color-primary-50);
+  --color-card-highlight-fg: var(--color-primary-700);
+  --color-chip-bg: var(--color-bg-muted);
+  --color-chip-bg-active: var(--gradient-primary);
+  --color-chip-border: var(--color-border);
+  --color-chip-text: var(--color-text-primary);
+  --color-chip-text-active: #FFFFFF;
   
   --color-text-primary: var(--color-neutral-900);
   --color-text-secondary: var(--color-neutral-600);
@@ -67,6 +82,85 @@
   --color-border: var(--color-neutral-200);
   --color-border-light: var(--color-neutral-100);
   --color-divider: var(--color-neutral-200);
+  --color-focus-ring: rgba(46, 125, 92, 0.35);
+  --color-overlay-backdrop: rgba(13, 17, 23, 0.45);
+
+  /* Form & control semantics */
+  --color-form-bg: var(--color-surface);
+  --color-form-bg-muted: var(--color-bg-muted);
+  --color-form-border: var(--color-border);
+  --color-form-border-hover: var(--color-neutral-300);
+  --color-form-border-focus: var(--color-primary-500);
+  --color-form-text: var(--color-text-primary);
+  --color-form-placeholder: var(--color-text-muted);
+
+  /* Interaction semantics */
+  --color-interactive-primary-bg: var(--color-primary-500);
+  --color-interactive-primary-bg-hover: var(--color-primary-600);
+  --color-interactive-primary-text: #FFFFFF;
+  --color-interactive-secondary-bg: var(--color-bg-muted);
+  --color-interactive-secondary-bg-hover: var(--color-neutral-200);
+  --color-interactive-secondary-border: var(--color-border);
+  --color-interactive-secondary-text: var(--color-text-primary);
+  --color-interactive-ghost-bg-hover: var(--color-bg-muted);
+  --color-interactive-ghost-text: var(--color-text-primary);
+
+  /* Status badge semantics */
+  --color-status-info-bg: var(--color-info-light);
+  --color-status-info-border: #b6e3ff;
+  --color-status-info-text: #0b77c5;
+  --color-status-success-bg: var(--color-success-light);
+  --color-status-success-border: #bdebdc;
+  --color-status-success-text: #0c6a45;
+  --color-status-warning-bg: var(--color-warning-light);
+  --color-status-warning-border: #ffd8a3;
+  --color-status-warning-text: #7a4b00;
+  --color-status-danger-bg: var(--color-error-light);
+  --color-status-danger-border: #f3c1be;
+  --color-status-danger-text: #b42318;
+  --color-status-neutral-bg: var(--color-bg-muted);
+  --color-status-neutral-border: var(--color-border);
+  --color-status-neutral-text: var(--color-text-secondary);
+  --color-status-accent-bg: var(--color-accent-100);
+  --color-status-accent-border: var(--color-accent-200);
+  --color-status-accent-text: var(--color-accent-700);
+
+  /* Alert semantics */
+  --color-alert-info-bg: var(--color-info-light);
+  --color-alert-info-border: #bae6fd;
+  --color-alert-info-text: #0c4a6e;
+  --color-alert-success-bg: var(--color-success-light);
+  --color-alert-success-border: #bdebdc;
+  --color-alert-success-text: #07513e;
+  --color-alert-warning-bg: var(--color-warning-light);
+  --color-alert-warning-border: #ffd8a3;
+  --color-alert-warning-text: #b96b00;
+  --color-alert-danger-bg: var(--color-error-light);
+  --color-alert-danger-border: #f2b8b5;
+  --color-alert-danger-text: #b42318;
+
+  /* Chart semantics */
+  --color-chart-1: var(--color-primary-500);
+  --color-chart-2: var(--color-accent-500);
+  --color-chart-3: var(--color-info);
+  --color-chart-4: var(--color-warning);
+  --color-chart-5: var(--color-success);
+  --color-chart-6: var(--color-neutral-500);
+  --gradient-chart-fill: linear-gradient(90deg, var(--color-chart-1), var(--color-chart-3));
+  --gradient-skeleton: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+
+  /* Legacy alias bridge (cleanup-safe migration) */
+  --bg-primary: var(--color-page-bg);
+  --bg-secondary: var(--color-page-bg-alt);
+  --surface-default: var(--color-form-bg);
+  --surface-elevated: var(--color-page-bg-elevated);
+  --accent-primary: var(--color-interactive-primary-bg);
+  --accent-hover: var(--color-interactive-primary-bg-hover);
+  --border-default: var(--color-form-border);
+  --border-subtle: var(--color-card-border-muted);
+  --text-primary: var(--color-text-primary);
+  --text-secondary: var(--color-text-secondary);
+  --text-muted: var(--color-text-muted);
   
   /* ===== TYPOGRAPHY ===== */
   --font-display: 'Pretendard Variable', 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI', sans-serif;
@@ -152,6 +246,7 @@
   --gradient-hero: radial-gradient(circle at 20% 20%, rgba(46, 125, 92, 0.18), transparent 30%),
                    radial-gradient(circle at 80% 0%, rgba(194, 24, 91, 0.18), transparent 35%),
                    linear-gradient(120deg, rgba(12, 18, 30, 0.05), rgba(12, 18, 30, 0));
+  --gradient-glass: linear-gradient(180deg, rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0.5));
   --glass-overlay: rgba(255, 255, 255, 0.65);
 
   /* ===== ROLE DISPLAY TOKENS ===== */
@@ -197,6 +292,21 @@
   --color-surface-hover: #21262D;
   --color-surface-muted: #1d222b;
   --color-surface-contrast: #F0F6FC;
+  --color-page-bg: var(--color-bg);
+  --color-page-bg-alt: #10161f;
+  --color-page-bg-elevated: var(--color-bg-elevated);
+  --color-page-overlay: rgba(16, 22, 30, 0.72);
+  --color-card-bg: var(--color-surface);
+  --color-card-border: var(--color-border);
+  --color-card-border-muted: var(--color-border-light);
+  --color-card-border-hover: var(--color-primary-500);
+  --color-card-highlight-bg: rgba(46, 125, 92, 0.18);
+  --color-card-highlight-fg: var(--color-primary-200);
+  --color-chip-bg: rgba(255, 255, 255, 0.06);
+  --color-chip-bg-active: var(--gradient-primary);
+  --color-chip-border: var(--color-border);
+  --color-chip-text: var(--color-text-primary);
+  --color-chip-text-active: #FFFFFF;
   
   --color-text-primary: #F0F6FC;
   --color-text-secondary: #8B949E;
@@ -206,6 +316,67 @@
   --color-border: #30363D;
   --color-border-light: #21262D;
   --color-divider: #30363D;
+  --color-focus-ring: rgba(66, 160, 122, 0.5);
+  --color-overlay-backdrop: rgba(6, 10, 16, 0.68);
+
+  --color-form-bg: var(--color-surface);
+  --color-form-bg-muted: rgba(255, 255, 255, 0.04);
+  --color-form-border: var(--color-border);
+  --color-form-border-hover: #48515a;
+  --color-form-border-focus: var(--color-primary-400);
+  --color-form-text: var(--color-text-primary);
+  --color-form-placeholder: var(--color-text-muted);
+
+  --color-interactive-primary-bg: var(--color-primary-500);
+  --color-interactive-primary-bg-hover: var(--color-primary-400);
+  --color-interactive-primary-text: #FFFFFF;
+  --color-interactive-secondary-bg: rgba(255, 255, 255, 0.06);
+  --color-interactive-secondary-bg-hover: rgba(255, 255, 255, 0.11);
+  --color-interactive-secondary-border: var(--color-border);
+  --color-interactive-secondary-text: var(--color-text-primary);
+  --color-interactive-ghost-bg-hover: rgba(255, 255, 255, 0.08);
+  --color-interactive-ghost-text: var(--color-text-primary);
+
+  --color-status-info-bg: rgba(34, 211, 238, 0.16);
+  --color-status-info-border: rgba(125, 211, 252, 0.38);
+  --color-status-info-text: #93c5fd;
+  --color-status-success-bg: rgba(16, 185, 129, 0.18);
+  --color-status-success-border: rgba(16, 185, 129, 0.4);
+  --color-status-success-text: #6ee7b7;
+  --color-status-warning-bg: rgba(245, 158, 11, 0.2);
+  --color-status-warning-border: rgba(251, 191, 36, 0.42);
+  --color-status-warning-text: #fde68a;
+  --color-status-danger-bg: rgba(239, 68, 68, 0.2);
+  --color-status-danger-border: rgba(248, 113, 113, 0.45);
+  --color-status-danger-text: #fecaca;
+  --color-status-neutral-bg: rgba(255, 255, 255, 0.08);
+  --color-status-neutral-border: var(--color-border);
+  --color-status-neutral-text: var(--color-text-secondary);
+  --color-status-accent-bg: rgba(216, 66, 128, 0.2);
+  --color-status-accent-border: rgba(216, 66, 128, 0.45);
+  --color-status-accent-text: #f5b4cf;
+
+  --color-alert-info-bg: rgba(59, 130, 246, 0.16);
+  --color-alert-info-border: rgba(59, 130, 246, 0.4);
+  --color-alert-info-text: #bfdbfe;
+  --color-alert-success-bg: rgba(16, 185, 129, 0.18);
+  --color-alert-success-border: rgba(16, 185, 129, 0.4);
+  --color-alert-success-text: #a7f3d0;
+  --color-alert-warning-bg: rgba(245, 158, 11, 0.2);
+  --color-alert-warning-border: rgba(245, 158, 11, 0.42);
+  --color-alert-warning-text: #fef3c7;
+  --color-alert-danger-bg: rgba(239, 68, 68, 0.2);
+  --color-alert-danger-border: rgba(239, 68, 68, 0.4);
+  --color-alert-danger-text: #fecaca;
+
+  --color-chart-1: var(--color-primary-300);
+  --color-chart-2: var(--color-accent-300);
+  --color-chart-3: #22d3ee;
+  --color-chart-4: #fbbf24;
+  --color-chart-5: #34d399;
+  --color-chart-6: #94a3b8;
+  --gradient-chart-fill: linear-gradient(90deg, var(--color-chart-1), var(--color-chart-3));
+  --gradient-skeleton: linear-gradient(90deg, #202833 25%, #2b3542 50%, #202833 75%);
   
   /* Adjusted shadows for dark mode */
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.4);
@@ -218,7 +389,20 @@
   --gradient-hero: radial-gradient(circle at 25% 20%, rgba(66, 160, 122, 0.24), transparent 32%),
                    radial-gradient(circle at 80% 10%, rgba(216, 66, 128, 0.2), transparent 36%),
                    linear-gradient(120deg, rgba(13, 17, 23, 0.7), rgba(13, 17, 23, 0.9));
+  --gradient-glass: linear-gradient(180deg, rgba(16, 22, 30, 0.68), rgba(16, 22, 30, 0.82));
   --glass-overlay: rgba(16, 22, 30, 0.75);
+
+  --bg-primary: var(--color-page-bg);
+  --bg-secondary: var(--color-page-bg-alt);
+  --surface-default: var(--color-form-bg);
+  --surface-elevated: var(--color-page-bg-elevated);
+  --accent-primary: var(--color-interactive-primary-bg);
+  --accent-hover: var(--color-interactive-primary-bg-hover);
+  --border-default: var(--color-form-border);
+  --border-subtle: var(--color-card-border-muted);
+  --text-primary: var(--color-text-primary);
+  --text-secondary: var(--color-text-secondary);
+  --text-muted: var(--color-text-muted);
 }
 
 /* ===== MEDIA QUERIES (Reference) ===== */

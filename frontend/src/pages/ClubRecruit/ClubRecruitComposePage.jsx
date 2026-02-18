@@ -2,8 +2,11 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { clubRecruitApi } from '../../api/clubRecruit';
 import Editor from '../../components/notices/Editor';
+import { sanitizeRichHtml } from '../../security/htmlSanitizer';
 import '../page-shell.css';
 import styles from './ClubRecruitComposePage.module.css';
+
+const MAX_IMAGE_UPLOAD_SIZE = 10 * 1024 * 1024;
 
 export default function ClubRecruitComposePage() {
   const navigate = useNavigate();
@@ -26,6 +29,14 @@ export default function ClubRecruitComposePage() {
   // Poster upload (sets posterUrl + preview)
   const handlePosterUpload = async (file) => {
     if (!file) return;
+    if (!file.type?.startsWith('image/')) {
+      setError('이미지 파일만 업로드할 수 있습니다.');
+      return;
+    }
+    if (file.size > MAX_IMAGE_UPLOAD_SIZE) {
+      setError('이미지는 10MB 이하만 업로드할 수 있습니다.');
+      return;
+    }
     setUploading(true);
     setError('');
     try {
@@ -40,6 +51,12 @@ export default function ClubRecruitComposePage() {
 
   // Editor image upload (does not overwrite posterUrl)
   const handleEditorImageUpload = async (file) => {
+    if (!file?.type?.startsWith('image/')) {
+      throw new Error('이미지 파일만 업로드할 수 있습니다.');
+    }
+    if (file.size > MAX_IMAGE_UPLOAD_SIZE) {
+      throw new Error('이미지는 10MB 이하만 업로드할 수 있습니다.');
+    }
     return clubRecruitApi.upload(file);
   };
 
@@ -52,6 +69,7 @@ export default function ClubRecruitComposePage() {
     setSubmitting(true);
     setError('');
     try {
+      const safeBody = sanitizeRichHtml(form.body);
       await clubRecruitApi.create({
         clubName: form.clubName,
         field: form.field,
@@ -59,7 +77,7 @@ export default function ClubRecruitComposePage() {
         applyPeriod: { start: form.applyStart, end: form.applyEnd || null },
         extraNote: form.extraNote,
         posterUrl: form.posterUrl,
-        body: form.body,
+        body: safeBody,
       });
       navigate('/community/club-recruit');
     } catch (err) {

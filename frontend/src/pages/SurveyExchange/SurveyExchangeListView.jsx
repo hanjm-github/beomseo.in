@@ -47,30 +47,32 @@ export default function SurveyExchangeListView() {
   // fetch list
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
-
-    surveyApi
-      .list({
-        sort,
-        q: search,
-        onlyMine,
-        hideAnswered,
-        page,
-        pageSize: PAGE_SIZE,
-      })
-      .then((res) => {
-        if (cancelled) return;
-        setData(res);
-      })
-      .catch(() => {
-        if (!cancelled) setData({ items: [], total: 0 });
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
+    const timer = setTimeout(() => {
+      setLoading(true);
+      surveyApi
+        .list({
+          sort,
+          q: search,
+          onlyMine,
+          hideAnswered,
+          page,
+          pageSize: PAGE_SIZE,
+        })
+        .then((res) => {
+          if (cancelled) return;
+          setData(res);
+        })
+        .catch(() => {
+          if (!cancelled) setData({ items: [], total: 0 });
+        })
+        .finally(() => {
+          if (!cancelled) setLoading(false);
+        });
+    }, 0);
 
     return () => {
       cancelled = true;
+      clearTimeout(timer);
     };
   }, [sort, search, onlyMine, hideAnswered, page]);
 
@@ -79,9 +81,25 @@ export default function SurveyExchangeListView() {
     surveyApi.credits().then(setCredits).catch(() => setCredits(null));
   }, []);
 
-  useEffect(() => {
+  const handleSortChange = (nextSort) => {
+    setSort(nextSort);
     setPage(1);
-  }, [sort, search, onlyMine, hideAnswered]);
+  };
+
+  const handleSearchChange = (nextSearch) => {
+    setSearch(nextSearch);
+    setPage(1);
+  };
+
+  const handleToggleOnlyMine = () => {
+    setOnlyMine((v) => !v);
+    setPage(1);
+  };
+
+  const handleToggleHideAnswered = () => {
+    setHideAnswered((v) => !v);
+    setPage(1);
+  };
 
   const handleOpen = (survey) => {
     navigate(`/community/survey/${survey.id}`);
@@ -107,14 +125,14 @@ export default function SurveyExchangeListView() {
           <p>응답을 하면 내 설문에 받을 수 있는 응답이 5개씩 늘어납니다.</p>
           <SurveyCreditBadge credits={credits} />
         </div>
-        <div className={styles.badgeRow} style={{ justifyContent: 'flex-end', alignItems: 'flex-start' }}>
+        <div className={`${styles.badgeRow} u-flex-end-start`}>
           <span className={`${styles.chip} ${styles.chipActive}`}><Sparkles size={14} />승인 시 응답권 +30</span>
         </div>
       </div>
 
       <div className={styles.toolbar}>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <select className={styles.select} value={sort} onChange={(e) => setSort(e.target.value)}>
+        <div className="u-flex-center-gap-2">
+          <select className={styles.select} value={sort} onChange={(e) => handleSortChange(e.target.value)}>
             {SORT_OPTIONS.map((opt) => (
               <option key={opt.key} value={opt.key}>
                 {opt.label}
@@ -125,8 +143,8 @@ export default function SurveyExchangeListView() {
             <input
               type="checkbox"
               checked={onlyMine}
-              onChange={() => setOnlyMine((v) => !v)}
-              style={{ accentColor: '#6366f1' }}
+              onChange={handleToggleOnlyMine}
+              style={{ accentColor: 'var(--color-chart-1)' }}
             />
             내 설문만
           </label>
@@ -134,8 +152,8 @@ export default function SurveyExchangeListView() {
             <input
               type="checkbox"
               checked={hideAnswered}
-              onChange={() => setHideAnswered((v) => !v)}
-              style={{ accentColor: '#6366f1' }}
+              onChange={handleToggleHideAnswered}
+              style={{ accentColor: 'var(--color-chart-1)' }}
             />
             내가 응답한 설문 숨기기
           </label>
@@ -144,7 +162,7 @@ export default function SurveyExchangeListView() {
           className={styles.search}
           placeholder="검색 (제목, 태그)"
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => handleSearchChange(e.target.value)}
         />
       </div>
 
@@ -170,7 +188,7 @@ export default function SurveyExchangeListView() {
         </div>
       )}
 
-      <div className="list-toolbar" style={{ justifyContent: 'center', marginTop: '16px' }}>
+      <div className="list-toolbar u-justify-center u-mt-4">
         <button className="btn btn-secondary" disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>
           이전
         </button>
@@ -187,7 +205,7 @@ export default function SurveyExchangeListView() {
       </div>
 
       {loading ? (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10, color: '#6b7280' }}>
+        <div className="u-flex-center-gap-2 u-mt-3 u-text-muted">
           <Loader2 size={16} className="spin" /> 불러오는 중…
         </div>
       ) : null}

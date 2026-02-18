@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+﻿import { useEffect, useState, useCallback } from "react";
 import { MessageSquare, Trash2, Loader2 } from "lucide-react";
 import { subjectChangesApi } from "../../api/subjectChanges";
 import { useAuth } from "../../context/AuthContext";
@@ -19,7 +19,7 @@ export default function SubjectComments({ postId }) {
       const res = await subjectChangesApi.listComments(postId, { page: 1, pageSize: 100, order: "asc" });
       setItems(res.items || []);
       setError("");
-    } catch (err) {
+    } catch {
       setError("댓글을 불러오지 못했습니다.");
     } finally {
       setLoading(false);
@@ -52,7 +52,7 @@ export default function SubjectComments({ postId }) {
     try {
       await subjectChangesApi.deleteComment(postId, commentId);
       setItems((prev) => prev.filter((c) => c.id !== commentId));
-    } catch (err) {
+    } catch {
       setError("댓글 삭제에 실패했습니다.");
     }
   };

@@ -17,7 +17,7 @@ export default function FreeCommentsPanel({ postId, currentUser, isAuthenticated
       const res = await communityApi.listComments(postId, { page: 1, pageSize: 50 });
       setItems(res.items || []);
       setError('');
-    } catch (err) {
+    } catch {
       setError('댓글을 불러오지 못했습니다.');
     } finally {
       setLoading(false);
@@ -37,7 +37,7 @@ export default function FreeCommentsPanel({ postId, currentUser, isAuthenticated
       setItems((prev) => [...prev, res]);
       setBody('');
       setError('');
-    } catch (err) {
+    } catch {
       setError('댓글 작성에 실패했습니다.');
     } finally {
       setPosting(false);
@@ -49,7 +49,7 @@ export default function FreeCommentsPanel({ postId, currentUser, isAuthenticated
     try {
       await communityApi.deleteComment(postId, commentId);
       setItems((prev) => prev.filter((c) => c.id !== commentId));
-    } catch (err) {
+    } catch {
       setError('댓글 삭제에 실패했습니다.');
     }
   };

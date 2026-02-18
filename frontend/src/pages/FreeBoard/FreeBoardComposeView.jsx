@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Loader2, Trash2 } from 'lucide-react';
 import Editor from '../../components/notices/Editor';
 import styles from '../../components/freeboard/freeboard.module.css';
 import { communityApi } from '../../api/community';
+import { sanitizeRichHtml, toPlainText } from '../../security/htmlSanitizer';
 import '../page-shell.css';
 
 const CATEGORIES = [
@@ -59,10 +60,16 @@ export default function FreeBoardComposeView({ mode = 'create' }) {
     setSubmitting(true);
     setError('');
     try {
-      const payload = { title, category, body };
+      const safeBody = sanitizeRichHtml(body);
+      if (!toPlainText(safeBody)) {
+        setError('본문을 입력해주세요.');
+        setSubmitting(false);
+        return;
+      }
+      const payload = { title, category, body: safeBody };
       const res = isEdit ? await communityApi.update(id, payload) : await communityApi.create(payload);
       navigate(`/community/free/${res.id}`);
-    } catch (err) {
+    } catch {
       setError('저장에 실패했습니다.');
     } finally {
       setSubmitting(false);
@@ -74,7 +81,7 @@ export default function FreeBoardComposeView({ mode = 'create' }) {
     try {
       await communityApi.remove(id);
       navigate('/community/free');
-    } catch (err) {
+    } catch {
       setError('삭제에 실패했습니다.');
     }
   };

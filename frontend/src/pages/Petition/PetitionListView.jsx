@@ -120,7 +120,7 @@ export default function PetitionListView() {
             : p
         ),
       }));
-    } catch (err) {
+    } catch {
       // silent fail, UI unchanged
     }
   };

@@ -1,5 +1,6 @@
 ﻿import api from './auth';
 import { normalizePaginatedResponse, normalizeUploadResponse } from './normalizers';
+import { shouldUseMockFallback } from './mockPolicy';
 
 const PAGE_SIZE_DEFAULT = 12;
 
@@ -135,7 +136,8 @@ export const clubRecruitApi = {
     try {
       const res = await api.get('/api/club-recruit', { params });
       return normalizePaginatedResponse(res.data, PAGE_SIZE_DEFAULT);
-    } catch {
+    } catch (err) {
+      if (!shouldUseMockFallback(err)) throw err;
       const mock = await mockList(params);
       return normalizePaginatedResponse(mock, PAGE_SIZE_DEFAULT);
     }
@@ -145,7 +147,8 @@ export const clubRecruitApi = {
     try {
       const res = await api.get(`/api/club-recruit/${id}`);
       return res.data;
-    } catch {
+    } catch (err) {
+      if (!shouldUseMockFallback(err)) throw err;
       return mockGet(id);
     }
   },
@@ -154,7 +157,8 @@ export const clubRecruitApi = {
     try {
       const res = await api.post('/api/club-recruit', payload);
       return res.data;
-    } catch {
+    } catch (err) {
+      if (!shouldUseMockFallback(err)) throw err;
       return mockCreate(payload);
     }
   },
@@ -167,7 +171,8 @@ export const clubRecruitApi = {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       return normalizeUploadResponse(res.data);
-    } catch {
+    } catch (err) {
+      if (!shouldUseMockFallback(err)) throw err;
       return mockUpload(file);
     }
   },
@@ -184,4 +189,5 @@ export const clubRecruitApi = {
 };
 
 export default clubRecruitApi;
+
 

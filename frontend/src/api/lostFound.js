@@ -1,5 +1,6 @@
 import api from './auth';
 import { normalizePaginatedResponse, normalizeUploadResponse, toAbsoluteApiUrl } from './normalizers';
+import { shouldUseMockFallback } from './mockPolicy';
 
 const PAGE_SIZE_DEFAULT = 12;
 const MAX_IMAGES = 5;
@@ -332,7 +333,8 @@ export const lostFoundApi = {
         ...normalized,
         items: (normalized.items || []).map(normalizeItem),
       };
-    } catch {
+    } catch (err) {
+      if (!shouldUseMockFallback(err)) throw err;
       const mock = await mockList(params);
       return normalizePaginatedResponse(mock, PAGE_SIZE_DEFAULT);
     }
@@ -342,7 +344,8 @@ export const lostFoundApi = {
     try {
       const res = await api.get(`/api/community/lost-found/${id}`);
       return normalizeItem(res.data);
-    } catch {
+    } catch (err) {
+      if (!shouldUseMockFallback(err)) throw err;
       return mockDetail(id);
     }
   },
@@ -351,7 +354,8 @@ export const lostFoundApi = {
     try {
       const res = await api.post('/api/community/lost-found', payload);
       return normalizeItem(res.data);
-    } catch {
+    } catch (err) {
+      if (!shouldUseMockFallback(err)) throw err;
       return mockCreate(payload);
     }
   },
@@ -360,7 +364,8 @@ export const lostFoundApi = {
     try {
       const res = await api.post(`/api/community/lost-found/${id}/status`, { status });
       return normalizeItem(res.data);
-    } catch {
+    } catch (err) {
+      if (!shouldUseMockFallback(err)) throw err;
       return mockUpdateStatus(id, status);
     }
   },
@@ -374,7 +379,8 @@ export const lostFoundApi = {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       return normalizeUploadResponse(res.data);
-    } catch {
+    } catch (err) {
+      if (!shouldUseMockFallback(err)) throw err;
       return mockUpload(file);
     }
   },
@@ -383,7 +389,8 @@ export const lostFoundApi = {
     try {
       const res = await api.get(`/api/community/lost-found/${id}/comments`, { params });
       return normalizePaginatedResponse(res.data, 50);
-    } catch {
+    } catch (err) {
+      if (!shouldUseMockFallback(err)) throw err;
       const mock = await mockListComments(id, params);
       return normalizePaginatedResponse(mock, 50);
     }
@@ -393,7 +400,8 @@ export const lostFoundApi = {
     try {
       const res = await api.post(`/api/community/lost-found/${id}/comments`, { body });
       return res.data;
-    } catch {
+    } catch (err) {
+      if (!shouldUseMockFallback(err)) throw err;
       return mockCreateComment(id, body);
     }
   },
@@ -402,7 +410,8 @@ export const lostFoundApi = {
     try {
       const res = await api.delete(`/api/community/lost-found/${id}/comments/${commentId}`);
       return res.data;
-    } catch {
+    } catch (err) {
+      if (!shouldUseMockFallback(err)) throw err;
       return mockDeleteComment(id, commentId);
     }
   },

@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { clubRecruitApi } from '../../api/clubRecruit';
 import RecruitCard from '../../components/clubRecruit/RecruitCard';
 import InfiniteLoader from '../../components/clubRecruit/InfiniteLoader';
 import ErrorState from '../../components/clubRecruit/ErrorState';
+import SafeHtml from '../../components/security/SafeHtml';
 import { useAuth } from '../../context/AuthContext';
 import '../page-shell.css';
 
@@ -83,7 +84,7 @@ export default function ClubRecruitDetailPage() {
                   try {
                     const res = await clubRecruitApi.unapprove(id);
                     setData(res);
-                  } catch (e) {
+                  } catch {
                     setError('승인 해제 중 오류가 발생했습니다.');
                   } finally {
                     setActionLoading(false);
@@ -102,7 +103,7 @@ export default function ClubRecruitDetailPage() {
                   try {
                     const res = await clubRecruitApi.approve(id);
                     setData(res);
-                  } catch (e) {
+                  } catch {
                     setError('승인 중 오류가 발생했습니다.');
                   } finally {
                     setActionLoading(false);
@@ -124,7 +125,7 @@ export default function ClubRecruitDetailPage() {
         </div>
         {data.extraNote ? <p style={{ fontWeight: 600 }}>{data.extraNote}</p> : null}
         {data.body ? (
-          <div dangerouslySetInnerHTML={{ __html: data.body }} />
+          <SafeHtml html={data.body} />
         ) : (
           <p className="muted">본문이 없습니다.</p>
         )}

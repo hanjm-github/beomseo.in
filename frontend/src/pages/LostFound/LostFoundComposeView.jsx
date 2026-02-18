@@ -34,6 +34,19 @@ export default function LostFoundComposeView() {
     }
 
     const queue = files.slice(0, remaining);
+    for (const file of queue) {
+      if (!file.type?.startsWith('image/')) {
+        setError('이미지 파일만 업로드할 수 있습니다.');
+        event.target.value = '';
+        return;
+      }
+      if (file.size > lostFoundApi.MAX_FILE_SIZE) {
+        setError('이미지는 10MB 이하만 업로드할 수 있습니다.');
+        event.target.value = '';
+        return;
+      }
+    }
+
     setUploading(true);
     setError('');
     try {

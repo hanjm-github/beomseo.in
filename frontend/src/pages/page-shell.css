@@ -1,8 +1,7 @@
 .page-shell {
-  width: 100%;
-  max-width: var(--max-width-2xl);
-  margin: 0 auto;
-  padding: var(--space-10) clamp(16px, 4vw, 32px) var(--space-16);
+  width: min(100%, var(--max-width-2xl));
+  margin-inline: auto;
+  padding: var(--space-10) clamp(16px, 3.6vw, 32px) var(--space-16);
   display: flex;
   flex-direction: column;
   gap: var(--space-8);
@@ -13,27 +12,30 @@
 .page-header {
   display: flex;
   justify-content: space-between;
-  gap: var(--space-6);
   align-items: flex-start;
+  gap: var(--space-5);
 }
 
 .page-header h1 {
-  font-size: var(--text-3xl);
+  font-size: clamp(var(--text-2xl), 2.4vw, var(--text-4xl));
   letter-spacing: var(--tracking-tight);
 }
 
 .page-header .lede {
   margin-top: var(--space-2);
   color: var(--color-text-secondary);
+  max-width: 65ch;
 }
 
 .header-actions {
   display: flex;
-  gap: var(--space-3);
   align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
 }
 
-.tab-row {
+.tab-row,
+.chip-set {
   display: flex;
   gap: var(--space-2);
   flex-wrap: wrap;
@@ -41,21 +43,21 @@
 }
 
 .chip {
-  padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-full);
-  background: var(--color-bg-muted);
-  color: var(--color-text-primary);
-  border: 1px solid var(--color-border);
-  font-size: var(--text-sm);
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-chip-border);
+  background: var(--color-chip-bg);
+  color: var(--color-chip-text);
+  font-size: var(--text-sm);
 }
 
 .chip-active {
-  background: linear-gradient(135deg, var(--color-primary-500), var(--color-accent-400));
-  color: white;
   border-color: transparent;
+  background: var(--color-chip-bg-active);
+  color: var(--color-chip-text-active);
 }
 
 .chip.ghost {
@@ -63,18 +65,19 @@
 }
 
 .card {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  background: var(--color-card-bg);
+  border: 1px solid var(--color-card-border);
   border-radius: var(--radius-xl);
   padding: var(--space-5);
   box-shadow: var(--shadow-card);
-  transition: transform var(--transition-base), box-shadow var(--transition-base);
+  transition: transform var(--transition-base), box-shadow var(--transition-base), border-color var(--transition-base);
   box-sizing: border-box;
 }
 
 .card:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-card-hover);
+  border-color: var(--color-card-border-hover);
 }
 
 .card-link {
@@ -83,7 +86,7 @@
 }
 
 .card-active {
-  border-color: var(--color-primary-300);
+  border-color: var(--color-card-border-hover);
   box-shadow: var(--shadow-lg);
 }
 
@@ -91,7 +94,7 @@
   width: 40px;
   height: 40px;
   border-radius: var(--radius-lg);
-  background: var(--color-bg-muted);
+  background: var(--color-form-bg-muted);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -122,16 +125,10 @@
   margin-bottom: var(--space-4);
 }
 
-.chip-set {
-  display: flex;
-  gap: var(--space-2);
-  flex-wrap: wrap;
-}
-
 .placeholder {
   color: var(--color-text-secondary);
   padding: var(--space-6);
-  background: var(--color-bg-muted);
+  background: var(--color-form-bg-muted);
   border-radius: var(--radius-lg);
 }
 
@@ -142,29 +139,36 @@
 .btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: var(--space-2);
+  min-height: 44px;
   padding: var(--space-3) var(--space-4);
   border-radius: var(--radius-lg);
   border: 1px solid transparent;
   font-weight: var(--font-medium);
   cursor: pointer;
-  transition: transform var(--transition-base), box-shadow var(--transition-base);
+  transition: transform var(--transition-base), box-shadow var(--transition-base), background-color var(--transition-fast);
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--color-primary-500), var(--color-accent-500));
-  color: white;
+  background: var(--color-interactive-primary-bg);
+  color: var(--color-interactive-primary-text);
   box-shadow: var(--shadow-md);
 }
 
 .btn-primary:hover {
+  background: var(--color-interactive-primary-bg-hover);
   box-shadow: var(--shadow-lg);
 }
 
 .btn-secondary {
-  background: var(--color-bg-muted);
-  border-color: var(--color-border);
-  color: var(--color-text-primary);
+  background: var(--color-interactive-secondary-bg);
+  border-color: var(--color-interactive-secondary-border);
+  color: var(--color-interactive-secondary-text);
+}
+
+.btn-secondary:hover {
+  background: var(--color-interactive-secondary-bg-hover);
 }
 
 .eyebrow {
@@ -175,6 +179,12 @@
 }
 
 @media (max-width: 768px) {
+  .page-shell {
+    padding-top: var(--space-8);
+    padding-bottom: var(--space-12);
+    gap: var(--space-6);
+  }
+
   .page-header {
     flex-direction: column;
   }

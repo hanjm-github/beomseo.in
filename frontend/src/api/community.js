@@ -4,6 +4,7 @@
  */
 import api from './auth';
 import { normalizePaginatedResponse, normalizeUploadResponse } from './normalizers';
+import { shouldUseMockFallback } from './mockPolicy';
 
 const PAGE_SIZE_DEFAULT = 20;
 const MAX_ATTACHMENTS = 5;
@@ -280,7 +281,8 @@ export const communityApi = {
     try {
       const res = await api.get('/api/community/free', { params });
       return normalizePaginatedResponse(res.data, PAGE_SIZE_DEFAULT);
-    } catch {
+    } catch (err) {
+      if (!shouldUseMockFallback(err)) throw err;
       const mock = await mockList(params);
       return normalizePaginatedResponse(mock, PAGE_SIZE_DEFAULT);
     }
@@ -290,7 +292,8 @@ export const communityApi = {
     try {
       const res = await api.get(`/api/community/free/${id}`);
       return res.data;
-    } catch {
+    } catch (err) {
+      if (!shouldUseMockFallback(err)) throw err;
       return mockGet(id);
     }
   },
@@ -299,7 +302,8 @@ export const communityApi = {
     try {
       const res = await api.post('/api/community/free', payload);
       return res.data;
-    } catch {
+    } catch (err) {
+      if (!shouldUseMockFallback(err)) throw err;
       return mockCreate({ ...payload, summary: summarize(payload.body) });
     }
   },
@@ -308,7 +312,8 @@ export const communityApi = {
     try {
       const res = await api.put(`/api/community/free/${id}`, payload);
       return res.data;
-    } catch {
+    } catch (err) {
+      if (!shouldUseMockFallback(err)) throw err;
       return mockUpdate(id, { ...payload, summary: summarize(payload.body) });
     }
   },
@@ -327,7 +332,8 @@ export const communityApi = {
     try {
       const res = await api.delete(`/api/community/free/${id}`);
       return res.data;
-    } catch {
+    } catch (err) {
+      if (!shouldUseMockFallback(err)) throw err;
       return mockRemove(id);
     }
   },
@@ -336,7 +342,8 @@ export const communityApi = {
     try {
       const res = await api.post(`/api/community/free/${id}/reactions`, { type });
       return res.data;
-    } catch {
+    } catch (err) {
+      if (!shouldUseMockFallback(err)) throw err;
       return mockReact(id, type);
     }
   },
@@ -345,7 +352,8 @@ export const communityApi = {
     try {
       const res = await api.post(`/api/community/free/${id}/bookmark`);
       return res.data;
-    } catch {
+    } catch (err) {
+      if (!shouldUseMockFallback(err)) throw err;
       return mockToggleBookmark(id);
     }
   },
@@ -354,7 +362,8 @@ export const communityApi = {
     try {
       const res = await api.get(`/api/community/free/${id}/comments`, { params });
       return normalizePaginatedResponse(res.data, 50);
-    } catch {
+    } catch (err) {
+      if (!shouldUseMockFallback(err)) throw err;
       const mock = await mockListComments(id, params);
       return normalizePaginatedResponse(mock, 50);
     }
@@ -364,7 +373,8 @@ export const communityApi = {
     try {
       const res = await api.post(`/api/community/free/${id}/comments`, { body });
       return res.data;
-    } catch {
+    } catch (err) {
+      if (!shouldUseMockFallback(err)) throw err;
       return mockCreateComment(id, body);
     }
   },
@@ -373,7 +383,8 @@ export const communityApi = {
     try {
       const res = await api.delete(`/api/community/free/${postId}/comments/${commentId}`);
       return res.data;
-    } catch {
+    } catch (err) {
+      if (!shouldUseMockFallback(err)) throw err;
       return mockDeleteComment(postId, commentId);
     }
   },
@@ -387,7 +398,8 @@ export const communityApi = {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       return normalizeUploadResponse(res.data);
-    } catch {
+    } catch (err) {
+      if (!shouldUseMockFallback(err)) throw err;
       return mockUpload(file);
     }
   },

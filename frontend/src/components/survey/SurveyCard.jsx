@@ -11,7 +11,6 @@ export default function SurveyCard({ survey, onOpen, onResults, isAdmin }) {
   return (
     <div
       className={styles.card}
-      style={{ background: '#f8fafc' }}
       onClick={() => onOpen?.(survey)}
       role="button"
       tabIndex={0}

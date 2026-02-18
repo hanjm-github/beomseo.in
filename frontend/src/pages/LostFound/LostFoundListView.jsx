@@ -110,7 +110,7 @@ export default function LostFoundListView() {
 
       <LostFoundList items={data.items} basePath="/community/lost-found" isLoading={loading} />
 
-      <div className="list-toolbar" style={{ justifyContent: 'center' }}>
+      <div className="list-toolbar u-justify-center">
         <button
           type="button"
           className="btn btn-secondary"

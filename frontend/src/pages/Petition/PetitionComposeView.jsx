@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { petitionApi, THRESHOLD_DEFAULT } from '../../api/petition';
 import { useAuth } from '../../context/AuthContext';
@@ -36,7 +36,7 @@ export default function PetitionComposeView() {
         threshold: THRESHOLD_DEFAULT,
       });
       navigate(`/community/petition/${res.id}`, { replace: true, state: { from: '/community/petition' } });
-    } catch (err) {
+    } catch {
       setError('청원 등록에 실패했습니다.');
     } finally {
       setSubmitting(false);

@@ -1,4 +1,4 @@
-import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
+﻿import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 import styles from './vote.module.css';
 
 const COLORS = ['#2E7D5C', '#C2185B', '#246750', '#E91E8C', '#42A07A', '#8B2252', '#91C7AB', '#6B1A3C'];
@@ -44,7 +44,7 @@ export default function VoteResultsDonut({ options = [], totalVotes = 0 }) {
       <ul className={styles.optionList} style={{ marginTop: 6 }}>
         {safeData.map((entry) => (
           <li key={entry.name} className={styles.optionItem}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div className="u-flex-center-gap-2">
               <span
                 aria-hidden="true"
                 style={{
@@ -71,4 +71,5 @@ export default function VoteResultsDonut({ options = [], totalVotes = 0 }) {
     </div>
   );
 }
+
 

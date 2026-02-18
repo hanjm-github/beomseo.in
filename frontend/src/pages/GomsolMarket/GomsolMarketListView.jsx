@@ -121,7 +121,7 @@ export default function GomsolMarketListView() {
       {submittedPending ? (
         <div className={styles.noticeBox}>
           등록한 게시글은 관리자 승인 후 일반 사용자에게 노출됩니다.
-          <button type="button" className="btn btn-secondary" onClick={clearSubmissionNotice} style={{ marginLeft: 12 }}>
+          <button type="button" className="btn btn-secondary u-ml-3" onClick={clearSubmissionNotice}>
             닫기
           </button>
         </div>
@@ -153,7 +153,7 @@ export default function GomsolMarketListView() {
         isAdmin={isAdmin}
       />
 
-      <div className="list-toolbar" style={{ justifyContent: 'center' }}>
+      <div className="list-toolbar u-justify-center">
         <button
           type="button"
           className="btn btn-secondary"

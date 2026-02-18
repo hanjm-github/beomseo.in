@@ -21,7 +21,7 @@ export default function FreeBoardListView() {
   const { user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  const [params, setParams] = useSearchParams();
+  const [params] = useSearchParams();
 
   const initialCategory = params.get('category') || 'all';
 
@@ -48,8 +48,8 @@ export default function FreeBoardListView() {
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
     const timer = setTimeout(() => {
+      setLoading(true);
       const categoryParam = category === 'all' ? undefined : category;
       const statusParam = user?.role === 'admin' ? 'all' : undefined;
       communityApi
@@ -79,16 +79,35 @@ export default function FreeBoardListView() {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [category, search, sort, mine, bookmarked, page]);
-
-  useEffect(() => {
-    setPage(1);
-  }, [category, search, sort, mine, bookmarked]);
+  }, [category, search, sort, mine, bookmarked, page, user?.role]);
 
   const totalPages = useMemo(() => Math.max(1, Math.ceil((data.total || 0) / PAGE_SIZE)), [data.total]);
   const basePath = '/community/free';
   const canWrite = !!user; // allow any logged-in user to write; backend enforces further
-  const isAdmin = user?.role === 'admin';
+  const handleCategoryChange = (nextCategory) => {
+    setCategory(nextCategory);
+    setPage(1);
+  };
+
+  const handleSearchChange = (nextSearch) => {
+    setSearch(nextSearch);
+    setPage(1);
+  };
+
+  const handleSortChange = (nextSort) => {
+    setSort(nextSort);
+    setPage(1);
+  };
+
+  const handleToggleMine = () => {
+    setMine((v) => !v);
+    setPage(1);
+  };
+
+  const handleToggleBookmarked = () => {
+    setBookmarked((v) => !v);
+    setPage(1);
+  };
 
   return (
     <div className="page-shell">
@@ -115,7 +134,7 @@ export default function FreeBoardListView() {
             role="tab"
             aria-selected={category === c.key}
             className={`${styles.chip} ${category === c.key ? styles.chipActive : ''}`}
-            onClick={() => setCategory(c.key)}
+            onClick={() => handleCategoryChange(c.key)}
           >
             {c.label}
           </button>
@@ -124,13 +143,13 @@ export default function FreeBoardListView() {
 
       <FreeBoardToolbar
         search={search}
-        onSearchChange={setSearch}
+        onSearchChange={handleSearchChange}
         sort={sort}
-        onSortChange={setSort}
+        onSortChange={handleSortChange}
         mine={mine}
         bookmarked={bookmarked}
-        onToggleMine={() => setMine((v) => !v)}
-        onToggleBookmarked={() => setBookmarked((v) => !v)}
+        onToggleMine={handleToggleMine}
+        onToggleBookmarked={handleToggleBookmarked}
       />
 
       <FreePostList items={data.items} basePath={basePath} isLoading={loading} />

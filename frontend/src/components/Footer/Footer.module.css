@@ -1,21 +1,21 @@
 /* Footer Component Styles */
 
 .footer {
-    background-color: var(--color-neutral-900);
+    background: linear-gradient(180deg, var(--color-neutral-900), var(--color-primary-900));
     color: var(--color-neutral-300);
     padding: var(--space-16) 0 var(--space-8);
     margin-top: var(--space-20);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 [data-theme="dark"] .footer {
-    background-color: #0A0C10;
-    border-top: 1px solid var(--color-border);
+    border-top-color: var(--color-card-border);
 }
 
 .container {
-    max-width: var(--max-width-xl);
+    max-width: var(--max-width-2xl);
     margin: 0 auto;
-    padding: 0 var(--space-6);
+    padding: 0 clamp(16px, 3.6vw, 32px);
 }
 
 .grid {
@@ -55,7 +55,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, var(--color-primary-400), var(--color-primary-600));
+    background: var(--gradient-primary);
     border-radius: var(--radius-lg);
     font-family: var(--font-display);
     font-size: var(--text-xl);
@@ -150,7 +150,7 @@
     align-items: center;
     margin-top: var(--space-12);
     padding-top: var(--space-8);
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 @media (min-width: 640px) {

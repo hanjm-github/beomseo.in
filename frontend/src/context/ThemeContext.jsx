@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useEffect, useState } from 'react';
 
 const ThemeContext = createContext(undefined);
@@ -64,4 +65,3 @@ export function useTheme() {
   return context;
 }
 
-export default ThemeContext;

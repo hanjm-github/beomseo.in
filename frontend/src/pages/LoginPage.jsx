@@ -45,7 +45,7 @@ function LoginPage() {
         <div className="login-page">
             <div className="login-container">
                 <div className="login-header">
-                    <h1>범서고등학교</h1>
+                    <h1>beomseo.in</h1>
                     <p>로그인</p>
                 </div>
 

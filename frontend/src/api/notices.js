@@ -5,6 +5,7 @@
  */
 import api from './auth';
 import { normalizePaginatedResponse, normalizeUploadResponse } from './normalizers';
+import { shouldUseMockFallback } from './mockPolicy';
 
 const MAX_ATTACHMENTS = 5;
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
@@ -262,7 +263,8 @@ export const noticesApi = {
         countdownEvent: normalized.countdownEvent ?? null,
         fromMock: false,
       };
-    } catch {
+    } catch (err) {
+      if (!shouldUseMockFallback(err)) throw err;
       const mock = await mockList(params);
       const normalizedMock = normalizePaginatedResponse(mock, 10);
       return {
@@ -277,7 +279,8 @@ export const noticesApi = {
     try {
       const response = await api.get(`/api/notices/${id}`);
       return response.data;
-    } catch {
+    } catch (err) {
+      if (!shouldUseMockFallback(err)) throw err;
       return mockGet(id);
     }
   },
@@ -286,7 +289,8 @@ export const noticesApi = {
     try {
       const response = await api.post('/api/notices', payload);
       return response.data;
-    } catch {
+    } catch (err) {
+      if (!shouldUseMockFallback(err)) throw err;
       return mockCreate(payload);
     }
   },
@@ -295,7 +299,8 @@ export const noticesApi = {
     try {
       const response = await api.put(`/api/notices/${id}`, payload);
       return response.data;
-    } catch {
+    } catch (err) {
+      if (!shouldUseMockFallback(err)) throw err;
       return mockUpdate(id, payload);
     }
   },
@@ -304,7 +309,8 @@ export const noticesApi = {
     try {
       const response = await api.delete(`/api/notices/${id}`);
       return response.data;
-    } catch {
+    } catch (err) {
+      if (!shouldUseMockFallback(err)) throw err;
       return mockDelete(id);
     }
   },
@@ -313,7 +319,8 @@ export const noticesApi = {
     try {
       const response = await api.post(`/api/notices/${id}/reactions`, { type });
       return response.data;
-    } catch {
+    } catch (err) {
+      if (!shouldUseMockFallback(err)) throw err;
       return mockReact(id, type);
     }
   },
@@ -322,7 +329,8 @@ export const noticesApi = {
     try {
       const response = await api.get(`/api/notices/${id}/comments`, { params });
       return normalizePaginatedResponse(response.data, 20);
-    } catch {
+    } catch (err) {
+      if (!shouldUseMockFallback(err)) throw err;
       const mock = await mockListComments(id, params);
       return normalizePaginatedResponse(mock, 20);
     }
@@ -332,7 +340,8 @@ export const noticesApi = {
     try {
       const response = await api.post(`/api/notices/${id}/comments`, { body });
       return response.data;
-    } catch {
+    } catch (err) {
+      if (!shouldUseMockFallback(err)) throw err;
       return mockCreateComment(id, body);
     }
   },
@@ -341,7 +350,8 @@ export const noticesApi = {
     try {
       const response = await api.delete(`/api/notices/${noticeId}/comments/${commentId}`);
       return response.data;
-    } catch {
+    } catch (err) {
+      if (!shouldUseMockFallback(err)) throw err;
       return mockDeleteComment(noticeId, commentId);
     }
   },
@@ -357,7 +367,8 @@ export const noticesApi = {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       return normalizeUploadResponse(response.data);
-    } catch {
+    } catch (err) {
+      if (!shouldUseMockFallback(err)) throw err;
       // Mock upload
       await delay(120);
       const url = URL.createObjectURL(file);

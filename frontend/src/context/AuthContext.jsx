@@ -1,8 +1,10 @@
+/* eslint-disable react-refresh/only-export-components */
 /**
  * Authentication Context for managing user state and auth operations.
  */
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { authApi } from '../api/auth';
+import { AUTH_EXPIRED_EVENT, authApi } from '../api/auth';
+import tokenStore from '../security/tokenStore';
 
 const AuthContext = createContext(null);
 
@@ -14,15 +16,14 @@ export function AuthProvider({ children }) {
     // Check if user is authenticated on mount
     useEffect(() => {
         const initAuth = async () => {
-            const token = localStorage.getItem('access_token');
+            const token = tokenStore.getAccessToken();
             if (token) {
                 try {
                     const data = await authApi.getMe();
                     setUser(data.user);
-                } catch (err) {
+                } catch {
                     // Token invalid or expired - clear storage
-                    localStorage.removeItem('access_token');
-                    localStorage.removeItem('refresh_token');
+                    tokenStore.clearTokens();
                     setUser(null);
                 }
             }
@@ -32,6 +33,19 @@ export function AuthProvider({ children }) {
         initAuth();
     }, []);
 
+    useEffect(() => {
+        const handleAuthExpired = () => {
+            tokenStore.clearTokens();
+            setUser(null);
+            setError('세션이 만료되었습니다. 다시 로그인해주세요.');
+        };
+
+        window.addEventListener(AUTH_EXPIRED_EVENT, handleAuthExpired);
+        return () => {
+            window.removeEventListener(AUTH_EXPIRED_EVENT, handleAuthExpired);
+        };
+    }, []);
+
     /**
      * Login with nickname and password
      */
@@ -39,8 +53,7 @@ export function AuthProvider({ children }) {
         setError(null);
         try {
             const data = await authApi.login(nickname, password);
-            localStorage.setItem('access_token', data.access_token);
-            localStorage.setItem('refresh_token', data.refresh_token);
+            tokenStore.setTokens(data.access_token, data.refresh_token);
             setUser(data.user);
             return { success: true };
         } catch (err) {
@@ -57,8 +70,7 @@ export function AuthProvider({ children }) {
         setError(null);
         try {
             const data = await authApi.register(nickname, password);
-            localStorage.setItem('access_token', data.access_token);
-            localStorage.setItem('refresh_token', data.refresh_token);
+            tokenStore.setTokens(data.access_token, data.refresh_token);
             setUser(data.user);
             return { success: true };
         } catch (err) {
@@ -74,11 +86,10 @@ export function AuthProvider({ children }) {
     const logout = useCallback(async () => {
         try {
             await authApi.logout();
-        } catch (err) {
+        } catch {
             // Ignore logout errors
         } finally {
-            localStorage.removeItem('access_token');
-            localStorage.removeItem('refresh_token');
+            tokenStore.clearTokens();
             setUser(null);
             setError(null);
         }
@@ -120,4 +131,3 @@ export function useAuth() {
     return context;
 }
 
-export default AuthContext;

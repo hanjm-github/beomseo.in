@@ -3,30 +3,31 @@
 .header {
     position: fixed;
     top: var(--space-3);
-    left: 0;
-    right: 0;
+    left: clamp(10px, 2vw, 24px);
+    right: clamp(10px, 2vw, 24px);
     z-index: var(--z-sticky);
-    background-color: rgba(255, 255, 255, 0.9);
+    background: var(--gradient-glass);
+    background-color: var(--color-page-overlay);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border: 1px solid var(--color-border-light);
-    border-radius: 0;
+    border: 1px solid var(--color-card-border-muted);
+    border-radius: var(--radius-xl);
     box-shadow: var(--shadow-md);
     transition: all var(--transition-base);
 }
 
 [data-theme="dark"] .header {
-    background-color: rgba(22, 27, 34, 0.9);
-    border-color: var(--color-border);
+    background-color: var(--color-page-overlay);
+    border-color: var(--color-card-border);
 }
 
 .header.scrolled {
-    background-color: rgba(255, 255, 255, 0.96);
+    background-color: var(--color-page-overlay);
     box-shadow: var(--shadow-lg);
 }
 
 [data-theme="dark"] .header.scrolled {
-    background-color: rgba(22, 27, 34, 0.96);
+    background-color: var(--color-page-overlay);
 }
 
 .container {
@@ -55,9 +56,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, var(--color-primary-500), var(--color-primary-700));
+    background: var(--gradient-primary);
     border-radius: var(--radius-lg);
-    box-shadow: 0 2px 8px rgba(27, 77, 62, 0.3);
+    box-shadow: var(--shadow-sm);
 }
 
 .logoText {
@@ -123,12 +124,12 @@
 }
 
 .navLink.active {
-    color: var(--color-primary-500);
-    background-color: var(--color-primary-50);
+    color: var(--color-card-highlight-fg);
+    background-color: var(--color-card-highlight-bg);
 }
 
 [data-theme="dark"] .navLink.active {
-    background-color: rgba(46, 125, 92, 0.15);
+    background-color: var(--color-card-highlight-bg);
 }
 
 .chevron {
@@ -147,7 +148,7 @@
     margin-top: var(--space-2);
     min-width: 280px;
     background-color: var(--color-surface);
-    border: 1px solid var(--color-border);
+    border: 1px solid var(--color-card-border);
     border-radius: var(--radius-xl);
     box-shadow: var(--shadow-lg);
     padding: var(--space-3);
@@ -190,8 +191,8 @@
 }
 
 .dropdownItem.active {
-    color: var(--color-primary-500);
-    background-color: var(--color-primary-50);
+    color: var(--color-card-highlight-fg);
+    background-color: var(--color-card-highlight-bg);
 }
 
 /* Actions */
@@ -224,16 +225,16 @@
     padding: var(--space-2) var(--space-4);
     font-size: var(--text-sm);
     font-weight: var(--font-medium);
-    color: white;
-    background-color: var(--color-primary-500);
+    color: var(--color-interactive-primary-text);
+    background-color: var(--color-interactive-primary-bg);
     border-radius: var(--radius-lg);
     text-decoration: none;
     transition: all var(--transition-fast);
 }
 
 .loginButton:hover {
-    background-color: var(--color-primary-600);
-    color: white;
+    background-color: var(--color-interactive-primary-bg-hover);
+    color: var(--color-interactive-primary-text);
 }
 
 @media (min-width: 768px) {
@@ -268,7 +269,7 @@
 .mobileNav {
     display: block;
     padding: var(--space-4) var(--space-4);
-    border-top: 1px solid var(--color-border-light);
+    border-top: 1px solid var(--color-card-border-muted);
     animation: slideDown 0.2s ease-out;
     box-sizing: border-box;
 }
@@ -347,16 +348,16 @@
     font-size: var(--text-sm);
     font-weight: var(--font-medium);
     color: var(--color-text-primary);
-    background-color: var(--color-bg-muted);
-    border: 1px solid var(--color-border-light);
+    background-color: var(--color-interactive-secondary-bg);
+    border: 1px solid var(--color-interactive-secondary-border);
     border-radius: var(--radius-lg);
     cursor: pointer;
     transition: all var(--transition-fast);
 }
 
 .userButton:hover {
-    background-color: var(--color-bg-subtle);
-    border-color: var(--color-border);
+    background-color: var(--color-interactive-secondary-bg-hover);
+    border-color: var(--color-card-border);
 }
 
 @media (min-width: 768px) {
@@ -372,7 +373,7 @@
     margin-top: var(--space-2);
     min-width: 160px;
     background-color: var(--color-surface);
-    border: 1px solid var(--color-border);
+    border: 1px solid var(--color-card-border);
     border-radius: var(--radius-xl);
     box-shadow: var(--shadow-lg);
     padding: var(--space-2);
@@ -408,5 +409,5 @@
 }
 
 .logoutButton:hover {
-    background-color: var(--color-error-light);
+    background-color: var(--color-alert-danger-bg);
 }

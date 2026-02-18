@@ -10,10 +10,10 @@ export default function SurveyCreditBadge({ credits }) {
       <span className={styles.chip}>획득 {earned}</span>
       <span className={styles.chip}>사용 {used}</span>
       <span className={`${styles.chip} ${styles.chipActive}`}>잔여 {available}</span>
-      <span className={styles.chip} style={{ background: '#eef2ff', color: '#4f46e5', borderColor: '#c7d2fe' }}>
+      <span className={`${styles.chip} ${styles.chipInfo}`}>
         승인 시 +30
       </span>
-      <span className={styles.chip} style={{ background: '#ecfeff', color: '#0ea5e9', borderColor: '#bae6fd' }}>
+      <span className={`${styles.chip} ${styles.chipBonus}`}>
         응답하면 +5
       </span>
     </div>

@@ -2,6 +2,24 @@ import { useState, useEffect, useMemo } from 'react';
 import { Calendar, Clock, AlertCircle } from 'lucide-react';
 import styles from './CountdownWidget.module.css';
 
+function calculateTimeLeft(date) {
+    const now = new Date();
+    const target = new Date(date);
+    const difference = target - now;
+
+    if (difference <= 0) {
+        return { days: 0, hours: 0, minutes: 0, seconds: 0, isOver: true };
+    }
+
+    return {
+        days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+        hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+        minutes: Math.floor((difference / (1000 * 60)) % 60),
+        seconds: Math.floor((difference / 1000) % 60),
+        isOver: false,
+    };
+}
+
 export default function CountdownWidget({
     targetDate,
     eventName = '다가오는 일정',
@@ -16,24 +34,6 @@ export default function CountdownWidget({
 
         return () => clearInterval(timer);
     }, [targetDate]);
-
-    function calculateTimeLeft(date) {
-        const now = new Date();
-        const target = new Date(date);
-        const difference = target - now;
-
-        if (difference <= 0) {
-            return { days: 0, hours: 0, minutes: 0, seconds: 0, isOver: true };
-        }
-
-        return {
-            days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-            hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
-            minutes: Math.floor((difference / (1000 * 60)) % 60),
-            seconds: Math.floor((difference / 1000) % 60),
-            isOver: false,
-        };
-    }
 
     const urgencyLevel = useMemo(() => {
         if (timeLeft.days <= 3) return 'urgent';

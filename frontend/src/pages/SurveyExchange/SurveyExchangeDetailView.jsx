@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Calendar, Loader2, Pencil, PieChart, Send, CheckCircle2, XCircle } from 'lucide-react';
 import SurveyResponseModal from '../../components/survey/SurveyResponseModal';
@@ -88,7 +88,7 @@ export default function SurveyExchangeDetailView() {
 
   if (loading) {
     return (
-      <div className="page-shell" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <div className="page-shell u-flex-center-gap-2">
         <Loader2 className="spin" size={18} /> 불러오는 중…
       </div>
     );
@@ -120,7 +120,7 @@ export default function SurveyExchangeDetailView() {
             ) : null}
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div className="u-flex-gap-2">
           {isOwner ? (
             <Link className="btn btn-secondary" to={`/community/survey/${id}/results`}>
               <PieChart size={16} /> 결과 보기
@@ -158,9 +158,9 @@ export default function SurveyExchangeDetailView() {
           <h2>응답 현황</h2>
           <p>현재 {survey.responsesReceived}명 응답 · 잔여 {remaining} · 목표 {survey.responseQuota}</p>
         </div>
-        <div className={styles.badgeRow} style={{ justifyContent: 'flex-end' }}>
+        <div className={`${styles.badgeRow} u-flex-end-start`}>
           {survey.expiresAt ? (
-            <span className={styles.chip} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <span className={`${styles.chip} u-inline-flex-center-gap-2`}>
               <Calendar size={14} /> 마감 {new Date(survey.expiresAt).toLocaleDateString()}
             </span>
           ) : (
@@ -169,9 +169,9 @@ export default function SurveyExchangeDetailView() {
         </div>
       </div>
 
-      <section style={{ marginTop: 18 }}>
+      <section className="u-mt-4">
         <h3>설문 안내</h3>
-        <ul style={{ color: '#4b5563', lineHeight: 1.6 }}>
+        <ul className="u-text-muted">
           <li>설문은 관리자 승인 후 응답권 30개가 부여됩니다.</li>
           <li>응답하면 내 설문 응답권 +5</li>
           <li>작성자/관리자는 결과 페이지에서 개별/그래프/다운로드 확인</li>
@@ -189,3 +189,4 @@ export default function SurveyExchangeDetailView() {
     </div>
   );
 }
+

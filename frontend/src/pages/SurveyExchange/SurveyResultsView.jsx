@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+﻿import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Loader2, Table } from 'lucide-react';
 import { surveyApi } from '../../api/survey';
@@ -107,7 +107,7 @@ export default function SurveyResultsView() {
 
   if (loading) {
     return (
-      <div className="page-shell" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <div className="page-shell u-flex-center-gap-2">
         <Loader2 className="spin" size={18} /> 불러오는 중…
       </div>
     );
@@ -129,7 +129,7 @@ export default function SurveyResultsView() {
           <h1>{survey.title}</h1>
           <p className="lede">{survey.description}</p>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div className="u-flex-gap-2">
           <button className="btn btn-secondary" onClick={() => exportSheet('csv')}>
             CSV 다운로드
           </button>
@@ -157,7 +157,7 @@ export default function SurveyResultsView() {
       {tab === 'summary' ? (
         <SurveyResultsCharts summary={summary} />
       ) : (
-        <div style={{ overflowX: 'auto' }}>
+        <div className="u-overflow-x-auto">
           <table className={styles.table}>
             <thead>
               <tr>
@@ -181,7 +181,7 @@ export default function SurveyResultsView() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={2 + (summary?.questions?.length || 0)} style={{ textAlign: 'center', padding: 12 }}>
+                  <td colSpan={2 + (summary?.questions?.length || 0)} className="u-center-text u-p-3">
                     <Table size={16} /> 아직 응답이 없습니다.
                   </td>
                 </tr>
@@ -193,3 +193,4 @@ export default function SurveyResultsView() {
     </div>
   );
 }
+

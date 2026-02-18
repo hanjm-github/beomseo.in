@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+﻿import { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import {
   Pin,
@@ -14,6 +14,7 @@ import {
 import styles from '../../components/notices/notices.module.css';
 import { noticesApi } from '../../api/notices';
 import Attachments from '../../components/notices/Attachments';
+import SafeHtml from '../../components/security/SafeHtml';
 import { useAuth } from '../../context/AuthContext';
 import RoleName from '../../components/RoleName/RoleName';
 import CommentsPanel from '../../components/notices/CommentsPanel';
@@ -23,7 +24,7 @@ const VALID_CATEGORIES = ['school', 'council'];
 export default function DetailView() {
   const { category = 'school', id } = useParams();
   const navigate = useNavigate();
-  const { user, loading: authLoading, isAuthenticated } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const canEdit = ['admin', 'council', 'student_council'].includes(user?.role);
 
   const [notice, setNotice] = useState(null);
@@ -36,21 +37,25 @@ export default function DetailView() {
       return;
     }
     let cancelled = false;
-    setLoading(true);
-    noticesApi
-      .get(id)
-      .then((res) => {
-        if (cancelled) return;
-        setNotice(res);
-        setLoading(false);
-      })
-      .catch(() => {
-        if (cancelled) return;
-        setNotice(null);
-        setLoading(false);
-      });
+    const timer = setTimeout(() => {
+      setLoading(true);
+      noticesApi
+        .get(id)
+        .then((res) => {
+          if (cancelled) return;
+          setNotice(res);
+          setLoading(false);
+        })
+        .catch(() => {
+          if (cancelled) return;
+          setNotice(null);
+          setLoading(false);
+        });
+    }, 0);
+
     return () => {
       cancelled = true;
+      clearTimeout(timer);
     };
   }, [category, id, navigate]);
 
@@ -80,7 +85,7 @@ export default function DetailView() {
       const res = await noticesApi.react(id, type);
       setNotice({ ...next, ...res });
       setError('');
-    } catch (err) {
+    } catch {
       setNotice(prev);
       setError('리액션 처리에 실패했습니다.');
     }
@@ -165,9 +170,10 @@ export default function DetailView() {
           </button>
         </div>
 
-        <div
+        <SafeHtml
           className={styles.detailContent}
-          dangerouslySetInnerHTML={{ __html: notice.body || '<p>본문이 없습니다.</p>' }}
+          html={notice.body || ''}
+          fallback="<p>본문이 없습니다.</p>"
         />
 
         <Attachments items={notice.attachments} />
@@ -214,7 +220,7 @@ export default function DetailView() {
                     try {
                       await noticesApi.remove(id);
                       navigate(`/notices/${category}`, { replace: true });
-                    } catch (err) {
+                    } catch {
                       setError('삭제에 실패했습니다. 다시 시도해주세요.');
                     }
                   }}

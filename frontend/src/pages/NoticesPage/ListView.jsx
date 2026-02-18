@@ -33,8 +33,8 @@ export default function ListView() {
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
     const timer = setTimeout(() => {
+      setLoading(true);
       const params = {
         category,
         query: search,
@@ -66,13 +66,29 @@ export default function ListView() {
     };
   }, [category, search, pinned, important, exam, sort, page]);
 
-  useEffect(() => {
-    setPage(1);
-  }, [search, pinned, important, exam, sort, category]);
-
   const totalPages = useMemo(() => Math.max(1, Math.ceil((data.total || 0) / PAGE_SIZE)), [data.total]);
 
   const basePath = `/notices/${category}`;
+  const handleSearchChange = (nextSearch) => {
+    setSearch(nextSearch);
+    setPage(1);
+  };
+  const handleTogglePinned = () => {
+    setPinned((v) => !v);
+    setPage(1);
+  };
+  const handleToggleImportant = () => {
+    setImportant((v) => !v);
+    setPage(1);
+  };
+  const handleToggleExam = () => {
+    setExam((v) => !v);
+    setPage(1);
+  };
+  const handleSortChange = (nextSort) => {
+    setSort(nextSort);
+    setPage(1);
+  };
 
   return (
     <div className="card surface">
@@ -90,15 +106,15 @@ export default function ListView() {
 
       <NoticeToolbar
         search={search}
-        onSearchChange={setSearch}
+        onSearchChange={handleSearchChange}
         pinned={pinned}
         important={important}
         exam={exam}
         sort={sort}
-        onTogglePinned={() => setPinned((v) => !v)}
-        onToggleImportant={() => setImportant((v) => !v)}
-        onToggleExam={() => setExam((v) => !v)}
-        onSortChange={setSort}
+        onTogglePinned={handleTogglePinned}
+        onToggleImportant={handleToggleImportant}
+        onToggleExam={handleToggleExam}
+        onSortChange={handleSortChange}
       />
 
       <NoticeList items={data.items} basePath={basePath} isLoading={loading} />

@@ -1,5 +1,6 @@
 ﻿import { Link } from "react-router-dom";
 import { MessageCircle, ExternalLink } from "lucide-react";
+import { toSafeExternalHref } from "../../security/urlPolicy";
 import styles from "./subjects.module.css";
 
 const statusMap = {
@@ -12,7 +13,7 @@ function formatDate(value) {
   if (!value) return "";
   try {
     return new Date(value).toLocaleDateString("ko-KR", { month: "short", day: "numeric" });
-  } catch (e) {
+  } catch {
     return value;
   }
 }
@@ -20,11 +21,11 @@ function formatDate(value) {
 export default function SubjectCard({
   item,
   basePath = "/community/subjects",
-  showMeta = false,
   showApproval = false,
 }) {
   const status = statusMap[item.status] || statusMap.open;
   const contactLink = item.contactLinks?.[0];
+  const safeContactLink = contactLink ? toSafeExternalHref(contactLink.url) : null;
 
   return (
     <Link to={`${basePath}/${item.id}`} className={styles.card} aria-label="선택과목 변경 상세 보기">
@@ -62,10 +63,10 @@ export default function SubjectCard({
           <span className={styles.contactBadge}>
             <MessageCircle size={16} /> 댓글로 협의
           </span>
-          {contactLink ? (
+          {contactLink && safeContactLink ? (
             <a
               className={styles.contactBtn}
-              href={contactLink.url}
+              href={safeContactLink}
               target="_blank"
               rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
@@ -75,7 +76,6 @@ export default function SubjectCard({
             </a>
           ) : null}
         </div>
-
       </div>
     </Link>
   );

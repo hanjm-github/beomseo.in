@@ -1,4 +1,4 @@
-/* MainPage Styles */
+﻿/* MainPage Styles */
 
 .page {
     min-height: 100vh;
@@ -103,20 +103,20 @@
     align-items: center;
     gap: var(--space-2);
     padding: var(--space-4) var(--space-6);
-    background-color: var(--color-primary-500);
-    color: white;
+    background-color: var(--color-interactive-primary-bg);
+    color: var(--color-interactive-primary-text);
     font-weight: var(--font-semibold);
     border-radius: var(--radius-xl);
     text-decoration: none;
     transition: all var(--transition-fast);
-    box-shadow: 0 4px 14px rgba(27, 77, 62, 0.3);
+    box-shadow: var(--shadow-md);
 }
 
 .heroPrimary:hover {
-    background-color: var(--color-primary-600);
-    color: white;
+    background-color: var(--color-interactive-primary-bg-hover);
+    color: var(--color-interactive-primary-text);
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(27, 77, 62, 0.4);
+    box-shadow: var(--shadow-lg);
 }
 
 .heroSecondary {
@@ -124,8 +124,8 @@
     align-items: center;
     gap: var(--space-2);
     padding: var(--space-4) var(--space-6);
-    background-color: var(--color-bg-muted);
-    color: var(--color-text-primary);
+    background-color: var(--color-interactive-secondary-bg);
+    color: var(--color-interactive-secondary-text);
     font-weight: var(--font-medium);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-xl);
@@ -134,9 +134,9 @@
 }
 
 .heroSecondary:hover {
-    background-color: var(--color-neutral-200);
-    border-color: var(--color-neutral-300);
-    color: var(--color-text-primary);
+    background-color: var(--color-interactive-secondary-bg-hover);
+    border-color: var(--color-form-border-hover);
+    color: var(--color-interactive-secondary-text);
 }
 
 .heroWidget {
@@ -153,7 +153,7 @@
 
 .countdownPlaceholder {
     min-height: 212px;
-    border: 1px solid var(--color-border);
+    border: 1px solid var(--color-card-border);
     border-radius: var(--radius-2xl);
     background-color: var(--color-surface);
     color: var(--color-text-secondary);
@@ -167,14 +167,9 @@
 }
 
 .countdownError {
-    border-color: var(--color-error);
-    background-color: var(--color-error-light);
-    color: #991b1b;
-}
-
-[data-theme="dark"] .countdownError {
-    background-color: rgba(239, 68, 68, 0.2);
-    color: #fecaca;
+    border-color: var(--color-alert-danger-border);
+    background-color: var(--color-alert-danger-bg);
+    color: var(--color-alert-danger-text);
 }
 
 /* Hero Background */
@@ -311,7 +306,7 @@
 /* Announcements Card */
 .announcementsCard {
     background-color: var(--color-surface);
-    border: 1px solid var(--color-border-light);
+    border: 1px solid var(--color-card-border-muted);
     border-radius: var(--radius-2xl);
     padding: var(--space-6);
     box-shadow: var(--shadow-card);
@@ -367,13 +362,13 @@
 
 .tab.active {
     background-color: var(--color-surface);
-    color: var(--color-primary-600);
+    color: var(--color-card-highlight-fg);
     box-shadow: var(--shadow-sm);
 }
 
 [data-theme="dark"] .tab.active {
     background-color: var(--color-bg);
-    color: var(--color-primary-400);
+    color: var(--color-card-highlight-fg);
 }
 
 .announcementsList {
@@ -395,3 +390,4 @@
 .viewMore:hover {
     color: var(--color-primary-700);
 }
+

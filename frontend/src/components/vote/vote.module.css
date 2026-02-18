@@ -1,4 +1,4 @@
-.pageHeader {
+﻿.pageHeader {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -89,7 +89,7 @@
 .skeleton {
   height: 220px;
   border-radius: var(--radius-xl);
-  background: linear-gradient(90deg, #f4f4f5 25%, #e6e6e7 37%, #f4f4f5 63%);
+  background: var(--gradient-skeleton);
   background-size: 400% 100%;
   animation: shimmer 1.4s ease infinite;
 }
@@ -168,15 +168,15 @@
 }
 
 .statusOpen {
-  background: #e6fbf5;
-  color: #07513e;
-  border-color: #bdebdc;
+  background: var(--color-status-success-bg);
+  color: var(--color-status-success-text);
+  border-color: var(--color-status-success-border);
 }
 
 .statusClosed {
-  background: #f4f4f5;
-  color: #5f6268;
-  border-color: #dddddf;
+  background: var(--color-status-neutral-bg);
+  color: var(--color-status-neutral-text);
+  border-color: var(--color-status-neutral-border);
 }
 
 .cardTitle {
@@ -365,9 +365,9 @@
 }
 
 .feedback {
-  border: 1px solid #bdebdc;
-  background: #e6fbf5;
-  color: #07513e;
+  border: 1px solid var(--color-status-success-border);
+  background: var(--color-status-success-bg);
+  color: var(--color-status-success-text);
   border-radius: var(--radius-lg);
   padding: 10px 12px;
   font-size: var(--text-sm);
@@ -424,9 +424,9 @@
   min-height: 44px;
   min-width: 44px;
   border-radius: var(--radius-lg);
-  border: 1px solid #f2b8b5;
-  background: #fff1f0;
-  color: #b42318;
+  border: 1px solid var(--color-alert-danger-border);
+  background: var(--color-alert-danger-bg);
+  color: var(--color-alert-danger-text);
 }
 
 .optionAdd {
@@ -451,9 +451,9 @@
 }
 
 .errorText {
-  color: #b42318;
-  background: #fff1f0;
-  border: 1px solid #f2b8b5;
+  color: var(--color-alert-danger-text);
+  background: var(--color-alert-danger-bg);
+  border: 1px solid var(--color-alert-danger-border);
   border-radius: var(--radius-lg);
   padding: 10px 12px;
   font-size: var(--text-sm);
@@ -503,4 +503,5 @@
     grid-template-columns: 24px 1fr auto;
   }
 }
+
 

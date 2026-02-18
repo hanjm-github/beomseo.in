@@ -15,7 +15,7 @@ const boards = [
     key: 'club-recruit',
     path: 'club-recruit',
     label: '동아리 모집',
-    description: '포스터와 모집 기간을 한눈에 확인할 수 있어요.',
+    description: '동아리 포스터와 분야를 한눈에 확인할 수 있어요.',
     icon: Users,
   },
   {
@@ -50,14 +50,14 @@ const boards = [
     key: 'lost-found',
     path: 'lost-found',
     label: '분실물 센터',
-    description: '사진, 상태 배지, 보관 장소를 확인해 주인을 찾습니다.',
+    description: '사진, 발견 장소를 확인해 주인을 찾습니다.',
     icon: Package,
   },
   {
     key: 'gomsol-market',
     path: 'gomsol-market',
     label: '곰솔마켓',
-    description: '교내 중고거래 글을 승인 기반으로 안전하게 확인해요.',
+    description: '교내 중고거래 글을 확인해요.',
     icon: Store,
   },
 ];

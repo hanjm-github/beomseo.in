@@ -4,6 +4,7 @@
  */
 import api from './auth';
 import { normalizePaginatedResponse } from './normalizers';
+import { shouldUseMockFallback } from './mockPolicy';
 
 const PAGE_SIZE_DEFAULT = 12;
 export const THRESHOLD_DEFAULT = 50;
@@ -164,7 +165,8 @@ export const petitionApi = {
     try {
       const res = await api.get('/api/community/petitions', { params });
       return normalizePaginatedResponse(res.data, PAGE_SIZE_DEFAULT);
-    } catch {
+    } catch (err) {
+      if (!shouldUseMockFallback(err)) throw err;
       const mock = await mockList(params);
       return normalizePaginatedResponse(mock, PAGE_SIZE_DEFAULT);
     }
@@ -174,7 +176,8 @@ export const petitionApi = {
     try {
       const res = await api.get(`/api/community/petitions/${id}`);
       return res.data;
-    } catch {
+    } catch (err) {
+      if (!shouldUseMockFallback(err)) throw err;
       return mockDetail(id);
     }
   },
@@ -183,7 +186,8 @@ export const petitionApi = {
     try {
       const res = await api.post('/api/community/petitions', payload);
       return res.data;
-    } catch {
+    } catch (err) {
+      if (!shouldUseMockFallback(err)) throw err;
       return mockCreate(payload);
     }
   },
@@ -192,7 +196,8 @@ export const petitionApi = {
     try {
       const res = await api.post(`/api/community/petitions/${id}/vote`, { action });
       return res.data;
-    } catch {
+    } catch (err) {
+      if (!shouldUseMockFallback(err)) throw err;
       return mockVote(id, action);
     }
   },
@@ -201,7 +206,8 @@ export const petitionApi = {
     try {
       const res = await api.post(`/api/community/petitions/${id}/answer`, payload);
       return res.data;
-    } catch {
+    } catch (err) {
+      if (!shouldUseMockFallback(err)) throw err;
       return mockAnswer(id, payload);
     }
   },
@@ -210,7 +216,8 @@ export const petitionApi = {
     try {
       const res = await api.post(`/api/community/petitions/${id}/approve`);
       return res.data;
-    } catch {
+    } catch (err) {
+      if (!shouldUseMockFallback(err)) throw err;
       // mock: mark as approved
       const found = mockPetitions.find((p) => p.id === id);
       if (found) {
@@ -224,7 +231,8 @@ export const petitionApi = {
     try {
       const res = await api.post(`/api/community/petitions/${id}/reject`);
       return res.data;
-    } catch {
+    } catch (err) {
+      if (!shouldUseMockFallback(err)) throw err;
       const found = mockPetitions.find((p) => p.id === id);
       if (found) {
         found.status = 'pending';

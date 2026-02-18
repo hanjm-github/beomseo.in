@@ -22,11 +22,11 @@
 
 /* Urgency Levels */
 .widget.warning {
-    background: linear-gradient(135deg, #D97706, #B45309);
+    background: linear-gradient(135deg, var(--color-warning), var(--color-warning));
 }
 
 .widget.urgent {
-    background: linear-gradient(135deg, #DC2626, #B91C1C);
+    background: linear-gradient(135deg, var(--color-error), var(--color-error));
     animation: pulse 2s ease-in-out infinite;
 }
 
