@@ -1,5 +1,6 @@
 ﻿import api from './auth';
 import { normalizePaginatedResponse } from './normalizers';
+import { trackPostCreated, trackPostCreateFailed } from '../analytics/zaraz';
 
 const PAGE_SIZE_DEFAULT = 12;
 
@@ -193,11 +194,22 @@ export const subjectChangesApi = {
   async create(payload) {
     try {
       const res = await api.post('/api/subject-changes', payload);
-      return res.data;
+      const created = res.data;
+      trackPostCreated({
+        boardType: 'subject_change',
+        userRole: created?.author?.role ?? created?.owner?.role ?? payload?.author?.role,
+        approvalStatus: created?.approvalStatus ?? created?.status,
+      });
+      return created;
     } catch (err) {
       if (!err.response) {
         return mockCreate(payload);
       }
+      trackPostCreateFailed({
+        boardType: 'subject_change',
+        userRole: payload?.author?.role,
+        errorType: err,
+      });
       throw err;
     }
   },

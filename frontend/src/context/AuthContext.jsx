@@ -5,6 +5,7 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { AUTH_EXPIRED_EVENT, authApi } from '../api/auth';
 import tokenStore from '../security/tokenStore';
+import { trackAuthFailure, trackAuthSuccess } from '../analytics/zaraz';
 
 const AuthContext = createContext(null);
 
@@ -55,8 +56,16 @@ export function AuthProvider({ children }) {
             const data = await authApi.login(nickname, password);
             tokenStore.setTokens(data.access_token, data.refresh_token);
             setUser(data.user);
+            trackAuthSuccess({
+                eventName: 'login',
+                userRole: data?.user?.role,
+            });
             return { success: true };
         } catch (err) {
+            trackAuthFailure({
+                eventName: 'login_failed',
+                errorType: err,
+            });
             const message = err.response?.data?.error || '로그인에 실패했습니다.';
             setError(message);
             return { success: false, error: message };
@@ -72,8 +81,16 @@ export function AuthProvider({ children }) {
             const data = await authApi.register(nickname, password);
             tokenStore.setTokens(data.access_token, data.refresh_token);
             setUser(data.user);
+            trackAuthSuccess({
+                eventName: 'sign_up',
+                userRole: data?.user?.role,
+            });
             return { success: true };
         } catch (err) {
+            trackAuthFailure({
+                eventName: 'sign_up_failed',
+                errorType: err,
+            });
             const message = err.response?.data?.error || '회원가입에 실패했습니다.';
             setError(message);
             return { success: false, error: message };

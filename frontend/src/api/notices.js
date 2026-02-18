@@ -6,6 +6,7 @@
 import api from './auth';
 import { normalizePaginatedResponse, normalizeUploadResponse } from './normalizers';
 import { shouldUseMockFallback } from './mockPolicy';
+import { trackPostCreated, trackPostCreateFailed } from '../analytics/zaraz';
 
 const MAX_ATTACHMENTS = 5;
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
@@ -288,9 +289,23 @@ export const noticesApi = {
   async create(payload) {
     try {
       const response = await api.post('/api/notices', payload);
-      return response.data;
+      const created = response.data;
+      trackPostCreated({
+        boardType: 'notice',
+        userRole: created?.author?.role ?? payload?.author?.role,
+        approvalStatus: created?.approvalStatus ?? created?.status,
+      });
+      return created;
     } catch (err) {
-      if (!shouldUseMockFallback(err)) throw err;
+      const useMockFallback = shouldUseMockFallback(err);
+      if (!useMockFallback) {
+        trackPostCreateFailed({
+          boardType: 'notice',
+          userRole: payload?.author?.role,
+          errorType: err,
+        });
+        throw err;
+      }
       return mockCreate(payload);
     }
   },

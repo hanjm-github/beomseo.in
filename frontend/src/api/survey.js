@@ -5,6 +5,7 @@ import api from './auth';
 import { normalizePaginatedResponse } from './normalizers';
 import { earnMockSurveyCredits, getMockSurveyCredits } from './mockSurveyCreditStore';
 import { shouldUseMockFallback } from './mockPolicy';
+import { trackPostCreated, trackPostCreateFailed } from '../analytics/zaraz';
 
 export const BASE_RESPONSE_QUOTA = 0;
 export const SURVEY_APPROVAL_GRANT = 30;
@@ -240,9 +241,23 @@ export const surveyApi = {
   async create(payload) {
     try {
       const res = await api.post('/api/surveys', payload);
-      return res.data;
+      const created = res.data;
+      trackPostCreated({
+        boardType: 'survey',
+        userRole: created?.owner?.role ?? created?.author?.role ?? payload?.owner?.role,
+        approvalStatus: created?.approvalStatus ?? created?.status,
+      });
+      return created;
     } catch (err) {
-      if (!shouldUseMockFallback(err)) throw err;
+      const useMockFallback = shouldUseMockFallback(err);
+      if (!useMockFallback) {
+        trackPostCreateFailed({
+          boardType: 'survey',
+          userRole: payload?.owner?.role ?? payload?.author?.role,
+          errorType: err,
+        });
+        throw err;
+      }
       return mockCreate(payload);
     }
   },

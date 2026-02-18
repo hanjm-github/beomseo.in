@@ -5,6 +5,7 @@
 import api from './auth';
 import { normalizePaginatedResponse } from './normalizers';
 import { shouldUseMockFallback } from './mockPolicy';
+import { trackPostCreated, trackPostCreateFailed } from '../analytics/zaraz';
 
 const PAGE_SIZE_DEFAULT = 12;
 export const THRESHOLD_DEFAULT = 50;
@@ -185,9 +186,23 @@ export const petitionApi = {
   async create(payload) {
     try {
       const res = await api.post('/api/community/petitions', payload);
-      return res.data;
+      const created = res.data;
+      trackPostCreated({
+        boardType: 'petition',
+        userRole: created?.author?.role ?? payload?.author?.role,
+        approvalStatus: created?.approvalStatus ?? created?.status,
+      });
+      return created;
     } catch (err) {
-      if (!shouldUseMockFallback(err)) throw err;
+      const useMockFallback = shouldUseMockFallback(err);
+      if (!useMockFallback) {
+        trackPostCreateFailed({
+          boardType: 'petition',
+          userRole: payload?.author?.role,
+          errorType: err,
+        });
+        throw err;
+      }
       return mockCreate(payload);
     }
   },

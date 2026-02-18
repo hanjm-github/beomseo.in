@@ -1,6 +1,7 @@
 ﻿import api from './auth';
 import { normalizePaginatedResponse, normalizeUploadResponse } from './normalizers';
 import { shouldUseMockFallback } from './mockPolicy';
+import { trackPostCreated, trackPostCreateFailed } from '../analytics/zaraz';
 
 const PAGE_SIZE_DEFAULT = 12;
 
@@ -156,9 +157,23 @@ export const clubRecruitApi = {
   async create(payload) {
     try {
       const res = await api.post('/api/club-recruit', payload);
-      return res.data;
+      const created = res.data;
+      trackPostCreated({
+        boardType: 'club_recruit',
+        userRole: created?.author?.role ?? payload?.author?.role,
+        approvalStatus: created?.approvalStatus ?? created?.status,
+      });
+      return created;
     } catch (err) {
-      if (!shouldUseMockFallback(err)) throw err;
+      const useMockFallback = shouldUseMockFallback(err);
+      if (!useMockFallback) {
+        trackPostCreateFailed({
+          boardType: 'club_recruit',
+          userRole: payload?.author?.role,
+          errorType: err,
+        });
+        throw err;
+      }
       return mockCreate(payload);
     }
   },

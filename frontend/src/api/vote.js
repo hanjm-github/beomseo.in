@@ -1,6 +1,7 @@
 import api from './auth';
 import { normalizePaginatedResponse } from './normalizers';
 import { earnMockSurveyCredits } from './mockSurveyCreditStore';
+import { trackPostCreated, trackPostCreateFailed } from '../analytics/zaraz';
 
 const PAGE_SIZE_DEFAULT = 12;
 const WRITER_ROLES = ['admin', 'council', 'student_council'];
@@ -306,9 +307,20 @@ export const voteApi = {
     };
     try {
       const res = await api.post('/api/community/votes', normalizedPayload);
-      return normalizeVotePost(res.data);
+      const created = normalizeVotePost(res.data);
+      trackPostCreated({
+        boardType: 'vote',
+        userRole: created?.author?.role ?? payload?.author?.role,
+        approvalStatus: created?.approvalStatus ?? created?.status,
+      });
+      return created;
     } catch (err) {
       if (!err.response) return mockCreate(normalizedPayload);
+      trackPostCreateFailed({
+        boardType: 'vote',
+        userRole: payload?.author?.role,
+        errorType: err,
+      });
       throw err;
     }
   },

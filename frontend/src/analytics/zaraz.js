@@ -1,0 +1,154 @@
+const ALLOWED_HOSTS = new Set(['beomseo.in']);
+const BLOCKED_KEY_NAMES = new Set([
+  'nickname',
+  'password',
+  'email',
+  'token',
+  'refresh_token',
+  'access_token',
+]);
+
+function isBlockedKey(key) {
+  if (typeof key !== 'string') return false;
+  return BLOCKED_KEY_NAMES.has(key.trim().toLowerCase());
+}
+
+function sanitizeValue(value) {
+  if (value == null) return undefined;
+  if (Array.isArray(value)) {
+    const sanitizedItems = value
+      .map((item) => sanitizeValue(item))
+      .filter((item) => item !== undefined);
+    return sanitizedItems;
+  }
+  if (typeof value === 'object') {
+    const output = {};
+    Object.entries(value).forEach(([key, nestedValue]) => {
+      if (isBlockedKey(key)) return;
+      const sanitizedNested = sanitizeValue(nestedValue);
+      if (sanitizedNested !== undefined) {
+        output[key] = sanitizedNested;
+      }
+    });
+    return output;
+  }
+  if (typeof value === 'function' || typeof value === 'symbol') return undefined;
+  return value;
+}
+
+function sanitizePayload(params = {}) {
+  const base = sanitizeValue(params);
+  if (!base || typeof base !== 'object') return {};
+  return base;
+}
+
+function normalizeRole(role) {
+  if (typeof role !== 'string') return undefined;
+  const trimmed = role.trim().toLowerCase();
+  return trimmed || undefined;
+}
+
+function extractErrorMessage(errorLike) {
+  if (typeof errorLike === 'string') return errorLike;
+  if (!errorLike || typeof errorLike !== 'object') return '';
+  if (typeof errorLike?.response?.data?.error === 'string') return errorLike.response.data.error;
+  if (typeof errorLike?.message === 'string') return errorLike.message;
+  return '';
+}
+
+export function normalizeErrorType(errorLike) {
+  const status = Number(errorLike?.response?.status || errorLike?.status || 0);
+  if (status === 400 || status === 409 || status === 422) return 'validation_error';
+  if (status === 401 || status === 403) return 'auth_error';
+  if (status >= 500) return 'server_error';
+
+  const code = String(errorLike?.code || '').toLowerCase();
+  if (code.includes('network') || code.includes('timeout') || code === 'ecconnaborted') {
+    return 'network_error';
+  }
+
+  const message = extractErrorMessage(errorLike).toLowerCase();
+  if (message.includes('network') || message.includes('timeout') || message.includes('fetch')) {
+    return 'network_error';
+  }
+  if (message.includes('auth') || message.includes('token') || message.includes('login')) {
+    return 'auth_error';
+  }
+  if (message.includes('invalid') || message.includes('required') || message.includes('not valid')) {
+    return 'validation_error';
+  }
+
+  return 'unknown_error';
+}
+
+export function isAnalyticsEnabled() {
+  if (!import.meta.env.PROD) return false;
+  if (typeof window === 'undefined') return false;
+  const hostname = window.location?.hostname?.toLowerCase();
+  if (!hostname || !ALLOWED_HOSTS.has(hostname)) return false;
+  return true;
+}
+
+function getPagePath() {
+  if (typeof window === 'undefined') return undefined;
+  const pathname = window.location?.pathname || '/';
+  const search = window.location?.search || '';
+  return `${pathname}${search}`;
+}
+
+function getTrackFunction() {
+  if (typeof window === 'undefined') return null;
+  if (!window.zaraz || typeof window.zaraz.track !== 'function') return null;
+  return window.zaraz.track.bind(window.zaraz);
+}
+
+export function trackEvent(eventName, params = {}) {
+  if (typeof eventName !== 'string' || !eventName.trim()) return false;
+  if (!isAnalyticsEnabled()) return false;
+
+  const track = getTrackFunction();
+  if (!track) return false;
+
+  const payload = sanitizePayload(params);
+  if (!payload.page_path) {
+    payload.page_path = getPagePath();
+  }
+
+  try {
+    track(eventName.trim(), payload);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function trackAuthSuccess({ eventName, userRole }) {
+  const role = normalizeRole(userRole);
+  const payload = role ? { user_role: role } : {};
+  return trackEvent(eventName, payload);
+}
+
+export function trackAuthFailure({ eventName, errorType }) {
+  return trackEvent(eventName, {
+    error_type: normalizeErrorType(errorType),
+  });
+}
+
+export function trackPostCreated({ boardType, userRole, approvalStatus }) {
+  const role = normalizeRole(userRole);
+  const approval = typeof approvalStatus === 'string' ? approvalStatus : undefined;
+  return trackEvent('post_created', {
+    board_type: boardType,
+    user_role: role,
+    approval_status: approval,
+  });
+}
+
+export function trackPostCreateFailed({ boardType, userRole, errorType }) {
+  const role = normalizeRole(userRole);
+  return trackEvent('post_create_failed', {
+    board_type: boardType,
+    user_role: role,
+    error_type: normalizeErrorType(errorType),
+  });
+}

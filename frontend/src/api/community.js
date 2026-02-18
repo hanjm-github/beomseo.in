@@ -5,6 +5,7 @@
 import api from './auth';
 import { normalizePaginatedResponse, normalizeUploadResponse } from './normalizers';
 import { shouldUseMockFallback } from './mockPolicy';
+import { trackPostCreated, trackPostCreateFailed } from '../analytics/zaraz';
 
 const PAGE_SIZE_DEFAULT = 20;
 const MAX_ATTACHMENTS = 5;
@@ -301,9 +302,23 @@ export const communityApi = {
   async create(payload) {
     try {
       const res = await api.post('/api/community/free', payload);
-      return res.data;
+      const created = res.data;
+      trackPostCreated({
+        boardType: 'free_board',
+        userRole: created?.author?.role ?? payload?.author?.role,
+        approvalStatus: created?.approvalStatus ?? created?.status,
+      });
+      return created;
     } catch (err) {
-      if (!shouldUseMockFallback(err)) throw err;
+      const useMockFallback = shouldUseMockFallback(err);
+      if (!useMockFallback) {
+        trackPostCreateFailed({
+          boardType: 'free_board',
+          userRole: payload?.author?.role,
+          errorType: err,
+        });
+        throw err;
+      }
       return mockCreate({ ...payload, summary: summarize(payload.body) });
     }
   },
