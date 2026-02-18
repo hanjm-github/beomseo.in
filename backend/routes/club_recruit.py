@@ -18,6 +18,7 @@ from models import (
 from utils.pagination import parse_pagination, build_paginated_response
 from utils.files import save_upload_for_scope, resolve_scope_upload_dir, ensure_dir
 from utils.security import require_role, get_current_user
+from utils.cache import cache_json_response, invalidate_cache_namespaces
 
 club_recruit_bp = Blueprint('club_recruit', __name__, url_prefix='/api/club-recruit')
 
@@ -134,6 +135,7 @@ def apply_sort(query, sort):
 
 @club_recruit_bp.route('', methods=['GET'])
 @club_recruit_bp.route('/', methods=['GET'])
+@cache_json_response('club_recruit')
 def list_recruits():
     grade_group = request.args.get('gradeGroup')
     q_text = request.args.get('q') or request.args.get('query')
@@ -190,6 +192,7 @@ def create_recruit():
     try:
         db.session.add(item)
         db.session.commit()
+        invalidate_cache_namespaces('club_recruit')
     except SQLAlchemyError:
         db.session.rollback()
         return jsonify({'error': '저장 중 오류가 발생했습니다.'}), 500
@@ -251,6 +254,7 @@ def update_recruit(item_id):
 
     try:
         db.session.commit()
+        invalidate_cache_namespaces('club_recruit')
     except SQLAlchemyError:
         db.session.rollback()
         return jsonify({'error': '수정 중 오류가 발생했습니다.'}), 500
@@ -269,6 +273,7 @@ def delete_recruit(item_id):
     try:
         item.deleted_at = db.func.now()
         db.session.commit()
+        invalidate_cache_namespaces('club_recruit')
     except SQLAlchemyError:
         db.session.rollback()
         return jsonify({'error': '삭제 중 오류가 발생했습니다.'}), 500
@@ -289,6 +294,7 @@ def approve_recruit(item_id):
     item.approved_at = datetime.utcnow()
     try:
         db.session.commit()
+        invalidate_cache_namespaces('club_recruit')
     except SQLAlchemyError:
         db.session.rollback()
         return jsonify({'error': '승인 처리 중 오류가 발생했습니다.'}), 500
@@ -308,6 +314,7 @@ def unapprove_recruit(item_id):
     item.approved_at = None
     try:
         db.session.commit()
+        invalidate_cache_namespaces('club_recruit')
     except SQLAlchemyError:
         db.session.rollback()
         return jsonify({'error': '승인 취소 중 오류가 발생했습니다.'}), 500

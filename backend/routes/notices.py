@@ -28,6 +28,7 @@ from models import (
 from utils.pagination import parse_pagination, build_paginated_response
 from utils.files import save_upload_for_scope, resolve_scope_upload_dir, ensure_dir
 from utils.security import require_role, get_current_user
+from utils.cache import cache_json_response, invalidate_cache_namespaces
 
 notices_bp = Blueprint('notices', __name__, url_prefix='/api/notices')
 
@@ -74,6 +75,7 @@ def get_next_countdown_event():
 
 @notices_bp.route('/', methods=['GET'])
 @notices_bp.route('', methods=['GET'])
+@cache_json_response('notices')
 def list_notices():
     category = request.args.get('category')
     query_text = request.args.get('query')
@@ -243,6 +245,7 @@ def create_notice():
     try:
         db.session.add(notice)
         db.session.commit()
+        invalidate_cache_namespaces('notices')
     except SQLAlchemyError:
         db.session.rollback()
         return jsonify({'error': '공지 저장 중 오류가 발생했습니다.'}), 500
@@ -303,6 +306,7 @@ def update_notice(notice_id):
 
     try:
         db.session.commit()
+        invalidate_cache_namespaces('notices')
     except SQLAlchemyError:
         db.session.rollback()
         return jsonify({'error': '공지 수정 중 오류가 발생했습니다.'}), 500
@@ -327,6 +331,7 @@ def delete_notice(notice_id):
     try:
         notice.deleted_at = db.func.now()
         db.session.commit()
+        invalidate_cache_namespaces('notices')
     except SQLAlchemyError:
         db.session.rollback()
         return jsonify({'error': '공지 삭제 중 오류가 발생했습니다.'}), 500
@@ -412,6 +417,7 @@ def serve_upload(filename):
 
 
 @notices_bp.route('/<int:notice_id>/comments', methods=['GET'])
+@cache_json_response('notices')
 def list_comments(notice_id):
     notice = Notice.query.get(notice_id)
     if not notice or notice.deleted_at:
@@ -465,6 +471,7 @@ def create_comment(notice_id):
     try:
         db.session.add(comment)
         db.session.commit()
+        invalidate_cache_namespaces('notices')
     except SQLAlchemyError:
         db.session.rollback()
         return jsonify({'error': '댓글 작성 중 오류가 발생했습니다.'}), 500
@@ -483,6 +490,7 @@ def delete_comment(notice_id, comment_id):
     try:
         comment.deleted_at = db.func.now()
         db.session.commit()
+        invalidate_cache_namespaces('notices')
     except SQLAlchemyError:
         db.session.rollback()
         return jsonify({'error': '댓글 삭제 중 오류가 발생했습니다.'}), 500
@@ -547,6 +555,7 @@ def react_notice(notice_id):
                 notice.dislike_count += 1
 
         db.session.commit()
+        invalidate_cache_namespaces('notices')
     except SQLAlchemyError:
         db.session.rollback()
         return jsonify({'error': '리액션 처리 중 오류가 발생했습니다.'}), 500

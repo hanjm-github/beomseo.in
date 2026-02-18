@@ -19,6 +19,7 @@ from models import (
 )
 from utils.pagination import parse_pagination, build_paginated_response
 from utils.security import require_role, get_current_user
+from utils.cache import cache_json_response, invalidate_cache_namespaces
 
 subject_changes_bp = Blueprint('subject_changes', __name__, url_prefix='/api/subject-changes')
 
@@ -159,6 +160,7 @@ def fetch_or_404(item_id):
 
 @subject_changes_bp.route('', methods=['GET'])
 @subject_changes_bp.route('/', methods=['GET'])
+@cache_json_response('subject_changes')
 def list_subject_changes():
     grade = request.args.get('grade')
     try:
@@ -221,6 +223,7 @@ def create_subject_change():
     try:
         db.session.add(item)
         db.session.commit()
+        invalidate_cache_namespaces('subject_changes')
     except SQLAlchemyError:
         db.session.rollback()
         return jsonify({'error': '저장 중 오류가 발생했습니다.'}), 500
@@ -277,6 +280,7 @@ def update_subject_change(item_id):
 
     try:
         db.session.commit()
+        invalidate_cache_namespaces('subject_changes')
     except SQLAlchemyError:
         db.session.rollback()
         return jsonify({'error': '수정 중 오류가 발생했습니다.'}), 500
@@ -298,6 +302,7 @@ def delete_subject_change(item_id):
     try:
         item.deleted_at = db.func.now()
         db.session.commit()
+        invalidate_cache_namespaces('subject_changes')
     except SQLAlchemyError:
         db.session.rollback()
         return jsonify({'error': '삭제 중 오류가 발생했습니다.'}), 500
@@ -318,6 +323,7 @@ def approve_subject_change(item_id):
     item.approved_at = datetime.utcnow()
     try:
         db.session.commit()
+        invalidate_cache_namespaces('subject_changes')
     except SQLAlchemyError:
         db.session.rollback()
         return jsonify({'error': '승인 처리 중 오류가 발생했습니다.'}), 500
@@ -337,6 +343,7 @@ def unapprove_subject_change(item_id):
     item.approved_at = None
     try:
         db.session.commit()
+        invalidate_cache_namespaces('subject_changes')
     except SQLAlchemyError:
         db.session.rollback()
         return jsonify({'error': '승인 해제 중 오류가 발생했습니다.'}), 500
@@ -362,6 +369,7 @@ def change_match_status(item_id):
     item.status = MatchStatus(status_raw)
     try:
         db.session.commit()
+        invalidate_cache_namespaces('subject_changes')
     except SQLAlchemyError:
         db.session.rollback()
         return jsonify({'error': '상태 변경 중 오류가 발생했습니다.'}), 500
@@ -373,6 +381,7 @@ def change_match_status(item_id):
 
 
 @subject_changes_bp.route('/<int:item_id>/comments', methods=['GET'])
+@cache_json_response('subject_changes')
 def list_comments(item_id):
     item = fetch_or_404(item_id)
     if not item:
@@ -430,6 +439,7 @@ def create_comment(item_id):
         db.session.add(comment)
         item.comment_count += 1
         db.session.commit()
+        invalidate_cache_namespaces('subject_changes')
     except SQLAlchemyError:
         db.session.rollback()
         return jsonify({'error': '댓글 저장 중 오류가 발생했습니다.'}), 500
@@ -457,6 +467,7 @@ def delete_comment(item_id, comment_id):
         if item.comment_count > 0:
             item.comment_count -= 1
         db.session.commit()
+        invalidate_cache_namespaces('subject_changes')
     except SQLAlchemyError:
         db.session.rollback()
         return jsonify({'error': '댓글 삭제 중 오류가 발생했습니다.'}), 500

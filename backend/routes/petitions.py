@@ -18,6 +18,7 @@ from models import (
 )
 from utils.pagination import parse_pagination, build_paginated_response
 from utils.security import require_role, get_current_user
+from utils.cache import cache_json_response, invalidate_cache_namespaces
 
 petitions_bp = Blueprint('petitions', __name__, url_prefix='/api/community/petitions')
 PETITION_CATEGORIES = (
@@ -95,6 +96,7 @@ def base_query(include_deleted=False):
 
 @petitions_bp.route('/', methods=['GET'])
 @petitions_bp.route('', methods=['GET'])
+@cache_json_response('petitions')
 def list_petitions():
     status = request.args.get('status')
     category = request.args.get('category')
@@ -179,6 +181,7 @@ def create_petition():
     try:
         db.session.add(petition)
         db.session.commit()
+        invalidate_cache_namespaces('petitions')
     except SQLAlchemyError:
         db.session.rollback()
         return jsonify({'error': '청원 저장 중 오류가 발생했습니다.'}), 500
@@ -202,6 +205,7 @@ def can_edit(petition: Petition, user: User):
 
 
 @petitions_bp.route('/<int:petition_id>', methods=['GET'])
+@cache_json_response('petitions')
 def get_petition(petition_id):
     petition = fetch_petition_or_404(petition_id)
     if not petition:
@@ -248,6 +252,7 @@ def update_petition(petition_id):
 
     try:
         db.session.commit()
+        invalidate_cache_namespaces('petitions')
     except SQLAlchemyError:
         db.session.rollback()
         return jsonify({'error': '청원 수정 중 오류가 발생했습니다.'}), 500
@@ -266,6 +271,7 @@ def delete_petition(petition_id):
     try:
         petition.deleted_at = db.func.now()
         db.session.commit()
+        invalidate_cache_namespaces('petitions')
     except SQLAlchemyError:
         db.session.rollback()
         return jsonify({'error': '청원 삭제 중 오류가 발생했습니다.'}), 500
@@ -286,6 +292,7 @@ def approve_petition(petition_id):
     petition.approved_at = datetime.utcnow()
     try:
         db.session.commit()
+        invalidate_cache_namespaces('petitions')
     except SQLAlchemyError:
         db.session.rollback()
         return jsonify({'error': '승인 처리 중 오류가 발생했습니다.'}), 500
@@ -305,6 +312,7 @@ def reject_petition(petition_id):
     petition.approved_at = None
     try:
         db.session.commit()
+        invalidate_cache_namespaces('petitions')
     except SQLAlchemyError:
         db.session.rollback()
         return jsonify({'error': '반려 처리 중 오류가 발생했습니다.'}), 500
@@ -336,6 +344,7 @@ def vote_petition(petition_id):
                 db.session.add(PetitionVote(petition_id=petition_id, user_id=user.id))
                 petition.votes_count = (petition.votes_count or 0) + 1
         db.session.commit()
+        invalidate_cache_namespaces('petitions')
     except IntegrityError:
         db.session.rollback()
         return jsonify({'error': '추천 처리 중 오류가 발생했습니다.'}), 500
@@ -380,6 +389,7 @@ def answer_petition(petition_id):
             )
             db.session.add(answer)
         db.session.commit()
+        invalidate_cache_namespaces('petitions')
     except SQLAlchemyError:
         db.session.rollback()
         return jsonify({'error': '답변 저장 중 오류가 발생했습니다.'}), 500

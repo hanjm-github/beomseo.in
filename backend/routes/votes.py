@@ -18,6 +18,7 @@ from models import (
 )
 from utils.pagination import parse_pagination, build_paginated_response
 from utils.security import require_role, get_current_user
+from utils.cache import cache_json_response, invalidate_cache_namespaces
 
 votes_bp = Blueprint('votes', __name__, url_prefix='/api/community/votes')
 
@@ -178,6 +179,7 @@ def vote_option_map(vote_ids, user_id):
 
 @votes_bp.route('', methods=['GET'])
 @votes_bp.route('/', methods=['GET'])
+@cache_json_response('votes', ttl=20)
 def list_votes():
     sort = request.args.get('sort', 'recent')
     q_text = (request.args.get('q') or '').strip()
@@ -221,6 +223,7 @@ def list_votes():
 
 
 @votes_bp.route('/<int:vote_id>', methods=['GET'])
+@cache_json_response('votes', ttl=20)
 def get_vote(vote_id):
     vote = fetch_vote(vote_id)
     if not vote:
@@ -269,6 +272,7 @@ def create_vote():
     try:
         db.session.add(vote)
         db.session.commit()
+        invalidate_cache_namespaces('votes')
     except SQLAlchemyError:
         db.session.rollback()
         return jsonify({'error': '투표 생성 중 오류가 발생했습니다.'}), 500
@@ -319,6 +323,7 @@ def submit_vote(vote_id):
         if reward > 0 and credit:
             credit.earn(reward)
         db.session.commit()
+        invalidate_cache_namespaces('votes', 'surveys')
     except IntegrityError:
         db.session.rollback()
         return jsonify({'error': '이미 투표에 참여했습니다.'}), 409

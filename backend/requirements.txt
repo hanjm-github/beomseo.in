@@ -13,3 +13,5 @@ bcrypt==4.2.1
 
 # Utils
 python-dotenv==1.0.1
+Flask-Caching==2.3.0
+redis==5.2.1

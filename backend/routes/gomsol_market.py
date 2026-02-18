@@ -28,6 +28,7 @@ from utils.files import (
     build_upload_url,
 )
 from utils.security import require_role, get_current_user
+from utils.cache import cache_json_response, invalidate_cache_namespaces
 
 gomsol_market_bp = Blueprint('gomsol_market', __name__, url_prefix='/api/community/gomsol-market')
 
@@ -197,6 +198,7 @@ def validate_create_payload(data):
 
 @gomsol_market_bp.route('', methods=['GET'])
 @gomsol_market_bp.route('/', methods=['GET'])
+@cache_json_response('gomsol_market')
 def list_posts():
     status = request.args.get('status')
     category = request.args.get('category')
@@ -306,6 +308,7 @@ def create_post():
     try:
         db.session.add(post)
         db.session.commit()
+        invalidate_cache_namespaces('gomsol_market')
     except SQLAlchemyError:
         db.session.rollback()
         return jsonify({'error': '게시글 저장 중 오류가 발생했습니다.'}), 500
@@ -326,6 +329,7 @@ def approve_post(post_id):
     post.approved_at = datetime.utcnow()
     try:
         db.session.commit()
+        invalidate_cache_namespaces('gomsol_market')
     except SQLAlchemyError:
         db.session.rollback()
         return jsonify({'error': '승인 처리 중 오류가 발생했습니다.'}), 500
@@ -345,6 +349,7 @@ def unapprove_post(post_id):
     post.approved_at = None
     try:
         db.session.commit()
+        invalidate_cache_namespaces('gomsol_market')
     except SQLAlchemyError:
         db.session.rollback()
         return jsonify({'error': '승인 해제 중 오류가 발생했습니다.'}), 500
@@ -373,6 +378,7 @@ def update_status(post_id):
     post.status = GomsolMarketSaleStatus(status)
     try:
         db.session.commit()
+        invalidate_cache_namespaces('gomsol_market')
     except SQLAlchemyError:
         db.session.rollback()
         return jsonify({'error': '상태 변경 중 오류가 발생했습니다.'}), 500
@@ -423,4 +429,3 @@ def serve_upload(filename):
     image = GomsolMarketImage.query.filter(GomsolMarketImage.url.like(f'%/{filename}')).first()
     download_name = image.name if image else filename
     return send_from_directory(upload_dir, filename, as_attachment=False, download_name=download_name)
-

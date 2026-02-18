@@ -27,6 +27,7 @@ from models import (
 from utils.pagination import parse_pagination, build_paginated_response
 from utils.files import save_upload_for_scope, resolve_scope_upload_dir, ensure_dir
 from utils.security import require_role, get_current_user
+from utils.cache import cache_json_response, invalidate_cache_namespaces
 
 free_bp = Blueprint('free', __name__, url_prefix='/api/community/free')
 
@@ -89,6 +90,7 @@ def can_edit(post: FreePost, user: User):
 
 @free_bp.route('/', methods=['GET'])
 @free_bp.route('', methods=['GET'])
+@cache_json_response('free')
 def list_posts():
     category = request.args.get('category')
     query_text = request.args.get('query')
@@ -208,6 +210,7 @@ def create_post():
     try:
         db.session.add(post)
         db.session.commit()
+        invalidate_cache_namespaces('free')
     except SQLAlchemyError:
         db.session.rollback()
         return jsonify({'error': '게시글 저장 중 오류가 발생했습니다.'}), 500
@@ -257,6 +260,7 @@ def update_post(post_id):
 
     try:
         db.session.commit()
+        invalidate_cache_namespaces('free')
     except SQLAlchemyError:
         db.session.rollback()
         return jsonify({'error': '게시글 수정 중 오류가 발생했습니다.'}), 500
@@ -278,6 +282,7 @@ def delete_post(post_id):
     try:
         post.deleted_at = db.func.now()
         db.session.commit()
+        invalidate_cache_namespaces('free')
     except SQLAlchemyError:
         db.session.rollback()
         return jsonify({'error': '게시글 삭제 중 오류가 발생했습니다.'}), 500
@@ -326,6 +331,7 @@ def approve_post(post_id):
     post.approved_at = datetime.utcnow()
     try:
         db.session.commit()
+        invalidate_cache_namespaces('free')
     except SQLAlchemyError:
         db.session.rollback()
         return jsonify({'error': '승인 처리 중 오류가 발생했습니다.'}), 500
@@ -345,6 +351,7 @@ def unapprove_post(post_id):
     post.approved_at = None
     try:
         db.session.commit()
+        invalidate_cache_namespaces('free')
     except SQLAlchemyError:
         db.session.rollback()
         return jsonify({'error': '승인 취소 중 오류가 발생했습니다.'}), 500
@@ -396,6 +403,7 @@ def react_post(post_id):
                 post.dislike_count += 1
 
         db.session.commit()
+        invalidate_cache_namespaces('free')
     except SQLAlchemyError:
         db.session.rollback()
         return jsonify({'error': '리액션 처리 중 오류가 발생했습니다.'}), 500
@@ -430,6 +438,7 @@ def toggle_bookmark(post_id):
             post.bookmarked_count += 1
             bookmarked = True
         db.session.commit()
+        invalidate_cache_namespaces('free')
     except IntegrityError:
         db.session.rollback()
         return jsonify({'error': '북마크 처리 중 오류가 발생했습니다.'}), 500
@@ -444,6 +453,7 @@ def toggle_bookmark(post_id):
 
 
 @free_bp.route('/<int:post_id>/comments', methods=['GET'])
+@cache_json_response('free')
 def list_comments(post_id):
     post = fetch_post_or_404(post_id)
     if not post:
@@ -491,6 +501,7 @@ def create_comment(post_id):
         db.session.add(comment)
         post.comments_count += 1
         db.session.commit()
+        invalidate_cache_namespaces('free')
     except SQLAlchemyError:
         db.session.rollback()
         return jsonify({'error': '댓글 작성 중 오류가 발생했습니다.'}), 500
@@ -512,6 +523,7 @@ def delete_comment(post_id, comment_id):
         if post and post.comments_count > 0:
             post.comments_count -= 1
         db.session.commit()
+        invalidate_cache_namespaces('free')
     except SQLAlchemyError:
         db.session.rollback()
         return jsonify({'error': '댓글 삭제 중 오류가 발생했습니다.'}), 500

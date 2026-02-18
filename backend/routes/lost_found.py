@@ -28,6 +28,7 @@ from utils.files import (
     build_upload_url,
 )
 from utils.security import require_role, get_current_user
+from utils.cache import cache_json_response, invalidate_cache_namespaces
 
 lost_found_bp = Blueprint('lost_found', __name__, url_prefix='/api/community/lost-found')
 
@@ -185,6 +186,7 @@ def validate_create_payload(data):
 
 @lost_found_bp.route('', methods=['GET'])
 @lost_found_bp.route('/', methods=['GET'])
+@cache_json_response('lost_found')
 def list_posts():
     # Optional auth read is kept for parity with other boards.
     optional_current_user()
@@ -286,6 +288,7 @@ def create_post():
     try:
         db.session.add(post)
         db.session.commit()
+        invalidate_cache_namespaces('lost_found')
     except SQLAlchemyError:
         db.session.rollback()
         return jsonify({'error': '분실물 등록 중 오류가 발생했습니다.'}), 500
@@ -309,6 +312,7 @@ def update_status(post_id):
     post.status = LostFoundStatus(status)
     try:
         db.session.commit()
+        invalidate_cache_namespaces('lost_found')
     except SQLAlchemyError:
         db.session.rollback()
         return jsonify({'error': '상태 변경 중 오류가 발생했습니다.'}), 500
@@ -363,6 +367,7 @@ def serve_upload(filename):
 
 
 @lost_found_bp.route('/<int:post_id>/comments', methods=['GET'])
+@cache_json_response('lost_found')
 def list_comments(post_id):
     post = fetch_post_or_404(post_id)
     if not post:
@@ -415,6 +420,7 @@ def create_comment(post_id):
         db.session.add(comment)
         post.comments_count = (post.comments_count or 0) + 1
         db.session.commit()
+        invalidate_cache_namespaces('lost_found')
     except SQLAlchemyError:
         db.session.rollback()
         return jsonify({'error': '댓글 저장 중 오류가 발생했습니다.'}), 500
@@ -439,9 +445,9 @@ def delete_comment(post_id, comment_id):
         if (post.comments_count or 0) > 0:
             post.comments_count -= 1
         db.session.commit()
+        invalidate_cache_namespaces('lost_found')
     except SQLAlchemyError:
         db.session.rollback()
         return jsonify({'error': '댓글 삭제 중 오류가 발생했습니다.'}), 500
 
     return jsonify({'message': '삭제되었습니다.'}), 200
-

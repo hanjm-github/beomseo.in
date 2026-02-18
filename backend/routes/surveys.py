@@ -22,6 +22,7 @@ from models import (
 )
 from utils.pagination import parse_pagination, build_paginated_response
 from utils.security import require_role, get_current_user
+from utils.cache import cache_json_response, invalidate_cache_namespaces
 
 surveys_bp = Blueprint('surveys', __name__, url_prefix='/api/surveys')
 
@@ -218,6 +219,7 @@ def build_quota_map(surveys):
 # Routes
 @surveys_bp.route('', methods=['GET'])
 @surveys_bp.route('/', methods=['GET'])
+@cache_json_response('surveys')
 def list_surveys():
     status = request.args.get('status')
     q_text = request.args.get('q') or request.args.get('query')
@@ -313,6 +315,7 @@ def list_surveys():
 
 
 @surveys_bp.route('/<survey_id>', methods=['GET'])
+@cache_json_response('surveys')
 def get_survey(survey_id):
     survey = fetch_survey_or_404(survey_id)
     if not survey:
@@ -372,6 +375,7 @@ def create_survey():
     try:
         db.session.add(survey)
         db.session.commit()
+        invalidate_cache_namespaces('surveys')
     except SQLAlchemyError:
         db.session.rollback()
         return jsonify({'error': '등록 중 오류가 발생했습니다.'}), 500
@@ -417,6 +421,7 @@ def approve_survey(survey_id):
 
     try:
         db.session.commit()
+        invalidate_cache_namespaces('surveys')
     except SQLAlchemyError:
         db.session.rollback()
         return jsonify({'error': '승인 처리 중 오류가 발생했습니다.'}), 500
@@ -441,6 +446,7 @@ def unapprove_survey(survey_id):
 
     try:
         db.session.commit()
+        invalidate_cache_namespaces('surveys')
     except SQLAlchemyError:
         db.session.rollback()
         return jsonify({'error': '승인 해제 중 오류가 발생했습니다.'}), 500
@@ -516,6 +522,7 @@ def submit_response(survey_id):
             respondent_credit.earn(earn_amount)
             credits_earned = earn_amount
         db.session.commit()
+        invalidate_cache_namespaces('surveys')
     except IntegrityError:
         db.session.rollback()
         return jsonify({'error': '이미 응답한 설문입니다.'}), 409
@@ -536,6 +543,7 @@ def submit_response(survey_id):
 
 @surveys_bp.route('/<survey_id>/summary', methods=['GET'])
 @jwt_required()
+@cache_json_response('surveys')
 def survey_summary(survey_id):
     survey = fetch_survey_or_404(survey_id)
     if not survey:
@@ -606,6 +614,7 @@ def survey_summary(survey_id):
 
 @surveys_bp.route('/<survey_id>/responses', methods=['GET'])
 @jwt_required()
+@cache_json_response('surveys')
 def survey_raw_responses(survey_id):
     survey = fetch_survey_or_404(survey_id)
     if not survey:
@@ -639,6 +648,7 @@ def survey_raw_responses(survey_id):
 
 @surveys_bp.route('/credits/me', methods=['GET'])
 @jwt_required()
+@cache_json_response('surveys', ttl=20)
 def my_credits():
     user = get_current_user()
     if not user:

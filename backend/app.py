@@ -15,6 +15,7 @@ from models import vote  # noqa: F401 ensure models are registered
 from models import lost_found  # noqa: F401 ensure models are registered
 from models import countdown_event  # noqa: F401 ensure models are registered
 from models import gomsol_market  # noqa: F401 ensure models are registered
+from utils.cache import init_cache
 
 
 def create_app(config_name=None):
@@ -26,6 +27,7 @@ def create_app(config_name=None):
     app.config.from_object(config.get(config_name, config['default']))
     
     # Initialize extensions
+    init_cache(app)
     db.init_app(app)
     
     # CORS setup for React frontend

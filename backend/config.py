@@ -28,6 +28,21 @@ def _parse_nickname_banned_words(value: str):
     return list(dict.fromkeys(words))
 
 
+def _parse_bool(value, default=False):
+    """Parse common boolean env values safely."""
+    if value is None:
+        return default
+    return str(value).strip().lower() in {'1', 'true', 'yes', 'on'}
+
+
+def _parse_int(value, default=0):
+    """Parse int env values safely."""
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
 class Config:
     """Flask configuration class."""
     
@@ -54,6 +69,15 @@ class Config:
     # CORS Settings (managed via .env CORS_ORIGINS)
     CORS_ORIGINS_RAW = os.getenv('CORS_ORIGINS', 'http://localhost:5173')
     CORS_ORIGINS = _parse_origins(CORS_ORIGINS_RAW)
+
+    # Cache / Redis
+    CACHE_ENABLED = _parse_bool(os.getenv('CACHE_ENABLED', 'true'), default=True)
+    REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
+    CACHE_DEFAULT_TIMEOUT = _parse_int(os.getenv('CACHE_DEFAULT_TIMEOUT', 60), 60)
+    CACHE_KEY_PREFIX = os.getenv('CACHE_KEY_PREFIX', 'beomseo_in_api:')
+    CACHE_DEBUG_HEADERS = _parse_bool(os.getenv('CACHE_DEBUG_HEADERS', 'false'), default=False)
+    CACHE_SOCKET_CONNECT_TIMEOUT = _parse_int(os.getenv('CACHE_SOCKET_CONNECT_TIMEOUT', 1), 1)
+    CACHE_SOCKET_TIMEOUT = _parse_int(os.getenv('CACHE_SOCKET_TIMEOUT', 1), 1)
 
     # Nickname moderation
     NICKNAME_BANNED_WORDS_RAW = os.getenv(
