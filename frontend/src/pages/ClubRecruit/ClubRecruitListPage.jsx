@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+﻿import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { clubRecruitApi } from '../../api/clubRecruit';
 import GradeTabs from '../../components/clubRecruit/GradeTabs';
@@ -14,9 +14,12 @@ const PAGE_SIZE = 12;
 
 export default function ClubRecruitListPage() {
   const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
+
   const [gradeGroup, setGradeGroup] = useState('lower');
   const [sort, setSort] = useState('recent');
   const [search, setSearch] = useState('');
+  const [approval, setApproval] = useState('all');
 
   const [items, setItems] = useState([]);
   const [page, setPage] = useState(1);
@@ -31,9 +34,10 @@ export default function ClubRecruitListPage() {
       gradeGroup,
       sort,
       q: search,
+      status: isAdmin ? (approval === 'all' ? undefined : approval) : 'approved',
       pageSize: PAGE_SIZE,
     }),
-    [gradeGroup, sort, search]
+    [gradeGroup, sort, search, approval, isAdmin]
   );
 
   const loadPage = useCallback(
@@ -89,13 +93,18 @@ export default function ClubRecruitListPage() {
     loadPage(page, page > 1);
   };
 
+  const handleApprovalChange = (nextApproval) => {
+    setApproval(nextApproval);
+    setPage(1);
+  };
+
   return (
     <div className="page-shell">
       <div className="page-header">
         <div>
           <p className="eyebrow">소통하는 범서고</p>
           <h1>동아리 모집 게시판</h1>
-          <p className="lede">포스터 한눈에, 필터와 검색으로 바로 지원.</p>
+          <p className="lede">학년별 탭과 필터로 바로 찾아보세요.</p>
         </div>
         <div className="header-actions">
           {user ? (
@@ -113,6 +122,9 @@ export default function ClubRecruitListPage() {
         onSearchChange={setSearch}
         sort={sort}
         onSortChange={setSort}
+        isAdmin={isAdmin}
+        approval={approval}
+        onApprovalChange={handleApprovalChange}
       />
 
       {error ? <ErrorState onRetry={handleRetry} /> : null}
@@ -121,16 +133,12 @@ export default function ClubRecruitListPage() {
         <>
           <RecruitGrid>
             {items.map((item) => (
-              <RecruitCard
-                key={item.id}
-                item={item}
-                showStatus={user?.role === 'admin'}
-              />
+              <RecruitCard key={item.id} item={item} showStatus={isAdmin} />
             ))}
           </RecruitGrid>
 
           {items.length === 0 && !loading ? (
-            <EmptyState message="조건에 맞는 동아리 모집이 없어요." />
+            <EmptyState message="조건에 맞는 동아리 모집글이 없어요." />
           ) : null}
 
           <div ref={sentinelRef} />

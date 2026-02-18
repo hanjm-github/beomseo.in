@@ -46,7 +46,7 @@ def register():
     
     if not is_ip_allowed(client_ip, allowed_ips):
         return jsonify({
-            'error': '회원가입은 울산광역시교육청 네트워크에서만 가능합니다.',
+            'error': '회원가입은 울산광역시교육청 네트워크(범서고등학교)에서만 가능합니다.',
             'error_en': 'Registration is only allowed from Ulsan Education Office network.'
         }), 403
     

@@ -69,7 +69,8 @@ export default function SurveyExchangeComposePage() {
         <div>
           <p className="eyebrow">설문 {isEdit ? '수정' : '작성'}</p>
           <h1>{isEdit ? '설문 수정' : '새 설문 만들기'}</h1>
-          <p className="lede">승인 후 응답권 30개가 부여됩니다. 질문을 구성하고 미리보기로 확인하세요.</p>
+          <p className="lede">승인 후 응답권 30개가 부여됩니다. 등록한 글은 관리자 승인 후 일반 사용자에게 공개됩니다.</p>
+          <p className="lede">현재 미리보기 기능 사용시 글 작성이 초기화되는 버그가 발생중입니다. 이용에 참고 부탁드립니다.</p>
         </div>
         <button className="btn btn-secondary" type="button" onClick={() => navigate(-1)}>
           <ArrowLeft size={16} /> 뒤로가기

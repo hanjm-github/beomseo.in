@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+﻿import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import FreeBoardToolbar from '../../components/freeboard/FreeBoardToolbar';
@@ -23,11 +23,14 @@ export default function FreeBoardListView() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
 
+  const isAdmin = user?.role === 'admin';
+
   const initialCategory = params.get('category') || 'all';
 
   const [category, setCategory] = useState(initialCategory);
   const [search, setSearch] = useState(params.get('q') || '');
   const [sort, setSort] = useState(params.get('sort') || 'recent');
+  const [approval, setApproval] = useState(isAdmin ? params.get('approval') || 'all' : 'approved');
   const [mine, setMine] = useState(params.get('mine') === '1');
   const [bookmarked, setBookmarked] = useState(params.get('bookmarked') === '1');
   const [page, setPage] = useState(Number(params.get('page')) || 1);
@@ -40,18 +43,19 @@ export default function FreeBoardListView() {
     if (category && category !== 'all') next.set('category', category);
     if (search) next.set('q', search);
     if (sort !== 'recent') next.set('sort', sort);
+    if (isAdmin && approval !== 'all') next.set('approval', approval);
     if (mine) next.set('mine', '1');
     if (bookmarked) next.set('bookmarked', '1');
     if (page > 1) next.set('page', String(page));
     navigate({ search: next.toString() }, { replace: true });
-  }, [category, search, sort, mine, bookmarked, page, navigate]);
+  }, [category, search, sort, approval, isAdmin, mine, bookmarked, page, navigate]);
 
   useEffect(() => {
     let cancelled = false;
     const timer = setTimeout(() => {
       setLoading(true);
       const categoryParam = category === 'all' ? undefined : category;
-      const statusParam = user?.role === 'admin' ? 'all' : undefined;
+      const statusParam = isAdmin ? (approval === 'all' ? undefined : approval) : 'approved';
       communityApi
         .list({
           category: categoryParam,
@@ -65,7 +69,20 @@ export default function FreeBoardListView() {
         })
         .then((res) => {
           if (cancelled) return;
-          setData(res);
+
+          const rawItems = res.items || [];
+          const filteredItems = isAdmin
+            ? approval === 'all'
+              ? rawItems
+              : rawItems.filter((item) => item.status === approval)
+            : rawItems.filter((item) => item.status === 'approved');
+          const hasClientFilter = filteredItems.length !== rawItems.length;
+
+          setData({
+            ...res,
+            items: filteredItems,
+            total: hasClientFilter ? filteredItems.length : res.total,
+          });
           setLoading(false);
         })
         .catch(() => {
@@ -79,11 +96,12 @@ export default function FreeBoardListView() {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [category, search, sort, mine, bookmarked, page, user?.role]);
+  }, [category, search, sort, approval, isAdmin, mine, bookmarked, page]);
 
   const totalPages = useMemo(() => Math.max(1, Math.ceil((data.total || 0) / PAGE_SIZE)), [data.total]);
   const basePath = '/community/free';
   const canWrite = !!user; // allow any logged-in user to write; backend enforces further
+
   const handleCategoryChange = (nextCategory) => {
     setCategory(nextCategory);
     setPage(1);
@@ -96,6 +114,11 @@ export default function FreeBoardListView() {
 
   const handleSortChange = (nextSort) => {
     setSort(nextSort);
+    setPage(1);
+  };
+
+  const handleApprovalChange = (nextApproval) => {
+    setApproval(nextApproval);
     setPage(1);
   };
 
@@ -146,6 +169,9 @@ export default function FreeBoardListView() {
         onSearchChange={handleSearchChange}
         sort={sort}
         onSortChange={handleSortChange}
+        isAdmin={isAdmin}
+        approval={approval}
+        onApprovalChange={handleApprovalChange}
         mine={mine}
         bookmarked={bookmarked}
         onToggleMine={handleToggleMine}

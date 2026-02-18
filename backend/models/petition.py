@@ -21,7 +21,7 @@ class Petition(db.Model):
     title = db.Column(db.String(200), nullable=False)
     summary = db.Column(db.String(500), nullable=False)
     body = db.Column(db.Text, nullable=False)
-    category = db.Column(db.String(50), nullable=False)  # 시설/급식/학사/행사/기타
+    category = db.Column(db.String(50), nullable=False)  # 기타/회장단/3학년부/2학년부/정보기술부/방송부/학예부/체육부/진로부/홍보부/기후환경부/학생지원부/생활안전부/융합인재부
     threshold = db.Column(db.Integer, nullable=False, default=50)
     votes_count = db.Column(db.Integer, nullable=False, default=0)
     status = db.Column(db.Enum(PetitionStatus), nullable=False, default=PetitionStatus.PENDING, index=True)

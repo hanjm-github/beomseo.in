@@ -1,4 +1,4 @@
-import { Search } from 'lucide-react';
+﻿import { Search } from 'lucide-react';
 import styles from './clubRecruit.module.css';
 
 const sortOptions = [
@@ -11,6 +11,9 @@ export default function RecruitFilterBar({
   onSearchChange,
   sort,
   onSortChange,
+  isAdmin = false,
+  approval = 'all',
+  onApprovalChange,
 }) {
   return (
     <div className={styles.filterBar} role="search">
@@ -33,6 +36,20 @@ export default function RecruitFilterBar({
             ))}
           </select>
         </div>
+
+        {isAdmin ? (
+          <div className={styles.selectWrap}>
+            <select
+              value={approval}
+              onChange={(e) => onApprovalChange?.(e.target.value)}
+              aria-label="승인 상태 필터"
+            >
+              <option value="all">승인 전체</option>
+              <option value="approved">승인됨</option>
+              <option value="pending">미승인</option>
+            </select>
+          </div>
+        ) : null}
       </div>
     </div>
   );

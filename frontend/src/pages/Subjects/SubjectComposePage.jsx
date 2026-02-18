@@ -55,7 +55,7 @@ export default function SubjectComposePage() {
         <div>
           <p className="eyebrow">선택과목 변경</p>
           <h1>글쓰기</h1>
-          <p className="lede">제목 없이 받는/주는 과목을 필수로 입력해 주세요.</p>
+          <p className="lede">등록한 글은 관리자 승인 후 일반 사용자에게 공개됩니다.</p>
         </div>
         <div className="header-actions">
           <Link className="btn btn-secondary" to="/community/subjects">

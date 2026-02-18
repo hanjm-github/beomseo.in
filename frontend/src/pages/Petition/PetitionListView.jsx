@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+﻿import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Filter, Plus, RotateCcw, Search } from 'lucide-react';
 import PetitionCard from '../../components/petition/PetitionCard';
@@ -14,15 +14,40 @@ const STATUS_FILTERS = [
   { key: 'answered', label: '답변 완료' },
 ];
 
-const CATEGORY_FILTERS = ['전체', '시설', '급식', '학사', '행사', '기타'];
+const APPROVAL_FILTERS = [
+  { key: 'all', label: '승인 전체' },
+  { key: 'approved', label: '승인됨' },
+  { key: 'pending', label: '미승인' },
+];
+
+const CATEGORY_FILTERS = [
+  '전체',
+  '기타',
+  '회장단',
+  '3학년부',
+  '2학년부',
+  '정보기술부',
+  '방송부',
+  '학예부',
+  '체육부',
+  '진로부',
+  '홍보부',
+  '기후환경부',
+  '학생지원부',
+  '생활안전부',
+  '융합인재부',
+];
+
 const PAGE_SIZE = 12;
 
 export default function PetitionListView() {
   const { user, isAuthenticated } = useAuth();
   const [params, setParams] = useSearchParams();
   const navigate = useNavigate();
+  const isAdmin = user?.role === 'admin';
 
   const [status, setStatus] = useState(params.get('status') || 'all');
+  const [approval, setApproval] = useState(params.get('approval') || 'all');
   const [category, setCategory] = useState(params.get('category') || '전체');
   const [sort, setSort] = useState(params.get('sort') || 'recent');
   const [search, setSearch] = useState(params.get('q') || '');
@@ -45,12 +70,13 @@ export default function PetitionListView() {
   useEffect(() => {
     const next = new URLSearchParams();
     if (status && status !== 'all') next.set('status', status);
+    if (isAdmin && approval !== 'all') next.set('approval', approval);
     if (category && category !== '전체') next.set('category', category);
     if (sort !== 'recent') next.set('sort', sort);
     if (search) next.set('q', search);
     if (page > 1) next.set('page', String(page));
     setParams(next, { replace: true });
-  }, [status, category, sort, search, page, setParams]);
+  }, [status, approval, isAdmin, category, sort, search, page, setParams]);
 
   useEffect(() => {
     let cancelled = false;
@@ -59,9 +85,9 @@ export default function PetitionListView() {
 
     const fetchList = async () => {
       try {
+        const approvalParam = !isAdmin ? 'approved' : approval === 'approved' ? 'approved' : undefined;
         const res = await petitionApi.list({
-          // 서버 status 필터는 승인 여부만 있으므로 derived 상태 필터는 클라이언트에서 수행
-          status: undefined,
+          status: approvalParam,
           category: category === '전체' ? undefined : category,
           sort,
           q: search,
@@ -69,16 +95,26 @@ export default function PetitionListView() {
           pageSize: PAGE_SIZE,
         });
         if (cancelled) return;
-        // 클라이언트 파생 상태 필터링
+
+        const rawItems = res.items || [];
+
+        const approvalFilteredItems = isAdmin
+          ? approval === 'pending'
+            ? rawItems.filter((it) => it.status !== 'approved')
+            : rawItems
+          : rawItems.filter((it) => it.status === 'approved');
+
         const filteredItems =
           status === 'all'
-            ? res.items
-            : res.items.filter((it) => deriveStatus(it) === status);
+            ? approvalFilteredItems
+            : approvalFilteredItems.filter((it) => deriveStatus(it) === status);
+
+        const hasClientFilter = approval === 'pending' || status !== 'all' || !isAdmin;
 
         setData({
           ...res,
           items: filteredItems,
-          total: status === 'all' ? res.total : filteredItems.length,
+          total: hasClientFilter ? filteredItems.length : res.total,
         });
       } catch (err) {
         if (cancelled) return;
@@ -92,12 +128,12 @@ export default function PetitionListView() {
     return () => {
       cancelled = true;
     };
-  }, [status, category, sort, search, page]);
+  }, [status, approval, isAdmin, category, sort, search, page]);
 
   // reset page on filters change
   useEffect(() => {
     setPage(1);
-  }, [status, category, sort, search]);
+  }, [status, approval, category, sort, search]);
 
   const totalPages = useMemo(
     () => Math.max(1, Math.ceil((data.total || 0) / (data.pageSize || PAGE_SIZE))),
@@ -116,7 +152,7 @@ export default function PetitionListView() {
         ...prev,
         items: prev.items.map((p) =>
           p.id === item.id
-            ? { ...p, votes: res.votes, isVotedByMe: res.isVotedByMe, status: res.status }
+            ? { ...p, votes: res.votes, isVotedByMe: res.isVotedByMe, statusDerived: res.status }
             : p
         ),
       }));
@@ -127,6 +163,7 @@ export default function PetitionListView() {
 
   const resetFilters = () => {
     setStatus('all');
+    setApproval('all');
     setCategory('전체');
     setSort('recent');
     setSearch('');
@@ -139,7 +176,7 @@ export default function PetitionListView() {
         <div>
           <p className="eyebrow">소통하는 범서고</p>
           <h1>학생 청원 게시판</h1>
-          <p className="lede">추천 {THRESHOLD_DEFAULT}표 달성 시 학생회장이 직접 답변합니다.</p>
+          <p className="lede">추천 {THRESHOLD_DEFAULT}명 달성 시 학생회장단이 직접 답변합니다.</p>
         </div>
         <div className="header-actions">
           <Link className="btn btn-primary" to="/community/petition/new">
@@ -186,6 +223,21 @@ export default function PetitionListView() {
             <option value="recent">최신순</option>
             <option value="votes">추천순</option>
           </select>
+
+          {isAdmin ? (
+            <select
+              className={styles.sortSelect}
+              value={approval}
+              onChange={(e) => setApproval(e.target.value)}
+              aria-label="승인 상태 필터"
+            >
+              {APPROVAL_FILTERS.map((opt) => (
+                <option key={opt.key} value={opt.key}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          ) : null}
         </div>
 
         <div className={styles.toolbar}>
@@ -228,8 +280,8 @@ export default function PetitionListView() {
                   item={item}
                   onVote={handleVote}
                   canVote={!!user}
-                  isAdmin={user?.role === 'admin'}
-                  // 상세 뒤로가기를 목록으로 보내기 위하여 state 전달
+                  isAdmin={isAdmin}
+                  // 상세 이동 후 목록으로 돌아오기 위한 state 전달
                   linkState={{ from: '/community/petition' }}
                 />
               ))}

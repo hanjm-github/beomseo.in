@@ -12,7 +12,22 @@ export const THRESHOLD_DEFAULT = 50;
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-const CATEGORY_OPTIONS = ['시설', '급식', '학사', '행사', '기타'];
+const CATEGORY_OPTIONS = [
+  '기타',
+  '회장단',
+  '3학년부',
+  '2학년부',
+  '정보기술부',
+  '방송부',
+  '학예부',
+  '체육부',
+  '진로부',
+  '홍보부',
+  '기후환경부',
+  '학생지원부',
+  '생활안전부',
+  '융합인재부',
+];
 
 const deriveStatus = (item) => {
   if (item?.answer) return 'answered';
@@ -30,9 +45,10 @@ let mockPetitions = [
     id: 'pet-1',
     title: '급식실 냉난방 온도 조절 개선 요청',
     summary: '점심시간에 너무 더워서 식사하기 힘들어요. 센서 재조정과 선풍기 추가 요청합니다.',
-    category: '급식',
+    category: '학생지원부',
     votes: 32,
     threshold: THRESHOLD_DEFAULT,
+    status: 'approved',
     createdAt: '2026-03-04T01:00:00Z',
     author: { nickname: '별빛', role: 'student' },
   },
@@ -40,9 +56,10 @@ let mockPetitions = [
     id: 'pet-2',
     title: '3학년 자습실 콘센트 추가 설치',
     summary: '노트북 사용 인원이 늘어났습니다. 벽면 4구 콘센트 3세트 추가 설치 부탁드립니다.',
-    category: '시설',
+    category: '생활안전부',
     votes: 54,
     threshold: THRESHOLD_DEFAULT,
+    status: 'approved',
     createdAt: '2026-03-05T03:30:00Z',
     author: { nickname: '공대꿈나무', role: 'student' },
     answer: {
@@ -56,9 +73,10 @@ let mockPetitions = [
     id: 'pet-3',
     title: '체육대회 종목에 배드민턴 추가',
     summary: '비인기 종목 다양화를 위해 배드민턴 단식/복식 예선을 도입하면 좋겠습니다.',
-    category: '행사',
+    category: '체육부',
     votes: 12,
     threshold: THRESHOLD_DEFAULT,
+    status: 'pending',
     createdAt: '2026-03-06T09:10:00Z',
     author: { nickname: '체육부', role: 'student-council' },
   },
@@ -67,7 +85,7 @@ let mockPetitions = [
 async function mockList(params = {}) {
   await delay(100);
   const { status, category, q, sort = 'recent', page = 1, pageSize = PAGE_SIZE_DEFAULT } = params;
-  let data = mockPetitions.map((p) => ({ ...p, status: deriveStatus(p) }));
+  let data = mockPetitions.map((p) => ({ ...p, statusDerived: deriveStatus(p) }));
 
   if (status && status !== 'all') data = data.filter((p) => p.status === status);
   if (category && CATEGORY_OPTIONS.includes(category)) data = data.filter((p) => p.category === category);
@@ -100,7 +118,7 @@ async function mockDetail(id) {
   await delay(80);
   const found = mockPetitions.find((p) => p.id === id);
   if (!found) throw new Error('Not found');
-  return { ...found, status: deriveStatus(found) };
+  return { ...found, statusDerived: deriveStatus(found) };
 }
 
 async function mockCreate(payload) {
@@ -114,13 +132,13 @@ async function mockCreate(payload) {
     category: payload.category || '기타',
     votes: 0,
     threshold: payload.threshold || THRESHOLD_DEFAULT,
+    status: 'pending',
     createdAt: now,
     author: payload.author || { nickname: '익명', role: 'student' },
-    status: 'needs-support',
     isVotedByMe: false,
   };
   mockPetitions = [item, ...mockPetitions];
-  return { ...item, status: deriveStatus(item) };
+  return { ...item, statusDerived: deriveStatus(item) };
 }
 
 async function mockVote(id, action) {
@@ -136,11 +154,10 @@ async function mockVote(id, action) {
       next.votes = Math.max(0, (next.votes || 0) - 1);
       next.isVotedByMe = false;
     }
-    next.status = deriveStatus(next);
     return next;
   });
   const updated = mockPetitions.find((p) => p.id === id);
-  return { votes: updated.votes, isVotedByMe: updated.isVotedByMe, status: updated.status };
+  return { votes: updated.votes, isVotedByMe: updated.isVotedByMe, status: deriveStatus(updated) };
 }
 
 async function mockAnswer(id, payload) {
@@ -250,7 +267,7 @@ export const petitionApi = {
       if (!shouldUseMockFallback(err)) throw err;
       const found = mockPetitions.find((p) => p.id === id);
       if (found) {
-        found.status = 'pending';
+        found.status = 'rejected';
       }
       return mockDetail(id);
     }

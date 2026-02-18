@@ -77,6 +77,12 @@
   cursor: pointer;
 }
 
+.selectWrap select {
+  border: none;
+  background: transparent;
+  outline: none;
+}
+
 .toggleBtn[aria-pressed='true'] {
   background: var(--color-bg-muted);
   border-color: var(--color-card-border-hover);
@@ -382,7 +388,7 @@
 
 @media (min-width: 960px) {
   .filterBar {
-    grid-template-columns: 1fr repeat(3, max-content);
+    grid-template-columns: 1fr repeat(4, max-content);
   }
 
   .searchWrap {

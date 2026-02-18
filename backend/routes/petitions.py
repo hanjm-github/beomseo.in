@@ -20,6 +20,22 @@ from utils.pagination import parse_pagination, build_paginated_response
 from utils.security import require_role, get_current_user
 
 petitions_bp = Blueprint('petitions', __name__, url_prefix='/api/community/petitions')
+PETITION_CATEGORIES = (
+    '기타',
+    '회장단',
+    '3학년부',
+    '2학년부',
+    '정보기술부',
+    '방송부',
+    '학예부',
+    '체육부',
+    '진로부',
+    '홍보부',
+    '기후환경부',
+    '학생지원부',
+    '생활안전부',
+    '융합인재부',
+)
 
 
 def parse_bool(val):
@@ -59,8 +75,8 @@ def validate_payload(data):
     max_body = current_app.config.get('MAX_PETITION_BODY', 10000)
     if not body or len(body) > max_body:
         errors.append(f'본문은 필수이며 {max_body}자 이하이어야 합니다.')
-    if category not in {'시설', '급식', '학사', '행사', '기타'}:
-        errors.append('category는 시설/급식/학사/행사/기타 중 하나여야 합니다.')
+    if category not in PETITION_CATEGORIES:
+        errors.append('category는 기타/회장단/3학년부/2학년부/정보기술부/방송부/학예부/체육부/진로부/홍보부/기후환경부/학생지원부/생활안전부/융합인재부 중 하나여야 합니다.')
 
     return errors, {
         'title': title,
@@ -102,7 +118,7 @@ def list_petitions():
         q = q.filter(Petition.status == PetitionStatus.REJECTED)
     # status == all for admin -> no filter
 
-    if category in {'시설', '급식', '학사', '행사', '기타'}:
+    if category in PETITION_CATEGORIES:
         q = q.filter(Petition.category == category)
 
     if query_text:

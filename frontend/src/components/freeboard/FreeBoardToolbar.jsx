@@ -1,10 +1,13 @@
-import styles from './freeboard.module.css';
+﻿import styles from './freeboard.module.css';
 
 export default function FreeBoardToolbar({
   search,
   onSearchChange,
   sort,
   onSortChange,
+  isAdmin = false,
+  approval = 'all',
+  onApprovalChange,
   mine,
   bookmarked,
   onToggleMine,
@@ -24,6 +27,19 @@ export default function FreeBoardToolbar({
         <option value="comments">댓글 많은 순</option>
         <option value="likes">공감 많은 순</option>
       </select>
+
+      {isAdmin ? (
+        <select
+          className={styles.select}
+          value={approval}
+          onChange={(e) => onApprovalChange?.(e.target.value)}
+          aria-label="승인 상태 필터"
+        >
+          <option value="all">승인 전체</option>
+          <option value="approved">승인됨</option>
+          <option value="pending">미승인</option>
+        </select>
+      ) : null}
 
       <button type="button" className={styles.toggleBtn} aria-pressed={mine} onClick={onToggleMine}>
         내 글만

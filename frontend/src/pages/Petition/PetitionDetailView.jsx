@@ -93,7 +93,7 @@ export default function PetitionDetailView() {
       const res = await petitionApi.vote(item.id, action);
       setItem((prev) =>
         prev
-          ? { ...prev, votes: res.votes, isVotedByMe: res.isVotedByMe, status: res.status }
+          ? { ...prev, votes: res.votes, isVotedByMe: res.isVotedByMe, statusDerived: res.status }
           : prev
       );
     } finally {

@@ -15,7 +15,7 @@ const mockItems = [
     extraNote: '프로그래밍 기초부터 앱 출시까지 함께',
     applyPeriod: { start: '2026-03-01', end: '2026-03-20' },
     applyLink: '#',
-    status: 'open',
+    status: 'approved',
   },
   {
     id: 'cr-2',
@@ -26,7 +26,7 @@ const mockItems = [
     extraNote: '하드웨어·회로 체험 위주, 매주 목요일',
     applyPeriod: { start: '2026-03-05', end: '2026-03-25' },
     applyLink: '#',
-    status: 'open',
+    status: 'approved',
   },
   {
     id: 'cr-3',
@@ -37,7 +37,7 @@ const mockItems = [
     extraNote: '공연팀·영상팀 동시 모집',
     applyPeriod: { start: '2026-03-01', end: null },
     applyLink: '#',
-    status: 'open',
+    status: 'approved',
   },
   {
     id: 'cr-4',
@@ -48,7 +48,7 @@ const mockItems = [
     extraNote: '바이올린/플루트 우대, 합주 경험 필수',
     applyPeriod: { start: '2026-03-02', end: '2026-03-15' },
     applyLink: '#',
-    status: 'open',
+    status: 'pending',
   },
 ];
 
@@ -59,7 +59,7 @@ function normalizeText(v) {
 }
 
 function applyFilters(items, params) {
-  const { gradeGroup, field, q, sort = 'recent' } = params;
+  const { gradeGroup, field, q, status, sort = 'recent' } = params;
   let data = [...items];
 
   if (gradeGroup === 'lower' || gradeGroup === 'upper') {
@@ -76,6 +76,10 @@ function applyFilters(items, params) {
         normalizeText(i.extraNote).includes(qq) ||
         normalizeText(i.field).includes(qq)
     );
+  }
+
+  if (status === 'approved' || status === 'pending') {
+    data = data.filter((i) => i.status === status);
   }
 
   if (sort === 'deadline') {
@@ -118,7 +122,7 @@ async function mockCreate(payload) {
   const item = {
     ...payload,
     id: `cr-${Date.now()}`,
-    status: 'open',
+    status: 'pending',
     createdAt: now,
   };
   mockItems.unshift(item);

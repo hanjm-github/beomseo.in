@@ -12,6 +12,8 @@ const NoticesPage = lazy(() => import('./pages/NoticesPage'));
 const CommunityRouter = lazy(() => import('./pages/CommunityRouter'));
 const SchoolInfoPage = lazy(() => import('./pages/SchoolInfoPage'));
 const GalleryPage = lazy(() => import('./pages/GalleryPage'));
+const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage'));
+const TermsOfServicePage = lazy(() => import('./pages/TermsOfServicePage'));
 
 import './styles/globals.css';
 
@@ -46,6 +48,8 @@ function App() {
                 <Route path="/community/*" element={<CommunityRouter />} />
                 <Route path="/school-info/*" element={<SchoolInfoPage />} />
                 <Route path="/gallery/*" element={<GalleryPage />} />
+                <Route path="/privacy" element={<PrivacyPolicyPage />} />
+                <Route path="/terms" element={<TermsOfServicePage />} />
               </Routes>
             </Suspense>
           </AppLayout>

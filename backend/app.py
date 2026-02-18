@@ -1,5 +1,5 @@
 """
-Flask application factory for 범서고등학교 school website backend.
+Flask application factory for beomseo.in school website backend.
 """
 import os
 from flask import Flask, jsonify

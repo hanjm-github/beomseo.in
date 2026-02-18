@@ -20,6 +20,10 @@ const summarize = (text = '') => {
 
 const computeStatus = (survey) => {
   if (!survey) return 'closed';
+  const approval =
+    survey.approvalStatus ??
+    (survey.status === 'approved' || survey.status === 'pending' ? survey.status : null);
+  if (approval && approval !== 'approved') return 'closed';
   const expired = survey.expiresAt && new Date(survey.expiresAt) < new Date();
   const quotaMet = (survey.responsesReceived || 0) >= (survey.responseQuota || BASE_RESPONSE_QUOTA);
   if (expired || quotaMet) return 'closed';
@@ -58,6 +62,7 @@ let mockSurveys = [
     ],
     responsesReceived: 6,
     responseQuota: 12,
+    approvalStatus: 'approved',
     expiresAt: null,
     owner: { id: 'u-1', name: '학생회', role: 'student-council' },
     createdAt: mockNow(),
@@ -91,6 +96,7 @@ let mockSurveys = [
     ],
     responsesReceived: 2,
     responseQuota: 20,
+    approvalStatus: 'approved',
     expiresAt: null,
     owner: { id: 'u-2', name: '3학년 문화부', role: 'student' },
     createdAt: mockNow(),
@@ -108,7 +114,20 @@ const mockSummary = {
 
 async function mockList(params = {}) {
   await delay(80);
-  let items = [...mockSurveys].map((s) => ({ ...s, status: computeStatus(s), summary: summarize(s.description) }));
+  let items = [...mockSurveys].map((s) => {
+    const approvalStatus =
+      s.approvalStatus ?? (s.status === 'approved' || s.status === 'pending' ? s.status : 'approved');
+    return {
+      ...s,
+      approvalStatus,
+      status: computeStatus({ ...s, approvalStatus }),
+      summary: summarize(s.description),
+    };
+  });
+
+  if (params.status === 'pending' || params.status === 'approved') {
+    items = items.filter((s) => s.approvalStatus === params.status);
+  }
 
   if (params.q) {
     const keyword = params.q.toLowerCase();
@@ -135,7 +154,10 @@ async function mockDetail(id) {
   await delay(60);
   const found = mockSurveys.find((s) => s.id === id);
   if (!found) throw new Error('Not found');
-  return { ...found, status: computeStatus(found) };
+  const approvalStatus =
+    found.approvalStatus ??
+    (found.status === 'approved' || found.status === 'pending' ? found.status : 'approved');
+  return { ...found, approvalStatus, status: computeStatus({ ...found, approvalStatus }) };
 }
 
 async function mockCreate(payload) {
@@ -213,6 +235,7 @@ export const surveyApi = {
     const normalized = {
       sort: params.sort,
       q: params.q,
+      status: params.status,
       mine: params.onlyMine ? '1' : undefined,
       hide: params.hideAnswered ? '1' : undefined,
       page: params.page,

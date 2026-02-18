@@ -1,14 +1,14 @@
-﻿import { Search } from "lucide-react";
-import styles from "./subjects.module.css";
+﻿import { Search } from 'lucide-react';
+import styles from './subjects.module.css';
 
 const subjectTags = [
-  { value: "all", label: "전체" },
-  { value: "국", label: "국어" },
-  { value: "수", label: "수학" },
-  { value: "영", label: "영어" },
-  { value: "사", label: "사회" },
-  { value: "과", label: "과학" },
-  { value: "예", label: "예체능" },
+  { value: 'all', label: '전체' },
+  { value: '국', label: '국어' },
+  { value: '수', label: '수학' },
+  { value: '영', label: '영어' },
+  { value: '사', label: '사회' },
+  { value: '과', label: '과학' },
+  { value: '예', label: '예체능' },
 ];
 
 export default function SubjectFilterBar({
@@ -20,6 +20,9 @@ export default function SubjectFilterBar({
   onToggleHideClosed,
   subjectTag,
   onSubjectTagChange,
+  isAdmin = false,
+  approval = 'all',
+  onApprovalChange,
 }) {
   return (
     <div className={styles.section}>
@@ -34,6 +37,20 @@ export default function SubjectFilterBar({
             aria-label="선택 과목 검색"
           />
         </div>
+
+        {isAdmin ? (
+          <div className={styles.selectWrap}>
+            <select
+              value={approval}
+              onChange={(e) => onApprovalChange?.(e.target.value)}
+              aria-label="승인 상태 필터"
+            >
+              <option value="all">승인 전체</option>
+              <option value="approved">승인됨</option>
+              <option value="pending">미승인</option>
+            </select>
+          </div>
+        ) : null}
 
         <button
           type="button"
@@ -59,7 +76,7 @@ export default function SubjectFilterBar({
           <button
             key={tag.value}
             type="button"
-            className={`${styles.chip} ${subjectTag === tag.value ? styles.chipActive : ""}`}
+            className={`${styles.chip} ${subjectTag === tag.value ? styles.chipActive : ''}`}
             onClick={() => onSubjectTagChange?.(tag.value)}
           >
             {tag.label}

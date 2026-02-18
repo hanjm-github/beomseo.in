@@ -160,3 +160,20 @@
 .login-footer a:hover {
     text-decoration: underline;
 }
+
+.signup-consent {
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    text-align: center;
+    line-height: var(--leading-relaxed);
+}
+
+.signup-consent a {
+    color: var(--color-primary-500);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.signup-consent a:hover {
+    color: var(--color-primary-700);
+}

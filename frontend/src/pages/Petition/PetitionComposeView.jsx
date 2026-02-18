@@ -5,7 +5,22 @@ import { useAuth } from '../../context/AuthContext';
 import '../page-shell.css';
 import styles from '../../components/petition/petition.module.css';
 
-const CATEGORY_OPTIONS = ['시설', '급식', '학사', '행사', '기타'];
+const CATEGORY_OPTIONS = [
+  '기타',
+  '회장단',
+  '3학년부',
+  '2학년부',
+  '정보기술부',
+  '방송부',
+  '학예부',
+  '체육부',
+  '진로부',
+  '홍보부',
+  '기후환경부',
+  '학생지원부',
+  '생활안전부',
+  '융합인재부',
+];
 
 export default function PetitionComposeView() {
   const { isAuthenticated } = useAuth();
@@ -13,7 +28,7 @@ export default function PetitionComposeView() {
   const location = useLocation();
 
   const [title, setTitle] = useState('');
-  const [category, setCategory] = useState('시설');
+  const [category, setCategory] = useState('기타');
   const [summary, setSummary] = useState('');
   const [body, setBody] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -64,7 +79,7 @@ export default function PetitionComposeView() {
         <div>
           <p className="eyebrow">소통하는 범서고</p>
           <h1>청원 작성</h1>
-          <p className="lede">추천 {THRESHOLD_DEFAULT}표를 달성하면 학생회가 답변합니다.</p>
+          <p className="lede">추천 {THRESHOLD_DEFAULT}표를 달성하면 학생회가 답변합니다. 등록한 글은 관리자 승인 후 일반 사용자에게 공개됩니다.</p>
         </div>
       </div>
 

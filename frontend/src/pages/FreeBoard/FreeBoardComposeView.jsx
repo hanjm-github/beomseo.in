@@ -92,7 +92,7 @@ export default function FreeBoardComposeView({ mode = 'create' }) {
         <div>
           <p className="eyebrow">자유 게시판</p>
           <h1>{isEdit ? '글 수정' : '글 작성'}</h1>
-          <p className="lede">이야기를 자유롭게 공유하세요.</p>
+          <p className="lede">이야기를 자유롭게 공유하세요. 등록한 글은 관리자 승인 후 일반 사용자에게 공개됩니다.</p>
         </div>
       </div>
 

@@ -67,7 +67,7 @@ function SignUpPage() {
 
                 <div className="ip-notice">
                     <Info size={18} />
-                    <span>회원가입은 울산광역시교육청 네트워크에서만 가능합니다.</span>
+                    <span>회원가입은 울산광역시교육청 네트워크(범서고등학교)에서만 가능합니다.</span>
                 </div>
 
                 <form className="login-form" onSubmit={handleSubmit}>
@@ -116,6 +116,14 @@ function SignUpPage() {
                             autoComplete="new-password"
                         />
                     </div>
+
+                    <p className="signup-consent">
+                        회원가입 시{' '}
+                        <Link to="/privacy" target="_blank">개인정보처리방침</Link>
+                        {' '}및{' '}
+                        <Link to="/terms" target="_blank">이용약관</Link>
+                        에 동의하는 것으로 간주됩니다.
+                    </p>
 
                     <button type="submit" className="login-button" disabled={loading}>
                         {loading ? (

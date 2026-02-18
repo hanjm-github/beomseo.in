@@ -44,7 +44,7 @@ const mockItems = [
     grade: 3,
     className: '3-5',
     authorNickname: '솔향기',
-    approvalStatus: 'approved',
+    approvalStatus: 'pending',
     offeringSubject: '지구과학Ⅱ',
     requestingSubject: '물리Ⅱ',
     type: 'swap',
@@ -86,6 +86,7 @@ function filterItems(items, params) {
     q,
     hideClosed,
     subjectTag,
+    status,
   } = params;
 
   if (grade === 1 || grade === 2 || grade === 3) {
@@ -96,6 +97,10 @@ function filterItems(items, params) {
     data = data.filter(
       (i) => text(i.offeringSubject).includes(text(subjectTag)) || text(i.requestingSubject).includes(text(subjectTag))
     );
+  }
+
+  if (status === 'approved' || status === 'pending') {
+    data = data.filter((i) => i.approvalStatus === status);
   }
 
   if (hideClosed) {
@@ -153,6 +158,7 @@ async function mockCreate(payload) {
     requestingSubject: payload.requestingSubject,
     type: payload.type || 'swap',
     status: 'open',
+    approvalStatus: 'pending',
     note: payload.note || '',
     commentCount: 0,
     likeCount: 0,

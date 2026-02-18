@@ -91,7 +91,7 @@ export default function MainPage() {
                 <section className={styles.hero}>
                     <Motion.div className={styles.heroContent} initial="hidden" animate="visible" variants={containerVariants}>
                         <Motion.div className={styles.heroText} variants={itemVariants}>
-                            <span className={styles.heroLabel}>범서고등학교 학교 홈페이지</span>
+                            <span className={styles.heroLabel}>beomseo.in</span>
                             <h1 className={styles.heroTitle}>
                                 <span className={styles.heroHighlight}>지혜로운 눈</span>으로 꿈을 이루고
                                 <br />

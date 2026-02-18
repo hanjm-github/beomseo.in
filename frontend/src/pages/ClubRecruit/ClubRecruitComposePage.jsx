@@ -93,7 +93,7 @@ export default function ClubRecruitComposePage() {
         <div>
           <p className="eyebrow">동아리 모집</p>
           <h1>모집 글 작성</h1>
-          <p className="lede">포스터와 핵심 정보를 입력해 주세요.</p>
+          <p className="lede">포스터와 핵심 정보를 입력해 주세요. 등록한 글은 관리자 승인 후 일반 사용자에게 공개됩니다.</p>
         </div>
       </div>
 
