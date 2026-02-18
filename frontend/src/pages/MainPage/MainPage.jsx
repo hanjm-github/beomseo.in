@@ -189,6 +189,7 @@ export default function MainPage() {
                                     to="/school-info/meal"
                                     icon={Utensils}
                                     title="오늘의 급식"
+                                    description="오늘 메뉴와 영양정보 확인"
                                     variant="success"
                                 />
                             </Motion.div>
@@ -197,6 +198,7 @@ export default function MainPage() {
                                     to="/school-info/calendar"
                                     icon={Calendar}
                                     title="학교 일정"
+                                    description="행사와 학사일정 빠르게 확인"
                                     variant="warning"
                                 />
                             </Motion.div>
@@ -205,6 +207,7 @@ export default function MainPage() {
                                     to="/gallery"
                                     icon={ImageIcon}
                                     title="갤러리"
+                                    description="학교 활동 사진과 소식 보기"
                                     variant="default"
                                 />
                             </Motion.div>
@@ -213,6 +216,7 @@ export default function MainPage() {
                                     to="/community/club-recruit"
                                     icon={Users}
                                     title="동아리"
+                                    description="동아리 모집 정보와 활동 안내"
                                     variant="default"
                                 />
                             </Motion.div>

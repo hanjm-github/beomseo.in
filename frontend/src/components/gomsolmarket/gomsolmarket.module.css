@@ -106,7 +106,8 @@
   border-radius: var(--radius-lg);
   background: var(--color-surface);
   flex: 1;
-  min-width: 260px;
+  min-width: 0;
+  width: 100%;
 }
 
 .searchBox input {
@@ -119,7 +120,7 @@
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: 1fr;
   gap: var(--space-4);
 }
 
@@ -600,5 +601,13 @@
   }
 }
 
+
+
+
+@media (min-width: 820px) {
+  .grid {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+}
 
 

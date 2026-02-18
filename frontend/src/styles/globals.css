@@ -366,3 +366,12 @@ select:focus-visible {
     height: 1px;
     background-color: var(--color-divider);
 }
+
+.route-fallback {
+    min-height: 160px;
+    width: 100%;
+    display: grid;
+    place-items: center;
+    color: var(--color-text-secondary);
+    font-size: var(--text-sm);
+}

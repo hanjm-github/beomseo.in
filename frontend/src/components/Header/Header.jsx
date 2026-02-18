@@ -81,6 +81,16 @@ export default function Header() {
     navigate('/');
   };
 
+  const closeMobileMenu = () => {
+    setIsMobileMenuOpen(false);
+    setActiveDropdown(null);
+  };
+
+  const handleMobileLogout = async () => {
+    closeMobileMenu();
+    await handleLogout();
+  };
+
   const handleDropdownToggle = (index) => {
     setActiveDropdown(activeDropdown === index ? null : index);
   };
@@ -204,7 +214,12 @@ export default function Header() {
             <div key={item.path} className={styles.mobileNavItem}>
               {item.children ? (
                 <>
-                  <button className={styles.mobileNavLink} onClick={() => handleDropdownToggle(index)}>
+                  <button
+                    className={styles.mobileNavLink}
+                    onClick={() => handleDropdownToggle(index)}
+                    aria-expanded={activeDropdown === index}
+                    aria-haspopup="true"
+                  >
                     {item.label}
                     <ChevronDown
                       size={16}
@@ -214,7 +229,12 @@ export default function Header() {
                   {activeDropdown === index && (
                     <div className={styles.mobileDropdown}>
                       {item.children.map((child) => (
-                        <Link key={child.path} to={child.path} className={styles.mobileDropdownItem}>
+                        <Link
+                          key={child.path}
+                          to={child.path}
+                          className={styles.mobileDropdownItem}
+                          onClick={closeMobileMenu}
+                        >
                           {child.label}
                         </Link>
                       ))}
@@ -222,12 +242,34 @@ export default function Header() {
                   )}
                 </>
               ) : (
-                <Link to={item.path} className={styles.mobileNavLink}>
+                <Link to={item.path} className={styles.mobileNavLink} onClick={closeMobileMenu}>
                   {item.label}
                 </Link>
               )}
             </div>
           ))}
+
+          {!loading && (
+            <div className={styles.mobileNavAuth}>
+              {isAuthenticated && user ? (
+                <>
+                  <div className={styles.mobileUserSummary}>
+                    <span>로그인됨:</span>
+                    <RoleName nickname={user.nickname} role={user.role} size="sm" />
+                  </div>
+                  <button type="button" className={styles.mobileAuthButton} onClick={handleMobileLogout}>
+                    <LogOut size={16} />
+                    <span>로그아웃</span>
+                  </button>
+                </>
+              ) : (
+                <Link to="/login" className={styles.mobileAuthButton} onClick={closeMobileMenu}>
+                  <User size={16} />
+                  <span>로그인 / 회원가입</span>
+                </Link>
+              )}
+            </div>
+          )}
         </nav>
       )}
     </header>

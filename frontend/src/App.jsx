@@ -1,17 +1,17 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
-import { useEffect } from 'react';
+import { Suspense, lazy, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import AppLayout from './layout/AppLayout';
-import MainPage from './pages/MainPage';
-import LoginPage from './pages/LoginPage';
-import SignUpPage from './pages/SignUpPage';
-import NoticesPage from './pages/NoticesPage';
-import CommunityRouter from './pages/CommunityRouter';
-import SchoolInfoPage from './pages/SchoolInfoPage';
-import GalleryPage from './pages/GalleryPage';
+const MainPage = lazy(() => import('./pages/MainPage'));
+const LoginPage = lazy(() => import('./pages/LoginPage'));
+const SignUpPage = lazy(() => import('./pages/SignUpPage'));
+const NoticesPage = lazy(() => import('./pages/NoticesPage'));
+const CommunityRouter = lazy(() => import('./pages/CommunityRouter'));
+const SchoolInfoPage = lazy(() => import('./pages/SchoolInfoPage'));
+const GalleryPage = lazy(() => import('./pages/GalleryPage'));
 
 import './styles/globals.css';
 
@@ -26,6 +26,10 @@ function ScrollToTop() {
   return null;
 }
 
+function RouteFallback() {
+  return <div className="route-fallback">페이지를 불러오는 중...</div>;
+}
+
 function App() {
   return (
     <ThemeProvider>
@@ -33,15 +37,17 @@ function App() {
         <Router>
           <ScrollToTop />
           <AppLayout>
-            <Routes>
-              <Route path="/" element={<MainPage />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/signup" element={<SignUpPage />} />
-              <Route path="/notices/*" element={<NoticesPage />} />
-              <Route path="/community/*" element={<CommunityRouter />} />
-              <Route path="/school-info/*" element={<SchoolInfoPage />} />
-              <Route path="/gallery/*" element={<GalleryPage />} />
-            </Routes>
+            <Suspense fallback={<RouteFallback />}>
+              <Routes>
+                <Route path="/" element={<MainPage />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/signup" element={<SignUpPage />} />
+                <Route path="/notices/*" element={<NoticesPage />} />
+                <Route path="/community/*" element={<CommunityRouter />} />
+                <Route path="/school-info/*" element={<SchoolInfoPage />} />
+                <Route path="/gallery/*" element={<GalleryPage />} />
+              </Routes>
+            </Suspense>
           </AppLayout>
         </Router>
       </AuthProvider>

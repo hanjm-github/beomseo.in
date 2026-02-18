@@ -55,7 +55,7 @@
 
 .toolbar {
   display: grid;
-  grid-template-columns: 1fr repeat(3, max-content);
+  grid-template-columns: 1fr;
   gap: var(--space-3);
   align-items: center;
 }
@@ -424,7 +424,7 @@
   border-color: var(--color-alert-danger-border);
 }
 
-@media (max-width: 900px) {
+@media (min-width: 900px) {
   .toolbar {
     grid-template-columns: 1fr 1fr;
   }
@@ -443,3 +443,4 @@
     flex-direction: column;
   }
 }
+

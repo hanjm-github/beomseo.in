@@ -10,6 +10,18 @@
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
 }
 
+.contactGrid {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 640px) {
+  .contactGrid {
+    grid-template-columns: 1fr 2fr;
+  }
+}
+
 .field {
   display: flex;
   flex-direction: column;

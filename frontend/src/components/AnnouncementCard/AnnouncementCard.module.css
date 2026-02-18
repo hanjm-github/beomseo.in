@@ -17,17 +17,11 @@
 
 .card:hover {
     background-color: var(--color-bg-muted);
-    margin: 0 calc(-1 * var(--space-4));
-    padding-left: var(--space-4);
-    padding-right: var(--space-4);
     border-radius: var(--radius-md);
 }
 
 .card.pinned {
     background-color: var(--color-primary-50);
-    margin: 0 calc(-1 * var(--space-4));
-    padding-left: var(--space-4);
-    padding-right: var(--space-4);
     border-radius: var(--radius-md);
     border-bottom: none;
     margin-bottom: var(--space-2);
@@ -100,4 +94,18 @@
     gap: var(--space-1);
     font-size: var(--text-xs);
     color: var(--color-text-muted);
+}
+
+@media (min-width: 640px) {
+    .card:hover {
+        margin: 0 calc(-1 * var(--space-4));
+        padding-left: var(--space-4);
+        padding-right: var(--space-4);
+    }
+
+    .card.pinned {
+        margin: 0 calc(-1 * var(--space-4));
+        padding-left: var(--space-4);
+        padding-right: var(--space-4);
+    }
 }

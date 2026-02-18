@@ -48,8 +48,9 @@
   border-radius: var(--radius-lg);
   border: 1px solid var(--color-border);
   background: var(--color-surface);
-  min-width: 260px;
-  flex: 1 1 280px;
+  min-width: 0;
+  width: 100%;
+  flex: 1 1 100%;
 }
 
 .searchWrap input {
@@ -84,7 +85,7 @@
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  grid-template-columns: 1fr;
   gap: var(--space-4);
 }
 
@@ -293,4 +294,6 @@
     transform: rotate(360deg);
   }
 }
+
+
 

@@ -79,7 +79,7 @@ export default function SurveyExchangeComposePage() {
       {loading ? <p>불러오는 중…</p> : null}
 
       <form onSubmit={handleSubmit}>
-        <section style={{ display: 'grid', gap: 12, gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))' }}>
+        <section className={styles.composeMetaGrid}>
           <label>
             제목
             <input
@@ -101,21 +101,20 @@ export default function SurveyExchangeComposePage() {
           </label>
         </section>
 
-        <label style={{ display: 'block', marginTop: 12 }}>
+        <label className={styles.composeDescription}>
           설명
           <textarea
-            className={styles.search}
-            style={{ minHeight: 90, width: '100%' }}
+            className={`${styles.search} ${styles.composeDescriptionField}`}
             value={meta.description}
             onChange={(e) => setMeta((m) => ({ ...m, description: e.target.value }))}
             placeholder="설문 목적과 응답 안내를 적어주세요."
           />
         </label>
 
-        <section style={{ marginTop: 18 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <h3 style={{ margin: 0 }}>질문 빌더</h3>
-            <div style={{ display: 'flex', gap: 8 }}>
+        <section className={styles.composeBuilderSection}>
+          <div className={styles.composeBuilderHeader}>
+            <h3 className={styles.composeBuilderTitle}>질문 빌더</h3>
+            <div className={styles.composeBuilderActions}>
               <button type="button" className="btn btn-secondary" onClick={() => setPreview((v) => !v)}>
                 <Eye size={16} /> 미리보기
               </button>
@@ -131,7 +130,7 @@ export default function SurveyExchangeComposePage() {
 
       {preview ? (
         <div className={styles.previewCard}>
-          <h4 style={{ marginTop: 0 }}>미리보기</h4>
+          <h4 className={styles.previewTitle}>미리보기</h4>
           <ReactFormGenerator data={formJson} answer_data={[]} />
         </div>
       ) : null}

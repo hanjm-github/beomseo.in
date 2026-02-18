@@ -151,3 +151,43 @@
 .large .arrow {
     display: none;
 }
+
+@media (max-width: 639px) {
+    .inner,
+    .large .inner {
+        flex-direction: row;
+        align-items: center;
+        text-align: left;
+        gap: var(--space-3);
+        padding: var(--space-4);
+    }
+
+    .large .iconWrapper {
+        width: 44px;
+        height: 44px;
+    }
+
+    .large .iconWrapper svg {
+        width: 24px;
+        height: 24px;
+    }
+
+    .large .title,
+    .title {
+        font-size: var(--text-base);
+        white-space: normal;
+        overflow: hidden;
+        text-overflow: initial;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+    }
+
+    .description {
+        -webkit-line-clamp: 2;
+    }
+
+    .large .arrow {
+        display: flex;
+    }
+}

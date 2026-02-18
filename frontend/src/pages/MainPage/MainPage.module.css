@@ -94,8 +94,14 @@
 
 .heroActions {
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: column;
     gap: var(--space-4);
+    align-items: stretch;
+}
+
+.heroActions > a {
+    width: 100%;
+    justify-content: center;
 }
 
 .heroPrimary {
@@ -141,7 +147,7 @@
 
 .heroWidget {
     width: 100%;
-    max-width: 360px;
+    max-width: 420px;
     margin: 0 auto;
 }
 
@@ -182,10 +188,10 @@
 
 .heroGradient1 {
     position: absolute;
-    width: 520px;
-    height: 520px;
-    top: -200px;
-    right: -60px;
+    width: clamp(280px, 62vw, 520px);
+    height: clamp(280px, 62vw, 520px);
+    top: clamp(-220px, -30vw, -140px);
+    right: clamp(-140px, -10vw, -40px);
     background: radial-gradient(circle, rgba(46, 125, 92, 0.15) 0%, transparent 70%);
     border-radius: 50%;
     max-width: 120vw;
@@ -193,10 +199,10 @@
 
 .heroGradient2 {
     position: absolute;
-    width: 340px;
-    height: 340px;
-    bottom: -100px;
-    left: -60px;
+    width: clamp(220px, 46vw, 340px);
+    height: clamp(220px, 46vw, 340px);
+    bottom: clamp(-140px, -18vw, -90px);
+    left: clamp(-120px, -8vw, -40px);
     background: radial-gradient(circle, rgba(194, 24, 91, 0.1) 0%, transparent 70%);
     border-radius: 50%;
     max-width: 120vw;
@@ -252,6 +258,17 @@
     .sectionTitle {
         font-size: var(--text-3xl);
     }
+
+    .heroActions {
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .heroActions > a {
+        width: auto;
+        justify-content: flex-start;
+    }
 }
 
 .sectionDescription {
@@ -265,6 +282,18 @@
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     gap: var(--space-4);
+}
+
+@media (max-width: 639px) {
+    .quickLinks {
+        grid-template-columns: 1fr;
+        gap: var(--space-3);
+    }
+
+    .quickLinkLarge {
+        grid-column: auto;
+        grid-row: auto;
+    }
 }
 
 @media (min-width: 640px) {

@@ -1,7 +1,8 @@
 ﻿.pageHeader {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  justify-content: flex-start;
+  align-items: flex-start;
+  flex-direction: column;
   gap: 16px;
   margin-bottom: 20px;
 }
@@ -12,6 +13,7 @@
   border-radius: 18px;
   padding: 18px 20px;
   display: flex;
+  flex-direction: column;
   justify-content: space-between;
   gap: 16px;
 }
@@ -58,7 +60,7 @@
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: 1fr;
   gap: 16px;
 }
 
@@ -165,15 +167,15 @@
 
 .toolbar {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  justify-content: flex-start;
+  align-items: stretch;
+  flex-direction: column;
   gap: 12px;
   margin: 12px 0 8px;
 }
 
 .search {
   width: 100%;
-  max-width: 320px;
   border: 1px solid var(--color-form-border);
   border-radius: 10px;
   padding: 10px 12px;
@@ -266,25 +268,25 @@
   font-family: var(--font-body) !important;
 }
 
-/* Inner wrapper: toolbar + preview side-by-side */
+/* Inner wrapper: mobile-first stacked layout */
 :global(.react-form-builder > div) {
   display: flex !important;
-  flex-direction: row !important;
+  flex-direction: column !important;
   gap: 16px;
-  align-items: flex-start;
+  align-items: stretch;
 }
 
-/* Toolbar: fixed-width left column */
+/* Toolbar: fluid on small screens */
 :global(.react-form-builder-toolbar) {
   order: -1 !important;
   float: none !important;
-  width: 260px !important;
-  min-width: 260px !important;
+  width: 100% !important;
+  min-width: 0 !important;
   flex-shrink: 0 !important;
-  position: sticky;
-  top: 80px;
-  max-height: calc(100vh - 120px);
-  overflow-y: auto;
+  position: static;
+  top: auto;
+  max-height: none;
+  overflow-y: visible;
   border-radius: var(--radius-xl);
   border: 1px solid var(--color-border);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.04);
@@ -452,7 +454,7 @@
 }
 .chartsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  grid-template-columns: 1fr;
   gap: 16px;
 }
 
@@ -630,4 +632,106 @@
   border-color: var(--color-status-info-border);
 }
 
+.composeMetaGrid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 1fr;
+}
 
+.composeDescription {
+  display: block;
+  margin-top: 12px;
+}
+
+.composeDescriptionField {
+  min-height: 90px;
+  width: 100%;
+}
+
+.composeBuilderSection {
+  margin-top: 18px;
+}
+
+.composeBuilderHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.composeBuilderTitle {
+  margin: 0;
+}
+
+.composeBuilderActions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.previewTitle {
+  margin-top: 0;
+}
+
+
+
+@media (min-width: 768px) {
+  .pageHeader {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .toolbar {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .search {
+    max-width: 320px;
+  }
+
+  .grid {
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  }
+
+  .chartsGrid {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+
+  .composeMetaGrid {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .hero {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .grid {
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  }
+
+  .chartsGrid {
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  }
+
+  :global(.react-form-builder > div) {
+    flex-direction: row !important;
+    align-items: flex-start;
+  }
+
+  :global(.react-form-builder-toolbar) {
+    width: 260px !important;
+    min-width: 260px !important;
+    position: sticky;
+    top: 80px;
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
+  }
+}

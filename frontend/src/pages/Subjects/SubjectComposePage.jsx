@@ -113,7 +113,7 @@ export default function SubjectComposePage() {
 
         <label className={styles.field}>
           <span>연락 수단</span>
-          <div className={styles.grid2} style={{ gridTemplateColumns: "1fr 2fr" }}>
+          <div className={styles.contactGrid}>
             <select
               value={form.contactType}
               onChange={(e) => handleChange("contactType", e.target.value)}

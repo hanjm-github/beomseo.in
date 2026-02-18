@@ -31,7 +31,8 @@
 }
 
 .filtersRight {
-  min-width: min(100%, 280px);
+  min-width: 0;
+  width: 100%;
 }
 
 .chip {
@@ -82,7 +83,7 @@
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: 1fr;
   gap: var(--space-4);
 }
 
@@ -274,7 +275,7 @@
 
 .detailGrid {
   display: grid;
-  grid-template-columns: minmax(260px, 1fr) minmax(280px, 1fr);
+  grid-template-columns: 1fr;
   gap: var(--space-4);
 }
 
@@ -492,7 +493,7 @@
   }
 
   .filtersRight {
-    min-width: 100%;
+    width: 100%;
   }
 
   .grid {
@@ -503,5 +504,21 @@
     grid-template-columns: 24px 1fr auto;
   }
 }
+
+
+
+
+@media (min-width: 640px) {
+  .grid {
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  }
+}
+
+@media (min-width: 900px) {
+  .detailGrid {
+    grid-template-columns: minmax(240px, 1fr) minmax(260px, 1fr);
+  }
+}
+
 
 
