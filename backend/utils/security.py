@@ -2,6 +2,7 @@
 Security utilities for authentication and authorization.
 """
 import ipaddress
+import re
 import bcrypt
 from functools import wraps
 from flask import request, jsonify
@@ -24,16 +25,41 @@ def verify_password(password: str, password_hash: str) -> bool:
     )
 
 
-def get_client_ip() -> str:
-    """Get client IP address from request, supporting proxies."""
-    # Check X-Forwarded-For header (for reverse proxy/nginx)
-    if request.headers.get('X-Forwarded-For'):
-        return request.headers.get('X-Forwarded-For').split(',')[0].strip()
-    # Check X-Real-IP header
-    if request.headers.get('X-Real-IP'):
-        return request.headers.get('X-Real-IP')
-    # Fall back to remote address
-    return request.remote_addr or '127.0.0.1'
+def _first_valid_ip_from_forwarded(header_value: str):
+    if not header_value:
+        return None
+    for part in header_value.split(','):
+        candidate = part.strip()
+        if not candidate:
+            continue
+        try:
+            ipaddress.ip_address(candidate)
+            return candidate
+        except ValueError:
+            continue
+    return None
+
+
+def get_client_ip():
+    """
+    Get client IP safely.
+    Always prefer proxy headers before falling back to remote address.
+    """
+    remote_addr = request.remote_addr or ''
+    forwarded = _first_valid_ip_from_forwarded(request.headers.get('X-Forwarded-For', ''))
+    if forwarded:
+        return forwarded
+    real_ip = _first_valid_ip_from_forwarded(request.headers.get('X-Real-IP', ''))
+    if real_ip:
+        return real_ip
+
+    if remote_addr:
+        try:
+            ipaddress.ip_address(remote_addr)
+            return remote_addr
+        except ValueError:
+            return None
+    return None
 
 
 def is_ip_allowed(client_ip: str, allowed_ranges: list) -> bool:
@@ -75,8 +101,9 @@ def require_role(*roles: UserRole):
         def decorated_function(*args, **kwargs):
             verify_jwt_in_request()
             
-            user_id_str = get_jwt_identity()
-            user_id = int(user_id_str)  # Convert string back to int for DB query
+            user_id = parse_jwt_identity_to_int()
+            if user_id is None:
+                return jsonify({'error': 'Invalid token identity'}), 401
             user = User.query.get(user_id)
             
             if not user:
@@ -97,8 +124,38 @@ def require_role(*roles: UserRole):
 
 def get_current_user():
     """Get current authenticated user from JWT."""
-    user_id_str = get_jwt_identity()
-    if user_id_str:
-        user_id = int(user_id_str)  # Convert string back to int for DB query
+    user_id = parse_jwt_identity_to_int()
+    if user_id is not None:
         return User.query.get(user_id)
     return None
+
+
+def parse_jwt_identity_to_int():
+    """
+    Parse JWT identity as integer user id.
+    Returns None if identity is missing or malformed.
+    """
+    user_id_str = get_jwt_identity()
+    if user_id_str in (None, ''):
+        return None
+    try:
+        return int(str(user_id_str))
+    except (TypeError, ValueError):
+        return None
+
+
+def sanitize_plain_text(value: str, max_length: int = None):
+    """
+    Normalize plain text input for storage in non-HTML fields.
+    Collapses dangerous control chars and trims surrounding spaces.
+    """
+    if value is None:
+        return ''
+
+    text = str(value)
+    text = text.replace('\r\n', '\n').replace('\r', '\n')
+    text = re.sub(r'[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]', '', text)
+    text = text.strip()
+    if max_length is not None and max_length >= 0:
+        text = text[:max_length]
+    return text

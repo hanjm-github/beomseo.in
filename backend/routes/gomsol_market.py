@@ -3,7 +3,6 @@ Gomsol market board routes.
 """
 from datetime import datetime
 from pathlib import Path
-from urllib.parse import urlparse
 
 from flask import Blueprint, request, jsonify, current_app, send_from_directory
 from flask_jwt_extended import jwt_required, get_jwt_identity, verify_jwt_in_request
@@ -26,6 +25,8 @@ from utils.files import (
     resolve_scope_upload_dir,
     ensure_dir,
     build_upload_url,
+    validate_upload,
+    extract_upload_filename_for_scope,
 )
 from utils.security import require_role, get_current_user
 from utils.cache import cache_json_response, invalidate_cache_namespaces
@@ -63,33 +64,6 @@ def parse_non_negative_int(value):
             return None
         return int(value) if value >= 0 else None
     return None
-
-
-def extract_upload_filename(url_value):
-    if not isinstance(url_value, str):
-        return None
-
-    raw = url_value.strip()
-    if not raw:
-        return None
-
-    parsed = urlparse(raw)
-    path = parsed.path if (parsed.scheme or parsed.netloc) else raw
-
-    prefix = (current_app.config.get('UPLOAD_ROUTE_PREFIXES') or {}).get('gomsol_market')
-    if not prefix:
-        return None
-
-    normalized_prefix = prefix.rstrip('/')
-    prefix_path = f'{normalized_prefix}/'
-    if not path.startswith(prefix_path):
-        return None
-
-    filename = path[len(prefix_path):].strip()
-    if not filename or '/' in filename or '\\' in filename:
-        return None
-
-    return filename
 
 
 def validate_create_payload(data):
@@ -147,7 +121,7 @@ def validate_create_payload(data):
             errors.append('이미지 형식이 올바르지 않습니다.')
             continue
 
-        filename = extract_upload_filename(image.get('url'))
+        filename = extract_upload_filename_for_scope(current_app.config, 'gomsol_market', image.get('url'))
         if not filename:
             errors.append('이미지 URL이 올바르지 않습니다.')
             continue
@@ -394,38 +368,48 @@ def upload_image():
         return jsonify({'error': 'file 필드가 필요합니다.'}), 400
 
     file = request.files['file']
-    if not file.filename:
-        return jsonify({'error': '파일 이름이 없습니다.'}), 400
-
-    mime = (file.mimetype or '').lower()
-    if not mime.startswith('image/'):
-        return jsonify({'error': '이미지 파일만 업로드할 수 있습니다.'}), 422
-
-    max_size = int(current_app.config.get('MAX_ATTACH_SIZE', 10 * 1024 * 1024))
-    file.seek(0, 2)
-    size = file.tell()
-    file.seek(0)
-    if size > max_size:
-        return jsonify({'error': '이미지 용량은 10MB 이하만 가능합니다.'}), 422
+    result = validate_upload(file, current_app.config, require_image=True)
+    if not result.get('ok'):
+        return jsonify({'error': result.get('error', '파일 검증에 실패했습니다.')}), 422
 
     saved = save_upload_for_scope(file, current_app.config, 'gomsol_market')
     return jsonify(
         {
             'id': saved['filename'],
-            'name': file.filename,
-            'size': size,
+            'name': result['name'],
+            'size': result['size'],
             'url': saved['url'],
-            'mime': file.mimetype,
-            'kind': 'image',
+            'mime': result['mime'],
+            'kind': result['kind'],
         }
     ), 201
 
 
-@gomsol_market_bp.route('/uploads/<path:filename>', methods=['GET'])
-@gomsol_market_bp.route('/uploads/<path:filename>/', methods=['GET'])
+@gomsol_market_bp.route('/uploads/<path:filename>', methods=['GET'], strict_slashes=False)
 def serve_upload(filename):
     upload_dir = resolve_scope_upload_dir(current_app.config, 'gomsol_market')
     ensure_dir(upload_dir)
-    image = GomsolMarketImage.query.filter(GomsolMarketImage.url.like(f'%/{filename}')).first()
+    file_path = Path(upload_dir) / filename
+    image_url = build_upload_url(current_app.config, 'gomsol_market', filename)
+    image = GomsolMarketImage.query.filter_by(url=image_url).first()
+    if not image:
+        # Backward compatibility for rows that stored absolute URLs.
+        image = GomsolMarketImage.query.filter(GomsolMarketImage.url.like(f'%{image_url}')).first()
+    if not image or not image.post:
+        if not file_path.exists():
+            return jsonify({'error': '첨부파일을 찾을 수 없습니다.'}), 404
+        # Allow temporary preview for newly uploaded images before post save.
+        response = send_from_directory(upload_dir, filename, as_attachment=False, download_name=filename)
+        response.headers['X-Content-Type-Options'] = 'nosniff'
+        return response
+
+    current_user = optional_current_user()
+    post = image.post
+    can_read_pending = is_admin(current_user) or (current_user and current_user.id == post.author_id)
+    if post.approval_status != GomsolMarketApprovalStatus.APPROVED and not can_read_pending:
+        return jsonify({'error': '열람 권한이 없습니다.'}), 403
+
     download_name = image.name if image else filename
-    return send_from_directory(upload_dir, filename, as_attachment=False, download_name=download_name)
+    response = send_from_directory(upload_dir, filename, as_attachment=False, download_name=download_name)
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    return response

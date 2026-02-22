@@ -2,6 +2,7 @@
 Club recruit board routes with admin approval workflow.
 """
 from datetime import datetime
+from pathlib import Path
 from flask import Blueprint, request, jsonify, current_app, send_from_directory
 from flask_jwt_extended import jwt_required, get_jwt_identity, verify_jwt_in_request
 from sqlalchemy import or_, case
@@ -16,7 +17,14 @@ from models import (
     RecruitStatus,
 )
 from utils.pagination import parse_pagination, build_paginated_response
-from utils.files import save_upload_for_scope, resolve_scope_upload_dir, ensure_dir
+from utils.files import (
+    save_upload_for_scope,
+    resolve_scope_upload_dir,
+    ensure_dir,
+    validate_upload,
+    build_upload_url,
+    normalize_upload_url_for_scope,
+)
 from utils.security import require_role, get_current_user
 from utils.cache import cache_json_response, invalidate_cache_namespaces
 
@@ -50,6 +58,11 @@ def validate_payload(data):
     extra_note = (data.get('extraNote') or '').strip()
     body = data.get('body') or ''
     poster_url = (data.get('posterUrl') or '').strip() or None
+
+    if poster_url:
+        normalized_poster_url = normalize_upload_url_for_scope(current_app.config, 'club_recruit', poster_url)
+        if normalized_poster_url:
+            poster_url = normalized_poster_url
 
     if not club_name or len(club_name) > 120:
         errors.append('동아리 이름은 1~120자로 입력해주세요.')
@@ -328,33 +341,57 @@ def upload_poster():
     if 'file' not in request.files:
         return jsonify({'error': 'file 필드가 필요합니다.'}), 400
     file = request.files['file']
-    if not file.filename:
-        return jsonify({'error': '파일 이름이 없습니다.'}), 400
 
-    max_size = current_app.config.get('MAX_ATTACH_SIZE', 10 * 1024 * 1024)
-    file.seek(0, 2)
-    size = file.tell()
-    file.seek(0)
-    if size > max_size:
-        return jsonify({'error': '첨부파일 용량은 10MB 이하만 가능합니다.'}), 422
+    result = validate_upload(file, current_app.config, require_image=True)
+    if not result.get('ok'):
+        return jsonify({'error': result.get('error', '파일 검증에 실패했습니다.')}), 422
 
     saved = save_upload_for_scope(file, current_app.config, 'club_recruit')
-    kind = 'image' if (file.mimetype or '').startswith('image/') else 'file'
 
     return jsonify({
         'id': saved['filename'],
-        'name': file.filename,
-        'size': size,
+        'name': result['name'],
+        'size': result['size'],
         'url': saved['url'],
-        'mime': file.mimetype,
-        'kind': kind
+        'mime': result['mime'],
+        'kind': result['kind']
     }), 201
 
 
-@club_recruit_bp.route('/uploads/<path:filename>', methods=['GET'])
-@club_recruit_bp.route('/uploads/<path:filename>/', methods=['GET'])
+@club_recruit_bp.route('/uploads/<path:filename>', methods=['GET'], strict_slashes=False)
 def serve_poster(filename):
     upload_dir = resolve_scope_upload_dir(current_app.config, 'club_recruit')
     ensure_dir(upload_dir)
-    download_name = filename
-    return send_from_directory(upload_dir, filename, as_attachment=False, download_name=download_name)
+    file_path = Path(upload_dir) / filename
+    poster_url = build_upload_url(current_app.config, 'club_recruit', filename)
+    item = ClubRecruit.query.filter(
+        ClubRecruit.deleted_at.is_(None),
+        ClubRecruit.poster_url == poster_url
+    ).first()
+    if not item:
+        # Backward compatibility for rows that stored absolute URLs.
+        item = ClubRecruit.query.filter(
+            ClubRecruit.deleted_at.is_(None),
+            ClubRecruit.poster_url.like(f'%{poster_url}')
+        ).first()
+    if not item:
+        # Inline editor images can exist only in body HTML (without poster_url matching).
+        item = ClubRecruit.query.filter(
+            ClubRecruit.deleted_at.is_(None),
+            ClubRecruit.body.ilike(f'%{poster_url}%')
+        ).first()
+    if not item:
+        if not file_path.exists():
+            return jsonify({'error': '첨부파일을 찾을 수 없습니다.'}), 404
+        # Allow temporary preview for newly uploaded poster/editor image before post save.
+        response = send_from_directory(upload_dir, filename, as_attachment=False, download_name=filename)
+        response.headers['X-Content-Type-Options'] = 'nosniff'
+        return response
+
+    current_user = optional_current_user()
+    if item.status != RecruitStatus.APPROVED and not (is_admin(current_user) or (current_user and current_user.id == item.author_id)):
+        return jsonify({'error': '열람 권한이 없습니다.'}), 403
+
+    response = send_from_directory(upload_dir, filename, as_attachment=False, download_name=filename)
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    return response

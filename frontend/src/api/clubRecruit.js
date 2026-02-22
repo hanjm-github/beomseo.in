@@ -1,9 +1,17 @@
 ﻿import api from './auth';
-import { normalizePaginatedResponse, normalizeUploadResponse } from './normalizers';
+import { normalizePaginatedResponse, normalizeUploadResponse, toAbsoluteApiUrl } from './normalizers';
 import { shouldUseMockFallback } from './mockPolicy';
 import { trackPostCreated, trackPostCreateFailed } from '../analytics/zaraz';
 
 const PAGE_SIZE_DEFAULT = 12;
+
+function normalizeRecruitItem(item) {
+  if (!item || typeof item !== 'object') return item;
+  return {
+    ...item,
+    posterUrl: toAbsoluteApiUrl(item.posterUrl || ''),
+  };
+}
 
 const mockItems = [
   {
@@ -140,7 +148,11 @@ export const clubRecruitApi = {
   async list(params = {}) {
     try {
       const res = await api.get('/api/club-recruit', { params });
-      return normalizePaginatedResponse(res.data, PAGE_SIZE_DEFAULT);
+      const normalized = normalizePaginatedResponse(res.data, PAGE_SIZE_DEFAULT);
+      return {
+        ...normalized,
+        items: (normalized.items || []).map(normalizeRecruitItem),
+      };
     } catch (err) {
       if (!shouldUseMockFallback(err)) throw err;
       const mock = await mockList(params);
@@ -151,7 +163,7 @@ export const clubRecruitApi = {
   async get(id) {
     try {
       const res = await api.get(`/api/club-recruit/${id}`);
-      return res.data;
+      return normalizeRecruitItem(res.data);
     } catch (err) {
       if (!shouldUseMockFallback(err)) throw err;
       return mockGet(id);
@@ -161,7 +173,7 @@ export const clubRecruitApi = {
   async create(payload) {
     try {
       const res = await api.post('/api/club-recruit', payload);
-      const created = res.data;
+      const created = normalizeRecruitItem(res.data);
       trackPostCreated({
         boardType: 'club_recruit',
         userRole: created?.author?.role ?? payload?.author?.role,
@@ -198,15 +210,16 @@ export const clubRecruitApi = {
 
   async approve(id) {
     const res = await api.post(`/api/club-recruit/${id}/approve`);
-    return res.data;
+    return normalizeRecruitItem(res.data);
   },
 
   async unapprove(id) {
     const res = await api.post(`/api/club-recruit/${id}/unapprove`);
-    return res.data;
+    return normalizeRecruitItem(res.data);
   },
 };
 
 export default clubRecruitApi;
+
 
 

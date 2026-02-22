@@ -61,6 +61,7 @@ from .gomsol_market import (
     GomsolMarketApprovalStatus,
 )
 from .countdown_event import CountdownEvent
+from .auth_token import AuthToken, AuthTokenType
 
 __all__ = [
     'User',
@@ -109,5 +110,7 @@ __all__ = [
     'GomsolMarketSaleStatus',
     'GomsolMarketApprovalStatus',
     'CountdownEvent',
+    'AuthToken',
+    'AuthTokenType',
     'db',
 ]

@@ -2,6 +2,7 @@
 Notice, attachment, comment, and reaction routes.
 """
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from flask import Blueprint, request, jsonify, current_app, send_from_directory
@@ -26,7 +27,14 @@ from models import (
     CountdownEvent,
 )
 from utils.pagination import parse_pagination, build_paginated_response
-from utils.files import save_upload_for_scope, resolve_scope_upload_dir, ensure_dir
+from utils.files import (
+    save_upload_for_scope,
+    resolve_scope_upload_dir,
+    ensure_dir,
+    validate_upload,
+    build_upload_url,
+    normalize_upload_url_for_scope,
+)
 from utils.security import require_role, get_current_user
 from utils.cache import cache_json_response, invalidate_cache_namespaces
 
@@ -181,10 +189,34 @@ def validate_notice_payload(data, is_update=False):
     max_size = current_app.config.get('MAX_ATTACH_SIZE', 10 * 1024 * 1024)
     if len(attachments) > max_attach:
         errors.append(f'첨부파일은 최대 {max_attach}개까지 가능합니다.')
+    normalized_attachments = []
     for a in attachments:
-        if a.get('size', 0) > max_size:
+        if not isinstance(a, dict):
+            errors.append('첨부파일 형식이 올바르지 않습니다.')
+            continue
+
+        attachment_url = normalize_upload_url_for_scope(current_app.config, 'notices', a.get('url'))
+        if not attachment_url:
+            errors.append('첨부파일 URL이 올바르지 않습니다.')
+            continue
+
+        try:
+            file_size = int(a.get('size') or 0)
+        except (TypeError, ValueError):
+            file_size = 0
+        if file_size > max_size:
             errors.append(f'첨부파일 용량은 10MB 이하만 가능합니다.')
-            break
+            continue
+
+        normalized_attachments.append(
+            {
+                'name': a.get('name'),
+                'url': attachment_url,
+                'mime': a.get('mime'),
+                'size': file_size or None,
+                'kind': a.get('kind', 'file'),
+            }
+        )
 
     return errors, {
         'title': title,
@@ -194,7 +226,7 @@ def validate_notice_payload(data, is_update=False):
         'pinned': pinned,
         'important': important,
         'exam_related': exam_related,
-        'attachments': attachments,
+        'attachments': normalized_attachments,
     }
 
 
@@ -370,47 +402,73 @@ def get_notice(notice_id):
 @notices_bp.route('/uploads', methods=['POST'])
 @notices_bp.route('/uploads/', methods=['POST'])
 @jwt_required()
+@require_role(UserRole.STUDENT_COUNCIL, UserRole.ADMIN)
 def upload_file():
     if 'file' not in request.files:
         return jsonify({'error': 'file 필드가 필요합니다.'}), 400
     file = request.files['file']
-    if not file.filename:
-        return jsonify({'error': '파일 이름이 없습니다.'}), 400
 
-    max_size = current_app.config.get('MAX_ATTACH_SIZE', 10 * 1024 * 1024)
-    file.seek(0, 2)
-    size = file.tell()
-    file.seek(0)
-    if size > max_size:
-        return jsonify({'error': '첨부파일 용량은 10MB 이하만 가능합니다.'}), 422
+    result = validate_upload(file, current_app.config, require_image=False)
+    if not result.get('ok'):
+        return jsonify({'error': result.get('error', '파일 검증에 실패했습니다.')}), 422
 
     saved = save_upload_for_scope(file, current_app.config, 'notices')
-    kind = 'image' if (file.mimetype or '').startswith('image/') else 'file'
 
     return jsonify({
         'id': saved['filename'],
-        'name': file.filename,
-        'size': size,
+        'name': result['name'],
+        'size': result['size'],
         'url': saved['url'],
-        'mime': file.mimetype,
-        'kind': kind
+        'mime': result['mime'],
+        'kind': result['kind'],
     }), 201
 
 
-@notices_bp.route('/uploads/<path:filename>', methods=['GET'])
-@notices_bp.route('/uploads/<path:filename>/', methods=['GET'])
+@notices_bp.route('/uploads/<path:filename>', methods=['GET'], strict_slashes=False)
 def serve_upload(filename):
     upload_dir = resolve_scope_upload_dir(current_app.config, 'notices')
     ensure_dir(upload_dir)
-    # Try to recover original name for Content-Disposition
-    attachment = Attachment.query.filter(Attachment.url.like(f"%/{filename}")).first()
-    download_name = attachment.name if attachment else filename
-    return send_from_directory(
+    file_path = Path(upload_dir) / filename
+    attachment_url = build_upload_url(current_app.config, 'notices', filename)
+    attachment = Attachment.query.filter_by(url=attachment_url).first()
+    if not attachment:
+        # Backward compatibility for rows that stored absolute URLs.
+        attachment = Attachment.query.filter(Attachment.url.like(f'%{attachment_url}')).first()
+
+    notice = attachment.notice if attachment else None
+    if not notice:
+        # Inline editor images can exist only in body HTML (without attachment rows).
+        notice = Notice.query.filter(
+            Notice.deleted_at.is_(None),
+            Notice.body.ilike(f'%{attachment_url}%')
+        ).first()
+    if not notice:
+        if not file_path.exists():
+            return jsonify({'error': '첨부파일을 찾을 수 없습니다.'}), 404
+        # Allow temporary preview/download for newly uploaded files before notice save.
+        ext = Path(filename).suffix.lower()
+        inline_exts = {'.jpg', '.jpeg', '.png', '.gif', '.webp'}
+        response = send_from_directory(
+            upload_dir,
+            filename,
+            as_attachment=ext not in inline_exts,
+            download_name=filename,
+        )
+        response.headers['X-Content-Type-Options'] = 'nosniff'
+        return response
+
+    ext = Path(filename).suffix.lower()
+    inline_exts = {'.jpg', '.jpeg', '.png', '.gif', '.webp'}
+    download_name = attachment.name if attachment and attachment.name else filename
+    inline_mime = (attachment.mime or '').startswith('image/') if attachment else ext in inline_exts
+    response = send_from_directory(
         upload_dir,
         filename,
-        as_attachment=False,
+        as_attachment=not inline_mime,
         download_name=download_name
     )
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    return response
 
 
 # ----- Comments -----

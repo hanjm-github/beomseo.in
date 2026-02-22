@@ -9,6 +9,59 @@ const MAX_IMAGE_UPLOAD_SIZE = 10 * 1024 * 1024;
 export default function Editor({ value, onChange, placeholder, onUploadImage, uploading }) {
   const editorRef = useRef(null);
   const fileInputRef = useRef(null);
+  const savedRangeRef = useRef(null);
+
+  const isRangeInsideEditor = (range) => {
+    const editor = editorRef.current;
+    if (!editor || !range) return false;
+    const container = range.commonAncestorContainer;
+    return container === editor || editor.contains(container);
+  };
+
+  const getCurrentEditorRange = () => {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return null;
+    const range = selection.getRangeAt(0);
+    return isRangeInsideEditor(range) ? range : null;
+  };
+
+  const createEditorEndRange = () => {
+    const editor = editorRef.current;
+    if (!editor) return null;
+    const range = document.createRange();
+    range.selectNodeContents(editor);
+    range.collapse(false);
+    return range;
+  };
+
+  const rememberEditorSelection = () => {
+    const range = getCurrentEditorRange();
+    if (!range) return;
+    savedRangeRef.current = range.cloneRange();
+  };
+
+  const focusEditorWithSelection = () => {
+    const editor = editorRef.current;
+    if (!editor) return null;
+
+    let range = getCurrentEditorRange();
+    if (!range && savedRangeRef.current && isRangeInsideEditor(savedRangeRef.current)) {
+      range = savedRangeRef.current.cloneRange();
+    }
+    if (!range) {
+      range = createEditorEndRange();
+    }
+    if (!range) return null;
+
+    editor.focus();
+    const selection = window.getSelection();
+    if (selection) {
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
+    savedRangeRef.current = range.cloneRange();
+    return range;
+  };
 
   useEffect(() => {
     const editor = editorRef.current;
@@ -29,8 +82,9 @@ export default function Editor({ value, onChange, placeholder, onUploadImage, up
   };
 
   const apply = (command) => {
+    focusEditorWithSelection();
     document.execCommand(command, false, null);
-    editorRef.current?.focus();
+    rememberEditorSelection();
     handleInput();
   };
 
@@ -44,8 +98,9 @@ export default function Editor({ value, onChange, placeholder, onUploadImage, up
       return;
     }
 
+    focusEditorWithSelection();
     document.execCommand('createLink', false, safeUrl);
-    editorRef.current?.focus();
+    rememberEditorSelection();
     handleInput();
   };
 
@@ -54,24 +109,34 @@ export default function Editor({ value, onChange, placeholder, onUploadImage, up
     if (!safeUrl) return;
     const editor = editorRef.current;
     if (!editor) return;
+
     const img = document.createElement('img');
     img.src = safeUrl;
     img.alt = 'image';
     img.style.maxWidth = '100%';
+
+    const range = focusEditorWithSelection() || createEditorEndRange();
+    if (!range) return;
+    range.insertNode(img);
+    range.setStartAfter(img);
+    range.collapse(true);
+
     const selection = window.getSelection();
-    if (!selection || selection.rangeCount === 0) {
-      editor.appendChild(img);
-    } else {
-      const range = selection.getRangeAt(0);
-      range.insertNode(img);
-      range.collapse(false);
+    if (selection) {
+      selection.removeAllRanges();
+      selection.addRange(range);
     }
-    editorRef.current?.focus();
+    savedRangeRef.current = range.cloneRange();
     handleInput();
   };
 
   const handleImageClick = () => {
     if (!onUploadImage) return;
+    if (!getCurrentEditorRange()) {
+      savedRangeRef.current = createEditorEndRange();
+    } else {
+      rememberEditorSelection();
+    }
     fileInputRef.current?.click();
   };
 
@@ -131,7 +196,13 @@ export default function Editor({ value, onChange, placeholder, onUploadImage, up
         tabIndex={0}
         suppressContentEditableWarning
         onInput={handleInput}
-        onClick={() => editorRef.current?.focus()}
+        onClick={() => {
+          editorRef.current?.focus();
+          rememberEditorSelection();
+        }}
+        onKeyUp={rememberEditorSelection}
+        onMouseUp={rememberEditorSelection}
+        onFocus={rememberEditorSelection}
         data-placeholder={placeholder}
       />
       {onUploadImage && (

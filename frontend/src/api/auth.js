@@ -128,10 +128,14 @@ api.interceptors.response.use(
                     )
                     .then((response) => {
                         const accessToken = response?.data?.access_token;
+                        const refreshToken = response?.data?.refresh_token;
                         if (!accessToken) {
                             throw new Error('Access token was not returned from refresh endpoint.');
                         }
                         tokenStore.setAccessToken(accessToken);
+                        if (refreshToken) {
+                            tokenStore.setRefreshToken(refreshToken);
+                        }
                         return accessToken;
                     })
                     .finally(() => {

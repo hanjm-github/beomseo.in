@@ -1,12 +1,10 @@
 """
 Authentication routes for signup, login, and token management.
 """
+import re
 from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import (
-    create_access_token,
-    create_refresh_token,
     jwt_required,
-    get_jwt_identity,
     get_jwt
 )
 
@@ -16,10 +14,33 @@ from utils.security import (
     verify_password,
     get_client_ip,
     is_ip_allowed,
-    get_current_user
+    get_current_user,
+    sanitize_plain_text,
+    parse_jwt_identity_to_int,
 )
+from utils.security_tokens import issue_token_pair, revoke_token_jti, revoke_raw_refresh_token
+from utils.rate_limit import limiter
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/api/auth')
+
+PASSWORD_MIN_LENGTH = 10
+PASSWORD_MAX_LENGTH = 72
+NICKNAME_MIN_LENGTH = 2
+NICKNAME_MAX_LENGTH = 50
+
+
+def _password_is_strong(password: str) -> bool:
+    if len(password) < PASSWORD_MIN_LENGTH or len(password) > PASSWORD_MAX_LENGTH:
+        return False
+    if not re.search(r'[A-Z]', password):
+        return False
+    if not re.search(r'[a-z]', password):
+        return False
+    if not re.search(r'[0-9]', password):
+        return False
+    if not re.search(r'[^A-Za-z0-9]', password):
+        return False
+    return True
 
 
 def find_banned_word_in_nickname(nickname, banned_words):
@@ -35,6 +56,7 @@ def find_banned_word_in_nickname(nickname, banned_words):
 
 
 @auth_bp.route('/register', methods=['POST'])
+@limiter.limit(lambda: current_app.config.get('RATELIMIT_REGISTER_LIMIT', '5 per 10 minute'))
 def register():
     """
     Register a new user.
@@ -43,27 +65,29 @@ def register():
     # Check IP restriction
     client_ip = get_client_ip()
     allowed_ips = current_app.config.get('ALLOWED_SIGNUP_IPS', [])
-    
+
+    if not client_ip:
+        return jsonify({'error': '클라이언트 IP를 확인할 수 없습니다.'}), 403
     if not is_ip_allowed(client_ip, allowed_ips):
         return jsonify({
             'error': '회원가입은 울산광역시교육청 네트워크(범서고등학교)에서만 가능합니다.',
             'error_en': 'Registration is only allowed from Ulsan Education Office network.'
         }), 403
-    
+
     data = request.get_json()
-    
+
     # Validate required fields
     if not data:
         return jsonify({'error': 'Request body is required'}), 400
-    
-    nickname = data.get('nickname', '').strip()
+
+    nickname = sanitize_plain_text(data.get('nickname', ''), max_length=NICKNAME_MAX_LENGTH)
     password = data.get('password', '')
-    
+
     if not nickname:
         return jsonify({'error': '닉네임을 입력해주세요.'}), 400
-    
-    if len(nickname) < 2 or len(nickname) > 50:
-        return jsonify({'error': '닉네임은 2-50자 사이로 입력해주세요.'}), 400
+
+    if len(nickname) < NICKNAME_MIN_LENGTH or len(nickname) > NICKNAME_MAX_LENGTH:
+        return jsonify({'error': f'닉네임은 {NICKNAME_MIN_LENGTH}-{NICKNAME_MAX_LENGTH}자 사이로 입력해주세요.'}), 400
 
     banned_word = find_banned_word_in_nickname(
         nickname,
@@ -74,9 +98,14 @@ def register():
 
     if not password:
         return jsonify({'error': '비밀번호를 입력해주세요.'}), 400
-    
-    if len(password) < 8:
-        return jsonify({'error': '비밀번호는 최소 8자 이상이어야 합니다.'}), 400
+
+    if not _password_is_strong(password):
+        return jsonify({
+            'error': (
+                f'비밀번호는 {PASSWORD_MIN_LENGTH}~{PASSWORD_MAX_LENGTH}자이며 '
+                '대문자/소문자/숫자/특수문자를 각각 1개 이상 포함해야 합니다.'
+            )
+        }), 400
     
     # Check if nickname already exists
     existing_user = User.query.filter_by(nickname=nickname).first()
@@ -93,13 +122,15 @@ def register():
     try:
         db.session.add(user)
         db.session.commit()
-    except Exception as e:
+    except Exception:
         db.session.rollback()
         return jsonify({'error': '회원가입 처리 중 오류가 발생했습니다.'}), 500
-    
-    # Generate tokens (identity must be string for JWT)
-    access_token = create_access_token(identity=str(user.id))
-    refresh_token = create_refresh_token(identity=str(user.id))
+
+    try:
+        access_token, refresh_token = issue_token_pair(user.id)
+    except Exception:
+        db.session.rollback()
+        return jsonify({'error': '토큰 발급 중 오류가 발생했습니다.'}), 500
     
     return jsonify({
         'message': '회원가입이 완료되었습니다.',
@@ -110,28 +141,31 @@ def register():
 
 
 @auth_bp.route('/login', methods=['POST'])
+@limiter.limit(lambda: current_app.config.get('RATELIMIT_LOGIN_LIMIT', '5 per minute'))
 def login():
     """Login with nickname and password."""
     data = request.get_json()
-    
+
     if not data:
         return jsonify({'error': 'Request body is required'}), 400
-    
-    nickname = data.get('nickname', '').strip()
+
+    nickname = sanitize_plain_text(data.get('nickname', ''), max_length=NICKNAME_MAX_LENGTH)
     password = data.get('password', '')
-    
+
     if not nickname or not password:
         return jsonify({'error': '닉네임과 비밀번호를 입력해주세요.'}), 400
-    
+
     # Find user
     user = User.query.filter_by(nickname=nickname).first()
-    
+
     if not user or not verify_password(password, user.password_hash):
         return jsonify({'error': '닉네임 또는 비밀번호가 올바르지 않습니다.'}), 401
-    
-    # Generate tokens (identity must be string for JWT)
-    access_token = create_access_token(identity=str(user.id))
-    refresh_token = create_refresh_token(identity=str(user.id))
+
+    try:
+        access_token, refresh_token = issue_token_pair(user.id)
+    except Exception:
+        db.session.rollback()
+        return jsonify({'error': '토큰 발급 중 오류가 발생했습니다.'}), 500
     
     return jsonify({
         'message': '로그인 성공',
@@ -143,20 +177,35 @@ def login():
 
 @auth_bp.route('/refresh', methods=['POST'])
 @jwt_required(refresh=True)
+@limiter.limit(lambda: current_app.config.get('RATELIMIT_REFRESH_LIMIT', '20 per 10 minute'))
 def refresh():
     """Refresh access token using refresh token."""
-    user_id_str = get_jwt_identity()
-    user_id = int(user_id_str)  # Convert string back to int for DB query
+    user_id = parse_jwt_identity_to_int()
+    if user_id is None:
+        return jsonify({'error': 'Invalid token identity'}), 401
+
     user = User.query.get(user_id)
-    
+
     if not user:
         return jsonify({'error': 'User not found'}), 404
-    
-    # Generate new access token with string identity
-    access_token = create_access_token(identity=str(user_id))
-    
+
+    jwt_payload = get_jwt()
+    refresh_jti = jwt_payload.get('jti')
+    if not refresh_jti:
+        return jsonify({'error': 'Invalid refresh token'}), 401
+
+    try:
+        access_token, refresh_token = issue_token_pair(
+            user_id=user_id,
+            rotate_from_refresh_jti=refresh_jti,
+        )
+    except Exception:
+        db.session.rollback()
+        return jsonify({'error': '토큰 갱신 중 오류가 발생했습니다.'}), 500
+
     return jsonify({
-        'access_token': access_token
+        'access_token': access_token,
+        'refresh_token': refresh_token,
     }), 200
 
 
@@ -164,10 +213,34 @@ def refresh():
 @jwt_required()
 def logout():
     """
-    Logout current user.
-    Note: For full logout, client should discard tokens.
-    Server-side token blacklisting can be added if needed.
+    Logout current user and revoke presented tokens.
+    Client should discard local token storage after this call.
     """
+    user = get_current_user()
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+
+    jwt_payload = get_jwt() or {}
+    revoke_token_jti(jwt_payload.get('jti'), reason='logout')
+
+    data = request.get_json(silent=True) or {}
+    provided_refresh_token = data.get('refresh_token')
+    refresh_revoke_error = None
+    if provided_refresh_token:
+        _, refresh_revoke_error = revoke_raw_refresh_token(provided_refresh_token, expected_user_id=user.id)
+
+    try:
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        return jsonify({'error': '로그아웃 처리 중 오류가 발생했습니다.'}), 500
+
+    if refresh_revoke_error:
+        return jsonify({
+            'message': '로그아웃 되었습니다.',
+            'warning': 'refresh_token을 폐기하지 못했습니다.',
+        }), 200
+
     return jsonify({'message': '로그아웃 되었습니다.'}), 200
 
 
