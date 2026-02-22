@@ -1,6 +1,22 @@
+﻿/**
+ * @file src/api/normalizers.js
+ * @description Encapsulates backend API contracts, normalization, and fallback behavior.
+ * Responsibilities:
+ * - Expose a stable API-facing interface for feature code while shielding transport details.
+ * Key dependencies:
+ * - ../security/urlPolicy
+ * Side effects:
+ * - Performs HTTP requests to backend endpoints via shared API clients.
+ * - Applies sanitization before rendering or using external URL/HTML values.
+ * Role in app flow:
+ * - Acts as the data boundary between UI code and backend HTTP endpoints.
+ */
 import { toSafeAssetUrl } from '../security/urlPolicy';
 const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000').replace(/\/$/, '');
 
+/**
+ * toAbsoluteApiUrl module entry point.
+ */
 export function toAbsoluteApiUrl(url) {
   const safeUrl = toSafeAssetUrl(url);
   if (!safeUrl) return '';
@@ -11,6 +27,9 @@ export function toAbsoluteApiUrl(url) {
   return `${API_BASE_URL}${prefix}${safeUrl}`;
 }
 
+/**
+ * normalizePaginatedResponse module entry point.
+ */
 export function normalizePaginatedResponse(data, fallbackPageSize = 0) {
   if (!data || typeof data !== 'object') {
     return {
@@ -30,6 +49,9 @@ export function normalizePaginatedResponse(data, fallbackPageSize = 0) {
   };
 }
 
+/**
+ * normalizeUploadResponse module entry point.
+ */
 export function normalizeUploadResponse(data) {
   if (!data || typeof data !== 'object') return data;
   return {
@@ -37,3 +59,5 @@ export function normalizeUploadResponse(data) {
     url: toAbsoluteApiUrl(data.url),
   };
 }
+
+

@@ -1,4 +1,20 @@
-﻿import { useEffect, useMemo, useState } from 'react';
+﻿/**
+ * @file src/pages/FreeBoard/FreeBoardListView.jsx
+ * @description Implements route-level views and page orchestration logic.
+ * Responsibilities:
+ * - Coordinate route state, fetch lifecycles, and permission-driven page behavior.
+ * Key dependencies:
+ * - react
+ * - react-router-dom
+ * - lucide-react
+ * - ../../components/freeboard/FreeBoardToolbar
+ * Side effects:
+ * - Influences client-side routing and navigation state.
+ * - Schedules deferred work using timer-based execution.
+ * Role in app flow:
+ * - Owns route-level user flows and composes feature components.
+ */
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import FreeBoardToolbar from '../../components/freeboard/FreeBoardToolbar';
@@ -17,6 +33,9 @@ const CATEGORIES = [
 
 const PAGE_SIZE = 20;
 
+/**
+ * FreeBoardListView module entry point.
+ */
 export default function FreeBoardListView() {
   const { user } = useAuth();
   const location = useLocation();
@@ -191,3 +210,5 @@ export default function FreeBoardListView() {
     </div>
   );
 }
+
+

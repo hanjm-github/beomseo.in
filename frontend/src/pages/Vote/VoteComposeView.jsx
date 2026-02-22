@@ -1,3 +1,18 @@
+﻿/**
+ * @file src/pages/Vote/VoteComposeView.jsx
+ * @description Implements route-level views and page orchestration logic.
+ * Responsibilities:
+ * - Coordinate route state, fetch lifecycles, and permission-driven page behavior.
+ * Key dependencies:
+ * - react
+ * - react-router-dom
+ * - lucide-react
+ * - ../../context/AuthContext
+ * Side effects:
+ * - Influences client-side routing and navigation state.
+ * Role in app flow:
+ * - Owns route-level user flows and composes feature components.
+ */
 import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Loader2 } from 'lucide-react';
@@ -16,6 +31,9 @@ function normalizeOptions(options) {
     .filter((option) => Boolean(option.text));
 }
 
+/**
+ * VoteComposeView module entry point.
+ */
 export default function VoteComposeView() {
   const navigate = useNavigate();
   const { user, isAuthenticated, loading: authLoading } = useAuth();
@@ -186,3 +204,5 @@ export default function VoteComposeView() {
     </div>
   );
 }
+
+

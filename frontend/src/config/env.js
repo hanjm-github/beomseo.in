@@ -1,3 +1,15 @@
+﻿/**
+ * @file src/config/env.js
+ * @description Reads and normalizes frontend environment configuration values.
+ * Responsibilities:
+ * - Encapsulate file-local responsibilities in support of the overall frontend architecture.
+ * Key dependencies:
+ * - Module-local logic without direct import dependencies.
+ * Side effects:
+ * - No significant side effects beyond React state and rendering behavior.
+ * Role in app flow:
+ * - Participates as a supporting module in the frontend runtime graph.
+ */
 function readStringEnv(key, fallback) {
   const value = import.meta.env[key];
   if (typeof value !== 'string') return fallback;
@@ -22,3 +34,5 @@ export const PETITION_THRESHOLD_DEFAULT = readPositiveIntEnv(
   'VITE_PETITION_THRESHOLD_DEFAULT',
   50
 );
+
+

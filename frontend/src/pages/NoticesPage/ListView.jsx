@@ -1,3 +1,19 @@
+﻿/**
+ * @file src/pages/NoticesPage/ListView.jsx
+ * @description Implements route-level views and page orchestration logic.
+ * Responsibilities:
+ * - Coordinate route state, fetch lifecycles, and permission-driven page behavior.
+ * Key dependencies:
+ * - react
+ * - react-router-dom
+ * - ../../components/notices/NoticeToolbar
+ * - ../../components/notices/NoticeList
+ * Side effects:
+ * - Influences client-side routing and navigation state.
+ * - Schedules deferred work using timer-based execution.
+ * Role in app flow:
+ * - Owns route-level user flows and composes feature components.
+ */
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams, Link, useLocation } from 'react-router-dom';
 import NoticeToolbar from '../../components/notices/NoticeToolbar';
@@ -9,6 +25,9 @@ import { useAuth } from '../../context/AuthContext';
 const VALID_CATEGORIES = ['school', 'council'];
 const PAGE_SIZE = 10;
 
+/**
+ * ListView module entry point.
+ */
 export default function ListView() {
   const { category = 'school' } = useParams();
   const navigate = useNavigate();
@@ -143,3 +162,5 @@ export default function ListView() {
     </div>
   );
 }
+
+

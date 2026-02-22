@@ -1,3 +1,19 @@
+﻿/**
+ * @file src/components/notices/Editor.jsx
+ * @description Defines reusable UI components and feature-specific interaction blocks.
+ * Responsibilities:
+ * - Render composable UI pieces with clear prop-driven behavior and minimal coupling.
+ * Key dependencies:
+ * - lucide-react
+ * - react
+ * - ../../security/htmlSanitizer
+ * - ../../security/urlPolicy
+ * Side effects:
+ * - Interacts with browser runtime APIs.
+ * - Applies sanitization before rendering or using external URL/HTML values.
+ * Role in app flow:
+ * - Implements reusable view logic consumed by route-level pages.
+ */
 import { Bold, Italic, Underline, List, Link as LinkIcon, Image as ImageIcon } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { sanitizeRichHtml } from '../../security/htmlSanitizer';
@@ -7,6 +23,9 @@ import styles from './notices.module.css';
 
 const MAX_IMAGE_UPLOAD_SIZE = UPLOAD_MAX_FILE_SIZE_BYTES;
 
+/**
+ * Editor module entry point.
+ */
 export default function Editor({ value, onChange, placeholder, onUploadImage, uploading }) {
   const editorRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -45,6 +64,8 @@ export default function Editor({ value, onChange, placeholder, onUploadImage, up
     const editor = editorRef.current;
     if (!editor) return null;
 
+    // Preserve cursor position across toolbar interactions so formatting and uploads
+    // apply to the user-intended insertion point instead of jumping to the end.
     let range = getCurrentEditorRange();
     if (!range && savedRangeRef.current && isRangeInsideEditor(savedRangeRef.current)) {
       range = savedRangeRef.current.cloneRange();
@@ -76,6 +97,8 @@ export default function Editor({ value, onChange, placeholder, onUploadImage, up
   const handleInput = () => {
     const html = editorRef.current?.innerHTML || '';
     const safeHtml = sanitizeRichHtml(html);
+    // If sanitization stripped disallowed markup, immediately sync the editable DOM
+    // so subsequent operations operate on the canonical safe HTML tree.
     if (editorRef.current && editorRef.current.innerHTML !== safeHtml) {
       editorRef.current.innerHTML = safeHtml;
     }
@@ -134,6 +157,7 @@ export default function Editor({ value, onChange, placeholder, onUploadImage, up
   const handleImageClick = () => {
     if (!onUploadImage) return;
     if (!getCurrentEditorRange()) {
+      // Default image insertion to the end when no active selection exists.
       savedRangeRef.current = createEditorEndRange();
     } else {
       rememberEditorSelection();
@@ -218,3 +242,4 @@ export default function Editor({ value, onChange, placeholder, onUploadImage, up
     </div>
   );
 }
+

@@ -1,3 +1,18 @@
+﻿/**
+ * @file src/pages/FreeBoard/FreeBoardDetailView.jsx
+ * @description Implements route-level views and page orchestration logic.
+ * Responsibilities:
+ * - Coordinate route state, fetch lifecycles, and permission-driven page behavior.
+ * Key dependencies:
+ * - react
+ * - react-router-dom
+ * - lucide-react
+ * - ../../components/freeboard/freeboard.module.css
+ * Side effects:
+ * - Influences client-side routing and navigation state.
+ * Role in app flow:
+ * - Owns route-level user flows and composes feature components.
+ */
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { Bookmark, BookmarkCheck, Heart, ThumbsDown, Eye, MessageCircle, ArrowLeft, ShieldAlert } from 'lucide-react';
@@ -9,6 +24,9 @@ import '../page-shell.css';
 import { useAuth } from '../../context/AuthContext';
 import RoleName from '../../components/RoleName/RoleName';
 
+/**
+ * FreeBoardDetailView module entry point.
+ */
 export default function FreeBoardDetailView() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -191,3 +209,5 @@ export default function FreeBoardDetailView() {
     </div>
   );
 }
+
+

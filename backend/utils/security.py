@@ -1,5 +1,8 @@
 """
-Security utilities for authentication and authorization.
+Security utilities shared by route handlers.
+
+The helpers in this module centralize identity parsing, authorization checks,
+and input normalization so board routes stay consistent.
 """
 import ipaddress
 import re
@@ -26,6 +29,7 @@ def verify_password(password: str, password_hash: str) -> bool:
 
 
 def _first_valid_ip_from_forwarded(header_value: str):
+    """Return the first syntactically valid IP from a forwarded header chain."""
     if not header_value:
         return None
     for part in header_value.split(','):
@@ -132,7 +136,11 @@ def require_role(*roles: UserRole):
 
 
 def get_current_user():
-    """Get current authenticated user from JWT."""
+    """
+    Get current authenticated user from JWT identity.
+
+    Result is memoized in ``flask.g`` to avoid repeated lookups in one request.
+    """
     if hasattr(g, '_current_user'):
         return g._current_user
 
@@ -151,6 +159,7 @@ def get_current_principal(optional=True):
     Return current auth principal with lightweight fields.
     Shape: {'id': int, 'role': str|None}
     """
+    # Request-scope memoization keeps role checks cheap on hot endpoints.
     if hasattr(g, '_current_principal'):
         return g._current_principal
 
@@ -165,6 +174,7 @@ def get_current_principal(optional=True):
         g._current_principal = None
         return None
 
+    # Role claim can be absent for legacy tokens issued before role embedding.
     claims = get_jwt() or {}
     role = claims.get('role')
     principal = {
@@ -196,6 +206,7 @@ def parse_jwt_identity_to_int():
     Parse JWT identity as integer user id.
     Returns None if identity is missing or malformed.
     """
+    # Reuse already-parsed principal when available.
     principal = getattr(g, '_current_principal', None)
     if isinstance(principal, dict) and principal.get('id') is not None:
         return principal['id']

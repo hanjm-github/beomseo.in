@@ -1,3 +1,18 @@
+﻿/**
+ * @file src/api/mocks/gomsolMarket.mock.js
+ * @description Implements deterministic mock API behavior for development fallback scenarios.
+ * Responsibilities:
+ * - Provide in-memory mock responses that mirror backend contracts and pagination semantics.
+ * Key dependencies:
+ * - ../normalizers
+ * - ../../config/env
+ * Side effects:
+ * - Mutates in-memory mock state to emulate backend persistence semantics.
+ * - Interacts with browser runtime APIs.
+ * - Schedules deferred work using timer-based execution.
+ * Role in app flow:
+ * - Supports local and development flows when network-backed API calls are unavailable.
+ */
 import { toAbsoluteApiUrl } from '../normalizers';
 import {
   UPLOAD_MAX_FILE_SIZE_BYTES,
@@ -269,3 +284,6 @@ export const gomsolMarketMockApi = {
   updateStatus,
   upload,
 };
+
+
+

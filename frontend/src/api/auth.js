@@ -1,3 +1,17 @@
+﻿/**
+ * @file src/api/auth.js
+ * @description Encapsulates backend API contracts, normalization, and fallback behavior.
+ * Responsibilities:
+ * - Expose a stable API-facing interface for feature code while shielding transport details.
+ * Key dependencies:
+ * - axios
+ * - ../security/tokenStore
+ * Side effects:
+ * - Performs HTTP requests to backend endpoints via shared API clients.
+ * - Interacts with browser runtime APIs.
+ * Role in app flow:
+ * - Acts as the data boundary between UI code and backend HTTP endpoints.
+ */
 /**
  * Auth API utilities with axios interceptors for JWT handling.
  */
@@ -55,6 +69,7 @@ function shouldSkipRefresh(requestUrl = '') {
         '/api/auth/refresh',
         '/api/auth/logout',
     ];
+    // Auth endpoints must never recursively trigger refresh logic.
     return authPaths.some((path) => requestUrl.includes(path));
 }
 
@@ -91,6 +106,7 @@ api.interceptors.response.use(
         }
 
         if (shouldSkipRefresh(requestUrl) || originalRequest._retry) {
+            // For non-login/register requests, clear stale tokens so UI can return to a fresh auth state.
             if (!requestUrl.includes('/api/auth/login') && !requestUrl.includes('/api/auth/register')) {
                 tokenStore.clearTokens();
                 emitAuthExpired('unauthorized');
@@ -115,6 +131,7 @@ api.interceptors.response.use(
 
         try {
             if (!refreshPromise) {
+                // Serialize refresh requests so multiple concurrent 401 responses share one refresh call.
                 refreshPromise = axios
                     .post(
                         `${API_BASE_URL}/api/auth/refresh`,
@@ -139,6 +156,7 @@ api.interceptors.response.use(
                         return accessToken;
                     })
                     .finally(() => {
+                        // Always release the lock, even on refresh failure, for future auth attempts.
                         refreshPromise = null;
                     });
             }
@@ -146,6 +164,7 @@ api.interceptors.response.use(
             const accessToken = await refreshPromise;
             originalRequest.headers = originalRequest.headers || {};
             originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+            // Replay the original request with the newly issued token.
             return api(originalRequest);
         } catch (refreshError) {
             tokenStore.clearTokens();
@@ -191,3 +210,5 @@ export const authApi = {
 };
 
 export default api;
+
+

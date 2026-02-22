@@ -1,3 +1,19 @@
+﻿/**
+ * @file src/App.jsx
+ * @description Declares global providers and top-level route boundaries for the SPA shell.
+ * Responsibilities:
+ * - Compose providers, router setup, and lazy route loading at the app boundary.
+ * Key dependencies:
+ * - react-router-dom
+ * - ./context/ThemeContext
+ * - ./context/AuthContext
+ * - react
+ * Side effects:
+ * - Influences client-side routing and navigation state.
+ * - Interacts with browser runtime APIs.
+ * Role in app flow:
+ * - Primary orchestrator connecting providers, routing, and shared layout.
+ */
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
@@ -60,3 +76,5 @@ function App() {
 }
 
 export default App;
+
+

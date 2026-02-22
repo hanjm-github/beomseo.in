@@ -1,3 +1,15 @@
+﻿/**
+ * @file src/utils/roleDisplay.js
+ * @description Hosts utility helpers reused across UI and feature modules.
+ * Responsibilities:
+ * - Encapsulate file-local responsibilities in support of the overall frontend architecture.
+ * Key dependencies:
+ * - Module-local logic without direct import dependencies.
+ * Side effects:
+ * - No significant side effects beyond React state and rendering behavior.
+ * Role in app flow:
+ * - Participates as a supporting module in the frontend runtime graph.
+ */
 /**
  * Role display mapping utility.
  * Normalizes role strings and returns prefix + class names for UI rendering.
@@ -50,6 +62,9 @@ const normalizeRole = (role) => {
  * @param {boolean} [params.showPrefix=true]
  * @param {string} [params.prefixOverride]
  */
+/**
+ * getRoleDisplay module entry point.
+ */
 export function getRoleDisplay({ role, nickname, showPrefix = true, prefixOverride }) {
   const safeNickname = nickname || '';
   const normalized = normalizeRole(role);
@@ -69,3 +84,5 @@ export function getRoleDisplay({ role, nickname, showPrefix = true, prefixOverri
 }
 
 export default getRoleDisplay;
+
+

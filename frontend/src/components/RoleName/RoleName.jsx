@@ -1,3 +1,17 @@
+﻿/**
+ * @file src/components/RoleName/RoleName.jsx
+ * @description Defines reusable UI components and feature-specific interaction blocks.
+ * Responsibilities:
+ * - Render composable UI pieces with clear prop-driven behavior and minimal coupling.
+ * Key dependencies:
+ * - react
+ * - ../../utils/roleDisplay
+ * - ./RoleName.module.css
+ * Side effects:
+ * - No significant side effects beyond React state and rendering behavior.
+ * Role in app flow:
+ * - Implements reusable view logic consumed by route-level pages.
+ */
 import React from 'react';
 import { getRoleDisplay } from '../../utils/roleDisplay';
 import styles from './RoleName.module.css';
@@ -40,3 +54,5 @@ export default function RoleName({
     </Component>
   );
 }
+
+

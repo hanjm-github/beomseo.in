@@ -1,4 +1,19 @@
 ﻿/**
+ * @file src/api/community.js
+ * @description Encapsulates backend API contracts, normalization, and fallback behavior.
+ * Responsibilities:
+ * - Expose a stable API-facing interface for feature code while shielding transport details.
+ * Key dependencies:
+ * - ./auth
+ * - ./normalizers
+ * - ./mockPolicy
+ * - ../analytics/zaraz
+ * Side effects:
+ * - Performs HTTP requests to backend endpoints via shared API clients.
+ * Role in app flow:
+ * - Acts as the data boundary between UI code and backend HTTP endpoints.
+ */
+/**
  * Community (free/anonymous) board API with optional dev-only mock fallback.
  */
 import api from './auth';
@@ -29,6 +44,7 @@ const loadCommunityMockApi = ENABLE_API_MOCKS
       let communityMockApiPromise;
       return () => {
         if (!communityMockApiPromise) {
+          // Lazy import keeps mock code out of the normal production path.
           communityMockApiPromise = import('./mocks/community.mock').then(
             (module) => module.communityMockApi
           );
@@ -76,6 +92,7 @@ export const communityApi = {
     } catch (err) {
       const useMockFallback = shouldUseMockFallback(err);
       if (!useMockFallback) {
+        // Record only real API failures; mock fallback in dev should not pollute failure metrics.
         trackPostCreateFailed({
           boardType: 'free_board',
           userRole: payload?.author?.role,
@@ -201,3 +218,5 @@ export const communityApi = {
 };
 
 export default communityApi;
+
+

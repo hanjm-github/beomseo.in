@@ -1,3 +1,18 @@
+﻿/**
+ * @file src/pages/LostFound/LostFoundDetailView.jsx
+ * @description Implements route-level views and page orchestration logic.
+ * Responsibilities:
+ * - Coordinate route state, fetch lifecycles, and permission-driven page behavior.
+ * Key dependencies:
+ * - react
+ * - react-router-dom
+ * - lucide-react
+ * - ../../api/lostFound
+ * Side effects:
+ * - No significant side effects beyond React state and rendering behavior.
+ * Role in app flow:
+ * - Owns route-level user flows and composes feature components.
+ */
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { CalendarDays, Eye, MapPin, PackageCheck } from 'lucide-react';
@@ -19,6 +34,9 @@ function formatDateTime(value) {
   });
 }
 
+/**
+ * LostFoundDetailView module entry point.
+ */
 export default function LostFoundDetailView() {
   const { id } = useParams();
   const { user, isAuthenticated } = useAuth();
@@ -196,3 +214,5 @@ export default function LostFoundDetailView() {
     </div>
   );
 }
+
+

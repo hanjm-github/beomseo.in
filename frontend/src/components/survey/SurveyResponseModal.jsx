@@ -1,8 +1,26 @@
+﻿/**
+ * @file src/components/survey/SurveyResponseModal.jsx
+ * @description Defines reusable UI components and feature-specific interaction blocks.
+ * Responsibilities:
+ * - Render composable UI pieces with clear prop-driven behavior and minimal coupling.
+ * Key dependencies:
+ * - lucide-react
+ * - react-form-builder2
+ * - ./survey.module.css
+ * - ./survey-form-builder.css
+ * Side effects:
+ * - No significant side effects beyond React state and rendering behavior.
+ * Role in app flow:
+ * - Implements reusable view logic consumed by route-level pages.
+ */
 import { X } from 'lucide-react';
 import { ReactFormGenerator } from 'react-form-builder2';
 import styles from './survey.module.css';
 import './survey-form-builder.css';
 
+/**
+ * SurveyResponseModal module entry point.
+ */
 export default function SurveyResponseModal({ survey, open, onClose, onSubmit, submitting }) {
   if (!open) return null;
 
@@ -34,3 +52,5 @@ export default function SurveyResponseModal({ survey, open, onClose, onSubmit, s
     </div>
   );
 }
+
+

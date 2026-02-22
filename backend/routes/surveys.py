@@ -30,6 +30,7 @@ surveys_bp = Blueprint('surveys', __name__, url_prefix='/api/surveys')
 
 # Helpers
 def optional_current_user():
+    """Return authenticated user when JWT is present; otherwise None."""
     try:
         verify_jwt_in_request(optional=True)
         uid = get_jwt_identity()
@@ -39,6 +40,7 @@ def optional_current_user():
 
 
 def parse_date(value):
+    """Parse date-like payload values used for survey expiration."""
     if not value:
         return None
     try:
@@ -168,6 +170,7 @@ def map_value(option_map, value):
 
 
 def validate_payload(data: dict):
+    """Validate survey payload and return normalized values for persistence."""
     errors = []
     title = (data.get('title') or '').strip()
     description = (data.get('description') or '').strip()
@@ -190,6 +193,7 @@ def validate_payload(data: dict):
 
 
 def fetch_survey_or_404(survey_id):
+    """Fetch non-deleted survey by id; invalid ids map to None."""
     try:
         sid = int(survey_id)
     except (TypeError, ValueError):
@@ -199,6 +203,7 @@ def fetch_survey_or_404(survey_id):
 
 
 def build_quota_map(owner_ids):
+    """Bulk-load credit rows to avoid repeated credit queries in list views."""
     owner_ids = {owner_id for owner_id in owner_ids if owner_id is not None}
     if not owner_ids:
         return {}
@@ -211,6 +216,11 @@ def build_quota_map(owner_ids):
 @surveys_bp.route('/', methods=['GET'])
 @cache_json_response('surveys')
 def list_surveys():
+    """
+    List surveys with role-aware visibility and quota-aware metadata.
+
+    Non-admin callers only see approved surveys plus their own authored rows.
+    """
     view = request.args.get('view')
     status = request.args.get('status')
     q_text = request.args.get('q') or request.args.get('query')
@@ -232,6 +242,7 @@ def list_surveys():
     ).filter(Survey.deleted_at.is_(None))
 
     if not is_admin:
+        # Moderation visibility: admin can inspect all states, others cannot.
         if current_user:
             query = query.filter(
                 or_(
@@ -258,12 +269,14 @@ def list_surveys():
         )
 
     if current_user and hide_answered:
+        # Exclude surveys already answered by current user.
         answered_subquery = (
             db.session.query(SurveyResponse.survey_id)
             .filter(SurveyResponse.respondent_id == current_user.id)
         )
         query = query.filter(~Survey.id.in_(answered_subquery))
 
+    # Compute quota availability in SQL so sorting works without Python post-processing.
     base_quota = int(current_app.config.get('SURVEY_BASE_QUOTA', 0) or 0)
     quota_available_expr = (
         func.coalesce(SurveyCredit.base, base_quota)
@@ -328,6 +341,7 @@ def list_surveys():
 @surveys_bp.route('/<survey_id>', methods=['GET'])
 @cache_json_response('surveys')
 def get_survey(survey_id):
+    """Return one survey, including form body only when caller can access it."""
     survey = fetch_survey_or_404(survey_id)
     if not survey:
         return jsonify({'error': '설문을 찾을 수 없습니다.'}), 404
@@ -363,6 +377,7 @@ def get_survey(survey_id):
 @surveys_bp.route('/', methods=['POST'])
 @jwt_required()
 def create_survey():
+    """Create survey in pending state; approval is required before responses."""
     data = request.get_json() or {}
     errors, payload = validate_payload(data)
     if errors:
@@ -397,6 +412,7 @@ def create_survey():
 
 
 def can_edit(survey: Survey, user: User):
+    """Owner can edit only while pending; admin can always edit."""
     if not user:
         return False
     if user.role == UserRole.ADMIN:
@@ -415,6 +431,7 @@ def update_survey(survey_id):
 @jwt_required()
 @require_role(UserRole.ADMIN)
 def approve_survey(survey_id):
+    """Approve survey and apply one-time owner credit grant."""
     survey = fetch_survey_or_404(survey_id)
     if not survey:
         return jsonify({'error': '설문을 찾을 수 없습니다.'}), 404
@@ -447,6 +464,7 @@ def approve_survey(survey_id):
 @jwt_required()
 @require_role(UserRole.ADMIN)
 def unapprove_survey(survey_id):
+    """Revert approved survey back to pending moderation state."""
     survey = fetch_survey_or_404(survey_id)
     if not survey:
         return jsonify({'error': '설문을 찾을 수 없습니다.'}), 404
@@ -469,6 +487,7 @@ def unapprove_survey(survey_id):
 
 
 def survey_is_open(survey: Survey, credit_available: int):
+    """Derived open state based on approval, expiration, and remaining quota."""
     if survey.status != SurveyStatus.APPROVED:
         return False
     if survey.expires_at and survey.expires_at <= date.today():
@@ -481,6 +500,11 @@ def survey_is_open(survey: Survey, credit_available: int):
 @surveys_bp.route('/<survey_id>/responses', methods=['POST'])
 @jwt_required()
 def submit_response(survey_id):
+    """
+    Persist one response and settle credit transfer atomically.
+
+    Owner quota is consumed per response; respondents may earn credits.
+    """
     survey = fetch_survey_or_404(survey_id)
     if not survey:
         return jsonify({'error': '설문을 찾을 수 없습니다.'}), 404
@@ -504,6 +528,7 @@ def submit_response(survey_id):
         normalized_answers = answers
 
     # 중복 응답 확인 (이미 응답한 경우 갱신 허용, 크레딧/카운트는 추가로 올리지 않음)
+    # Duplicate submissions are also protected by DB unique constraint.
     existing = SurveyResponse.query.filter_by(
         survey_id=survey.id, respondent_id=respondent.id
     ).first()
@@ -556,6 +581,7 @@ def submit_response(survey_id):
 @jwt_required()
 @cache_json_response('surveys')
 def survey_summary(survey_id):
+    """Build question-level aggregate summary for charting/report screens."""
     survey = fetch_survey_or_404(survey_id)
     if not survey:
         return jsonify({'error': '설문을 찾을 수 없습니다.'}), 404
@@ -627,6 +653,7 @@ def survey_summary(survey_id):
 @jwt_required()
 @cache_json_response('surveys')
 def survey_raw_responses(survey_id):
+    """Return raw response rows with option identifiers mapped to labels."""
     survey = fetch_survey_or_404(survey_id)
     if not survey:
         return jsonify({'error': '설문을 찾을 수 없습니다.'}), 404
@@ -661,6 +688,7 @@ def survey_raw_responses(survey_id):
 @jwt_required()
 @cache_json_response('surveys', ttl=20)
 def my_credits():
+    """Return current user's survey credit balances."""
     user = get_current_user()
     if not user:
         return jsonify({'error': 'User not found'}), 404

@@ -1,3 +1,18 @@
+﻿/**
+ * @file src/components/freeboard/FreePostCard.jsx
+ * @description Defines reusable UI components and feature-specific interaction blocks.
+ * Responsibilities:
+ * - Render composable UI pieces with clear prop-driven behavior and minimal coupling.
+ * Key dependencies:
+ * - lucide-react
+ * - react-router-dom
+ * - ./freeboard.module.css
+ * - ../../api/community
+ * Side effects:
+ * - No significant side effects beyond React state and rendering behavior.
+ * Role in app flow:
+ * - Implements reusable view logic consumed by route-level pages.
+ */
 import { MessageCircle, Eye, Heart, Paperclip, Flame, ShieldAlert } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import styles from './freeboard.module.css';
@@ -22,6 +37,9 @@ const categoryTone = {
   qna: styles.badgeQna,
 };
 
+/**
+ * FreePostCard module entry point.
+ */
 export default function FreePostCard({ post, to }) {
   const hot = (post.likes || 0) + (post.commentsCount || 0) >= 20;
   const badgeClass = categoryTone[post.category] || styles.badgeInfo;
@@ -84,3 +102,5 @@ export default function FreePostCard({ post, to }) {
     </Link>
   );
 }
+
+

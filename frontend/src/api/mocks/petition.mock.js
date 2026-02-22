@@ -1,3 +1,16 @@
+﻿/**
+ * @file src/api/mocks/petition.mock.js
+ * @description Implements deterministic mock API behavior for development fallback scenarios.
+ * Responsibilities:
+ * - Provide in-memory mock responses that mirror backend contracts and pagination semantics.
+ * Key dependencies:
+ * - ../../config/env
+ * Side effects:
+ * - Mutates in-memory mock state to emulate backend persistence semantics.
+ * - Schedules deferred work using timer-based execution.
+ * Role in app flow:
+ * - Supports local and development flows when network-backed API calls are unavailable.
+ */
 import { PETITION_THRESHOLD_DEFAULT } from '../../config/env';
 
 export const THRESHOLD_DEFAULT = PETITION_THRESHOLD_DEFAULT;
@@ -212,3 +225,6 @@ export const petitionMockApi = {
   deriveStatus,
   CATEGORY_OPTIONS,
 };
+
+
+

@@ -1,3 +1,17 @@
+﻿/**
+ * @file src/analytics/zaraz.js
+ * @description Wraps analytics instrumentation with privacy-safe payload handling.
+ * Responsibilities:
+ * - Encapsulate file-local responsibilities in support of the overall frontend architecture.
+ * Key dependencies:
+ * - Module-local logic without direct import dependencies.
+ * Side effects:
+ * - Emits analytics events with normalized and privacy-safe payload fields.
+ * - Interacts with browser runtime APIs.
+ * - Applies sanitization before rendering or using external URL/HTML values.
+ * Role in app flow:
+ * - Participates as a supporting module in the frontend runtime graph.
+ */
 const DEFAULT_ALLOWED_HOSTS = ['beomseo.in'];
 const DEFAULT_BLOCKED_KEY_NAMES = [
   'nickname',
@@ -91,6 +105,9 @@ function extractErrorMessage(errorLike) {
   return '';
 }
 
+/**
+ * normalizeErrorType module entry point.
+ */
 export function normalizeErrorType(errorLike) {
   const status = Number(errorLike?.response?.status || errorLike?.status || 0);
   if (status === 400 || status === 409 || status === 422) return 'validation_error';
@@ -116,6 +133,9 @@ export function normalizeErrorType(errorLike) {
   return 'unknown_error';
 }
 
+/**
+ * isAnalyticsEnabled module entry point.
+ */
 export function isAnalyticsEnabled() {
   if (!ANALYTICS_ENABLED) return false;
   if (!ANALYTICS_ALLOW_IN_DEV && !import.meta.env.PROD) return false;
@@ -139,6 +159,9 @@ function getTrackFunction() {
   return window.zaraz.track.bind(window.zaraz);
 }
 
+/**
+ * trackEvent module entry point.
+ */
 export function trackEvent(eventName, params = {}) {
   if (typeof eventName !== 'string' || !eventName.trim()) return false;
   if (!isAnalyticsEnabled()) return false;
@@ -159,18 +182,27 @@ export function trackEvent(eventName, params = {}) {
   }
 }
 
+/**
+ * trackAuthSuccess module entry point.
+ */
 export function trackAuthSuccess({ eventName, userRole }) {
   const role = normalizeRole(userRole);
   const payload = role ? { user_role: role } : {};
   return trackEvent(eventName, payload);
 }
 
+/**
+ * trackAuthFailure module entry point.
+ */
 export function trackAuthFailure({ eventName, errorType }) {
   return trackEvent(eventName, {
     error_type: normalizeErrorType(errorType),
   });
 }
 
+/**
+ * trackPostCreated module entry point.
+ */
 export function trackPostCreated({ boardType, userRole, approvalStatus }) {
   const role = normalizeRole(userRole);
   const approval = typeof approvalStatus === 'string' ? approvalStatus : undefined;
@@ -181,6 +213,9 @@ export function trackPostCreated({ boardType, userRole, approvalStatus }) {
   });
 }
 
+/**
+ * trackPostCreateFailed module entry point.
+ */
 export function trackPostCreateFailed({ boardType, userRole, errorType }) {
   const role = normalizeRole(userRole);
   return trackEvent('post_create_failed', {
@@ -189,3 +224,5 @@ export function trackPostCreateFailed({ boardType, userRole, errorType }) {
     error_type: normalizeErrorType(errorType),
   });
 }
+
+

@@ -24,12 +24,14 @@ votes_bp = Blueprint('votes', __name__, url_prefix='/api/community/votes')
 
 
 def parse_bool(value, default=False):
+    """Parse permissive boolean query flags."""
     if value is None:
         return default
     return str(value).lower() in {'1', 'true', 'yes', 'on'}
 
 
 def optional_current_user_id():
+    """Return authenticated user id when available, else None."""
     try:
         verify_jwt_in_request(optional=True)
         user_id = get_jwt_identity()
@@ -39,6 +41,7 @@ def optional_current_user_id():
 
 
 def parse_iso_datetime(value):
+    """Parse ISO datetime input and normalize timezone-aware values to UTC-naive."""
     if value in (None, ''):
         return None
 
@@ -60,6 +63,7 @@ def parse_iso_datetime(value):
 
 
 def ensure_credit(user_id: int):
+    """Lazy-create credit row used by vote reward payouts."""
     base = current_app.config.get('SURVEY_BASE_QUOTA', 0)
     credit = SurveyCredit.query.get(user_id)
     if credit:
@@ -75,6 +79,7 @@ def ensure_credit(user_id: int):
 
 
 def validate_create_payload(data):
+    """Validate vote creation payload including option uniqueness constraints."""
     errors = []
     title = (data.get('title') or '').strip()
     description = (data.get('description') or '').strip()
@@ -158,6 +163,7 @@ def validate_create_payload(data):
 
 
 def fetch_vote(vote_id):
+    """Fetch non-deleted vote with author/options eager-loaded."""
     return Vote.query.options(
         joinedload(Vote.author),
         selectinload(Vote.options),
@@ -168,6 +174,7 @@ def fetch_vote(vote_id):
 
 
 def vote_option_map(vote_ids, user_id):
+    """Map vote_id -> selected option key for the current user."""
     if not vote_ids or not user_id:
         return {}
 
@@ -187,6 +194,7 @@ def vote_option_map(vote_ids, user_id):
 @votes_bp.route('/', methods=['GET'])
 @cache_json_response('votes', ttl=20)
 def list_votes():
+    """List votes with optional closed filtering and participation sort modes."""
     view = request.args.get('view')
     sort = request.args.get('sort', 'recent')
     q_text = (request.args.get('q') or '').strip()
@@ -213,6 +221,7 @@ def list_votes():
         )
 
     if not include_closed:
+        # Default view hides closed polls for an "active board" experience.
         query = query.filter(or_(Vote.closes_at.is_(None), Vote.closes_at > now))
 
     if sort == 'participation':
@@ -240,6 +249,7 @@ def list_votes():
 @votes_bp.route('/<int:vote_id>', methods=['GET'])
 @cache_json_response('votes', ttl=20)
 def get_vote(vote_id):
+    """Return one poll with caller's own selected option when authenticated."""
     vote = fetch_vote(vote_id)
     if not vote:
         return jsonify({'error': '투표를 찾을 수 없습니다.'}), 404
@@ -265,6 +275,7 @@ def get_vote(vote_id):
 @jwt_required()
 @require_role(UserRole.ADMIN, UserRole.STUDENT_COUNCIL)
 def create_vote():
+    """Create poll (admin/student-council only)."""
     data = request.get_json() or {}
     errors, payload = validate_create_payload(data)
     if errors:
@@ -305,6 +316,11 @@ def create_vote():
 @votes_bp.route('/<int:vote_id>/vote', methods=['POST'])
 @jwt_required()
 def submit_vote(vote_id):
+    """
+    Submit one vote response and reward respondent credits.
+
+    Duplicate votes are blocked by both pre-check and DB unique constraint.
+    """
     vote = fetch_vote(vote_id)
     if not vote:
         return jsonify({'error': '투표를 찾을 수 없습니다.'}), 404
@@ -329,6 +345,7 @@ def submit_vote(vote_id):
     if not option:
         return jsonify({'error': '유효하지 않은 선택지입니다.'}), 422
 
+    # Reward integrates with the same credit ledger used by surveys.
     reward = max(0, int(current_app.config.get('VOTE_REWARD_CREDITS', 1)))
     credit = ensure_credit(user.id)
 

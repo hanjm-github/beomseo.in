@@ -1,9 +1,25 @@
+﻿/**
+ * @file src/components/vote/VoteOptionEditor.jsx
+ * @description Defines reusable UI components and feature-specific interaction blocks.
+ * Responsibilities:
+ * - Render composable UI pieces with clear prop-driven behavior and minimal coupling.
+ * Key dependencies:
+ * - lucide-react
+ * - ./vote.module.css
+ * Side effects:
+ * - No significant side effects beyond React state and rendering behavior.
+ * Role in app flow:
+ * - Implements reusable view logic consumed by route-level pages.
+ */
 import { Plus, Trash2 } from 'lucide-react';
 import styles from './vote.module.css';
 
 const MIN_OPTIONS = 2;
 const MAX_OPTIONS = 8;
 
+/**
+ * VoteOptionEditor module entry point.
+ */
 export default function VoteOptionEditor({ options, onChange }) {
   const updateOption = (id, text) => {
     onChange(options.map((option) => (option.id === id ? { ...option, text } : option)));
@@ -66,4 +82,6 @@ export default function VoteOptionEditor({ options, onChange }) {
     </div>
   );
 }
+
+
 

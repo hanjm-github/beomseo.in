@@ -1,4 +1,21 @@
-﻿import { useEffect, useState, useMemo } from 'react';
+﻿/**
+ * @file src/pages/NoticesPage/DetailView.jsx
+ * @description Implements route-level views and page orchestration logic.
+ * Responsibilities:
+ * - Coordinate route state, fetch lifecycles, and permission-driven page behavior.
+ * Key dependencies:
+ * - react
+ * - react-router-dom
+ * - lucide-react
+ * - ../../components/notices/notices.module.css
+ * Side effects:
+ * - Influences client-side routing and navigation state.
+ * - Interacts with browser runtime APIs.
+ * - Schedules deferred work using timer-based execution.
+ * Role in app flow:
+ * - Owns route-level user flows and composes feature components.
+ */
+import { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import {
   Pin,
@@ -21,6 +38,9 @@ import CommentsPanel from '../../components/notices/CommentsPanel';
 
 const VALID_CATEGORIES = ['school', 'council'];
 
+/**
+ * DetailView module entry point.
+ */
 export default function DetailView() {
   const { category = 'school', id } = useParams();
   const navigate = useNavigate();
@@ -243,3 +263,5 @@ export default function DetailView() {
     </div>
   );
 }
+
+

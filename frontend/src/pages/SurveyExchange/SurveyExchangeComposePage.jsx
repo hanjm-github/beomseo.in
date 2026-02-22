@@ -1,3 +1,18 @@
+﻿/**
+ * @file src/pages/SurveyExchange/SurveyExchangeComposePage.jsx
+ * @description Implements route-level views and page orchestration logic.
+ * Responsibilities:
+ * - Coordinate route state, fetch lifecycles, and permission-driven page behavior.
+ * Key dependencies:
+ * - react
+ * - react-router-dom
+ * - react-form-builder2
+ * - lucide-react
+ * Side effects:
+ * - Influences client-side routing and navigation state.
+ * Role in app flow:
+ * - Owns route-level user flows and composes feature components.
+ */
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ReactFormBuilder, ReactFormGenerator } from 'react-form-builder2';
@@ -9,6 +24,9 @@ import { useAuth } from '../../context/AuthContext';
 import styles from '../../components/survey/survey.module.css';
 import '../page-shell.css';
 
+/**
+ * SurveyExchangeComposePage module entry point.
+ */
 export default function SurveyExchangeComposePage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -170,3 +188,5 @@ export default function SurveyExchangeComposePage() {
     </div>
   );
 }
+
+

@@ -27,6 +27,7 @@ class ContactType(str, Enum):
 
 
 class SubjectChange(db.Model):
+    """Subject-change listing with approval and match-state workflow."""
     __tablename__ = 'subject_changes'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -55,6 +56,7 @@ class SubjectChange(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
     def to_dict(self, include_note=True):
+        """Serialize board item for detail/list responses."""
         return {
             'id': self.id,
             'grade': self.grade,
@@ -95,6 +97,7 @@ class SubjectChangeLike(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False, index=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
+    # Enforces one like per user per subject-change item.
     __table_args__ = (
         db.UniqueConstraint('subject_change_id', 'user_id', name='uq_subject_change_like'),
     )
@@ -114,6 +117,7 @@ class SubjectChangeComment(db.Model):
     user = db.relationship('User', backref=db.backref('subject_change_comments', lazy='dynamic'))
 
     def to_dict(self):
+        """Serialize subject-change comment payload."""
         return {
             'id': self.id,
             'postId': self.subject_change_id,

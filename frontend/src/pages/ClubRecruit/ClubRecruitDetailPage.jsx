@@ -1,4 +1,19 @@
-﻿import { useEffect, useState } from 'react';
+﻿/**
+ * @file src/pages/ClubRecruit/ClubRecruitDetailPage.jsx
+ * @description Implements route-level views and page orchestration logic.
+ * Responsibilities:
+ * - Coordinate route state, fetch lifecycles, and permission-driven page behavior.
+ * Key dependencies:
+ * - react
+ * - react-router-dom
+ * - ../../api/clubRecruit
+ * - ../../components/clubRecruit/RecruitCard
+ * Side effects:
+ * - No significant side effects beyond React state and rendering behavior.
+ * Role in app flow:
+ * - Owns route-level user flows and composes feature components.
+ */
+import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { clubRecruitApi } from '../../api/clubRecruit';
 import RecruitCard from '../../components/clubRecruit/RecruitCard';
@@ -8,6 +23,9 @@ import SafeHtml from '../../components/security/SafeHtml';
 import { useAuth } from '../../context/AuthContext';
 import '../page-shell.css';
 
+/**
+ * ClubRecruitDetailPage module entry point.
+ */
 export default function ClubRecruitDetailPage() {
   const { id } = useParams();
   const { user } = useAuth();
@@ -138,3 +156,5 @@ export default function ClubRecruitDetailPage() {
     </div>
   );
 }
+
+

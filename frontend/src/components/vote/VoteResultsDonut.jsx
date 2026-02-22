@@ -1,4 +1,17 @@
-﻿import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
+﻿/**
+ * @file src/components/vote/VoteResultsDonut.jsx
+ * @description Defines reusable UI components and feature-specific interaction blocks.
+ * Responsibilities:
+ * - Render composable UI pieces with clear prop-driven behavior and minimal coupling.
+ * Key dependencies:
+ * - recharts
+ * - ./vote.module.css
+ * Side effects:
+ * - No significant side effects beyond React state and rendering behavior.
+ * Role in app flow:
+ * - Implements reusable view logic consumed by route-level pages.
+ */
+import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 import styles from './vote.module.css';
 
 const COLORS = ['#2E7D5C', '#C2185B', '#246750', '#E91E8C', '#42A07A', '#8B2252', '#91C7AB', '#6B1A3C'];
@@ -8,6 +21,9 @@ const tooltipFormatter = (value, name, props) => {
   return [`${value}표 (${pct}%)`, name];
 };
 
+/**
+ * VoteResultsDonut module entry point.
+ */
 export default function VoteResultsDonut({ options = [], totalVotes = 0 }) {
   const safeData = options.map((option, index) => ({
     name: option.text,
@@ -71,5 +87,7 @@ export default function VoteResultsDonut({ options = [], totalVotes = 0 }) {
     </div>
   );
 }
+
+
 
 

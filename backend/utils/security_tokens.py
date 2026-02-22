@@ -12,6 +12,7 @@ from models import db, AuthToken, AuthTokenType, UserRole
 
 
 def _utc_from_unix(unix_ts):
+    """Convert UNIX timestamp claims to naive UTC datetimes for DB storage."""
     try:
         return datetime.fromtimestamp(int(unix_ts), tz=timezone.utc).replace(tzinfo=None)
     except Exception:
@@ -33,12 +34,19 @@ def _safe_client_ip():
 
 
 def _persist_token(raw_token: str, token_type: AuthTokenType, user_id: int, parent_jti: Optional[str] = None):
+    """
+    Persist token metadata from JWT payload.
+
+    Token rows provide server-side session state, enabling revocation and
+    rotation checks that are not possible with stateless JWT validation alone.
+    """
     payload = decode_token(raw_token)
     jti = payload.get('jti')
     exp = payload.get('exp')
     if not jti or not exp:
         raise ValueError('token payload missing jti/exp')
 
+    # Idempotency guard for retries during login/refresh flows.
     existing = AuthToken.query.filter_by(jti=jti).first()
     if existing:
         return existing
@@ -58,6 +66,7 @@ def _persist_token(raw_token: str, token_type: AuthTokenType, user_id: int, pare
 
 
 def _normalize_role_value(user_role):
+    """Normalize optional role values before embedding into JWT claims."""
     if isinstance(user_role, UserRole):
         return user_role.value
     if user_role in (None, ''):
@@ -75,11 +84,13 @@ def issue_token_pair(
     If rotate_from_refresh_jti is provided, revoke that refresh token.
     """
     role_value = _normalize_role_value(user_role)
+    # Embedding role keeps authorization checks cheap on most requests.
     claims = {'role': role_value} if role_value else None
 
     access_token = create_access_token(identity=str(user_id), additional_claims=claims)
     refresh_token = create_refresh_token(identity=str(user_id), additional_claims=claims)
 
+    # Persist refresh first so access token can point to refresh parent_jti.
     refresh_rec = _persist_token(
         refresh_token,
         AuthTokenType.REFRESH,
@@ -105,6 +116,7 @@ def issue_token_pair(
 
 
 def revoke_token_jti(jti: Optional[str], reason: str = 'revoked', replaced_by_jti: Optional[str] = None):
+    """Mark one token as revoked; no-op when token is unknown/already revoked."""
     if not jti:
         return False
 
@@ -128,6 +140,7 @@ def revoke_raw_refresh_token(raw_token: str, expected_user_id: int):
     except Exception:
         return False, 'invalid_token'
 
+    # Only refresh tokens are accepted for explicit logout revocation.
     if payload.get('type') != 'refresh':
         return False, 'invalid_token_type'
 

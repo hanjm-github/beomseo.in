@@ -1,9 +1,27 @@
+﻿/**
+ * @file src/components/lostfound/LostFoundCommentsPanel.jsx
+ * @description Defines reusable UI components and feature-specific interaction blocks.
+ * Responsibilities:
+ * - Render composable UI pieces with clear prop-driven behavior and minimal coupling.
+ * Key dependencies:
+ * - react
+ * - lucide-react
+ * - ../RoleName/RoleName
+ * - ../../api/lostFound
+ * Side effects:
+ * - Interacts with browser runtime APIs.
+ * Role in app flow:
+ * - Implements reusable view logic consumed by route-level pages.
+ */
 import { useCallback, useEffect, useState } from 'react';
 import { MessageSquare, Trash2, Loader2 } from 'lucide-react';
 import RoleName from '../RoleName/RoleName';
 import { lostFoundApi } from '../../api/lostFound';
 import styles from './lostfound.module.css';
 
+/**
+ * LostFoundCommentsPanel module entry point.
+ */
 export default function LostFoundCommentsPanel({ itemId, currentUser, isAuthenticated }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -128,3 +146,5 @@ export default function LostFoundCommentsPanel({ itemId, currentUser, isAuthenti
     </section>
   );
 }
+
+

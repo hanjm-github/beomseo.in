@@ -1,4 +1,21 @@
-﻿import { useEffect, useMemo, useReducer, useState } from 'react';
+﻿/**
+ * @file src/pages/NoticesPage/ComposeView.jsx
+ * @description Implements route-level views and page orchestration logic.
+ * Responsibilities:
+ * - Coordinate route state, fetch lifecycles, and permission-driven page behavior.
+ * Key dependencies:
+ * - react
+ * - react-router-dom
+ * - ../../components/notices/notices.module.css
+ * - ../../components/notices/Editor
+ * Side effects:
+ * - Reads or writes localStorage for persisted client state.
+ * - Influences client-side routing and navigation state.
+ * - Applies sanitization before rendering or using external URL/HTML values.
+ * Role in app flow:
+ * - Owns route-level user flows and composes feature components.
+ */
+import { useEffect, useMemo, useReducer, useState } from 'react';
 import { useNavigate, useParams, useLocation, Link } from 'react-router-dom';
 import styles from '../../components/notices/notices.module.css';
 import Editor from '../../components/notices/Editor';
@@ -46,6 +63,9 @@ function reducer(state, action) {
   }
 }
 
+/**
+ * ComposeView module entry point.
+ */
 export default function ComposeView({ mode = 'create' }) {
   const { category = 'school', id } = useParams();
   const navigate = useNavigate();
@@ -84,6 +104,8 @@ export default function ComposeView({ mode = 'create' }) {
       .get(id)
       .then((data) => {
         if (cancelled) return;
+        // Edit mode permission is revalidated against server-owned author data
+        // to prevent stale client role state from unlocking unauthorized edits.
         const isAdmin = user?.role === 'admin';
         const isCouncilAuthor =
           user?.role === 'student_council' &&
@@ -151,6 +173,7 @@ export default function ComposeView({ mode = 'create' }) {
   }, [draftKey]);
 
   useEffect(() => {
+    // Persist full draft state so route changes or refreshes do not destroy in-progress notice writing.
     const payload = { ...state, attachments: state.attachments };
     localStorage.setItem(draftKey, JSON.stringify(payload));
   }, [state, draftKey]);
@@ -194,6 +217,8 @@ export default function ComposeView({ mode = 'create' }) {
       body: sanitizedBody,
       category,
       tags: normalizedTags,
+      // Generate a deterministic fallback summary so list cards remain populated
+      // even when the backend does not return an explicit summary field.
       summary: state.summary || toPlainText(sanitizedBody).slice(0, 120),
     };
     try {
@@ -406,3 +431,5 @@ export default function ComposeView({ mode = 'create' }) {
     </div>
   );
 }
+
+

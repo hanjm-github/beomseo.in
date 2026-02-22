@@ -1,3 +1,18 @@
+﻿/**
+ * @file src/pages/Vote/VoteListView.jsx
+ * @description Implements route-level views and page orchestration logic.
+ * Responsibilities:
+ * - Coordinate route state, fetch lifecycles, and permission-driven page behavior.
+ * Key dependencies:
+ * - react
+ * - react-router-dom
+ * - lucide-react
+ * - ../../context/AuthContext
+ * Side effects:
+ * - Schedules deferred work using timer-based execution.
+ * Role in app flow:
+ * - Owns route-level user flows and composes feature components.
+ */
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Loader2, Plus, Vote as VoteIcon } from 'lucide-react';
@@ -15,6 +30,9 @@ const SORT_OPTIONS = [
   { value: 'deadline', label: '마감 임박순' },
 ];
 
+/**
+ * VoteListView module entry point.
+ */
 export default function VoteListView() {
   const { user } = useAuth();
   const [params, setParams] = useSearchParams();
@@ -207,3 +225,5 @@ export default function VoteListView() {
     </div>
   );
 }
+
+

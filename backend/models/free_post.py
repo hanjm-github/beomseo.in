@@ -103,6 +103,7 @@ class FreeComment(db.Model):
 
 
 class FreePost(db.Model):
+    """Free-board post with moderation, reactions, comments, and bookmarks."""
     __tablename__ = 'free_posts'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -158,6 +159,7 @@ class FreePost(db.Model):
 
     @staticmethod
     def summarize(body: str) -> str:
+        """Build plain-text summary from rich-text body for list cards."""
         if not body:
             return ''
         text = body.replace('<', ' <').split()
@@ -167,6 +169,7 @@ class FreePost(db.Model):
         return plain
 
     def to_dict(self, my_reaction=None, bookmarked=False):
+        """Detail serializer for free-board endpoints."""
         return {
             'id': self.id,
             'title': self.title,
@@ -197,6 +200,7 @@ class FreePost(db.Model):
         }
 
     def to_list_dict(self, my_reaction=None, bookmarked=False):
+        """Compact serializer used by free-board list APIs."""
         attachments_count = len(self.attachments) if self.attachments is not None else 0
         return {
             'id': self.id,
@@ -228,6 +232,7 @@ class FreePost(db.Model):
 
 
 def apply_free_filters(query, category=None, status=None, query_text=None, mine=None, bookmarked=None, user_id=None):
+    """Reusable filter helper for free-board query composition."""
     query = query.filter(FreePost.deleted_at.is_(None))
     if category in {FreeCategory.CHAT.value, FreeCategory.CHAT}:
         query = query.filter(FreePost.category == FreeCategory.CHAT)
@@ -258,6 +263,7 @@ def apply_free_filters(query, category=None, status=None, query_text=None, mine=
 
 
 def apply_free_sort(query, sort_key: str):
+    """Reusable sort helper for free-board listing order."""
     if sort_key == 'comments':
         return query.order_by(FreePost.comments_count.desc(), FreePost.created_at.desc())
     if sort_key == 'likes':

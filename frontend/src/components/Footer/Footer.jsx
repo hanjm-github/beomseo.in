@@ -1,8 +1,26 @@
+﻿/**
+ * @file src/components/Footer/Footer.jsx
+ * @description Defines reusable UI components and feature-specific interaction blocks.
+ * Responsibilities:
+ * - Render composable UI pieces with clear prop-driven behavior and minimal coupling.
+ * Key dependencies:
+ * - react-router-dom
+ * - lucide-react
+ * - ../../config/env
+ * - ./Footer.module.css
+ * Side effects:
+ * - No significant side effects beyond React state and rendering behavior.
+ * Role in app flow:
+ * - Implements reusable view logic consumed by route-level pages.
+ */
 import { Link } from 'react-router-dom';
 import { MapPin, User, ExternalLink } from 'lucide-react';
 import { APP_NAME } from '../../config/env';
 import styles from './Footer.module.css';
 
+/**
+ * Footer module entry point.
+ */
 export default function Footer() {
     const currentYear = new Date().getFullYear();
 
@@ -104,3 +122,5 @@ export default function Footer() {
         </footer>
     );
 }
+
+

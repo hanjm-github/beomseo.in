@@ -34,7 +34,12 @@ class User(db.Model):
         return f'<User {self.nickname}>'
     
     def to_dict(self):
-        """Convert user to dictionary for JSON response."""
+        """
+        Convert user to API-safe response shape.
+
+        Field names are intentionally stable because multiple board serializers
+        embed this payload contract.
+        """
         return {
             'id': self.id,
             'nickname': self.nickname,

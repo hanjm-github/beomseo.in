@@ -41,12 +41,14 @@ PETITION_CATEGORIES = (
 
 
 def parse_bool(val):
+    """Parse permissive boolean query values."""
     if val is None:
         return None
     return str(val).lower() in {'1', 'true', 'yes', 'on'}
 
 
 def optional_current_user_id():
+    """Return authenticated user id when JWT is present, otherwise None."""
     try:
         verify_jwt_in_request(optional=True)
         uid = get_jwt_identity()
@@ -63,6 +65,7 @@ def summarize(text: str, limit: int = 500):
 
 
 def validate_payload(data):
+    """Validate create/update payload and return normalized petition fields."""
     errors = []
     title = (data.get('title') or '').strip()
     summary = (data.get('summary') or '').strip()
@@ -89,6 +92,7 @@ def validate_payload(data):
 
 
 def base_query(include_deleted=False):
+    """Base petition query with optional soft-delete inclusion."""
     q = Petition.query
     if not include_deleted:
         q = q.filter(Petition.deleted_at.is_(None))
@@ -99,6 +103,12 @@ def base_query(include_deleted=False):
 @petitions_bp.route('', methods=['GET'])
 @cache_json_response('petitions')
 def list_petitions():
+    """
+    List petitions with role-aware visibility and derived-status filtering.
+
+    Admins can inspect moderation states; non-admins can only see approved
+    petitions plus their own pending/rejected items.
+    """
     view = request.args.get('view')
     status = request.args.get('status')
     approval = request.args.get('approval', 'all')
@@ -122,6 +132,7 @@ def list_petitions():
         selectinload(Petition.answer).joinedload(PetitionAnswer.responder),
     )
     if is_admin:
+        # Moderation view: admin can choose approval and workflow status filters.
         if approval == 'approved':
             q = q.filter(Petition.status == PetitionStatus.APPROVED)
         elif approval == 'unapproved':
@@ -135,6 +146,7 @@ def list_petitions():
             q = q.filter(Petition.status == PetitionStatus.REJECTED)
         # status == all for admin -> no filter
     else:
+        # Public view: approved petitions are visible, own drafts remain visible.
         if current_user_id:
             q = q.filter(
                 or_(
@@ -152,6 +164,7 @@ def list_petitions():
         pattern = f"%{query_text}%"
         q = q.filter(or_(Petition.title.ilike(pattern), Petition.summary.ilike(pattern), Petition.body.ilike(pattern)))
 
+    # Derived state is computed from answer existence + threshold progress.
     if status_derived == 'answered':
         q = q.join(PetitionAnswer, PetitionAnswer.petition_id == Petition.id)
     elif status_derived == 'waiting-answer':
@@ -201,6 +214,7 @@ def list_petitions():
 @petitions_bp.route('', methods=['POST'])
 @jwt_required()
 def create_petition():
+    """Create a new petition in pending moderation state."""
     data = request.get_json() or {}
     errors, payload = validate_payload(data)
     if errors:
@@ -233,6 +247,7 @@ def create_petition():
 
 
 def fetch_petition_or_404(petition_id):
+    """Fetch one non-deleted petition with related author/answer metadata."""
     petition = base_query().options(
         joinedload(Petition.author),
         joinedload(Petition.approved_by),
@@ -242,6 +257,7 @@ def fetch_petition_or_404(petition_id):
 
 
 def can_edit(petition: Petition, user: User):
+    """Author can edit pending/rejected items; admin can edit everything."""
     if not user:
         return False
     if user.role == UserRole.ADMIN:
@@ -254,6 +270,7 @@ def can_edit(petition: Petition, user: User):
 @petitions_bp.route('/<int:petition_id>', methods=['GET'])
 @cache_json_response('petitions')
 def get_petition(petition_id):
+    """Return petition detail with access checks for unapproved content."""
     petition = fetch_petition_or_404(petition_id)
     if not petition:
         return jsonify({'error': '청원을 찾을 수 없습니다.'}), 404
@@ -282,6 +299,7 @@ def get_petition(petition_id):
 @petitions_bp.route('/<int:petition_id>', methods=['PUT'])
 @jwt_required()
 def update_petition(petition_id):
+    """Update petition content when caller satisfies edit policy."""
     petition = fetch_petition_or_404(petition_id)
     if not petition:
         return jsonify({'error': '청원을 찾을 수 없습니다.'}), 404
@@ -315,6 +333,7 @@ def update_petition(petition_id):
 @jwt_required()
 @require_role(UserRole.ADMIN)
 def delete_petition(petition_id):
+    """Soft-delete petition (admin only)."""
     petition = fetch_petition_or_404(petition_id)
     if not petition:
         return jsonify({'error': '청원을 찾을 수 없습니다.'}), 404
@@ -334,6 +353,7 @@ def delete_petition(petition_id):
 @jwt_required()
 @require_role(UserRole.ADMIN)
 def approve_petition(petition_id):
+    """Approve petition and record approver metadata."""
     petition = fetch_petition_or_404(petition_id)
     if not petition:
         return jsonify({'error': '청원을 찾을 수 없습니다.'}), 404
@@ -354,6 +374,7 @@ def approve_petition(petition_id):
 @jwt_required()
 @require_role(UserRole.ADMIN)
 def reject_petition(petition_id):
+    """Reject petition and clear previous approval metadata."""
     petition = fetch_petition_or_404(petition_id)
     if not petition:
         return jsonify({'error': '청원을 찾을 수 없습니다.'}), 404
@@ -373,6 +394,7 @@ def reject_petition(petition_id):
 @petitions_bp.route('/<int:petition_id>/vote', methods=['POST'])
 @jwt_required()
 def vote_petition(petition_id):
+    """Toggle/submit support vote and update denormalized vote counter."""
     petition = fetch_petition_or_404(petition_id)
     if not petition:
         return jsonify({'error': '청원을 찾을 수 없습니다.'}), 404
@@ -414,6 +436,7 @@ def vote_petition(petition_id):
 @jwt_required()
 @require_role(UserRole.ADMIN, UserRole.STUDENT_COUNCIL)
 def answer_petition(petition_id):
+    """Create or update official answer (admin/student council)."""
     petition = fetch_petition_or_404(petition_id)
     if not petition:
         return jsonify({'error': '청원을 찾을 수 없습니다.'}), 404
@@ -425,6 +448,7 @@ def answer_petition(petition_id):
 
     user = get_current_user()
     try:
+        # Idempotent behavior: overwrite existing answer instead of duplicating.
         if petition.answer:
             petition.answer.content = content
             petition.answer.role = user.role.value

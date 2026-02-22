@@ -1,3 +1,17 @@
+﻿/**
+ * @file src/components/gomsolmarket/GomsolMarketFilterBar.jsx
+ * @description Defines reusable UI components and feature-specific interaction blocks.
+ * Responsibilities:
+ * - Render composable UI pieces with clear prop-driven behavior and minimal coupling.
+ * Key dependencies:
+ * - lucide-react
+ * - ../../api/gomsolMarket
+ * - ./gomsolmarket.module.css
+ * Side effects:
+ * - No significant side effects beyond React state and rendering behavior.
+ * Role in app flow:
+ * - Implements reusable view logic consumed by route-level pages.
+ */
 import { RotateCcw, Search } from 'lucide-react';
 import { gomsolMarketApi } from '../../api/gomsolMarket';
 import styles from './gomsolmarket.module.css';
@@ -8,6 +22,9 @@ const SORT_OPTIONS = [
   { key: 'price-desc', label: '가격 높은순' },
 ];
 
+/**
+ * GomsolMarketFilterBar module entry point.
+ */
 export default function GomsolMarketFilterBar({
   status,
   category,
@@ -132,3 +149,5 @@ export default function GomsolMarketFilterBar({
     </section>
   );
 }
+
+

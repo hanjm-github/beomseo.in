@@ -1,6 +1,9 @@
 """
-Flask application configuration.
-Loads environment variables and provides config class for Flask.
+Centralized Flask configuration.
+
+This module is intentionally declarative: every environment-facing runtime
+policy (security, upload constraints, caching, and board defaults) lives here
+ so behavior can be audited without scanning route code.
 """
 import os
 from datetime import timedelta
@@ -51,7 +54,11 @@ def _parse_int(value, default=0):
 
 
 class Config:
-    """Flask configuration class."""
+    """
+    Base configuration shared by all environments.
+
+    Production overrides should only tighten constraints, never relax them.
+    """
 
     ENV_NAME = os.getenv('FLASK_ENV', 'development')
 
@@ -69,6 +76,7 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # JWT Settings
+    # Secret quality is enforced again during app bootstrap (fail-fast).
     JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', '')
     JWT_MIN_SECRET_LENGTH = _parse_int(os.getenv('JWT_MIN_SECRET_LENGTH', 32), 32)
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=30)
@@ -83,6 +91,7 @@ class Config:
     CORS_ORIGINS = _parse_origins(CORS_ORIGINS_RAW)
 
     # Cache / Redis
+    # Redis is optional at runtime; cache helpers degrade to NullCache.
     CACHE_ENABLED = _parse_bool(os.getenv('CACHE_ENABLED', 'true'), default=True)
     REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
     CACHE_DEFAULT_TIMEOUT = _parse_int(os.getenv('CACHE_DEFAULT_TIMEOUT', 60), 60)
@@ -92,6 +101,7 @@ class Config:
     CACHE_SOCKET_TIMEOUT = _parse_int(os.getenv('CACHE_SOCKET_TIMEOUT', 1), 1)
 
     # Rate limiting
+    # Route-level overrides (login/register/refresh) are applied in blueprints.
     RATELIMIT_STORAGE_URI = os.getenv('RATELIMIT_STORAGE_URI', REDIS_URL if REDIS_URL else 'memory://')
     RATELIMIT_DEFAULT = os.getenv('RATELIMIT_DEFAULT', '300 per hour')
     RATELIMIT_WRITE_LIMIT = os.getenv('RATELIMIT_WRITE_LIMIT', '120 per minute')
@@ -107,6 +117,7 @@ class Config:
     NICKNAME_BANNED_WORDS = _parse_nickname_banned_words(NICKNAME_BANNED_WORDS_RAW)
     
     # Uploads
+    # Scope directories and URL prefixes must stay aligned for safe URL checks.
     UPLOAD_ROOT = os.getenv('UPLOAD_ROOT', str(BACKEND_DIR / 'uploads'))
     UPLOAD_DIR = UPLOAD_ROOT  # Backward-compatible alias
     UPLOAD_SCOPE_DIRS = {
@@ -123,7 +134,7 @@ class Config:
         'lost_found': '/api/community/lost-found/uploads',
         'gomsol_market': '/api/community/gomsol-market/uploads',
     }
-    MAX_ATTACH_SIZE = int(os.getenv('MAX_ATTACH_SIZE', 10 * 1024 * 1024))  # 10MB
+    MAX_ATTACH_SIZE = int(os.getenv('MAX_ATTACH_SIZE', 10 * 1024 * 1024))  # 10MB per file
     MAX_ATTACH_COUNT = int(os.getenv('MAX_ATTACH_COUNT', 5))
     MAX_CONTENT_LENGTH = int(os.getenv('MAX_CONTENT_LENGTH', 12 * 1024 * 1024))
     UPLOAD_ALLOWED_MIME_TYPES = set(
@@ -179,6 +190,7 @@ class Config:
 class DevelopmentConfig(Config):
     """Development configuration."""
     DEBUG = True
+    # Development fallback only; production must provide an explicit secret.
     JWT_SECRET_KEY = Config.JWT_SECRET_KEY or 'dev-local-only-change-me-please-123'
 
 

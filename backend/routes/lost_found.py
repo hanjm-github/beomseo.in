@@ -36,6 +36,7 @@ lost_found_bp = Blueprint('lost_found', __name__, url_prefix='/api/community/los
 
 
 def optional_current_user():
+    """Return authenticated user when token exists; otherwise None."""
     try:
         verify_jwt_in_request(optional=True)
         user_id = get_jwt_identity()
@@ -45,6 +46,7 @@ def optional_current_user():
 
 
 def parse_iso_datetime(value):
+    """Parse ISO datetime and normalize timezone-aware values to UTC-naive."""
     if value in (None, ''):
         return None
 
@@ -66,6 +68,7 @@ def parse_iso_datetime(value):
 
 
 def fetch_post_or_404(post_id):
+    """Fetch non-deleted lost-found post with author/images eager-loaded."""
     return LostFoundPost.query.options(
         joinedload(LostFoundPost.author),
         selectinload(LostFoundPost.images),
@@ -76,6 +79,11 @@ def fetch_post_or_404(post_id):
 
 
 def validate_create_payload(data):
+    """
+    Validate lost-found payload including image ownership checks.
+
+    Uploaded image URLs must belong to the lost_found scope and exist on disk.
+    """
     errors = []
     max_attach_count = int(current_app.config.get('MAX_ATTACH_COUNT', 5))
     max_attach_size = int(current_app.config.get('MAX_ATTACH_SIZE', 10 * 1024 * 1024))
@@ -168,6 +176,7 @@ def validate_create_payload(data):
 @lost_found_bp.route('/', methods=['GET'])
 @cache_json_response('lost_found')
 def list_posts():
+    """List lost-found posts with filter/sort/pagination controls."""
     # Optional auth read is kept for parity with other boards.
     optional_current_user()
 
@@ -219,6 +228,7 @@ def list_posts():
 
 @lost_found_bp.route('/<int:post_id>', methods=['GET'])
 def get_post(post_id):
+    """Return post detail and best-effort increment view count."""
     post = fetch_post_or_404(post_id)
     if not post:
         return jsonify({'error': '게시글을 찾을 수 없습니다.'}), 404
@@ -237,6 +247,7 @@ def get_post(post_id):
 @jwt_required()
 @require_role(UserRole.ADMIN, UserRole.STUDENT_COUNCIL)
 def create_post():
+    """Create lost-found post (admin/student-council only)."""
     data = request.get_json() or {}
     errors, payload = validate_create_payload(data)
     if errors:
@@ -284,6 +295,7 @@ def create_post():
 @jwt_required()
 @require_role(UserRole.ADMIN, UserRole.STUDENT_COUNCIL)
 def update_status(post_id):
+    """Update lost-found status (`searching`/`found`)."""
     post = fetch_post_or_404(post_id)
     if not post:
         return jsonify({'error': '게시글을 찾을 수 없습니다.'}), 404
@@ -309,6 +321,7 @@ def update_status(post_id):
 @jwt_required()
 @require_role(UserRole.ADMIN, UserRole.STUDENT_COUNCIL)
 def upload_image():
+    """Validate and store image used by lost-found posts."""
     if 'file' not in request.files:
         return jsonify({'error': 'file 필드가 필요합니다.'}), 400
 
@@ -332,6 +345,7 @@ def upload_image():
 
 @lost_found_bp.route('/uploads/<path:filename>', methods=['GET'], strict_slashes=False)
 def serve_upload(filename):
+    """Serve image with fallback access for unsaved temporary uploads."""
     upload_dir = resolve_scope_upload_dir(current_app.config, 'lost_found')
     ensure_dir(upload_dir)
     file_path = Path(upload_dir) / filename
@@ -356,6 +370,7 @@ def serve_upload(filename):
 @lost_found_bp.route('/<int:post_id>/comments', methods=['GET'])
 @cache_json_response('lost_found')
 def list_comments(post_id):
+    """List comments for one lost-found post."""
     post = fetch_post_or_404(post_id)
     if not post:
         return jsonify({'error': '게시글을 찾을 수 없습니다.'}), 404
@@ -387,6 +402,7 @@ def list_comments(post_id):
 @lost_found_bp.route('/<int:post_id>/comments', methods=['POST'])
 @jwt_required()
 def create_comment(post_id):
+    """Create comment and increment denormalized comments counter."""
     post = fetch_post_or_404(post_id)
     if not post:
         return jsonify({'error': '게시글을 찾을 수 없습니다.'}), 404
@@ -421,6 +437,7 @@ def create_comment(post_id):
 @jwt_required()
 @require_role(UserRole.ADMIN)
 def delete_comment(post_id, comment_id):
+    """Soft-delete comment (admin only) and decrement comments count."""
     post = fetch_post_or_404(post_id)
     if not post:
         return jsonify({'error': '게시글을 찾을 수 없습니다.'}), 404

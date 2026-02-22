@@ -1,6 +1,22 @@
+﻿/**
+ * @file src/components/notices/NoticeToolbar.jsx
+ * @description Defines reusable UI components and feature-specific interaction blocks.
+ * Responsibilities:
+ * - Render composable UI pieces with clear prop-driven behavior and minimal coupling.
+ * Key dependencies:
+ * - lucide-react
+ * - ./notices.module.css
+ * Side effects:
+ * - No significant side effects beyond React state and rendering behavior.
+ * Role in app flow:
+ * - Implements reusable view logic consumed by route-level pages.
+ */
 import { Search, ListFilter, Pin, AlertTriangle, GraduationCap } from 'lucide-react';
 import styles from './notices.module.css';
 
+/**
+ * NoticeToolbar module entry point.
+ */
 export default function NoticeToolbar({
   search,
   onSearchChange,
@@ -63,3 +79,5 @@ export default function NoticeToolbar({
     </div>
   );
 }
+
+

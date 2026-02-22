@@ -42,12 +42,14 @@ free_bp = Blueprint('free', __name__, url_prefix='/api/community/free')
 
 
 def parse_bool(val):
+    """Parse permissive boolean query values."""
     if val is None:
         return None
     return str(val).lower() in {'1', 'true', 'yes', 'on'}
 
 
 def optional_current_user_id():
+    """Return authenticated user id when token exists; else None."""
     try:
         verify_jwt_in_request(optional=True)
         uid = get_jwt_identity()
@@ -57,6 +59,7 @@ def optional_current_user_id():
 
 
 def validate_payload(data, is_update=False):
+    """Validate free-board payload including attachment metadata."""
     errors = []
     title = (data.get('title') or '').strip()
     body = (data.get('body') or '').strip()
@@ -112,10 +115,12 @@ def validate_payload(data, is_update=False):
 
 
 def is_admin(user: User):
+    """Role helper for moderation/visibility checks."""
     return user and user.role == UserRole.ADMIN
 
 
 def can_edit(post: FreePost, user: User):
+    """Author can edit own non-deleted post; admin can edit any post."""
     if is_admin(user):
         return True
     return user and post.author_id == user.id and not post.deleted_at
@@ -125,6 +130,11 @@ def can_edit(post: FreePost, user: User):
 @free_bp.route('', methods=['GET'])
 @cache_json_response('free')
 def list_posts():
+    """
+    List free-board posts with role-aware visibility.
+
+    Non-admin users can view approved posts plus their own pending posts.
+    """
     category = request.args.get('category')
     query_text = request.args.get('query')
     sort = request.args.get('sort', 'recent')
@@ -184,6 +194,7 @@ def list_posts():
 
 
 def apply_filters(query, category, status, query_text, mine, bookmarked, user_id, user=None):
+    """Apply list filters and role-based visibility constraints."""
     query = query.filter(FreePost.deleted_at.is_(None))
     if category in {FreeCategory.CHAT.value, FreeCategory.CHAT}:
         query = query.filter(FreePost.category == FreeCategory.CHAT)
@@ -220,6 +231,7 @@ def apply_filters(query, category, status, query_text, mine, bookmarked, user_id
 
 
 def apply_sort(query, sort):
+    """Apply supported sort mode for list endpoints."""
     if sort == 'comments':
         return query.order_by(FreePost.comments_count.desc(), FreePost.created_at.desc())
     if sort == 'likes':
@@ -231,6 +243,7 @@ def apply_sort(query, sort):
 @free_bp.route('', methods=['POST'])
 @jwt_required()
 def create_post():
+    """Create post in pending moderation state."""
     data = request.get_json() or {}
     errors, payload = validate_payload(data)
     if errors:
@@ -273,6 +286,7 @@ def create_post():
 
 
 def fetch_post_or_404(post_id):
+    """Fetch non-deleted post with eager-loaded relations."""
     post = FreePost.query.options(
         joinedload(FreePost.author),
         joinedload(FreePost.approved_by),
@@ -286,6 +300,7 @@ def fetch_post_or_404(post_id):
 @free_bp.route('/<int:post_id>', methods=['PUT'])
 @jwt_required()
 def update_post(post_id):
+    """Update post content and attachment set when caller can edit."""
     post = fetch_post_or_404(post_id)
     if not post:
         return jsonify({'error': '게시글을 찾을 수 없습니다.'}), 404
@@ -329,6 +344,7 @@ def update_post(post_id):
 @free_bp.route('/<int:post_id>', methods=['DELETE'])
 @jwt_required()
 def delete_post(post_id):
+    """Soft-delete post (admin only)."""
     post = fetch_post_or_404(post_id)
     if not post:
         return jsonify({'error': '게시글을 찾을 수 없습니다.'}), 404
@@ -350,6 +366,7 @@ def delete_post(post_id):
 
 @free_bp.route('/<int:post_id>', methods=['GET'])
 def get_post(post_id):
+    """Return one post with visibility checks for pending content."""
     post = fetch_post_or_404(post_id)
     if not post:
         return jsonify({'error': '게시글을 찾을 수 없습니다.'}), 404
@@ -380,6 +397,7 @@ def get_post(post_id):
 @jwt_required()
 @require_role(UserRole.ADMIN)
 def approve_post(post_id):
+    """Approve pending post and persist moderation metadata."""
     post = fetch_post_or_404(post_id)
     if not post:
         return jsonify({'error': '게시글을 찾을 수 없습니다.'}), 404
@@ -400,6 +418,7 @@ def approve_post(post_id):
 @jwt_required()
 @require_role(UserRole.ADMIN)
 def unapprove_post(post_id):
+    """Move post back to pending state."""
     post = fetch_post_or_404(post_id)
     if not post:
         return jsonify({'error': '게시글을 찾을 수 없습니다.'}), 404
@@ -419,6 +438,7 @@ def unapprove_post(post_id):
 @free_bp.route('/<int:post_id>/reactions', methods=['POST'])
 @jwt_required()
 def react_post(post_id):
+    """Toggle or switch post reaction while preserving counters."""
     post = fetch_post_or_404(post_id)
     if not post:
         return jsonify({'error': '게시글을 찾을 수 없습니다.'}), 404
@@ -476,6 +496,7 @@ def react_post(post_id):
 @free_bp.route('/<int:post_id>/bookmark', methods=['POST'])
 @jwt_required()
 def toggle_bookmark(post_id):
+    """Toggle bookmark membership and denormalized bookmark counter."""
     post = fetch_post_or_404(post_id)
     if not post:
         return jsonify({'error': '게시글을 찾을 수 없습니다.'}), 404
@@ -513,6 +534,7 @@ def toggle_bookmark(post_id):
 @free_bp.route('/<int:post_id>/comments', methods=['GET'])
 @cache_json_response('free')
 def list_comments(post_id):
+    """List comments with deterministic order and pagination."""
     post = fetch_post_or_404(post_id)
     if not post:
         return jsonify({'error': '게시글을 찾을 수 없습니다.'}), 404
@@ -542,6 +564,7 @@ def list_comments(post_id):
 @free_bp.route('/<int:post_id>/comments', methods=['POST'])
 @jwt_required()
 def create_comment(post_id):
+    """Create comment and increment post comments_count."""
     post = fetch_post_or_404(post_id)
     if not post:
         return jsonify({'error': '게시글을 찾을 수 없습니다.'}), 404
@@ -573,6 +596,7 @@ def create_comment(post_id):
 @jwt_required()
 @require_role(UserRole.ADMIN)
 def delete_comment(post_id, comment_id):
+    """Soft-delete comment and decrement post comments_count."""
     comment = FreeComment.query.filter_by(id=comment_id, post_id=post_id).first()
     if not comment or comment.deleted_at:
         return jsonify({'error': '댓글을 찾을 수 없습니다.'}), 404
@@ -598,6 +622,7 @@ def delete_comment(post_id, comment_id):
 @free_bp.route('/uploads/', methods=['POST'])
 @jwt_required()
 def upload_file():
+    """Validate and store upload for free-board attachments."""
     if 'file' not in request.files:
         return jsonify({'error': 'file 필드가 필요합니다.'}), 400
     file = request.files['file']
@@ -620,6 +645,7 @@ def upload_file():
 
 @free_bp.route('/uploads/<path:filename>', methods=['GET'], strict_slashes=False)
 def serve_upload(filename):
+    """Serve upload with post-level visibility and temporary-file fallback."""
     upload_dir = resolve_scope_upload_dir(current_app.config, 'free')
     ensure_dir(upload_dir)
     file_path = Path(upload_dir) / filename

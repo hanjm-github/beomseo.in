@@ -1,4 +1,19 @@
-﻿import { Link } from "react-router-dom";
+﻿/**
+ * @file src/components/subjects/SubjectCard.jsx
+ * @description Defines reusable UI components and feature-specific interaction blocks.
+ * Responsibilities:
+ * - Render composable UI pieces with clear prop-driven behavior and minimal coupling.
+ * Key dependencies:
+ * - react-router-dom
+ * - lucide-react
+ * - ../../security/urlPolicy
+ * - ../RoleName/RoleName
+ * Side effects:
+ * - Applies sanitization before rendering or using external URL/HTML values.
+ * Role in app flow:
+ * - Implements reusable view logic consumed by route-level pages.
+ */
+import { Link } from "react-router-dom";
 import { MessageCircle, ExternalLink } from "lucide-react";
 import { toSafeExternalHref } from "../../security/urlPolicy";
 import RoleName from "../RoleName/RoleName";
@@ -19,6 +34,9 @@ function formatDate(value) {
   }
 }
 
+/**
+ * SubjectCard module entry point.
+ */
 export default function SubjectCard({
   item,
   basePath = "/community/subjects",
@@ -113,3 +131,4 @@ export default function SubjectCard({
     </Link>
   );
 }
+

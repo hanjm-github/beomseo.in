@@ -1,4 +1,20 @@
-﻿import { useEffect, useMemo, useState } from 'react';
+﻿/**
+ * @file src/pages/SurveyExchange/SurveyExchangeListView.jsx
+ * @description Implements route-level views and page orchestration logic.
+ * Responsibilities:
+ * - Coordinate route state, fetch lifecycles, and permission-driven page behavior.
+ * Key dependencies:
+ * - react
+ * - react-router-dom
+ * - lucide-react
+ * - ../../components/survey/SurveyCard
+ * Side effects:
+ * - Influences client-side routing and navigation state.
+ * - Schedules deferred work using timer-based execution.
+ * Role in app flow:
+ * - Owns route-level user flows and composes feature components.
+ */
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Filter, Loader2, Plus, Sparkles } from 'lucide-react';
 import SurveyCard from '../../components/survey/SurveyCard';
@@ -16,6 +32,9 @@ const SORT_OPTIONS = [
 
 const PAGE_SIZE = 12;
 
+/**
+ * SurveyExchangeListView module entry point.
+ */
 export default function SurveyExchangeListView() {
   const [params, setParams] = useSearchParams();
   const navigate = useNavigate();
@@ -247,3 +266,5 @@ export default function SurveyExchangeListView() {
     </div>
   );
 }
+
+

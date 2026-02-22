@@ -1,3 +1,18 @@
+﻿/**
+ * @file src/components/petition/PetitionCard.jsx
+ * @description Defines reusable UI components and feature-specific interaction blocks.
+ * Responsibilities:
+ * - Render composable UI pieces with clear prop-driven behavior and minimal coupling.
+ * Key dependencies:
+ * - react-router-dom
+ * - lucide-react
+ * - ../RoleName/RoleName
+ * - ./petition.module.css
+ * Side effects:
+ * - No significant side effects beyond React state and rendering behavior.
+ * Role in app flow:
+ * - Implements reusable view logic consumed by route-level pages.
+ */
 import { Link } from 'react-router-dom';
 import { Bookmark, Clock3, Sparkles, ThumbsUp, BookOpen, CheckCheck } from 'lucide-react';
 import RoleName from '../RoleName/RoleName';
@@ -35,6 +50,9 @@ const formatDate = (iso) => {
   }
 };
 
+/**
+ * PetitionCard module entry point.
+ */
 export default function PetitionCard({
   item,
   basePath = '/community/petition',
@@ -134,3 +152,5 @@ export default function PetitionCard({
     </Link>
   );
 }
+
+

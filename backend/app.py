@@ -1,5 +1,9 @@
 """
-Flask application factory for beomseo.in school website backend.
+Flask application factory for the backend API.
+
+This module wires cross-cutting concerns (security, caching, rate limiting,
+JWT, and CORS) before blueprint registration so all endpoints share the same
+runtime guarantees.
 """
 import os
 from flask import Flask, jsonify, request
@@ -38,6 +42,12 @@ INSECURE_JWT_SECRETS = {
 
 
 def validate_security_config(app):
+    """
+    Validate security-critical settings before the app starts serving traffic.
+
+    The goal is fail-fast startup in misconfigured environments (especially
+    production) instead of silently running with weak defaults.
+    """
     errors = []
     env_name = str(app.config.get('ENV_NAME', 'development')).lower()
     secret = app.config.get('JWT_SECRET_KEY') or ''
@@ -59,13 +69,19 @@ def validate_security_config(app):
 
 
 def create_app(config_name=None):
-    """Create and configure Flask application."""
+    """
+    Create and configure the Flask application instance.
+
+    Initialization order matters: config -> security validation -> extensions
+    -> global handlers -> blueprints.
+    """
     if config_name is None:
         config_name = os.getenv('FLASK_ENV', 'development')
 
     app = Flask(__name__)
     app.config.from_object(config.get(config_name, config['default']))
     app.config['ENV_NAME'] = config_name
+    # Reject insecure runtime configuration before extensions are initialized.
     validate_security_config(app)
 
     # Initialize extensions
@@ -116,20 +132,24 @@ def create_app(config_name=None):
 
     @jwt.token_in_blocklist_loader
     def token_in_blocklist(jwt_header, jwt_payload):
+        # DB token state is authoritative for logout/revocation/rotation.
         return is_token_blocked(jwt_payload)
 
     @app.errorhandler(RateLimitExceeded)
     def handle_rate_limit(error):
+        # Return a consistent JSON payload for all limiter violations.
         retry_after = getattr(error, 'retry_after', None)
         return build_rate_limit_response(retry_after=retry_after)
 
     @app.after_request
     def set_security_headers(response):
+        # Baseline browser hardening headers for every API response.
         response.headers.setdefault('X-Content-Type-Options', 'nosniff')
         response.headers.setdefault('X-Frame-Options', 'DENY')
         response.headers.setdefault('Referrer-Policy', 'strict-origin-when-cross-origin')
         response.headers.setdefault('Permissions-Policy', 'geolocation=(), microphone=(), camera=()')
         if app.config.get('ENV_NAME') == 'production' and request.is_secure:
+            # HSTS is only enabled over HTTPS to avoid local/dev surprises.
             response.headers.setdefault('Strict-Transport-Security', 'max-age=31536000; includeSubDomains')
         return response
 
@@ -145,6 +165,7 @@ def create_app(config_name=None):
     from routes.lost_found import lost_found_bp
     from routes.gomsol_market import gomsol_market_bp
 
+    # Apply shared write throttling before blueprint registration.
     write_limit = app.config.get('RATELIMIT_WRITE_LIMIT', '120 per minute')
     apply_blueprint_write_limit(notices_bp, write_limit)
     apply_blueprint_write_limit(free_bp, write_limit)
@@ -172,7 +193,8 @@ def create_app(config_name=None):
     def health():
         return jsonify({'status': 'healthy', 'message': '범서고등학교 API 서버'}), 200
 
-    # Create database tables
+    # Create tables for environments without migration tooling.
+    # (Production deployments should prefer explicit migration flows.)
     with app.app_context():
         db.create_all()
 

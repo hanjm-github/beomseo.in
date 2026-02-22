@@ -1,8 +1,24 @@
+﻿/**
+ * @file src/pages/GalleryPage.jsx
+ * @description Implements route-level views and page orchestration logic.
+ * Responsibilities:
+ * - Coordinate route state, fetch lifecycles, and permission-driven page behavior.
+ * Key dependencies:
+ * - lucide-react
+ * - ./page-shell.css
+ * Side effects:
+ * - No significant side effects beyond React state and rendering behavior.
+ * Role in app flow:
+ * - Owns route-level user flows and composes feature components.
+ */
 import { Hammer } from 'lucide-react';
 import './page-shell.css';
 
 const pendingFeatures = ['공모전 갤러리', '행사 사진', '보호 뷰(민감 사진 흐림 처리)'];
 
+/**
+ * GalleryPage module entry point.
+ */
 export default function GalleryPage() {
   return (
     <div className="page-shell">
@@ -33,3 +49,5 @@ export default function GalleryPage() {
     </div>
   );
 }
+
+

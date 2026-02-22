@@ -80,6 +80,11 @@ def init_cache(app):
 
 
 def _auth_fingerprint() -> str:
+    """
+    Build a stable privacy-preserving auth discriminator for cache keys.
+
+    We hash Authorization instead of storing raw header values in Redis keys.
+    """
     auth = (request.headers.get('Authorization') or '').strip()
     if not auth:
         return 'anon'
@@ -87,6 +92,7 @@ def _auth_fingerprint() -> str:
 
 
 def _normalized_query() -> str:
+    """Normalize query parameters so equivalent requests share one cache key."""
     pairs = []
     for key in sorted(request.args.keys()):
         values = request.args.getlist(key)
@@ -96,12 +102,14 @@ def _normalized_query() -> str:
 
 
 def _cache_key(namespace: str) -> str:
+    # Include path/query/auth fingerprint to avoid cross-user data leakage.
     base = f"resp|{namespace}|{request.method}|{request.path}|{_normalized_query()}|{_auth_fingerprint()}"
     digest = hashlib.sha256(base.encode('utf-8')).hexdigest()
     return f"resp:{namespace}:{digest}"
 
 
 def _namespace_index_key(namespace: str) -> str:
+    """Namespace index stores concrete response keys for efficient invalidation."""
     return f"nsidx:{namespace}"
 
 
@@ -129,6 +137,7 @@ def _is_cacheable_json_response(response) -> bool:
 
 
 def _serialize_response(response):
+    """Serialize response essentials only (status/mimetype/body)."""
     try:
         payload = {
             'status': response.status_code,
@@ -141,6 +150,7 @@ def _serialize_response(response):
 
 
 def _deserialize_response(raw_payload):
+    """Rebuild a Flask response object from serialized cache payload."""
     try:
         if isinstance(raw_payload, bytes):
             raw_payload = raw_payload.decode('utf-8')
@@ -169,6 +179,7 @@ def cache_json_response(namespace: str, ttl: int | None = None):
             debug_headers = bool(current_app.config.get('CACHE_DEBUG_HEADERS', False))
             runtime_mode = current_app.config.get('CACHE_RUNTIME_MODE', 'disabled')
 
+            # Cache is intentionally read-only for idempotent GET traffic.
             if request.method != 'GET' or runtime_mode != 'redis':
                 response = make_response(view_func(*args, **kwargs))
                 if debug_headers and request.method == 'GET':

@@ -42,6 +42,7 @@ def ensure_dir(path: str):
 
 
 def _require_scope(config: dict, scope: str) -> str:
+    """Resolve logical upload scope and fail explicitly for unknown scopes."""
     scope_dirs = config.get('UPLOAD_SCOPE_DIRS') or {}
     scope_dir = scope_dirs.get(scope)
     if not scope_dir:
@@ -50,6 +51,7 @@ def _require_scope(config: dict, scope: str) -> str:
 
 
 def resolve_scope_upload_dir(config: dict, scope: str) -> str:
+    """Resolve absolute upload directory for a configured scope."""
     upload_root = config.get('UPLOAD_ROOT') or config.get('UPLOAD_DIR') or './uploads'
     scope_dir = _require_scope(config, scope)
 
@@ -63,6 +65,7 @@ def resolve_scope_upload_dir(config: dict, scope: str) -> str:
 
 
 def build_upload_url(config: dict, scope: str, filename: str) -> str:
+    """Build canonical API URL for a stored upload file."""
     route_prefixes = config.get('UPLOAD_ROUTE_PREFIXES') or {}
     prefix = route_prefixes.get(scope)
     if not prefix:
@@ -82,6 +85,11 @@ def _normalize_upload_candidate_path(path_value: str) -> str:
 
 
 def extract_upload_filename_for_scope(config: dict, scope: str, url_value):
+    """
+    Extract a safe filename from an upload URL.
+
+    This guards against path traversal by rejecting nested path segments.
+    """
     if not isinstance(url_value, str):
         return None
 
@@ -112,6 +120,7 @@ def extract_upload_filename_for_scope(config: dict, scope: str, url_value):
 
 
 def normalize_upload_url_for_scope(config: dict, scope: str, url_value):
+    """Canonicalize arbitrary client-provided upload URL into server format."""
     filename = extract_upload_filename_for_scope(config, scope, url_value)
     if not filename:
         return None
@@ -119,6 +128,7 @@ def normalize_upload_url_for_scope(config: dict, scope: str, url_value):
 
 
 def _read_file_head(file_storage, size=1024):
+    """Read file header bytes without changing the caller stream position."""
     stream = getattr(file_storage, 'stream', None)
     if stream is None:
         return b''
@@ -178,6 +188,7 @@ def _extension_allowed_for_mime(extension: str, mime: str):
 
 
 def _normalize_mime(file_storage):
+    """Normalize MIME value by dropping optional charset parameters."""
     mime = (getattr(file_storage, 'mimetype', '') or '').strip().lower()
     if ';' in mime:
         mime = mime.split(';', 1)[0].strip()
@@ -185,6 +196,7 @@ def _normalize_mime(file_storage):
 
 
 def _safe_file_size(file_storage):
+    """Compute stream size defensively; return 0 on stream errors."""
     stream = getattr(file_storage, 'stream', None)
     if stream is None:
         return 0
@@ -228,6 +240,7 @@ def validate_upload(file_storage, config: dict, require_image: bool = False):
     head = _read_file_head(file_storage)
     sniffed_mime = _sniff_signature_mime(head)
 
+    # Candidate MIME list is built from both declared mimetype and signature.
     candidate_mimes = []
     if provided_mime and sniffed_mime:
         compatible = (
@@ -270,6 +283,7 @@ def validate_upload(file_storage, config: dict, require_image: bool = False):
 
 
 def save_upload(file_storage, upload_dir: str):
+    """Store file with randomized filename to avoid collisions and probing."""
     ensure_dir(upload_dir)
     original = secure_filename(file_storage.filename or '') or 'file'
     ext = Path(original).suffix.lower()
@@ -284,6 +298,7 @@ def save_upload(file_storage, upload_dir: str):
 
 
 def save_upload_for_scope(file_storage, config: dict, scope: str):
+    """Persist upload in scope directory and return metadata with API URL."""
     upload_dir = resolve_scope_upload_dir(config, scope)
     saved = save_upload(file_storage, upload_dir)
     saved['url'] = build_upload_url(config, scope, saved['filename'])

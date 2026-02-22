@@ -1,7 +1,24 @@
+﻿/**
+ * @file src/components/survey/SurveyCard.jsx
+ * @description Defines reusable UI components and feature-specific interaction blocks.
+ * Responsibilities:
+ * - Render composable UI pieces with clear prop-driven behavior and minimal coupling.
+ * Key dependencies:
+ * - lucide-react
+ * - ../RoleName/RoleName
+ * - ./survey.module.css
+ * Side effects:
+ * - No significant side effects beyond React state and rendering behavior.
+ * Role in app flow:
+ * - Implements reusable view logic consumed by route-level pages.
+ */
 import { Calendar, PieChart, User } from 'lucide-react';
 import RoleName from '../RoleName/RoleName';
 import styles from './survey.module.css';
 
+/**
+ * SurveyCard module entry point.
+ */
 export default function SurveyCard({ survey, onOpen, onResults, isAdmin }) {
   const remaining = Math.max(0, (survey.responseQuota || 0) - (survey.responsesReceived || 0));
   const progress = Math.min(
@@ -69,3 +86,5 @@ export default function SurveyCard({ survey, onOpen, onResults, isAdmin }) {
     </div>
   );
 }
+
+

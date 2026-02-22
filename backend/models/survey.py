@@ -15,6 +15,7 @@ class SurveyStatus(str, Enum):
 
 
 class Survey(db.Model):
+    """Survey aggregate with approval gate and response quota accounting."""
     __tablename__ = 'surveys'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -60,6 +61,7 @@ class Survey(db.Model):
         is_answered: bool = False,
         quota_available: int = None,
     ):
+        """Detail serializer for survey endpoints (camelCase frontend contract)."""
         return {
             'id': self.id,
             'title': self.title,
@@ -105,6 +107,7 @@ class SurveyResponse(db.Model):
     survey = db.relationship('Survey', backref=db.backref('responses', lazy='dynamic'))
     respondent = db.relationship('User')
 
+    # One respondent can submit only one response per survey.
     __table_args__ = (
         UniqueConstraint('survey_id', 'respondent_id', name='uq_survey_response_unique'),
     )
@@ -118,6 +121,7 @@ class SurveyResponse(db.Model):
 
 
 class SurveyCredit(db.Model):
+    """Per-user credit ledger shared by survey and vote features."""
     __tablename__ = 'survey_credits'
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
     base = db.Column(db.Integer, nullable=False, default=0)
@@ -129,14 +133,17 @@ class SurveyCredit(db.Model):
 
     @property
     def available(self):
+        """Available credits = base + earned - used."""
         return (self.base or 0) + (self.earned or 0) - (self.used or 0)
 
     def consume(self, amount: int = 1):
+        """Increase used credits by non-negative amount."""
         if amount < 0:
             amount = 0
         self.used = (self.used or 0) + amount
 
     def earn(self, amount: int = 1):
+        """Increase earned credits by non-negative amount."""
         if amount < 0:
             amount = 0
         self.earned = (self.earned or 0) + amount

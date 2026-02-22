@@ -1,3 +1,17 @@
+﻿/**
+ * @file src/layout/AppLayout.jsx
+ * @description Provides shared layout structure reused by routed pages.
+ * Responsibilities:
+ * - Keep global layout concerns consistent across all feature routes.
+ * Key dependencies:
+ * - ../components/Header
+ * - ../components/Footer
+ * - ../styles/layout.css
+ * Side effects:
+ * - No significant side effects beyond React state and rendering behavior.
+ * Role in app flow:
+ * - Provides consistent shell structure around route-rendered page content.
+ */
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import '../styles/layout.css';
@@ -21,3 +35,5 @@ export default function AppLayout({ children }) {
     </div>
   );
 }
+
+

@@ -15,6 +15,7 @@ class PetitionStatus(str, Enum):
 
 
 class Petition(db.Model):
+    """Petition aggregate with moderation, voting, and official answer state."""
     __tablename__ = 'petitions'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -42,6 +43,7 @@ class Petition(db.Model):
     votes = db.relationship('PetitionVote', backref='petition', cascade='all, delete-orphan')
 
     def status_derived(self, has_answer=None):
+        """Derive frontend workflow status from votes/threshold/answer state."""
         if has_answer is None:
             has_answer = self.answer is not None
         if has_answer:
@@ -51,6 +53,7 @@ class Petition(db.Model):
         return 'needs-support'
 
     def to_dict(self, include_body=True, is_voted_by_me=False):
+        """Detail serializer used by petition detail endpoints."""
         return {
             'id': self.id,
             'title': self.title,
@@ -79,6 +82,7 @@ class Petition(db.Model):
         }
 
     def to_list_dict(self, is_voted_by_me=False):
+        """Compact serializer used by list endpoints."""
         has_answer = self.answer is not None
         return {
             'id': self.id,
@@ -109,6 +113,7 @@ class PetitionVote(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
+    # Enforces one support vote per user per petition.
     __table_args__ = (
         UniqueConstraint('petition_id', 'user_id', name='uq_petition_vote_unique'),
     )
@@ -124,6 +129,7 @@ class PetitionAnswer(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
     def to_dict(self):
+        """Serialize official answer payload for frontend cards/detail."""
         return {
             'responder': self.responder.nickname if self.responder else None,
             'role': self.role,

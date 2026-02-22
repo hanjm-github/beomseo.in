@@ -1,3 +1,16 @@
+﻿/**
+ * @file src/pages/CommunityRouter.jsx
+ * @description Implements route-level views and page orchestration logic.
+ * Responsibilities:
+ * - Coordinate route state, fetch lifecycles, and permission-driven page behavior.
+ * Key dependencies:
+ * - react
+ * - react-router-dom
+ * Side effects:
+ * - Influences client-side routing and navigation state.
+ * Role in app flow:
+ * - Owns route-level user flows and composes feature components.
+ */
 import { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 
@@ -40,6 +53,9 @@ const lazyRoute = (Component, props = {}) => (
   </Suspense>
 );
 
+/**
+ * CommunityRouter module entry point.
+ */
 export default function CommunityRouter() {
   return (
     <Routes>
@@ -82,3 +98,4 @@ export default function CommunityRouter() {
     </Routes>
   );
 }
+

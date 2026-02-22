@@ -1,9 +1,27 @@
+﻿/**
+ * @file src/components/freeboard/FreeCommentsPanel.jsx
+ * @description Defines reusable UI components and feature-specific interaction blocks.
+ * Responsibilities:
+ * - Render composable UI pieces with clear prop-driven behavior and minimal coupling.
+ * Key dependencies:
+ * - react
+ * - lucide-react
+ * - ./freeboard.module.css
+ * - ../../api/community
+ * Side effects:
+ * - Interacts with browser runtime APIs.
+ * Role in app flow:
+ * - Implements reusable view logic consumed by route-level pages.
+ */
 import { useEffect, useState, useCallback } from 'react';
 import { MessageSquare, Trash2, Loader2 } from 'lucide-react';
 import styles from './freeboard.module.css';
 import { communityApi } from '../../api/community';
 import RoleName from '../RoleName/RoleName';
 
+/**
+ * FreeCommentsPanel module entry point.
+ */
 export default function FreeCommentsPanel({ postId, currentUser, isAuthenticated }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -116,3 +134,5 @@ export default function FreeCommentsPanel({ postId, currentUser, isAuthenticated
     </div>
   );
 }
+
+

@@ -1,6 +1,22 @@
+﻿/**
+ * @file src/components/lostfound/LostFoundList.jsx
+ * @description Defines reusable UI components and feature-specific interaction blocks.
+ * Responsibilities:
+ * - Render composable UI pieces with clear prop-driven behavior and minimal coupling.
+ * Key dependencies:
+ * - ./LostFoundCard
+ * - ./lostfound.module.css
+ * Side effects:
+ * - No significant side effects beyond React state and rendering behavior.
+ * Role in app flow:
+ * - Implements reusable view logic consumed by route-level pages.
+ */
 import LostFoundCard from './LostFoundCard';
 import styles from './lostfound.module.css';
 
+/**
+ * LostFoundList module entry point.
+ */
 export default function LostFoundList({ items, basePath, isLoading }) {
   if (isLoading) {
     return <div className={styles.placeholder}>분실물 목록을 불러오는 중입니다.</div>;
@@ -23,3 +39,5 @@ export default function LostFoundList({ items, basePath, isLoading }) {
     </div>
   );
 }
+
+

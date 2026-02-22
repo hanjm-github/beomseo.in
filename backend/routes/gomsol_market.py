@@ -36,6 +36,7 @@ gomsol_market_bp = Blueprint('gomsol_market', __name__, url_prefix='/api/communi
 
 
 def optional_current_user():
+    """Return authenticated user when token exists; otherwise None."""
     try:
         verify_jwt_in_request(optional=True)
         user_id = get_jwt_identity()
@@ -45,10 +46,12 @@ def optional_current_user():
 
 
 def is_admin(user):
+    """Role helper used for moderation visibility and approvals."""
     return user and user.role == UserRole.ADMIN
 
 
 def fetch_post_or_404(post_id):
+    """Fetch non-deleted market post with author/approver/images eager-loaded."""
     return GomsolMarketPost.query.options(
         joinedload(GomsolMarketPost.author),
         joinedload(GomsolMarketPost.approved_by),
@@ -60,6 +63,7 @@ def fetch_post_or_404(post_id):
 
 
 def parse_non_negative_int(value):
+    """Parse non-negative integer values used by price validation."""
     if isinstance(value, bool):
         return None
     if isinstance(value, int):
@@ -72,6 +76,11 @@ def parse_non_negative_int(value):
 
 
 def validate_create_payload(data):
+    """
+    Validate market payload and normalize contact/image fields.
+
+    At least one contact channel is required to reduce dead-end listings.
+    """
     errors = []
     max_attach_count = int(current_app.config.get('MAX_ATTACH_COUNT', 5))
     max_attach_size = int(current_app.config.get('MAX_ATTACH_SIZE', 10 * 1024 * 1024))
@@ -179,6 +188,7 @@ def validate_create_payload(data):
 @gomsol_market_bp.route('/', methods=['GET'])
 @cache_json_response('gomsol_market')
 def list_posts():
+    """List market posts with role-aware approval visibility."""
     status = request.args.get('status')
     category = request.args.get('category')
     approval = request.args.get('approval')
@@ -248,6 +258,7 @@ def list_posts():
 @gomsol_market_bp.route('/<int:post_id>', methods=['GET'])
 @jwt_required()
 def get_post(post_id):
+    """Return post detail while protecting pending listings from public access."""
     post = fetch_post_or_404(post_id)
     if not post:
         return jsonify({'error': '게시글을 찾을 수 없습니다.'}), 404
@@ -273,6 +284,7 @@ def get_post(post_id):
 @gomsol_market_bp.route('/', methods=['POST'])
 @jwt_required()
 def create_post():
+    """Create market post in pending approval state."""
     data = request.get_json() or {}
     errors, payload = validate_create_payload(data)
     if errors:
@@ -323,6 +335,7 @@ def create_post():
 @jwt_required()
 @require_role(UserRole.ADMIN)
 def approve_post(post_id):
+    """Approve market post and persist moderation metadata."""
     post = fetch_post_or_404(post_id)
     if not post:
         return jsonify({'error': '게시글을 찾을 수 없습니다.'}), 404
@@ -343,6 +356,7 @@ def approve_post(post_id):
 @jwt_required()
 @require_role(UserRole.ADMIN)
 def unapprove_post(post_id):
+    """Revert market post back to pending approval state."""
     post = fetch_post_or_404(post_id)
     if not post:
         return jsonify({'error': '게시글을 찾을 수 없습니다.'}), 404
@@ -362,6 +376,7 @@ def unapprove_post(post_id):
 @gomsol_market_bp.route('/<int:post_id>/status', methods=['POST'])
 @jwt_required()
 def update_status(post_id):
+    """Update sale status (`selling`/`sold`) for author or admin."""
     post = fetch_post_or_404(post_id)
     if not post:
         return jsonify({'error': '게시글을 찾을 수 없습니다.'}), 404
@@ -393,6 +408,7 @@ def update_status(post_id):
 @gomsol_market_bp.route('/uploads/', methods=['POST'])
 @jwt_required()
 def upload_image():
+    """Validate and store market image upload."""
     if 'file' not in request.files:
         return jsonify({'error': 'file 필드가 필요합니다.'}), 400
 
@@ -416,6 +432,7 @@ def upload_image():
 
 @gomsol_market_bp.route('/uploads/<path:filename>', methods=['GET'], strict_slashes=False)
 def serve_upload(filename):
+    """Serve market image with pending-post access policy and temp fallback."""
     upload_dir = resolve_scope_upload_dir(current_app.config, 'gomsol_market')
     ensure_dir(upload_dir)
     file_path = Path(upload_dir) / filename

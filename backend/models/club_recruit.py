@@ -18,6 +18,7 @@ class RecruitStatus(str, Enum):
 
 
 class ClubRecruit(db.Model):
+    """Club recruitment post with approval workflow metadata."""
     __tablename__ = 'club_recruits'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -46,6 +47,11 @@ class ClubRecruit(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
     def to_dict(self, include_body=True):
+        """
+        Serialize recruit post in frontend contract shape (camelCase keys).
+
+        `include_body=False` is used by list APIs to reduce payload size.
+        """
         return {
             'id': self.id,
             'clubName': self.club_name,
@@ -81,6 +87,7 @@ class ClubRecruit(db.Model):
 
     @staticmethod
     def normalize_date(value):
+        """Parse relaxed date inputs (`YYYY-MM-DD` or datetime-like strings)."""
         if not value:
             return None
         if isinstance(value, date):

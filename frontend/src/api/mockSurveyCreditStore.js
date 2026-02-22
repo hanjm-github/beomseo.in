@@ -1,3 +1,15 @@
+﻿/**
+ * @file src/api/mockSurveyCreditStore.js
+ * @description Encapsulates backend API contracts, normalization, and fallback behavior.
+ * Responsibilities:
+ * - Expose a stable API-facing interface for feature code while shielding transport details.
+ * Key dependencies:
+ * - Module-local logic without direct import dependencies.
+ * Side effects:
+ * - Performs HTTP requests to backend endpoints via shared API clients.
+ * Role in app flow:
+ * - Acts as the data boundary between UI code and backend HTTP endpoints.
+ */
 const DEFAULT_CREDITS = Object.freeze({
   base: 0,
   earned: 10,
@@ -21,6 +33,9 @@ function normalizeCredits(next) {
   };
 }
 
+/**
+ * getMockSurveyCredits module entry point.
+ */
 export function getMockSurveyCredits() {
   const normalized = normalizeCredits(mockSurveyCredits);
   const available = normalized.base + normalized.earned - normalized.used;
@@ -30,11 +45,17 @@ export function getMockSurveyCredits() {
   };
 }
 
+/**
+ * setMockSurveyCredits module entry point.
+ */
 export function setMockSurveyCredits(next) {
   mockSurveyCredits = normalizeCredits(next || DEFAULT_CREDITS);
   return getMockSurveyCredits();
 }
 
+/**
+ * patchMockSurveyCredits module entry point.
+ */
 export function patchMockSurveyCredits(patch = {}) {
   mockSurveyCredits = normalizeCredits({
     ...mockSurveyCredits,
@@ -43,6 +64,9 @@ export function patchMockSurveyCredits(patch = {}) {
   return getMockSurveyCredits();
 }
 
+/**
+ * earnMockSurveyCredits module entry point.
+ */
 export function earnMockSurveyCredits(amount = 0) {
   const value = Math.max(0, toSafeNumber(amount));
   return patchMockSurveyCredits({
@@ -50,6 +74,9 @@ export function earnMockSurveyCredits(amount = 0) {
   });
 }
 
+/**
+ * consumeMockSurveyCredits module entry point.
+ */
 export function consumeMockSurveyCredits(amount = 0) {
   const value = Math.max(0, toSafeNumber(amount));
   return patchMockSurveyCredits({
@@ -57,7 +84,12 @@ export function consumeMockSurveyCredits(amount = 0) {
   });
 }
 
+/**
+ * resetMockSurveyCredits module entry point.
+ */
 export function resetMockSurveyCredits() {
   return setMockSurveyCredits(DEFAULT_CREDITS);
 }
+
+
 

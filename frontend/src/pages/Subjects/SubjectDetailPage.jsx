@@ -1,4 +1,19 @@
-﻿import { useEffect, useState } from "react";
+﻿/**
+ * @file src/pages/Subjects/SubjectDetailPage.jsx
+ * @description Implements route-level views and page orchestration logic.
+ * Responsibilities:
+ * - Coordinate route state, fetch lifecycles, and permission-driven page behavior.
+ * Key dependencies:
+ * - react
+ * - react-router-dom
+ * - ../../api/subjectChanges
+ * - ../../components/subjects/SubjectCard
+ * Side effects:
+ * - Interacts with browser runtime APIs.
+ * Role in app flow:
+ * - Owns route-level user flows and composes feature components.
+ */
+import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { subjectChangesApi } from "../../api/subjectChanges";
 import SubjectCard from "../../components/subjects/SubjectCard";
@@ -8,6 +23,9 @@ import InfiniteLoader from "../../components/clubRecruit/InfiniteLoader";
 import { useAuth } from "../../context/AuthContext";
 import "../page-shell.css";
 
+/**
+ * SubjectDetailPage module entry point.
+ */
 export default function SubjectDetailPage() {
   const { id } = useParams();
   const [item, setItem] = useState(null);
@@ -142,3 +160,5 @@ export default function SubjectDetailPage() {
     </div>
   );
 }
+
+

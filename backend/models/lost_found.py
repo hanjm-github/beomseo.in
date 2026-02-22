@@ -22,6 +22,7 @@ class LostFoundCategory(str, Enum):
 
 
 class LostFoundPost(db.Model):
+    """Lost-found entry with image gallery and lifecycle status."""
     __tablename__ = 'lost_found_posts'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -59,6 +60,7 @@ class LostFoundPost(db.Model):
     )
 
     def to_dict(self):
+        """Detail serializer used by lost-found detail endpoints."""
         return {
             'id': self.id,
             'title': self.title,
@@ -82,6 +84,7 @@ class LostFoundPost(db.Model):
         }
 
     def to_list_dict(self):
+        """List serializer that returns preview image only."""
         images = [image.to_dict() for image in self.images]
         preview_images = images[:1]
         return {
@@ -121,6 +124,7 @@ class LostFoundImage(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
     def to_dict(self):
+        """Serialize lost-found image metadata."""
         return {
             'id': self.id,
             'name': self.name,
@@ -145,6 +149,7 @@ class LostFoundComment(db.Model):
     user = db.relationship('User', backref=db.backref('lost_found_comments', lazy='dynamic'))
 
     def to_dict(self):
+        """Serialize comment payload in frontend contract shape."""
         return {
             'id': self.id,
             'postId': self.post_id,

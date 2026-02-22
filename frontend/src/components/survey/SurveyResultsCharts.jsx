@@ -1,4 +1,18 @@
-﻿import { useMemo, useState } from "react";
+﻿/**
+ * @file src/components/survey/SurveyResultsCharts.jsx
+ * @description Defines reusable UI components and feature-specific interaction blocks.
+ * Responsibilities:
+ * - Render composable UI pieces with clear prop-driven behavior and minimal coupling.
+ * Key dependencies:
+ * - react
+ * - recharts
+ * - ./survey.module.css
+ * Side effects:
+ * - No significant side effects beyond React state and rendering behavior.
+ * Role in app flow:
+ * - Implements reusable view logic consumed by route-level pages.
+ */
+import { useMemo, useState } from "react";
 import {
   Bar,
   BarChart,
@@ -67,6 +81,9 @@ const renderDonutLabel = (props) => {
   );
 };
 
+/**
+ * SurveyResultsCharts module entry point.
+ */
 export default function SurveyResultsCharts({ summary }) {
   const [viewModes, setViewModes] = useState({});
 
@@ -275,3 +292,5 @@ export default function SurveyResultsCharts({ summary }) {
     </div>
   );
 }
+
+

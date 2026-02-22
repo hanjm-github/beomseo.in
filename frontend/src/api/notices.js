@@ -1,4 +1,19 @@
 ﻿/**
+ * @file src/api/notices.js
+ * @description Encapsulates backend API contracts, normalization, and fallback behavior.
+ * Responsibilities:
+ * - Expose a stable API-facing interface for feature code while shielding transport details.
+ * Key dependencies:
+ * - ./auth
+ * - ./normalizers
+ * - ./mockPolicy
+ * - ../analytics/zaraz
+ * Side effects:
+ * - Performs HTTP requests to backend endpoints via shared API clients.
+ * Role in app flow:
+ * - Acts as the data boundary between UI code and backend HTTP endpoints.
+ */
+/**
  * Notices API with optional dev-only mock fallback.
  */
 import api from './auth';
@@ -19,6 +34,7 @@ const loadNoticesMockApi = ENABLE_API_MOCKS
       let noticesMockApiPromise;
       return () => {
         if (!noticesMockApiPromise) {
+          // Keep mock implementation code-split and loaded only on explicit fallback.
           noticesMockApiPromise = import('./mocks/notices.mock').then(
             (module) => module.noticesMockApi
           );
@@ -43,6 +59,7 @@ export const noticesApi = {
       if (!shouldUseMockFallback(err)) throw err;
       const mockApi = await loadNoticesMockApi();
       const mock = await mockApi.list(params);
+      // Preserve the same normalized shape so UI code is environment-agnostic.
       const normalizedMock = normalizePaginatedResponse(mock, 10);
       return {
         ...normalizedMock,
@@ -178,3 +195,5 @@ export const noticesApi = {
 };
 
 export default noticesApi;
+
+

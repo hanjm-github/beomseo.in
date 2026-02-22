@@ -1,3 +1,16 @@
+﻿/**
+ * @file src/security/urlPolicy.js
+ * @description Centralizes client-side safety guards for storage, URLs, and HTML handling.
+ * Responsibilities:
+ * - Enforce frontend trust boundaries before rendering or navigating untrusted values.
+ * Key dependencies:
+ * - Module-local logic without direct import dependencies.
+ * Side effects:
+ * - Applies frontend trust-boundary checks for URLs, HTML content, and token persistence.
+ * - Applies sanitization before rendering or using external URL/HTML values.
+ * Role in app flow:
+ * - Protects rendering and navigation surfaces against unsafe input.
+ */
 const DANGEROUS_SCHEME_RE = /^(?:javascript|data|vbscript|file):/i;
 const EXTERNAL_SCHEME_RE = /^[a-z][a-z0-9+.-]*:\/\//i;
 
@@ -20,6 +33,9 @@ function safeParse(url) {
   }
 }
 
+/**
+ * toSafeExternalHref module entry point.
+ */
 export function toSafeExternalHref(rawUrl) {
   const value = sanitizeInput(rawUrl);
   if (!value) return null;
@@ -37,6 +53,9 @@ export function toSafeExternalHref(rawUrl) {
   return parsed.href;
 }
 
+/**
+ * toSafeOpenChatHref module entry point.
+ */
 export function toSafeOpenChatHref(rawUrl) {
   const value = sanitizeInput(rawUrl);
   if (!value) return null;
@@ -52,6 +71,9 @@ export function toSafeOpenChatHref(rawUrl) {
   return parsed.href;
 }
 
+/**
+ * toSafeAssetUrl module entry point.
+ */
 export function toSafeAssetUrl(rawUrl) {
   const value = sanitizeInput(rawUrl);
   if (!value) return null;
@@ -70,3 +92,5 @@ export function toSafeAssetUrl(rawUrl) {
 
   return value;
 }
+
+

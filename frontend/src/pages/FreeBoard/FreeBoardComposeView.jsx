@@ -1,4 +1,21 @@
-﻿import { useEffect, useState } from 'react';
+﻿/**
+ * @file src/pages/FreeBoard/FreeBoardComposeView.jsx
+ * @description Implements route-level views and page orchestration logic.
+ * Responsibilities:
+ * - Coordinate route state, fetch lifecycles, and permission-driven page behavior.
+ * Key dependencies:
+ * - react
+ * - react-router-dom
+ * - lucide-react
+ * - ../../components/notices/Editor
+ * Side effects:
+ * - Influences client-side routing and navigation state.
+ * - Interacts with browser runtime APIs.
+ * - Applies sanitization before rendering or using external URL/HTML values.
+ * Role in app flow:
+ * - Owns route-level user flows and composes feature components.
+ */
+import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Loader2, Trash2 } from 'lucide-react';
 import Editor from '../../components/notices/Editor';
@@ -14,6 +31,9 @@ const CATEGORIES = [
   { key: 'qna', label: 'QnA' },
 ];
 
+/**
+ * FreeBoardComposeView module entry point.
+ */
 export default function FreeBoardComposeView({ mode = 'create' }) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -238,3 +258,5 @@ export default function FreeBoardComposeView({ mode = 'create' }) {
     </div>
   );
 }
+
+

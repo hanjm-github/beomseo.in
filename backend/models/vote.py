@@ -8,6 +8,7 @@ from .user import db
 
 
 class Vote(db.Model):
+    """Poll aggregate with selectable options and response tracking."""
     __tablename__ = 'votes'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -39,6 +40,7 @@ class Vote(db.Model):
     )
 
     def status(self, now=None):
+        """Derived open/closed state based on deleted flag and close time."""
         now = now or datetime.utcnow()
         if self.deleted_at:
             return 'closed'
@@ -47,6 +49,7 @@ class Vote(db.Model):
         return 'open'
 
     def to_dict(self, my_vote_option_id=None, now=None):
+        """Serialize poll detail with caller-specific selected option metadata."""
         total = max(0, int(self.total_votes or 0))
         serialized_options = [opt.to_dict(total_votes=total) for opt in self.options]
 
@@ -81,11 +84,13 @@ class VoteOption(db.Model):
     votes_count = db.Column(db.Integer, nullable=False, default=0)
     display_order = db.Column(db.Integer, nullable=False, default=0)
 
+    # `option_key` is unique only within each poll.
     __table_args__ = (
         UniqueConstraint('vote_id', 'option_key', name='uq_vote_option_key_per_vote'),
     )
 
     def to_dict(self, total_votes=0):
+        """Serialize option with vote count and percentage for charting."""
         votes = max(0, int(self.votes_count or 0))
         divisor = max(0, int(total_votes or 0))
         pct = round((votes / divisor) * 100) if divisor > 0 else 0
@@ -110,6 +115,7 @@ class VoteResponse(db.Model):
     option = db.relationship('VoteOption')
     respondent = db.relationship('User')
 
+    # One vote response per respondent per poll.
     __table_args__ = (
         UniqueConstraint('vote_id', 'respondent_id', name='uq_vote_response_unique'),
     )

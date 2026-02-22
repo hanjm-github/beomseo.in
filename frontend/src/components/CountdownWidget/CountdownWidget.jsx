@@ -1,3 +1,17 @@
+﻿/**
+ * @file src/components/CountdownWidget/CountdownWidget.jsx
+ * @description Defines reusable UI components and feature-specific interaction blocks.
+ * Responsibilities:
+ * - Render composable UI pieces with clear prop-driven behavior and minimal coupling.
+ * Key dependencies:
+ * - react
+ * - lucide-react
+ * - ./CountdownWidget.module.css
+ * Side effects:
+ * - Schedules deferred work using timer-based execution.
+ * Role in app flow:
+ * - Implements reusable view logic consumed by route-level pages.
+ */
 import { useState, useEffect, useMemo } from 'react';
 import { Calendar, Clock, AlertCircle } from 'lucide-react';
 import styles from './CountdownWidget.module.css';
@@ -20,6 +34,9 @@ function calculateTimeLeft(date) {
     };
 }
 
+/**
+ * CountdownWidget module entry point.
+ */
 export default function CountdownWidget({
     targetDate,
     eventName = '다가오는 일정',
@@ -104,3 +121,4 @@ export default function CountdownWidget({
         </div>
     );
 }
+

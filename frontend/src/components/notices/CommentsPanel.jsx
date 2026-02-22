@@ -1,9 +1,27 @@
-﻿import { useEffect, useState, useCallback } from 'react';
+﻿/**
+ * @file src/components/notices/CommentsPanel.jsx
+ * @description Defines reusable UI components and feature-specific interaction blocks.
+ * Responsibilities:
+ * - Render composable UI pieces with clear prop-driven behavior and minimal coupling.
+ * Key dependencies:
+ * - react
+ * - lucide-react
+ * - ../../api/notices
+ * - ../RoleName/RoleName
+ * Side effects:
+ * - Interacts with browser runtime APIs.
+ * Role in app flow:
+ * - Implements reusable view logic consumed by route-level pages.
+ */
+import { useEffect, useState, useCallback } from 'react';
 import { MessageSquare, Trash2, Loader2 } from 'lucide-react';
 import { noticesApi } from '../../api/notices';
 import RoleName from '../RoleName/RoleName';
 import styles from './notices.module.css';
 
+/**
+ * CommentsPanel module entry point.
+ */
 export default function CommentsPanel({ noticeId, currentUser, isAuthenticated }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -121,3 +139,4 @@ export default function CommentsPanel({ noticeId, currentUser, isAuthenticated }
     </div>
   );
 }
+

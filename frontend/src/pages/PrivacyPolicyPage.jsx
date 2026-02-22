@@ -1,5 +1,20 @@
+﻿/**
+ * @file src/pages/PrivacyPolicyPage.jsx
+ * @description Implements route-level views and page orchestration logic.
+ * Responsibilities:
+ * - Coordinate route state, fetch lifecycles, and permission-driven page behavior.
+ * Key dependencies:
+ * - ./LegalPage.css
+ * Side effects:
+ * - Interacts with browser runtime APIs for local in-page navigation helpers.
+ * Role in app flow:
+ * - Owns route-level user flows and composes feature components.
+ */
 import './LegalPage.css';
 
+/**
+ * PrivacyPolicyPage module entry point.
+ */
 export default function PrivacyPolicyPage() {
     const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
@@ -454,3 +469,6 @@ export default function PrivacyPolicyPage() {
         </div>
     );
 }
+
+
+

@@ -1,4 +1,20 @@
-﻿import { useState } from "react";
+﻿/**
+ * @file src/pages/Subjects/SubjectComposePage.jsx
+ * @description Implements route-level views and page orchestration logic.
+ * Responsibilities:
+ * - Coordinate route state, fetch lifecycles, and permission-driven page behavior.
+ * Key dependencies:
+ * - react
+ * - react-router-dom
+ * - ../../api/subjectChanges
+ * - ../../security/urlPolicy
+ * Side effects:
+ * - Influences client-side routing and navigation state.
+ * - Applies sanitization before rendering or using external URL/HTML values.
+ * Role in app flow:
+ * - Owns route-level user flows and composes feature components.
+ */
+import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { subjectChangesApi } from "../../api/subjectChanges";
 import { toSafeOpenChatHref } from "../../security/urlPolicy";
@@ -6,6 +22,9 @@ import { useAuth } from "../../context/AuthContext";
 import "../page-shell.css";
 import styles from "../ClubRecruit/ClubRecruitComposePage.module.css";
 
+/**
+ * SubjectComposePage module entry point.
+ */
 export default function SubjectComposePage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -221,3 +240,5 @@ export default function SubjectComposePage() {
     </div>
   );
 }
+
+

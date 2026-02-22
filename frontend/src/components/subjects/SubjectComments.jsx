@@ -1,10 +1,28 @@
-﻿import { useEffect, useState, useCallback } from "react";
+﻿/**
+ * @file src/components/subjects/SubjectComments.jsx
+ * @description Defines reusable UI components and feature-specific interaction blocks.
+ * Responsibilities:
+ * - Render composable UI pieces with clear prop-driven behavior and minimal coupling.
+ * Key dependencies:
+ * - react
+ * - lucide-react
+ * - ../../api/subjectChanges
+ * - ../../context/AuthContext
+ * Side effects:
+ * - Interacts with browser runtime APIs.
+ * Role in app flow:
+ * - Implements reusable view logic consumed by route-level pages.
+ */
+import { useEffect, useState, useCallback } from "react";
 import { MessageSquare, Trash2, Loader2 } from "lucide-react";
 import { subjectChangesApi } from "../../api/subjectChanges";
 import { useAuth } from "../../context/AuthContext";
 import RoleName from "../RoleName/RoleName";
 import styles from "./subjects.module.css";
 
+/**
+ * SubjectComments module entry point.
+ */
 export default function SubjectComments({ postId }) {
   const { user } = useAuth();
   const isAuthenticated = Boolean(user);
@@ -126,3 +144,5 @@ export default function SubjectComments({ postId }) {
     </div>
   );
 }
+
+

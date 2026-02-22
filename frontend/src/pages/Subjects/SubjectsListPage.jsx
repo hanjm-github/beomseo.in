@@ -1,4 +1,19 @@
-﻿import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
+﻿/**
+ * @file src/pages/Subjects/SubjectsListPage.jsx
+ * @description Implements route-level views and page orchestration logic.
+ * Responsibilities:
+ * - Coordinate route state, fetch lifecycles, and permission-driven page behavior.
+ * Key dependencies:
+ * - react
+ * - react-router-dom
+ * - lucide-react
+ * - ../../context/AuthContext
+ * Side effects:
+ * - No significant side effects beyond React state and rendering behavior.
+ * Role in app flow:
+ * - Owns route-level user flows and composes feature components.
+ */
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Info } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -14,6 +29,9 @@ import '../page-shell.css';
 
 const PAGE_SIZE = 12;
 
+/**
+ * SubjectsListPage module entry point.
+ */
 export default function SubjectsListPage() {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
@@ -176,3 +194,5 @@ export default function SubjectsListPage() {
     </div>
   );
 }
+
+

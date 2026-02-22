@@ -1,4 +1,17 @@
-﻿import { Search } from 'lucide-react';
+﻿/**
+ * @file src/components/clubRecruit/RecruitFilterBar.jsx
+ * @description Defines reusable UI components and feature-specific interaction blocks.
+ * Responsibilities:
+ * - Render composable UI pieces with clear prop-driven behavior and minimal coupling.
+ * Key dependencies:
+ * - lucide-react
+ * - ./clubRecruit.module.css
+ * Side effects:
+ * - No significant side effects beyond React state and rendering behavior.
+ * Role in app flow:
+ * - Implements reusable view logic consumed by route-level pages.
+ */
+import { Search } from 'lucide-react';
 import styles from './clubRecruit.module.css';
 
 const sortOptions = [
@@ -6,6 +19,9 @@ const sortOptions = [
   { value: 'deadline', label: '마감 임박 순' },
 ];
 
+/**
+ * RecruitFilterBar module entry point.
+ */
 export default function RecruitFilterBar({
   search,
   onSearchChange,
@@ -54,3 +70,5 @@ export default function RecruitFilterBar({
     </div>
   );
 }
+
+

@@ -1,3 +1,17 @@
+﻿/**
+ * @file src/components/lostfound/LostFoundFilterBar.jsx
+ * @description Defines reusable UI components and feature-specific interaction blocks.
+ * Responsibilities:
+ * - Render composable UI pieces with clear prop-driven behavior and minimal coupling.
+ * Key dependencies:
+ * - lucide-react
+ * - ../../api/lostFound
+ * - ./lostfound.module.css
+ * Side effects:
+ * - No significant side effects beyond React state and rendering behavior.
+ * Role in app flow:
+ * - Implements reusable view logic consumed by route-level pages.
+ */
 import { Search, RotateCcw } from 'lucide-react';
 import { lostFoundApi } from '../../api/lostFound';
 import styles from './lostfound.module.css';
@@ -8,6 +22,9 @@ const SORT_OPTIONS = [
   { key: 'foundAt-asc', label: '습득일 오래된순' },
 ];
 
+/**
+ * LostFoundFilterBar module entry point.
+ */
 export default function LostFoundFilterBar({
   status,
   category,
@@ -101,3 +118,5 @@ export default function LostFoundFilterBar({
     </section>
   );
 }
+
+

@@ -1,3 +1,20 @@
+﻿/**
+ * @file src/pages/ClubRecruit/ClubRecruitComposePage.jsx
+ * @description Implements route-level views and page orchestration logic.
+ * Responsibilities:
+ * - Coordinate route state, fetch lifecycles, and permission-driven page behavior.
+ * Key dependencies:
+ * - react
+ * - react-router-dom
+ * - ../../api/clubRecruit
+ * - ../../components/notices/Editor
+ * Side effects:
+ * - Influences client-side routing and navigation state.
+ * - Interacts with browser runtime APIs.
+ * - Applies sanitization before rendering or using external URL/HTML values.
+ * Role in app flow:
+ * - Owns route-level user flows and composes feature components.
+ */
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { clubRecruitApi } from '../../api/clubRecruit';
@@ -10,6 +27,9 @@ import styles from './ClubRecruitComposePage.module.css';
 
 const MAX_IMAGE_UPLOAD_SIZE = UPLOAD_MAX_FILE_SIZE_BYTES;
 
+/**
+ * ClubRecruitComposePage module entry point.
+ */
 export default function ClubRecruitComposePage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -230,3 +250,5 @@ export default function ClubRecruitComposePage() {
     </div>
   );
 }
+
+

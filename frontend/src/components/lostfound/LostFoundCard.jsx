@@ -1,3 +1,18 @@
+﻿/**
+ * @file src/components/lostfound/LostFoundCard.jsx
+ * @description Defines reusable UI components and feature-specific interaction blocks.
+ * Responsibilities:
+ * - Render composable UI pieces with clear prop-driven behavior and minimal coupling.
+ * Key dependencies:
+ * - lucide-react
+ * - react-router-dom
+ * - ../../api/lostFound
+ * - ./lostfound.module.css
+ * Side effects:
+ * - No significant side effects beyond React state and rendering behavior.
+ * Role in app flow:
+ * - Implements reusable view logic consumed by route-level pages.
+ */
 import { CalendarDays, MapPin, PackageCheck } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { lostFoundApi } from '../../api/lostFound';
@@ -9,6 +24,9 @@ function formatFoundDate(value) {
   return parsed.toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' });
 }
 
+/**
+ * LostFoundCard module entry point.
+ */
 export default function LostFoundCard({ item, to }) {
   const images = Array.isArray(item.images) ? item.images : [];
   const imageCount = typeof item.imageCount === 'number' ? item.imageCount : images.length;
@@ -65,3 +83,5 @@ export default function LostFoundCard({ item, to }) {
     </Link>
   );
 }
+
+

@@ -44,6 +44,7 @@ notices_bp = Blueprint('notices', __name__, url_prefix='/api/notices')
 
 
 def resolve_kst_timezone():
+    """Resolve Asia/Seoul timezone with fixed-offset fallback."""
     try:
         return ZoneInfo('Asia/Seoul')
     except ZoneInfoNotFoundError:
@@ -54,12 +55,14 @@ KST = resolve_kst_timezone()
 
 
 def parse_bool(val):
+    """Parse permissive boolean query flags."""
     if val is None:
         return None
     return str(val).lower() in {'1', 'true', 'yes', 'on'}
 
 
 def parse_tags(value):
+    """Normalize tag inputs from string/list payload forms."""
     if value is None:
         return []
 
@@ -99,6 +102,7 @@ def optional_current_user_id():
 
 
 def get_next_countdown_event():
+    """Return next upcoming countdown event serialized for notice list payload."""
     now_kst_naive = datetime.now(KST).replace(tzinfo=None)
     event = (
         CountdownEvent.query
@@ -113,6 +117,11 @@ def get_next_countdown_event():
 @notices_bp.route('', methods=['GET'])
 @cache_json_response('notices')
 def list_notices():
+    """
+    List notices with category/tag filters and optional reaction metadata.
+
+    Countdown event metadata is attached for school notice views.
+    """
     category = request.args.get('category')
     query_text = request.args.get('query')
     pinned = parse_bool(request.args.get('pinned'))
@@ -164,6 +173,7 @@ def list_notices():
 
 
 def apply_filters(query, category, query_text, pinned, important, exam, tags=None):
+    """Apply notice filters while always excluding soft-deleted rows."""
     if category in {NoticeCategory.SCHOOL.value, NoticeCategory.SCHOOL}:
         query = query.filter(Notice.category == NoticeCategory.SCHOOL)
     elif category in {NoticeCategory.COUNCIL.value, NoticeCategory.COUNCIL}:
@@ -195,6 +205,7 @@ def apply_filters(query, category, query_text, pinned, important, exam, tags=Non
 
 
 def apply_sort(query, sort):
+    """Apply supported sort key for notice listing."""
     if sort == 'views':
         return query.order_by(Notice.pinned.desc(), Notice.views.desc(), Notice.created_at.desc())
     if sort == 'important':
@@ -203,6 +214,7 @@ def apply_sort(query, sort):
 
 
 def validate_notice_payload(data, is_update=False):
+    """Validate notice payload and normalize attachment/tag fields."""
     errors = []
     title = (data.get('title') or '').strip()
     body = (data.get('body') or '').strip()
@@ -266,6 +278,7 @@ def validate_notice_payload(data, is_update=False):
 
 
 def map_category(cat_str):
+    """Map raw category string to enum with school as fallback."""
     if cat_str == NoticeCategory.COUNCIL.value:
         return NoticeCategory.COUNCIL
     return NoticeCategory.SCHOOL
@@ -276,6 +289,7 @@ def map_category(cat_str):
 @jwt_required()
 @require_role(UserRole.STUDENT_COUNCIL, UserRole.ADMIN)
 def create_notice():
+    """Create notice (student-council/admin only)."""
     data = request.get_json() or {}
     errors, payload = validate_notice_payload(data)
     if errors:
@@ -321,6 +335,7 @@ def create_notice():
 
 
 def ensure_edit_permission(notice, user):
+    """Student council can edit own notices; admin can edit any notice."""
     if user.role == UserRole.ADMIN:
         return True
     if user.role == UserRole.STUDENT_COUNCIL and notice.author_id == user.id:
@@ -331,6 +346,7 @@ def ensure_edit_permission(notice, user):
 @notices_bp.route('/<int:notice_id>', methods=['PUT'])
 @jwt_required()
 def update_notice(notice_id):
+    """Update notice and replace attachment set atomically."""
     notice = Notice.query.get(notice_id)
     if not notice:
         return jsonify({'error': '공지 를 찾을 수 없습니다.'}), 404
@@ -384,6 +400,7 @@ def update_notice(notice_id):
 @notices_bp.route('/<int:notice_id>', methods=['DELETE'])
 @jwt_required()
 def delete_notice(notice_id):
+    """Soft-delete notice when caller has edit permission."""
     notice = Notice.query.get(notice_id)
     if not notice:
         return jsonify({'error': '공지 를 찾을 수 없습니다.'}), 404
@@ -408,6 +425,7 @@ def delete_notice(notice_id):
 
 @notices_bp.route('/<int:notice_id>', methods=['GET'])
 def get_notice(notice_id):
+    """Return notice detail and best-effort increment view counter."""
     notice = Notice.query.options(
         joinedload(Notice.author),
         selectinload(Notice.attachments),
@@ -442,6 +460,7 @@ def get_notice(notice_id):
 @jwt_required()
 @require_role(UserRole.STUDENT_COUNCIL, UserRole.ADMIN)
 def upload_file():
+    """Validate and store notice attachment file."""
     if 'file' not in request.files:
         return jsonify({'error': 'file 필드가 필요합니다.'}), 400
     file = request.files['file']
@@ -464,6 +483,11 @@ def upload_file():
 
 @notices_bp.route('/uploads/<path:filename>', methods=['GET'], strict_slashes=False)
 def serve_upload(filename):
+    """
+    Serve notice uploads with compatibility fallbacks.
+
+    Newly uploaded files can be previewed before notice linkage is saved.
+    """
     upload_dir = resolve_scope_upload_dir(current_app.config, 'notices')
     ensure_dir(upload_dir)
     file_path = Path(upload_dir) / filename
@@ -515,6 +539,7 @@ def serve_upload(filename):
 @notices_bp.route('/<int:notice_id>/comments', methods=['GET'])
 @cache_json_response('notices')
 def list_comments(notice_id):
+    """List notice comments with deterministic ordering and pagination."""
     notice = Notice.query.get(notice_id)
     if not notice or notice.deleted_at:
         return jsonify({'error': '공지 를 찾을 수 없습니다.'}), 404
@@ -547,6 +572,7 @@ def list_comments(notice_id):
 @notices_bp.route('/<int:notice_id>/comments', methods=['POST'])
 @jwt_required()
 def create_comment(notice_id):
+    """Create one notice comment for authenticated user."""
     notice = Notice.query.get(notice_id)
     if not notice or notice.deleted_at:
         return jsonify({'error': '공지 를 찾을 수 없습니다.'}), 404
@@ -581,6 +607,7 @@ def create_comment(notice_id):
 @jwt_required()
 @require_role(UserRole.ADMIN)
 def delete_comment(notice_id, comment_id):
+    """Soft-delete notice comment (admin only)."""
     comment = Comment.query.filter_by(id=comment_id, notice_id=notice_id).first()
     if not comment or comment.deleted_at:
         return jsonify({'error': '댓글을 찾을 수 없습니다.'}), 404
@@ -602,6 +629,7 @@ def delete_comment(notice_id, comment_id):
 @notices_bp.route('/<int:notice_id>/reactions', methods=['POST'])
 @jwt_required()
 def react_notice(notice_id):
+    """Toggle/switch reaction and maintain denormalized like/dislike counters."""
     notice = Notice.query.get(notice_id)
     if not notice or notice.deleted_at:
         return jsonify({'error': '공지 를 찾을 수 없습니다.'}), 404

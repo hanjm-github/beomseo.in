@@ -1,4 +1,19 @@
-﻿import { useEffect, useMemo, useState } from 'react';
+﻿/**
+ * @file src/pages/Vote/VoteDetailView.jsx
+ * @description Implements route-level views and page orchestration logic.
+ * Responsibilities:
+ * - Coordinate route state, fetch lifecycles, and permission-driven page behavior.
+ * Key dependencies:
+ * - react
+ * - react-router-dom
+ * - lucide-react
+ * - ../../context/AuthContext
+ * Side effects:
+ * - Influences client-side routing and navigation state.
+ * Role in app flow:
+ * - Owns route-level user flows and composes feature components.
+ */
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { CheckCircle2, Loader2, Lock, Vote as VoteIcon } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -20,6 +35,9 @@ const formatDateTime = (iso) => {
   });
 };
 
+/**
+ * VoteDetailView module entry point.
+ */
 export default function VoteDetailView() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -194,4 +212,6 @@ export default function VoteDetailView() {
     </div>
   );
 }
+
+
 

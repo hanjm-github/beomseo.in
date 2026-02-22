@@ -1,4 +1,19 @@
-﻿import api from './auth';
+﻿/**
+ * @file src/api/gomsolMarket.js
+ * @description Encapsulates backend API contracts, normalization, and fallback behavior.
+ * Responsibilities:
+ * - Expose a stable API-facing interface for feature code while shielding transport details.
+ * Key dependencies:
+ * - ./auth
+ * - ./normalizers
+ * - ./mockPolicy
+ * - ../analytics/zaraz
+ * Side effects:
+ * - Performs HTTP requests to backend endpoints via shared API clients.
+ * Role in app flow:
+ * - Acts as the data boundary between UI code and backend HTTP endpoints.
+ */
+import api from './auth';
 import {
   normalizePaginatedResponse,
   normalizeUploadResponse,
@@ -239,3 +254,5 @@ export const gomsolMarketApi = {
 };
 
 export default gomsolMarketApi;
+
+

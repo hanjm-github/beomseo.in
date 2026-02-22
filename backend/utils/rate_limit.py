@@ -8,6 +8,12 @@ from flask_limiter.util import get_remote_address
 
 
 def _rate_limit_key():
+    """
+    Build limiter key by authenticated user when possible, else by client IP.
+
+    This prevents one user from consuming another user's quota behind the same
+    proxy while still supporting anonymous throttling.
+    """
     try:
         verify_jwt_in_request(optional=True)
         identity = get_jwt_identity()
@@ -27,6 +33,7 @@ limiter = Limiter(
 
 
 def init_limiter(app):
+    """Initialize limiter with app-level storage and safety defaults."""
     storage_uri = app.config.get('RATELIMIT_STORAGE_URI') or 'memory://'
     app.config.setdefault('RATELIMIT_STORAGE_URI', storage_uri)
     app.config.setdefault('RATELIMIT_HEADERS_ENABLED', True)
@@ -35,6 +42,7 @@ def init_limiter(app):
 
 
 def apply_blueprint_write_limit(blueprint, limit_value):
+    """Apply shared write-method limit once per blueprint instance."""
     if not blueprint:
         return
     if getattr(blueprint, '_write_limit_applied', False):
@@ -44,6 +52,7 @@ def apply_blueprint_write_limit(blueprint, limit_value):
 
 
 def build_rate_limit_response(retry_after=None):
+    """Build consistent JSON 429 response with optional Retry-After header."""
     payload = {
         'error': '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.',
         'error_code': 'rate_limit_exceeded',

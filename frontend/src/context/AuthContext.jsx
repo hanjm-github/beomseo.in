@@ -1,3 +1,18 @@
+﻿/**
+ * @file src/context/AuthContext.jsx
+ * @description Defines React context state and helper hooks shared across the app.
+ * Responsibilities:
+ * - Own shared cross-route state and lifecycle hooks consumed by descendant components.
+ * Key dependencies:
+ * - react
+ * - ../api/auth
+ * - ../security/tokenStore
+ * - ../analytics/zaraz
+ * Side effects:
+ * - Interacts with browser runtime APIs.
+ * Role in app flow:
+ * - Supplies cross-cutting state to page and component layers during runtime.
+ */
 /* eslint-disable react-refresh/only-export-components */
 /**
  * Authentication Context for managing user state and auth operations.
@@ -9,6 +24,9 @@ import { trackAuthFailure, trackAuthSuccess } from '../analytics/zaraz';
 
 const AuthContext = createContext(null);
 
+/**
+ * AuthProvider module entry point.
+ */
 export function AuthProvider({ children }) {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -147,4 +165,6 @@ export function useAuth() {
     }
     return context;
 }
+
+
 

@@ -1,3 +1,19 @@
+﻿/**
+ * @file src/pages/GomsolMarket/GomsolMarketComposeView.jsx
+ * @description Implements route-level views and page orchestration logic.
+ * Responsibilities:
+ * - Coordinate route state, fetch lifecycles, and permission-driven page behavior.
+ * Key dependencies:
+ * - react
+ * - react-router-dom
+ * - lucide-react
+ * - ../../api/gomsolMarket
+ * Side effects:
+ * - Influences client-side routing and navigation state.
+ * - Applies sanitization before rendering or using external URL/HTML values.
+ * Role in app flow:
+ * - Owns route-level user flows and composes feature components.
+ */
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Loader2, X } from 'lucide-react';
@@ -7,6 +23,9 @@ import { useAuth } from '../../context/AuthContext';
 import styles from '../../components/gomsolmarket/gomsolmarket.module.css';
 import '../page-shell.css';
 
+/**
+ * GomsolMarketComposeView module entry point.
+ */
 export default function GomsolMarketComposeView() {
   const navigate = useNavigate();
   const { user, isAuthenticated, loading: authLoading } = useAuth();
@@ -340,3 +359,5 @@ export default function GomsolMarketComposeView() {
     </div>
   );
 }
+
+

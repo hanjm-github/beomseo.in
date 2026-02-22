@@ -1,3 +1,16 @@
+﻿/**
+ * @file src/components/clubRecruit/RecruitCard.jsx
+ * @description Defines reusable UI components and feature-specific interaction blocks.
+ * Responsibilities:
+ * - Render composable UI pieces with clear prop-driven behavior and minimal coupling.
+ * Key dependencies:
+ * - react-router-dom
+ * - ./clubRecruit.module.css
+ * Side effects:
+ * - No significant side effects beyond React state and rendering behavior.
+ * Role in app flow:
+ * - Implements reusable view logic consumed by route-level pages.
+ */
 import { Link } from 'react-router-dom';
 import styles from './clubRecruit.module.css';
 
@@ -22,6 +35,9 @@ function initials(name) {
   return name.slice(0, 2).toUpperCase();
 }
 
+/**
+ * RecruitCard module entry point.
+ */
 export default function RecruitCard({ item, basePath = '/community/club-recruit', showStatus = false }) {
   const { id, clubName, field, gradeGroup, posterUrl, extraNote, applyPeriod, status } = item;
 
@@ -65,3 +81,5 @@ export default function RecruitCard({ item, basePath = '/community/club-recruit'
     </Link>
   );
 }
+
+

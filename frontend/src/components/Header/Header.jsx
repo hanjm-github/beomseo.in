@@ -1,3 +1,20 @@
+﻿/**
+ * @file src/components/Header/Header.jsx
+ * @description Defines reusable UI components and feature-specific interaction blocks.
+ * Responsibilities:
+ * - Render composable UI pieces with clear prop-driven behavior and minimal coupling.
+ * Key dependencies:
+ * - react
+ * - react-router-dom
+ * - lucide-react
+ * - ../../context/ThemeContext
+ * Side effects:
+ * - Influences client-side routing and navigation state.
+ * - Interacts with browser runtime APIs.
+ * - Schedules deferred work using timer-based execution.
+ * Role in app flow:
+ * - Implements reusable view logic consumed by route-level pages.
+ */
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -51,6 +68,9 @@ const navigationItems = [
   { label: '범서고 갤러리', path: '/gallery' },
 ];
 
+/**
+ * Header module entry point.
+ */
 export default function Header() {
   const { isDark, toggleTheme } = useTheme();
   const { user, isAuthenticated, logout, loading } = useAuth();
@@ -276,3 +296,5 @@ export default function Header() {
     </header>
   );
 }
+
+

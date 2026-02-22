@@ -1,3 +1,18 @@
+﻿/**
+ * @file src/security/htmlSanitizer.js
+ * @description Centralizes client-side safety guards for storage, URLs, and HTML handling.
+ * Responsibilities:
+ * - Enforce frontend trust boundaries before rendering or navigating untrusted values.
+ * Key dependencies:
+ * - dompurify
+ * - ./urlPolicy
+ * Side effects:
+ * - Applies frontend trust-boundary checks for URLs, HTML content, and token persistence.
+ * - Interacts with browser runtime APIs.
+ * - Applies sanitization before rendering or using external URL/HTML values.
+ * Role in app flow:
+ * - Protects rendering and navigation surfaces against unsafe input.
+ */
 import DOMPurify from 'dompurify';
 import { toSafeAssetUrl, toSafeExternalHref } from './urlPolicy';
 
@@ -60,6 +75,9 @@ function sanitizeUriAttributes(cleanHtml) {
   return doc.body.innerHTML;
 }
 
+/**
+ * sanitizeRichHtml module entry point.
+ */
 export function sanitizeRichHtml(rawHtml) {
   const source = typeof rawHtml === 'string' ? rawHtml : '';
   if (!source) return '';
@@ -75,6 +93,9 @@ export function sanitizeRichHtml(rawHtml) {
   return sanitizeUriAttributes(clean);
 }
 
+/**
+ * toPlainText module entry point.
+ */
 export function toPlainText(rawHtml) {
   const clean = sanitizeRichHtml(rawHtml);
   if (!clean) return '';
@@ -84,3 +105,5 @@ export function toPlainText(rawHtml) {
   const doc = parser.parseFromString(clean, 'text/html');
   return (doc.body.textContent || '').trim();
 }
+
+

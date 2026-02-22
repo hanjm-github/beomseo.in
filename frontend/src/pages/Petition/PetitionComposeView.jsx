@@ -1,4 +1,19 @@
-﻿import { useState } from 'react';
+﻿/**
+ * @file src/pages/Petition/PetitionComposeView.jsx
+ * @description Implements route-level views and page orchestration logic.
+ * Responsibilities:
+ * - Coordinate route state, fetch lifecycles, and permission-driven page behavior.
+ * Key dependencies:
+ * - react
+ * - react-router-dom
+ * - ../../api/petition
+ * - ../../context/AuthContext
+ * Side effects:
+ * - Influences client-side routing and navigation state.
+ * Role in app flow:
+ * - Owns route-level user flows and composes feature components.
+ */
+import { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { petitionApi, THRESHOLD_DEFAULT } from '../../api/petition';
 import { useAuth } from '../../context/AuthContext';
@@ -22,6 +37,9 @@ const CATEGORY_OPTIONS = [
   '융합인재부',
 ];
 
+/**
+ * PetitionComposeView module entry point.
+ */
 export default function PetitionComposeView() {
   const { isAuthenticated, loading: authLoading } = useAuth();
   const navigate = useNavigate();
@@ -164,3 +182,5 @@ export default function PetitionComposeView() {
     </div>
   );
 }
+
+

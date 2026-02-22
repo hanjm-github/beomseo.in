@@ -1,3 +1,18 @@
+﻿/**
+ * @file src/pages/CommunityPage.jsx
+ * @description Implements route-level views and page orchestration logic.
+ * Responsibilities:
+ * - Coordinate route state, fetch lifecycles, and permission-driven page behavior.
+ * Key dependencies:
+ * - react
+ * - react-router-dom
+ * - lucide-react
+ * - ./page-shell.css
+ * Side effects:
+ * - Influences client-side routing and navigation state.
+ * Role in app flow:
+ * - Owns route-level user flows and composes feature components.
+ */
 import { createElement, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { MessageCircle, Users, Shuffle, Vote, PlugZap, ShieldCheck, Package, Store } from 'lucide-react';
@@ -62,6 +77,9 @@ const boards = [
   },
 ];
 
+/**
+ * CommunityPage module entry point.
+ */
 export default function CommunityPage() {
   const { pathname } = useLocation();
   const active = useMemo(() => boards.find((b) => pathname.includes(b.key))?.key, [pathname]);
@@ -101,3 +119,5 @@ export default function CommunityPage() {
     </div>
   );
 }
+
+

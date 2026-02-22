@@ -1,4 +1,19 @@
-﻿import { useEffect, useMemo, useState } from 'react';
+﻿/**
+ * @file src/pages/Petition/PetitionListView.jsx
+ * @description Implements route-level views and page orchestration logic.
+ * Responsibilities:
+ * - Coordinate route state, fetch lifecycles, and permission-driven page behavior.
+ * Key dependencies:
+ * - react
+ * - react-router-dom
+ * - lucide-react
+ * - ../../components/petition/PetitionCard
+ * Side effects:
+ * - Influences client-side routing and navigation state.
+ * Role in app flow:
+ * - Owns route-level user flows and composes feature components.
+ */
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Filter, Plus, RotateCcw, Search } from 'lucide-react';
 import PetitionCard from '../../components/petition/PetitionCard';
@@ -40,6 +55,9 @@ const CATEGORY_FILTERS = [
 
 const PAGE_SIZE = 12;
 
+/**
+ * PetitionListView module entry point.
+ */
 export default function PetitionListView() {
   const { user, isAuthenticated } = useAuth();
   const [params, setParams] = useSearchParams();
@@ -293,3 +311,5 @@ export default function PetitionListView() {
     </div>
   );
 }
+
+

@@ -1,5 +1,20 @@
+﻿/**
+ * @file src/components/survey/SurveyCreditBadge.jsx
+ * @description Defines reusable UI components and feature-specific interaction blocks.
+ * Responsibilities:
+ * - Render composable UI pieces with clear prop-driven behavior and minimal coupling.
+ * Key dependencies:
+ * - ./survey.module.css
+ * Side effects:
+ * - No significant side effects beyond React state and rendering behavior.
+ * Role in app flow:
+ * - Implements reusable view logic consumed by route-level pages.
+ */
 import styles from './survey.module.css';
 
+/**
+ * SurveyCreditBadge module entry point.
+ */
 export default function SurveyCreditBadge({ credits }) {
   const earned = credits?.earned ?? 0;
   const used = credits?.used ?? 0;
@@ -19,3 +34,5 @@ export default function SurveyCreditBadge({ credits }) {
     </div>
   );
 }
+
+

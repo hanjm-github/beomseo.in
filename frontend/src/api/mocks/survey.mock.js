@@ -1,3 +1,16 @@
+﻿/**
+ * @file src/api/mocks/survey.mock.js
+ * @description Implements deterministic mock API behavior for development fallback scenarios.
+ * Responsibilities:
+ * - Provide in-memory mock responses that mirror backend contracts and pagination semantics.
+ * Key dependencies:
+ * - ../mockSurveyCreditStore
+ * Side effects:
+ * - Mutates in-memory mock state to emulate backend persistence semantics.
+ * - Schedules deferred work using timer-based execution.
+ * Role in app flow:
+ * - Supports local and development flows when network-backed API calls are unavailable.
+ */
 import { earnMockSurveyCredits, getMockSurveyCredits } from '../mockSurveyCreditStore';
 
 const PAGE_SIZE_DEFAULT = 12;
@@ -244,4 +257,7 @@ export const surveyMockApi = {
   summary,
   rawResponses,
 };
+
+
+
 

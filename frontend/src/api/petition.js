@@ -1,4 +1,19 @@
 ﻿/**
+ * @file src/api/petition.js
+ * @description Encapsulates backend API contracts, normalization, and fallback behavior.
+ * Responsibilities:
+ * - Expose a stable API-facing interface for feature code while shielding transport details.
+ * Key dependencies:
+ * - ./auth
+ * - ./normalizers
+ * - ./mockPolicy
+ * - ../analytics/zaraz
+ * Side effects:
+ * - Performs HTTP requests to backend endpoints via shared API clients.
+ * Role in app flow:
+ * - Acts as the data boundary between UI code and backend HTTP endpoints.
+ */
+/**
  * Petition board API with optional dev-only mock fallback.
  */
 import api from './auth';
@@ -144,3 +159,5 @@ export const petitionApi = {
 };
 
 export default petitionApi;
+
+

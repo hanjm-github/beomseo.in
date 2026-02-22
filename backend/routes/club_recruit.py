@@ -33,12 +33,14 @@ club_recruit_bp = Blueprint('club_recruit', __name__, url_prefix='/api/club-recr
 
 
 def parse_bool(val):
+    """Parse permissive boolean query values."""
     if val is None:
         return None
     return str(val).lower() in {'1', 'true', 'yes', 'on'}
 
 
 def optional_current_user():
+    """Return authenticated user when token exists; otherwise None."""
     try:
         verify_jwt_in_request(optional=True)
         uid = get_jwt_identity()
@@ -48,6 +50,7 @@ def optional_current_user():
 
 
 def validate_payload(data):
+    """Validate recruit payload and normalize date/poster fields."""
     errors = []
     club_name = (data.get('clubName') or '').strip()
     field = (data.get('field') or '').strip()
@@ -99,16 +102,19 @@ def validate_payload(data):
 
 
 def is_admin(user: User):
+    """Role helper for approval visibility and moderation checks."""
     return user and user.role == UserRole.ADMIN
 
 
 def can_edit(item: ClubRecruit, user: User):
+    """Author can edit own non-deleted items; admin can edit any item."""
     if is_admin(user):
         return True
     return user and item.author_id == user.id and not item.deleted_at
 
 
 def apply_filters(query, grade_group, status, q_text, user):
+    """Apply list filters and role-based visibility constraints."""
     query = query.filter(ClubRecruit.deleted_at.is_(None))
     if grade_group in {GradeGroup.LOWER.value, GradeGroup.LOWER}:
         query = query.filter(ClubRecruit.grade_group == GradeGroup.LOWER)
@@ -145,6 +151,7 @@ def apply_filters(query, grade_group, status, q_text, user):
 
 
 def apply_sort(query, sort):
+    """Apply supported sort modes (`recent`, `deadline`)."""
     if sort == 'deadline':
         # Null apply_end last
         return query.order_by(
@@ -159,6 +166,7 @@ def apply_sort(query, sort):
 @club_recruit_bp.route('/', methods=['GET'])
 @cache_json_response('club_recruit')
 def list_recruits():
+    """List recruit posts with moderation-aware visibility policy."""
     grade_group = request.args.get('gradeGroup')
     q_text = request.args.get('q') or request.args.get('query')
     sort = request.args.get('sort', 'recent')
@@ -196,6 +204,7 @@ def list_recruits():
 @club_recruit_bp.route('/', methods=['POST'])
 @jwt_required()
 def create_recruit():
+    """Create recruit post in pending approval state."""
     data = request.get_json() or {}
     errors, payload = validate_payload(data)
     if errors:
@@ -231,6 +240,7 @@ def create_recruit():
 
 
 def fetch_or_404(item_id):
+    """Fetch non-deleted recruit row with author/approver eager-loaded."""
     item = ClubRecruit.query.options(
         joinedload(ClubRecruit.author),
         joinedload(ClubRecruit.approved_by),
@@ -242,6 +252,7 @@ def fetch_or_404(item_id):
 
 @club_recruit_bp.route('/<int:item_id>', methods=['GET'])
 def get_recruit(item_id):
+    """Return recruit detail with visibility checks for pending rows."""
     item = fetch_or_404(item_id)
     if not item:
         return jsonify({'error': '게시글을 찾을 수 없습니다.'}), 404
@@ -262,6 +273,7 @@ def get_recruit(item_id):
 @club_recruit_bp.route('/<int:item_id>', methods=['PUT'])
 @jwt_required()
 def update_recruit(item_id):
+    """Update recruit post fields when caller has edit permission."""
     item = fetch_or_404(item_id)
     if not item:
         return jsonify({'error': '게시글을 찾을 수 없습니다.'}), 404
@@ -299,6 +311,7 @@ def update_recruit(item_id):
 @jwt_required()
 @require_role(UserRole.ADMIN)
 def delete_recruit(item_id):
+    """Soft-delete recruit post (admin only)."""
     item = fetch_or_404(item_id)
     if not item:
         return jsonify({'error': '게시글을 찾을 수 없습니다.'}), 404
@@ -318,6 +331,7 @@ def delete_recruit(item_id):
 @jwt_required()
 @require_role(UserRole.ADMIN)
 def approve_recruit(item_id):
+    """Approve recruit post and capture approver metadata."""
     item = fetch_or_404(item_id)
     if not item:
         return jsonify({'error': '게시글을 찾을 수 없습니다.'}), 404
@@ -338,6 +352,7 @@ def approve_recruit(item_id):
 @jwt_required()
 @require_role(UserRole.ADMIN)
 def unapprove_recruit(item_id):
+    """Revert recruit post back to pending approval."""
     item = fetch_or_404(item_id)
     if not item:
         return jsonify({'error': '게시글을 찾을 수 없습니다.'}), 404
@@ -358,6 +373,7 @@ def unapprove_recruit(item_id):
 @club_recruit_bp.route('/uploads/', methods=['POST'])
 @jwt_required()
 def upload_poster():
+    """Validate/store club recruit poster image."""
     if 'file' not in request.files:
         return jsonify({'error': 'file 필드가 필요합니다.'}), 400
     file = request.files['file']
@@ -380,6 +396,7 @@ def upload_poster():
 
 @club_recruit_bp.route('/uploads/<path:filename>', methods=['GET'], strict_slashes=False)
 def serve_poster(filename):
+    """Serve poster with pending-content access controls and temp fallback."""
     upload_dir = resolve_scope_upload_dir(current_app.config, 'club_recruit')
     ensure_dir(upload_dir)
     file_path = Path(upload_dir) / filename

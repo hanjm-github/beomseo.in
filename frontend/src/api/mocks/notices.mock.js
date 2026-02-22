@@ -1,3 +1,17 @@
+﻿/**
+ * @file src/api/mocks/notices.mock.js
+ * @description Implements deterministic mock API behavior for development fallback scenarios.
+ * Responsibilities:
+ * - Provide in-memory mock responses that mirror backend contracts and pagination semantics.
+ * Key dependencies:
+ * - ../../config/env
+ * Side effects:
+ * - Mutates in-memory mock state to emulate backend persistence semantics.
+ * - Interacts with browser runtime APIs.
+ * - Schedules deferred work using timer-based execution.
+ * Role in app flow:
+ * - Supports local and development flows when network-backed API calls are unavailable.
+ */
 import {
   UPLOAD_MAX_ATTACHMENTS,
   UPLOAD_MAX_FILE_SIZE_BYTES,
@@ -101,6 +115,7 @@ function applyListFilters(data, params = {}) {
   switch (sort) {
     case 'views':
       result.sort((a, b) => {
+        // Pinned notices keep absolute precedence regardless of secondary sort key.
         if (a.pinned !== b.pinned) return b.pinned - a.pinned;
         return (b.views || 0) - (a.views || 0) || new Date(b.createdAt) - new Date(a.createdAt);
       });
@@ -280,3 +295,6 @@ export const noticesMockApi = {
   MAX_ATTACHMENTS,
   MAX_FILE_SIZE,
 };
+
+
+

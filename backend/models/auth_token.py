@@ -13,6 +13,12 @@ class AuthTokenType(str, Enum):
 
 
 class AuthToken(db.Model):
+    """
+    Persisted JWT session state.
+
+    This table enables revocation/rotation controls that are not possible with
+    stateless JWT validation alone.
+    """
     __tablename__ = 'auth_tokens'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -41,5 +47,5 @@ class AuthToken(db.Model):
 
     @property
     def is_revoked(self):
+        """Convenience flag used by token state checks."""
         return self.revoked_at is not None
-

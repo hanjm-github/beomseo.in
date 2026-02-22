@@ -1,3 +1,18 @@
+﻿/**
+ * @file src/pages/GomsolMarket/GomsolMarketListView.jsx
+ * @description Implements route-level views and page orchestration logic.
+ * Responsibilities:
+ * - Coordinate route state, fetch lifecycles, and permission-driven page behavior.
+ * Key dependencies:
+ * - react
+ * - react-router-dom
+ * - lucide-react
+ * - ../../api/gomsolMarket
+ * Side effects:
+ * - No significant side effects beyond React state and rendering behavior.
+ * Role in app flow:
+ * - Owns route-level user flows and composes feature components.
+ */
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Plus } from 'lucide-react';
@@ -16,6 +31,9 @@ function toSafePage(value) {
   return Math.floor(parsed);
 }
 
+/**
+ * GomsolMarketListView module entry point.
+ */
 export default function GomsolMarketListView() {
   const [params, setParams] = useSearchParams();
   const { user, isAuthenticated } = useAuth();
@@ -184,3 +202,5 @@ export default function GomsolMarketListView() {
     </div>
   );
 }
+
+

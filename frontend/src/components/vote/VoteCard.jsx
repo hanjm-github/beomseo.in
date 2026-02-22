@@ -1,3 +1,17 @@
+﻿/**
+ * @file src/components/vote/VoteCard.jsx
+ * @description Defines reusable UI components and feature-specific interaction blocks.
+ * Responsibilities:
+ * - Render composable UI pieces with clear prop-driven behavior and minimal coupling.
+ * Key dependencies:
+ * - lucide-react
+ * - react-router-dom
+ * - ./vote.module.css
+ * Side effects:
+ * - No significant side effects beyond React state and rendering behavior.
+ * Role in app flow:
+ * - Implements reusable view logic consumed by route-level pages.
+ */
 import { Clock3, Percent, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import styles from './vote.module.css';
@@ -14,6 +28,9 @@ const formatDateTime = (iso) => {
   });
 };
 
+/**
+ * VoteCard module entry point.
+ */
 export default function VoteCard({ post, to }) {
   const sortedOptions = [...(post.options || [])].sort((a, b) => b.votes - a.votes);
   const leadOption = sortedOptions[0];
@@ -60,4 +77,6 @@ export default function VoteCard({ post, to }) {
     </Link>
   );
 }
+
+
 

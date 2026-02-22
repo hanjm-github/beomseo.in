@@ -27,6 +27,7 @@ class GomsolMarketApprovalStatus(str, Enum):
 
 
 class GomsolMarketPost(db.Model):
+    """Market listing with approval workflow and sale status tracking."""
     __tablename__ = 'gomsol_market_posts'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -69,6 +70,7 @@ class GomsolMarketPost(db.Model):
     )
 
     def to_dict(self):
+        """Detail serializer used by market detail endpoints."""
         return {
             'id': self.id,
             'title': self.title,
@@ -94,6 +96,7 @@ class GomsolMarketPost(db.Model):
         }
 
     def to_list_dict(self):
+        """List serializer that returns a preview image subset."""
         images = [image.to_dict() for image in self.images]
         return {
             'id': self.id,
@@ -129,6 +132,7 @@ class GomsolMarketImage(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
     def to_dict(self):
+        """Serialize uploaded market image metadata."""
         return {
             'id': self.id,
             'name': self.name,

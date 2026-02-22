@@ -1,3 +1,17 @@
+﻿/**
+ * @file src/security/tokenStore.js
+ * @description Centralizes client-side safety guards for storage, URLs, and HTML handling.
+ * Responsibilities:
+ * - Enforce frontend trust boundaries before rendering or navigating untrusted values.
+ * Key dependencies:
+ * - Module-local logic without direct import dependencies.
+ * Side effects:
+ * - Applies frontend trust-boundary checks for URLs, HTML content, and token persistence.
+ * - Reads or writes localStorage for persisted client state.
+ * - Interacts with browser runtime APIs.
+ * Role in app flow:
+ * - Protects rendering and navigation surfaces against unsafe input.
+ */
 const ACCESS_TOKEN_KEY = 'access_token';
 const REFRESH_TOKEN_KEY = 'refresh_token';
 
@@ -70,3 +84,5 @@ export const tokenStore = {
 };
 
 export default tokenStore;
+
+

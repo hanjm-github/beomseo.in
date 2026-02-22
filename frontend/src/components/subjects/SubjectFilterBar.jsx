@@ -1,4 +1,17 @@
-﻿import { Search } from 'lucide-react';
+﻿/**
+ * @file src/components/subjects/SubjectFilterBar.jsx
+ * @description Defines reusable UI components and feature-specific interaction blocks.
+ * Responsibilities:
+ * - Render composable UI pieces with clear prop-driven behavior and minimal coupling.
+ * Key dependencies:
+ * - lucide-react
+ * - ./subjects.module.css
+ * Side effects:
+ * - No significant side effects beyond React state and rendering behavior.
+ * Role in app flow:
+ * - Implements reusable view logic consumed by route-level pages.
+ */
+import { Search } from 'lucide-react';
 import styles from './subjects.module.css';
 
 const subjectTags = [
@@ -11,6 +24,9 @@ const subjectTags = [
   { value: '예', label: '예체능' },
 ];
 
+/**
+ * SubjectFilterBar module entry point.
+ */
 export default function SubjectFilterBar({
   search,
   onSearchChange,
@@ -86,3 +102,5 @@ export default function SubjectFilterBar({
     </div>
   );
 }
+
+

@@ -26,12 +26,14 @@ subject_changes_bp = Blueprint('subject_changes', __name__, url_prefix='/api/sub
 
 
 def parse_bool(val):
+    """Parse permissive boolean query values."""
     if val is None:
         return None
     return str(val).lower() in {'1', 'true', 'yes', 'on'}
 
 
 def optional_current_user():
+    """Return authenticated user when token exists; otherwise None."""
     try:
         verify_jwt_in_request(optional=True)
         uid = get_jwt_identity()
@@ -41,6 +43,7 @@ def optional_current_user():
 
 
 def _valid_url(url: str):
+    """Minimal allowlist URL validator for contact link payloads."""
     if not url:
         return False
     lower = url.lower()
@@ -48,6 +51,7 @@ def _valid_url(url: str):
 
 
 def validate_payload(data):
+    """Validate board payload and normalize contact link structures."""
     errors = []
     try:
         grade = int(data.get('grade'))
@@ -123,10 +127,12 @@ def validate_payload(data):
 
 
 def is_admin(user: User):
+    """Role helper for moderation branches."""
     return user and user.role == UserRole.ADMIN
 
 
 def can_edit(item: SubjectChange, user: User):
+    """Author can edit own row; admin can edit any row."""
     if is_admin(user):
         return True
     return user and item.author_id == user.id and not item.deleted_at
@@ -134,6 +140,7 @@ def can_edit(item: SubjectChange, user: User):
 
 def apply_filters(query, grade=None, q_text=None, subject_tag=None, hide_closed=None,
                   only_mine=None, status=None, current_user: User = None):
+    """Apply list filters and enforce role-aware visibility rules."""
     query = query.filter(SubjectChange.deleted_at.is_(None))
     if grade in {1, 2, 3}:
         query = query.filter(SubjectChange.grade == grade)
@@ -183,6 +190,7 @@ def apply_filters(query, grade=None, q_text=None, subject_tag=None, hide_closed=
 
 
 def fetch_or_404(item_id):
+    """Fetch one subject-change item with eager-loaded author/approver."""
     item = SubjectChange.query.options(
         joinedload(SubjectChange.author),
         joinedload(SubjectChange.approved_by),
@@ -196,6 +204,7 @@ def fetch_or_404(item_id):
 @subject_changes_bp.route('/', methods=['GET'])
 @cache_json_response('subject_changes')
 def list_subject_changes():
+    """List rows with moderation-aware visibility and optional admin filters."""
     grade = request.args.get('grade')
     try:
         grade = int(grade) if grade is not None else None
@@ -238,6 +247,7 @@ def list_subject_changes():
 @subject_changes_bp.route('/', methods=['POST'])
 @jwt_required()
 def create_subject_change():
+    """Create subject-change row in pending approval state."""
     data = request.get_json() or {}
     errors, payload = validate_payload(data)
     if errors:
@@ -273,6 +283,7 @@ def create_subject_change():
 @subject_changes_bp.route('/<int:item_id>', methods=['GET'])
 @jwt_required()
 def get_subject_change(item_id):
+    """Return one item with access checks for unapproved rows."""
     item = fetch_or_404(item_id)
     if not item:
         return jsonify({'error': '게시글을 찾을 수 없습니다.'}), 404
@@ -296,6 +307,7 @@ def get_subject_change(item_id):
 @subject_changes_bp.route('/<int:item_id>', methods=['PUT'])
 @jwt_required()
 def update_subject_change(item_id):
+    """Update item and reset approval when non-admin changes content."""
     item = fetch_or_404(item_id)
     if not item:
         return jsonify({'error': '게시글을 찾을 수 없습니다.'}), 404
@@ -334,6 +346,7 @@ def update_subject_change(item_id):
 @subject_changes_bp.route('/<int:item_id>', methods=['DELETE'])
 @jwt_required()
 def delete_subject_change(item_id):
+    """Soft-delete item when caller is owner or admin."""
     item = fetch_or_404(item_id)
     if not item:
         return jsonify({'error': '게시글을 찾을 수 없습니다.'}), 404
@@ -357,6 +370,7 @@ def delete_subject_change(item_id):
 @jwt_required()
 @require_role(UserRole.ADMIN)
 def approve_subject_change(item_id):
+    """Approve item and capture approver metadata."""
     item = fetch_or_404(item_id)
     if not item:
         return jsonify({'error': '게시글을 찾을 수 없습니다.'}), 404
@@ -377,6 +391,7 @@ def approve_subject_change(item_id):
 @jwt_required()
 @require_role(UserRole.ADMIN)
 def unapprove_subject_change(item_id):
+    """Return item to pending approval state."""
     item = fetch_or_404(item_id)
     if not item:
         return jsonify({'error': '게시글을 찾을 수 없습니다.'}), 404
@@ -396,6 +411,7 @@ def unapprove_subject_change(item_id):
 @subject_changes_bp.route('/<int:item_id>/status', methods=['POST'])
 @jwt_required()
 def change_match_status(item_id):
+    """Update match status (`open`, `negotiating`, `matched`)."""
     item = fetch_or_404(item_id)
     if not item:
         return jsonify({'error': '게시글을 찾을 수 없습니다.'}), 404
@@ -427,6 +443,7 @@ def change_match_status(item_id):
 @jwt_required()
 @cache_json_response('subject_changes')
 def list_comments(item_id):
+    """List comments with same visibility policy as item detail."""
     item = fetch_or_404(item_id)
     if not item:
         return jsonify({'error': '게시글을 찾을 수 없습니다.'}), 404
@@ -466,6 +483,7 @@ def list_comments(item_id):
 @subject_changes_bp.route('/<int:item_id>/comments', methods=['POST'])
 @jwt_required()
 def create_comment(item_id):
+    """Create comment and increment denormalized comment counter."""
     item = fetch_or_404(item_id)
     if not item:
         return jsonify({'error': '게시글을 찾을 수 없습니다.'}), 404
@@ -499,6 +517,7 @@ def create_comment(item_id):
 @subject_changes_bp.route('/<int:item_id>/comments/<int:comment_id>', methods=['DELETE'])
 @jwt_required()
 def delete_comment(item_id, comment_id):
+    """Soft-delete comment and decrement parent comment count."""
     item = fetch_or_404(item_id)
     if not item:
         return jsonify({'error': '게시글을 찾을 수 없습니다.'}), 404

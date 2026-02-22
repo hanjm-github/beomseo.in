@@ -1,3 +1,18 @@
+﻿/**
+ * @file src/components/notices/NoticeCard.jsx
+ * @description Defines reusable UI components and feature-specific interaction blocks.
+ * Responsibilities:
+ * - Render composable UI pieces with clear prop-driven behavior and minimal coupling.
+ * Key dependencies:
+ * - lucide-react
+ * - react-router-dom
+ * - ../RoleName/RoleName
+ * - ./notices.module.css
+ * Side effects:
+ * - No significant side effects beyond React state and rendering behavior.
+ * Role in app flow:
+ * - Implements reusable view logic consumed by route-level pages.
+ */
 import { Paperclip, Eye, Pin, AlertTriangle, GraduationCap } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import RoleName from '../RoleName/RoleName';
@@ -12,6 +27,9 @@ function Badge({ icon: Icon, label, tone = 'neutral' }) {
   );
 }
 
+/**
+ * NoticeCard module entry point.
+ */
 export default function NoticeCard({ notice, to }) {
   const attachmentsCount =
     typeof notice.attachmentsCount === 'number'
@@ -71,3 +89,5 @@ export default function NoticeCard({ notice, to }) {
     </Link>
   );
 }
+
+

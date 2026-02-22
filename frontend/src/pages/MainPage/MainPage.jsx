@@ -1,4 +1,19 @@
-﻿import { useEffect, useMemo, useState } from 'react';
+﻿/**
+ * @file src/pages/MainPage/MainPage.jsx
+ * @description Implements route-level views and page orchestration logic.
+ * Responsibilities:
+ * - Coordinate route state, fetch lifecycles, and permission-driven page behavior.
+ * Key dependencies:
+ * - react
+ * - lucide-react
+ * - react-router-dom
+ * - ../../components/CountdownWidget
+ * Side effects:
+ * - No significant side effects beyond React state and rendering behavior.
+ * Role in app flow:
+ * - Owns route-level user flows and composes feature components.
+ */
+import { useEffect, useMemo, useState } from 'react';
 import {
     Bell,
     MessageCircle,
@@ -21,6 +36,9 @@ import { APP_NAME } from '../../config/env';
 
 import styles from './MainPage.module.css';
 
+/**
+ * MainPage module entry point.
+ */
 export default function MainPage() {
     const [activeTab, setActiveTab] = useState('school');
     const [announcements, setAnnouncements] = useState({ school: [], council: [] });
@@ -261,3 +279,5 @@ export default function MainPage() {
         </div>
     );
 }
+
+

@@ -30,6 +30,7 @@ NICKNAME_MAX_LENGTH = 50
 
 
 def _password_is_strong(password: str) -> bool:
+    """Validate password policy used during registration."""
     if len(password) < PASSWORD_MIN_LENGTH or len(password) > PASSWORD_MAX_LENGTH:
         return False
     if not re.search(r'[A-Z]', password):
@@ -62,7 +63,7 @@ def register():
     Register a new user.
     IP-restricted to Ulsan Education Office network.
     """
-    # Check IP restriction
+    # Registration is intentionally network-restricted for school-only onboarding.
     client_ip = get_client_ip()
     allowed_ips = current_app.config.get('ALLOWED_SIGNUP_IPS', [])
 
@@ -76,7 +77,7 @@ def register():
 
     data = request.get_json()
 
-    # Validate required fields
+    # Body validation happens before DB access to keep error responses deterministic.
     if not data:
         return jsonify({'error': 'Request body is required'}), 400
 
@@ -107,7 +108,7 @@ def register():
             )
         }), 400
     
-    # Check if nickname already exists
+    # Nickname uniqueness is validated early for user-friendly conflicts.
     existing_user = User.query.filter_by(nickname=nickname).first()
     if existing_user:
         return jsonify({'error': '이미 사용 중인 닉네임입니다.'}), 409
@@ -143,7 +144,7 @@ def register():
 @auth_bp.route('/login', methods=['POST'])
 @limiter.limit(lambda: current_app.config.get('RATELIMIT_LOGIN_LIMIT', '5 per minute'))
 def login():
-    """Login with nickname and password."""
+    """Authenticate user and issue fresh access/refresh token pair."""
     data = request.get_json()
 
     if not data:
@@ -155,7 +156,7 @@ def login():
     if not nickname or not password:
         return jsonify({'error': '닉네임과 비밀번호를 입력해주세요.'}), 400
 
-    # Find user
+    # Lookup is nickname-based by product design.
     user = User.query.filter_by(nickname=nickname).first()
 
     if not user or not verify_password(password, user.password_hash):
@@ -179,7 +180,12 @@ def login():
 @jwt_required(refresh=True)
 @limiter.limit(lambda: current_app.config.get('RATELIMIT_REFRESH_LIMIT', '20 per 10 minute'))
 def refresh():
-    """Refresh access token using refresh token."""
+    """
+    Rotate refresh token and issue a new token pair.
+
+    Rotation ensures previously presented refresh tokens can be revoked as
+    replayed/old credentials.
+    """
     user_id = parse_jwt_identity_to_int()
     if user_id is None:
         return jsonify({'error': 'Invalid token identity'}), 401
@@ -221,6 +227,7 @@ def logout():
     if not user:
         return jsonify({'error': 'User not found'}), 404
 
+    # Access token is always revoked; refresh token revocation is best-effort.
     jwt_payload = get_jwt() or {}
     revoke_token_jti(jwt_payload.get('jti'), reason='logout')
 

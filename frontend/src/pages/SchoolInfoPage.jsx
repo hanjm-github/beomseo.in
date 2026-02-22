@@ -1,8 +1,24 @@
+﻿/**
+ * @file src/pages/SchoolInfoPage.jsx
+ * @description Implements route-level views and page orchestration logic.
+ * Responsibilities:
+ * - Coordinate route state, fetch lifecycles, and permission-driven page behavior.
+ * Key dependencies:
+ * - lucide-react
+ * - ./page-shell.css
+ * Side effects:
+ * - No significant side effects beyond React state and rendering behavior.
+ * Role in app flow:
+ * - Owns route-level user flows and composes feature components.
+ */
 import { Hammer } from 'lucide-react';
 import './page-shell.css';
 
 const pendingFeatures = ['교무실 지도', '점공 계산기', '오늘의 급식', '학사 캘린더'];
 
+/**
+ * SchoolInfoPage module entry point.
+ */
 export default function SchoolInfoPage() {
   return (
     <div className="page-shell">
@@ -33,3 +49,5 @@ export default function SchoolInfoPage() {
     </div>
   );
 }
+
+

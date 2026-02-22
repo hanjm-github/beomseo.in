@@ -1,3 +1,18 @@
+﻿/**
+ * @file src/pages/LoginPage.jsx
+ * @description Implements route-level views and page orchestration logic.
+ * Responsibilities:
+ * - Coordinate route state, fetch lifecycles, and permission-driven page behavior.
+ * Key dependencies:
+ * - react
+ * - react-router-dom
+ * - ../context/AuthContext
+ * - lucide-react
+ * Side effects:
+ * - Influences client-side routing and navigation state.
+ * Role in app flow:
+ * - Owns route-level user flows and composes feature components.
+ */
 /**
  * Login page component for beomseo.in website.
  */
@@ -108,3 +123,4 @@ function LoginPage() {
 }
 
 export default LoginPage;
+

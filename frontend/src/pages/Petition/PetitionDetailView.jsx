@@ -1,3 +1,20 @@
+﻿/**
+ * @file src/pages/Petition/PetitionDetailView.jsx
+ * @description Implements route-level views and page orchestration logic.
+ * Responsibilities:
+ * - Coordinate route state, fetch lifecycles, and permission-driven page behavior.
+ * Key dependencies:
+ * - react
+ * - react-router-dom
+ * - lucide-react
+ * - ../../api/petition
+ * Side effects:
+ * - Influences client-side routing and navigation state.
+ * - Interacts with browser runtime APIs.
+ * - Schedules deferred work using timer-based execution.
+ * Role in app flow:
+ * - Owns route-level user flows and composes feature components.
+ */
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { ArrowLeft, BookOpen, CheckCircle2, Clock3, Share2, ThumbsUp } from 'lucide-react';
@@ -49,6 +66,9 @@ const formatDate = (iso) => {
   }
 };
 
+/**
+ * PetitionDetailView module entry point.
+ */
 export default function PetitionDetailView() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -305,3 +325,5 @@ export default function PetitionDetailView() {
     </div>
   );
 }
+
+

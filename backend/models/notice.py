@@ -28,6 +28,7 @@ class Attachment(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
     def to_dict(self):
+        """Serialize attachment metadata for notice APIs."""
         return {
             'id': self.id,
             'name': self.name,
@@ -86,6 +87,7 @@ class Comment(db.Model):
 
 
 class Notice(db.Model):
+    """Notice aggregate including attachments, comments, and reactions."""
     __tablename__ = 'notices'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -133,6 +135,7 @@ class Notice(db.Model):
 
     @staticmethod
     def summarize(body: str) -> str:
+        """Generate plain-text summary from body for list payloads."""
         if not body:
             return ''
         text = body.replace('<', ' <').split()
@@ -142,9 +145,11 @@ class Notice(db.Model):
         return plain
 
     def tags_list(self):
+        """Return normalized tag list from comma-separated storage."""
         return [t.strip() for t in (self.tags or '').split(',') if t.strip()]
 
     def to_dict(self, my_reaction=None):
+        """Detail serializer used by notice detail endpoint."""
         role_alias = 'council' if self.author_role == UserRole.STUDENT_COUNCIL.value else self.author_role
         return {
             'id': self.id,
@@ -173,6 +178,7 @@ class Notice(db.Model):
         }
 
     def to_list_dict(self, my_reaction=None):
+        """List serializer used by notice list endpoint."""
         role_alias = 'council' if self.author_role == UserRole.STUDENT_COUNCIL.value else self.author_role
         attachments_count = len(self.attachments) if self.attachments is not None else 0
         return {
@@ -202,6 +208,7 @@ class Notice(db.Model):
 
 # Helpful scopes
 def apply_notice_filters(query, category=None, query_text=None, pinned=None, important=None, exam=None, tags=None):
+    """Reusable filter helper for notice listing queries."""
     query = query.filter(Notice.deleted_at.is_(None))
     if category in {NoticeCategory.SCHOOL.value, NoticeCategory.SCHOOL}:
         query = query.filter(Notice.category == NoticeCategory.SCHOOL)
@@ -235,6 +242,7 @@ def apply_notice_filters(query, category=None, query_text=None, pinned=None, imp
 
 
 def apply_notice_sort(query, sort_key: str):
+    """Reusable sort helper for notice list ordering."""
     if sort_key == 'views':
         return query.order_by(Notice.views.desc(), Notice.created_at.desc())
     if sort_key == 'important':

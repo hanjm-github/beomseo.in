@@ -1,6 +1,22 @@
+﻿/**
+ * @file src/components/gomsolmarket/GomsolMarketList.jsx
+ * @description Defines reusable UI components and feature-specific interaction blocks.
+ * Responsibilities:
+ * - Render composable UI pieces with clear prop-driven behavior and minimal coupling.
+ * Key dependencies:
+ * - ./GomsolMarketCard
+ * - ./gomsolmarket.module.css
+ * Side effects:
+ * - No significant side effects beyond React state and rendering behavior.
+ * Role in app flow:
+ * - Implements reusable view logic consumed by route-level pages.
+ */
 import GomsolMarketCard from './GomsolMarketCard';
 import styles from './gomsolmarket.module.css';
 
+/**
+ * GomsolMarketList module entry point.
+ */
 export default function GomsolMarketList({ items, basePath, isLoading, isAdmin, viewerId, canViewDetail = true }) {
   if (isLoading) {
     return <div className={styles.placeholder}>곰솔마켓 목록을 불러오는 중입니다.</div>;
@@ -30,3 +46,5 @@ export default function GomsolMarketList({ items, basePath, isLoading, isAdmin, 
     </div>
   );
 }
+
+

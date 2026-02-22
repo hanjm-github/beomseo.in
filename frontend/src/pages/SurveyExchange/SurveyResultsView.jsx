@@ -1,4 +1,19 @@
-﻿import { useEffect, useMemo, useState } from 'react';
+﻿/**
+ * @file src/pages/SurveyExchange/SurveyResultsView.jsx
+ * @description Implements route-level views and page orchestration logic.
+ * Responsibilities:
+ * - Coordinate route state, fetch lifecycles, and permission-driven page behavior.
+ * Key dependencies:
+ * - react
+ * - react-router-dom
+ * - lucide-react
+ * - ../../api/survey
+ * Side effects:
+ * - Interacts with browser runtime APIs.
+ * Role in app flow:
+ * - Owns route-level user flows and composes feature components.
+ */
+import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Loader2, Table } from 'lucide-react';
 import { surveyApi } from '../../api/survey';
@@ -6,6 +21,9 @@ import SurveyResultsCharts from '../../components/survey/SurveyResultsCharts';
 import styles from '../../components/survey/survey.module.css';
 import '../page-shell.css';
 
+/**
+ * SurveyResultsView module entry point.
+ */
 export default function SurveyResultsView() {
   const { id } = useParams();
   const [survey, setSurvey] = useState(null);
@@ -193,4 +211,6 @@ export default function SurveyResultsView() {
     </div>
   );
 }
+
+
 
