@@ -15,10 +15,10 @@
  */
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
-import { ReactFormBuilder, ReactFormGenerator } from 'react-form-builder2';
+import { ReactFormBuilder } from 'react-form-builder2';
 import 'react-form-builder2/dist/app.css';
 import '../../components/survey/survey-form-builder.css';
-import { ArrowLeft, Eye, Save } from 'lucide-react';
+import { ArrowLeft, Save } from 'lucide-react';
 import { surveyApi } from '../../api/survey';
 import { useAuth } from '../../context/AuthContext';
 import styles from '../../components/survey/survey.module.css';
@@ -40,7 +40,6 @@ export default function SurveyExchangeComposePage() {
     expiresAt: '',
   });
   const [formJson, setFormJson] = useState([]);
-  const [preview, setPreview] = useState(false);
   const [saving, setSaving] = useState(false);
   const loading = isEdit;
 
@@ -120,7 +119,6 @@ export default function SurveyExchangeComposePage() {
           <p className="eyebrow">설문 {isEdit ? '수정' : '작성'}</p>
           <h1>{isEdit ? '설문 수정' : '새 설문 만들기'}</h1>
           <p className="lede">승인 후 응답권 30개가 부여됩니다. 등록한 글은 관리자 승인 후 일반 사용자에게 공개됩니다.</p>
-          <p className="lede">현재 미리보기 기능 사용시 글 작성이 초기화되는 버그가 발생중입니다. 이용에 참고 부탁드립니다.</p>
         </div>
         <button className="btn btn-secondary" type="button" onClick={() => navigate(-1)}>
           <ArrowLeft size={16} /> 뒤로가기
@@ -166,9 +164,6 @@ export default function SurveyExchangeComposePage() {
           <div className={styles.composeBuilderHeader}>
             <h3 className={styles.composeBuilderTitle}>질문 빌더</h3>
             <div className={styles.composeBuilderActions}>
-              <button type="button" className="btn btn-secondary" onClick={() => setPreview((v) => !v)}>
-                <Eye size={16} /> 미리보기
-              </button>
               <button type="submit" className="btn btn-primary" disabled={saving}>
                 <Save size={16} />
                 {saving ? '저장 중…' : '저장'}
@@ -178,13 +173,6 @@ export default function SurveyExchangeComposePage() {
           <ReactFormBuilder data={formJson} onPost={handleSaveForm} />
         </section>
       </form>
-
-      {preview ? (
-        <div className={styles.previewCard}>
-          <h4 className={styles.previewTitle}>미리보기</h4>
-          <ReactFormGenerator data={formJson} answer_data={[]} />
-        </div>
-      ) : null}
     </div>
   );
 }

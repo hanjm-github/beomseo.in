@@ -706,14 +706,6 @@
   font-weight: 600;
 }
 
-.previewCard {
-  margin-top: 16px;
-  border: 1px solid var(--color-card-border);
-  border-radius: 12px;
-  padding: 12px;
-  background: var(--color-card-bg);
-}
-
 .chipInfo {
   background: var(--color-status-accent-bg);
   color: var(--color-status-accent-text);
@@ -763,10 +755,6 @@
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
-}
-
-.previewTitle {
-  margin-top: 0;
 }
 
 
