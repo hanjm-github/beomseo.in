@@ -14,7 +14,7 @@ export default function ListView() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
-  const canCreate = ['admin', 'council', 'student_council'].includes(user?.role);
+  const canCreate = ['admin', 'student_council'].includes(user?.role);
 
   const [search, setSearch] = useState('');
   const [pinned, setPinned] = useState(false);

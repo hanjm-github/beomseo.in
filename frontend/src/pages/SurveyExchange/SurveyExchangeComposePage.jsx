@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ReactFormBuilder, ReactFormGenerator } from 'react-form-builder2';
 import 'react-form-builder2/dist/app.css';
 import '../../components/survey/survey-form-builder.css';
-import { ArrowLeft, Check, Eye, Save } from 'lucide-react';
+import { ArrowLeft, Eye, Save } from 'lucide-react';
 import { surveyApi } from '../../api/survey';
+import { useAuth } from '../../context/AuthContext';
 import styles from '../../components/survey/survey.module.css';
 import '../page-shell.css';
 
@@ -13,6 +14,7 @@ export default function SurveyExchangeComposePage() {
   const navigate = useNavigate();
   const location = useLocation();
   const isEdit = !!id;
+  const { isAuthenticated, loading: authLoading } = useAuth();
 
   const [meta, setMeta] = useState({
     title: '',
@@ -25,10 +27,11 @@ export default function SurveyExchangeComposePage() {
   const loading = isEdit;
 
   useEffect(() => {
+    if (authLoading || !isAuthenticated) return;
     if (!isEdit) return;
     alert('설문 수정 기능이 비활성화되었습니다.');
     navigate(`/community/survey/${id}`, { replace: true });
-  }, [id, isEdit, navigate]);
+  }, [authLoading, id, isAuthenticated, isEdit, navigate]);
 
   const handleSaveForm = (data) => {
     setFormJson(data.task_data || data);
@@ -63,6 +66,34 @@ export default function SurveyExchangeComposePage() {
       setSaving(false);
     }
   };
+
+  if (authLoading) {
+    return (
+      <div className="page-shell">
+        <div className="placeholder">권한 정보를 확인하는 중입니다.</div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="page-shell">
+        <div className="card">
+          <p className="eyebrow">설문 작성 권한</p>
+          <h1>로그인이 필요합니다.</h1>
+          <p className="lede">설문 작성은 로그인한 사용자만 가능합니다.</p>
+          <div className="u-action-stack">
+            <Link className="btn btn-secondary" to="/community/survey">
+              목록으로
+            </Link>
+            <Link className="btn btn-primary" to="/login" state={{ from: location.pathname }}>
+              로그인
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="page-shell">

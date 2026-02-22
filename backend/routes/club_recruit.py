@@ -131,7 +131,15 @@ def apply_filters(query, grade_group, status, q_text, user):
         )
 
     if not is_admin(user):
-        query = query.filter(ClubRecruit.status == RecruitStatus.APPROVED)
+        if user:
+            query = query.filter(
+                or_(
+                    ClubRecruit.status == RecruitStatus.APPROVED,
+                    ClubRecruit.author_id == user.id,
+                )
+            )
+        else:
+            query = query.filter(ClubRecruit.status == RecruitStatus.APPROVED)
     return query
 
 
@@ -158,7 +166,8 @@ def list_recruits():
 
     current_user = optional_current_user()
     if not is_admin(current_user):
-        status = RecruitStatus.APPROVED.value
+        # Non-admin users can still see their own pending posts.
+        status = None
 
     query = ClubRecruit.query
     query = apply_filters(query, grade_group, status, q_text, current_user)

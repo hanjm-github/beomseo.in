@@ -17,6 +17,7 @@ const PAGE_SIZE = 12;
 export default function SubjectsListPage() {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
+  const canViewDetail = Boolean(user);
 
   const [grade, setGrade] = useState(1);
   const [search, setSearch] = useState('');
@@ -40,7 +41,7 @@ export default function SubjectsListPage() {
       onlyMine,
       hideClosed,
       subjectTag,
-      status: isAdmin ? (approval === 'all' ? undefined : approval) : 'approved',
+      status: isAdmin ? (approval === 'all' ? undefined : approval) : undefined,
       pageSize: PAGE_SIZE,
     }),
     [grade, search, onlyMine, hideClosed, subjectTag, approval, isAdmin]
@@ -106,6 +107,11 @@ export default function SubjectsListPage() {
           <p className="eyebrow">소통하는 범서고</p>
           <h1>선택과목 변경 게시판</h1>
           <p className="lede">주는 과목과 받고 싶은 과목을 한눈에 확인하세요.</p>
+          {!canViewDetail ? (
+            <p className="muted" style={{ marginTop: 8 }}>
+              상세 열람과 댓글 참여는 로그인 후 이용할 수 있습니다.
+            </p>
+          ) : null}
           <p className="muted" style={{ display: 'inline-flex', gap: 8, alignItems: 'center', marginTop: 8 }}>
             <Info size={14} /> 주는/받는 과목을 꼭 입력해 주세요.
           </p>
@@ -115,7 +121,11 @@ export default function SubjectsListPage() {
             <Link className="btn btn-primary" to="/community/subjects/new">
               글쓰기
             </Link>
-          ) : null}
+          ) : (
+            <Link className="btn btn-secondary" to="/login" state={{ from: '/community/subjects' }}>
+              로그인
+            </Link>
+          )}
         </div>
       </div>
 
@@ -144,7 +154,8 @@ export default function SubjectsListPage() {
                 key={item.id}
                 item={item}
                 showMeta={false}
-                showApproval={isAdmin}
+                showApproval={isAdmin || Boolean(user?.id && item.author?.id && String(user.id) === String(item.author.id))}
+                canViewDetail={canViewDetail}
               />
             ))}
           </SubjectListGrid>

@@ -136,6 +136,15 @@
   box-shadow: var(--shadow-card-hover);
 }
 
+.cardStatic {
+  cursor: default;
+}
+
+.cardStatic:hover {
+  transform: none;
+  box-shadow: var(--shadow-sm);
+}
+
 .cardHeader {
   display: flex;
   justify-content: space-between;

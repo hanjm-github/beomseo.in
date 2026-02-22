@@ -15,9 +15,17 @@ export default function SubjectDetailPage() {
   const [error, setError] = useState(null);
   const [approving, setApproving] = useState(false);
   const [statusChanging, setStatusChanging] = useState(false);
-  const { user } = useAuth();
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
 
   useEffect(() => {
+    if (authLoading) return undefined;
+    if (!isAuthenticated) {
+      setItem(null);
+      setError(null);
+      setLoading(false);
+      return undefined;
+    }
+
     let cancelled = false;
     const run = async () => {
       setLoading(true);
@@ -35,7 +43,7 @@ export default function SubjectDetailPage() {
     return () => {
       cancelled = true;
     };
-  }, [id]);
+  }, [authLoading, id, isAuthenticated]);
 
   const toggleApprove = async () => {
     if (!item) return;
@@ -66,6 +74,27 @@ export default function SubjectDetailPage() {
       setStatusChanging(false);
     }
   };
+
+  if (authLoading) return <InfiniteLoader />;
+  if (!isAuthenticated) {
+    return (
+      <div className="page-shell">
+        <div className="card">
+          <p className="eyebrow">선택과목 변경 열람 권한</p>
+          <h1>로그인이 필요합니다.</h1>
+          <p className="lede">선택과목 변경 게시글 상세 조회는 로그인 사용자만 이용할 수 있습니다.</p>
+          <div className="u-action-stack">
+            <Link className="btn btn-secondary" to="/community/subjects">
+              목록으로
+            </Link>
+            <Link className="btn btn-primary" to="/login" state={{ from: `/community/subjects/${id}` }}>
+              로그인
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) return <InfiniteLoader />;
   if (error) return <ErrorState onRetry={() => window.location.reload()} />;
@@ -100,7 +129,15 @@ export default function SubjectDetailPage() {
         </div>
       </div>
 
-      <SubjectCard item={item} showMeta={false} showApproval={user?.role === "admin"} />
+      <SubjectCard
+        item={item}
+        showMeta={false}
+        showApproval={
+          user?.role === "admin" ||
+          Boolean(user?.id && item?.author?.id && String(user.id) === String(item.author.id))
+        }
+        canViewDetail={false}
+      />
       <SubjectComments postId={id} />
     </div>
   );

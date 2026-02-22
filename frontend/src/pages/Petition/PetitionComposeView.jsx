@@ -23,7 +23,7 @@ const CATEGORY_OPTIONS = [
 ];
 
 export default function PetitionComposeView() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -57,6 +57,14 @@ export default function PetitionComposeView() {
       setSubmitting(false);
     }
   };
+
+  if (authLoading) {
+    return (
+      <div className="page-shell">
+        <div className="placeholder">권한 정보를 확인하는 중입니다.</div>
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     return (

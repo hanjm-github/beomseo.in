@@ -8,7 +8,7 @@ import '../page-shell.css';
 
 export default function LostFoundComposeView() {
   const navigate = useNavigate();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
   const canWrite = lostFoundApi.canWrite(user);
 
   const [title, setTitle] = useState('');
@@ -118,6 +118,14 @@ export default function LostFoundComposeView() {
       setSubmitting(false);
     }
   };
+
+  if (authLoading) {
+    return (
+      <div className="page-shell">
+        <div className="placeholder">권한 정보를 확인하는 중입니다.</div>
+      </div>
+    );
+  }
 
   if (!canWrite) {
     return (

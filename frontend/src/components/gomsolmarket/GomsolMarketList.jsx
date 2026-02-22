@@ -1,7 +1,7 @@
 import GomsolMarketCard from './GomsolMarketCard';
 import styles from './gomsolmarket.module.css';
 
-export default function GomsolMarketList({ items, basePath, isLoading, isAdmin }) {
+export default function GomsolMarketList({ items, basePath, isLoading, isAdmin, viewerId, canViewDetail = true }) {
   if (isLoading) {
     return <div className={styles.placeholder}>곰솔마켓 목록을 불러오는 중입니다.</div>;
   }
@@ -21,8 +21,10 @@ export default function GomsolMarketList({ items, basePath, isLoading, isAdmin }
         <GomsolMarketCard
           key={item.id}
           item={item}
-          to={`${basePath}/${item.id}`}
-          isAdmin={isAdmin}
+          to={canViewDetail ? `${basePath}/${item.id}` : null}
+          showApproval={
+            isAdmin || Boolean(viewerId && item.author?.id && String(viewerId) === String(item.author.id))
+          }
         />
       ))}
     </div>

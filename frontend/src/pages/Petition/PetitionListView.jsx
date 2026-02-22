@@ -59,6 +59,7 @@ export default function PetitionListView() {
 
   const deriveStatus = (item, threshold) => {
     if (!item) return 'needs-support';
+    if (item.status && item.status !== 'approved') return 'pending';
     if (item.answer) return 'answered';
     const votes = item.votes || 0;
     const th = item.threshold || threshold || THRESHOLD_DEFAULT;
@@ -85,7 +86,7 @@ export default function PetitionListView() {
 
     const fetchList = async () => {
       try {
-        const approvalParam = !isAdmin ? 'approved' : approval === 'approved' ? 'approved' : undefined;
+        const approvalParam = isAdmin && approval === 'approved' ? 'approved' : undefined;
         const res = await petitionApi.list({
           status: approvalParam,
           category: category === '전체' ? undefined : category,
@@ -102,14 +103,14 @@ export default function PetitionListView() {
           ? approval === 'pending'
             ? rawItems.filter((it) => it.status !== 'approved')
             : rawItems
-          : rawItems.filter((it) => it.status === 'approved');
+          : rawItems;
 
         const filteredItems =
           status === 'all'
             ? approvalFilteredItems
             : approvalFilteredItems.filter((it) => deriveStatus(it) === status);
 
-        const hasClientFilter = approval === 'pending' || status !== 'all' || !isAdmin;
+        const hasClientFilter = approval === 'pending' || status !== 'all';
 
         setData({
           ...res,

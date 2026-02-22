@@ -9,7 +9,7 @@ import '../page-shell.css';
 
 export default function GomsolMarketComposeView() {
   const navigate = useNavigate();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
 
   const canWrite = gomsolMarketApi.canWrite(user);
   const isAdmin = gomsolMarketApi.canManageApproval(user);
@@ -144,6 +144,14 @@ export default function GomsolMarketComposeView() {
       setSubmitting(false);
     }
   };
+
+  if (authLoading) {
+    return (
+      <div className="page-shell">
+        <div className={styles.placeholder}>권한 정보를 확인하는 중입니다.</div>
+      </div>
+    );
+  }
 
   if (!canWrite) {
     return (

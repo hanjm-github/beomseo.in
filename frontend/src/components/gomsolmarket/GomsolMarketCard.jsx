@@ -14,13 +14,13 @@ function formatDate(value) {
   return parsed.toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' });
 }
 
-export default function GomsolMarketCard({ item, to, isAdmin }) {
+export default function GomsolMarketCard({ item, to, showApproval = false }) {
   const coverImage = item.images?.[0];
   const statusClass = item.status === 'sold' ? styles.statusSold : styles.statusSelling;
   const approvalClass = item.approvalStatus === 'approved' ? styles.approvalApproved : styles.approvalPending;
 
-  return (
-    <Link to={to} className={styles.card} aria-label={`${item.title} 상세 보기`}>
+  const content = (
+    <>
       <div className={styles.cardImageWrap}>
         {coverImage ? (
           <img
@@ -42,7 +42,7 @@ export default function GomsolMarketCard({ item, to, isAdmin }) {
             {gomsolMarketApi.categoryLabel[item.category] || gomsolMarketApi.categoryLabel.etc}
           </span>
         </div>
-        {isAdmin ? (
+        {showApproval ? (
           <div className={styles.adminBadgeWrap}>
             <span className={`${styles.approvalBadge} ${approvalClass}`}>
               <ShieldCheck size={12} />
@@ -65,6 +65,20 @@ export default function GomsolMarketCard({ item, to, isAdmin }) {
           </span>
         </div>
       </div>
+    </>
+  );
+
+  if (!to) {
+    return (
+      <article className={`${styles.card} ${styles.cardStatic}`} aria-label={`${item.title} 요약`}>
+        {content}
+      </article>
+    );
+  }
+
+  return (
+    <Link to={to} className={styles.card} aria-label={`${item.title} 상세 보기`}>
+      {content}
     </Link>
   );
 }

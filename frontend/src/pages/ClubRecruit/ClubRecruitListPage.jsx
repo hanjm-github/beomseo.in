@@ -34,7 +34,7 @@ export default function ClubRecruitListPage() {
       gradeGroup,
       sort,
       q: search,
-      status: isAdmin ? (approval === 'all' ? undefined : approval) : 'approved',
+      status: isAdmin ? (approval === 'all' ? undefined : approval) : undefined,
       pageSize: PAGE_SIZE,
     }),
     [gradeGroup, sort, search, approval, isAdmin]
@@ -133,7 +133,11 @@ export default function ClubRecruitListPage() {
         <>
           <RecruitGrid>
             {items.map((item) => (
-              <RecruitCard key={item.id} item={item} showStatus={isAdmin} />
+              <RecruitCard
+                key={item.id}
+                item={item}
+                showStatus={isAdmin || Boolean(user?.id && item.author?.id && String(user.id) === String(item.author.id))}
+              />
             ))}
           </RecruitGrid>
 

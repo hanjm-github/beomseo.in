@@ -18,16 +18,17 @@ function toSafePage(value) {
 
 export default function GomsolMarketListView() {
   const [params, setParams] = useSearchParams();
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
 
   const isAdmin = gomsolMarketApi.canManageApproval(user);
   const canWrite = gomsolMarketApi.canWrite(user);
+  const canViewDetail = Boolean(user);
 
   const status = params.get('status') || 'all';
   const category = params.get('category') || 'all';
   const sort = params.get('sort') || 'recent';
   const search = params.get('q') || '';
-  const approval = isAdmin ? params.get('approval') || 'all' : 'approved';
+  const approval = isAdmin ? params.get('approval') || 'all' : 'all';
   const page = toSafePage(params.get('page'));
   const submittedPending = params.get('submitted') === 'pending';
 
@@ -69,7 +70,7 @@ export default function GomsolMarketListView() {
         const res = await gomsolMarketApi.list({
           status: status === 'all' ? undefined : status,
           category: category === 'all' ? undefined : category,
-          approval: isAdmin ? (approval === 'all' ? undefined : approval) : 'approved',
+          approval: isAdmin ? (approval === 'all' ? undefined : approval) : undefined,
           sort,
           q: search,
           page,
@@ -78,15 +79,10 @@ export default function GomsolMarketListView() {
         if (cancelled) return;
 
         const rawItems = res.items || [];
-        const filteredItems = isAdmin
-          ? rawItems
-          : rawItems.filter((item) => item.approvalStatus === 'approved');
-        const hasClientFilter = filteredItems.length !== rawItems.length;
-
         setData({
           ...res,
-          items: filteredItems,
-          total: hasClientFilter ? filteredItems.length : res.total,
+          items: rawItems,
+          total: res.total,
         });
       } catch {
         if (cancelled) return;
@@ -109,13 +105,22 @@ export default function GomsolMarketListView() {
           <p className="eyebrow">소통하는 범서고</p>
           <h1>곰솔마켓</h1>
           <p className="lede">교내 중고거래 장터에서 필요한 물건을 쉽고 안전하게 거래해요.</p>
+          {!canViewDetail ? (
+            <p className="muted" style={{ marginTop: 8 }}>
+              상세 페이지와 연락처 확인은 로그인 후 이용할 수 있습니다.
+            </p>
+          ) : null}
         </div>
         {canWrite ? (
           <Link className="btn btn-primary" to="/community/gomsol-market/new">
             <Plus size={16} />
             상품 등록
           </Link>
-        ) : null}
+        ) : (
+          <Link className="btn btn-secondary" to="/login" state={{ from: '/community/gomsol-market' }}>
+            로그인
+          </Link>
+        )}
       </div>
 
       {submittedPending ? (
@@ -151,6 +156,8 @@ export default function GomsolMarketListView() {
         basePath="/community/gomsol-market"
         isLoading={loading}
         isAdmin={isAdmin}
+        viewerId={user?.id}
+        canViewDetail={isAuthenticated}
       />
 
       <div className="list-toolbar u-justify-center">

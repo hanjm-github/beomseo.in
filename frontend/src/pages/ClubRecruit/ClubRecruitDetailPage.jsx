@@ -60,6 +60,8 @@ export default function ClubRecruitDetailPage() {
     : applyPeriod.start
       ? `${applyPeriod.start} ~ 모집 기간 미정`
       : '모집 기간 미정';
+  const isAdmin = user?.role === 'admin';
+  const isOwner = Boolean(user?.id && data?.author?.id && String(user.id) === String(data.author.id));
 
   return (
     <div className="page-shell">
@@ -69,50 +71,52 @@ export default function ClubRecruitDetailPage() {
           <h1>{data.clubName}</h1>
           <p className="lede">모집 기간: {applyLabel}</p>
         </div>
-        {user?.role === 'admin' ? (
+        {isAdmin || isOwner ? (
           <div className="header-actions" style={{ gap: '8px' }}>
             <span className="chip">
               상태: {data.status === 'approved' ? '승인됨' : '승인 대기'}
             </span>
-            {data.status === 'approved' ? (
-              <button
-                className="btn btn-secondary"
-                type="button"
-                disabled={actionLoading}
-                onClick={async () => {
-                  setActionLoading(true);
-                  try {
-                    const res = await clubRecruitApi.unapprove(id);
-                    setData(res);
-                  } catch {
-                    setError('승인 해제 중 오류가 발생했습니다.');
-                  } finally {
-                    setActionLoading(false);
-                  }
-                }}
-              >
-                승인 해제
-              </button>
-            ) : (
-              <button
-                className="btn btn-primary"
-                type="button"
-                disabled={actionLoading}
-                onClick={async () => {
-                  setActionLoading(true);
-                  try {
-                    const res = await clubRecruitApi.approve(id);
-                    setData(res);
-                  } catch {
-                    setError('승인 중 오류가 발생했습니다.');
-                  } finally {
-                    setActionLoading(false);
-                  }
-                }}
-              >
-                승인하기
-              </button>
-            )}
+            {isAdmin ? (
+              data.status === 'approved' ? (
+                <button
+                  className="btn btn-secondary"
+                  type="button"
+                  disabled={actionLoading}
+                  onClick={async () => {
+                    setActionLoading(true);
+                    try {
+                      const res = await clubRecruitApi.unapprove(id);
+                      setData(res);
+                    } catch {
+                      setError('승인 해제 중 오류가 발생했습니다.');
+                    } finally {
+                      setActionLoading(false);
+                    }
+                  }}
+                >
+                  승인 해제
+                </button>
+              ) : (
+                <button
+                  className="btn btn-primary"
+                  type="button"
+                  disabled={actionLoading}
+                  onClick={async () => {
+                    setActionLoading(true);
+                    try {
+                      const res = await clubRecruitApi.approve(id);
+                      setData(res);
+                    } catch {
+                      setError('승인 중 오류가 발생했습니다.');
+                    } finally {
+                      setActionLoading(false);
+                    }
+                  }}
+                >
+                  승인하기
+                </button>
+              )
+            ) : null}
           </div>
         ) : null}
       </div>

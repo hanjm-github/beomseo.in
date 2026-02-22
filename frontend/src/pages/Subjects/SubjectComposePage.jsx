@@ -1,11 +1,14 @@
 ﻿import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { subjectChangesApi } from "../../api/subjectChanges";
+import { useAuth } from "../../context/AuthContext";
 import "../page-shell.css";
 import styles from "../ClubRecruit/ClubRecruitComposePage.module.css";
 
 export default function SubjectComposePage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { isAuthenticated, loading: authLoading } = useAuth();
   const [form, setForm] = useState({
     grade: 1,
     className: "",
@@ -48,6 +51,34 @@ export default function SubjectComposePage() {
       setSubmitting(false);
     }
   };
+
+  if (authLoading) {
+    return (
+      <div className="page-shell">
+        <div className="placeholder">권한 정보를 확인하는 중입니다.</div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="page-shell">
+        <div className="card">
+          <p className="eyebrow">선택과목 변경 작성 권한</p>
+          <h1>로그인이 필요합니다.</h1>
+          <p className="lede">선택과목 변경 글 작성은 로그인한 사용자만 가능합니다.</p>
+          <div className="u-action-stack">
+            <Link className="btn btn-secondary" to="/community/subjects">
+              목록으로
+            </Link>
+            <Link className="btn btn-primary" to="/login" state={{ from: location.pathname }}>
+              로그인
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="page-shell">

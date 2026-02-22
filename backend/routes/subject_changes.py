@@ -148,6 +148,17 @@ def apply_filters(query, grade=None, q_text=None, subject_tag=None, hide_closed=
 
     if only_mine and current_user:
         query = query.filter(SubjectChange.author_id == current_user.id)
+
+    if not is_admin(current_user):
+        if current_user:
+            query = query.filter(
+                or_(
+                    SubjectChange.approval_status == ApprovalStatus.APPROVED,
+                    SubjectChange.author_id == current_user.id,
+                )
+            )
+        else:
+            query = query.filter(SubjectChange.approval_status == ApprovalStatus.APPROVED)
     return query
 
 
@@ -177,8 +188,9 @@ def list_subject_changes():
 
     current_user = optional_current_user()
     admin_mode = is_admin(current_user)
-    if not admin_mode and not (only_mine and current_user):
-        status = ApprovalStatus.APPROVED.value
+    if not admin_mode:
+        # Non-admin users can still see their own pending posts.
+        status = None
 
     query = SubjectChange.query
     query = apply_filters(query, grade, q_text, subject_tag, hide_closed, only_mine, status, current_user)
@@ -232,12 +244,16 @@ def create_subject_change():
 
 
 @subject_changes_bp.route('/<int:item_id>', methods=['GET'])
+@jwt_required()
 def get_subject_change(item_id):
     item = fetch_or_404(item_id)
     if not item:
         return jsonify({'error': '게시글을 찾을 수 없습니다.'}), 404
 
-    current_user = optional_current_user()
+    current_user = get_current_user()
+    if not current_user:
+        return jsonify({'error': 'User not found'}), 404
+
     if item.approval_status != ApprovalStatus.APPROVED and not (is_admin(current_user) or (current_user and current_user.id == item.author_id)):
         return jsonify({'error': '열람 권한이 없습니다.'}), 403
 
@@ -381,13 +397,17 @@ def change_match_status(item_id):
 
 
 @subject_changes_bp.route('/<int:item_id>/comments', methods=['GET'])
+@jwt_required()
 @cache_json_response('subject_changes')
 def list_comments(item_id):
     item = fetch_or_404(item_id)
     if not item:
         return jsonify({'error': '게시글을 찾을 수 없습니다.'}), 404
 
-    current_user = optional_current_user()
+    current_user = get_current_user()
+    if not current_user:
+        return jsonify({'error': 'User not found'}), 404
+
     if item.approval_status != ApprovalStatus.APPROVED and not (is_admin(current_user) or (current_user and current_user.id == item.author_id)):
         return jsonify({'error': '열람 권한이 없습니다.'}), 403
 

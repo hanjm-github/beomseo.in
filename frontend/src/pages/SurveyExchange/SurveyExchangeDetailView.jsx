@@ -22,6 +22,8 @@ export default function SurveyExchangeDetailView() {
 
   const isOwner = survey && user && (user.role === 'admin' || survey.owner?.id === user.id);
   const isAdmin = user?.role === 'admin';
+  const canSeeApprovalStatus =
+    Boolean(isAdmin) || Boolean(survey && user && survey.owner?.id && String(survey.owner.id) === String(user.id));
   const alreadyAnswered = survey?.isAnsweredByMe;
 
   useEffect(() => {
@@ -119,7 +121,7 @@ export default function SurveyExchangeDetailView() {
           <p className="lede">{survey.description}</p>
           <div className={styles.badgeRow}>
             {survey.status === 'closed' ? <span className={styles.chip}>마감</span> : null}
-            {isAdmin && survey.approvalStatus ? (
+            {canSeeApprovalStatus && survey.approvalStatus ? (
               <span className={`${styles.chip} ${survey.approvalStatus === 'approved' ? styles.chipActive : ''}`}>
                 {survey.approvalStatus === 'approved' ? '승인됨' : '승인대기'}
               </span>

@@ -55,7 +55,7 @@ export default function FreeBoardListView() {
     const timer = setTimeout(() => {
       setLoading(true);
       const categoryParam = category === 'all' ? undefined : category;
-      const statusParam = isAdmin ? (approval === 'all' ? undefined : approval) : 'approved';
+      const statusParam = isAdmin ? (approval === 'all' ? undefined : approval) : undefined;
       communityApi
         .list({
           category: categoryParam,
@@ -71,17 +71,10 @@ export default function FreeBoardListView() {
           if (cancelled) return;
 
           const rawItems = res.items || [];
-          const filteredItems = isAdmin
-            ? approval === 'all'
-              ? rawItems
-              : rawItems.filter((item) => item.status === approval)
-            : rawItems.filter((item) => item.status === 'approved');
-          const hasClientFilter = filteredItems.length !== rawItems.length;
-
           setData({
             ...res,
-            items: filteredItems,
-            total: hasClientFilter ? filteredItems.length : res.total,
+            items: rawItems,
+            total: res.total,
           });
           setLoading(false);
         })

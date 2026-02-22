@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { clubRecruitApi } from '../../api/clubRecruit';
 import Editor from '../../components/notices/Editor';
 import { sanitizeRichHtml } from '../../security/htmlSanitizer';
 import { UPLOAD_MAX_FILE_SIZE_BYTES, UPLOAD_MAX_FILE_SIZE_MB } from '../../config/env';
+import { useAuth } from '../../context/AuthContext';
 import '../page-shell.css';
 import styles from './ClubRecruitComposePage.module.css';
 
@@ -11,6 +12,8 @@ const MAX_IMAGE_UPLOAD_SIZE = UPLOAD_MAX_FILE_SIZE_BYTES;
 
 export default function ClubRecruitComposePage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { isAuthenticated, loading: authLoading } = useAuth();
   const [form, setForm] = useState({
     clubName: '',
     field: '',
@@ -88,6 +91,34 @@ export default function ClubRecruitComposePage() {
     }
   };
 
+  if (authLoading) {
+    return (
+      <div className="page-shell">
+        <div className="placeholder">권한 정보를 확인하는 중입니다.</div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="page-shell">
+        <div className="card">
+          <p className="eyebrow">동아리 모집 작성 권한</p>
+          <h1>로그인이 필요합니다.</h1>
+          <p className="lede">동아리 모집 글 작성은 로그인한 사용자만 가능합니다.</p>
+          <div className="u-action-stack">
+            <Link className="btn btn-secondary" to="/community/club-recruit">
+              목록으로
+            </Link>
+            <Link className="btn btn-primary" to="/login" state={{ from: location.pathname }}>
+              로그인
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="page-shell">
       <div className="page-header">
@@ -105,7 +136,7 @@ export default function ClubRecruitComposePage() {
             <input
               value={form.clubName}
               onChange={(e) => handleChange('clubName', e.target.value)}
-              placeholder="예) 코딩나무"
+              placeholder="예) 시그널"
               required
             />
           </label>
@@ -164,7 +195,7 @@ export default function ClubRecruitComposePage() {
           <Editor
             value={form.body}
             onChange={(val) => handleChange('body', val)}
-            placeholder="지원 방법, 활동 일정, 문의처 등을 자세히 작성하세요."
+            placeholder="지원 방법, 활동 일정, 문의처 등을 자세히 작성하세요. (범서고 외부에서도 상세 페이지 조회가 가능합니다. 되도록 개인정보를 기입하지 않는 것을 추천드립니다.)"
             onUploadImage={handleEditorImageUpload}
             uploading={uploading}
           />

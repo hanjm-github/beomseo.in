@@ -18,7 +18,7 @@ function normalizeOptions(options) {
 
 export default function VoteComposeView() {
   const navigate = useNavigate();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
 
   const canWrite = voteApi.canWrite(user);
   const [title, setTitle] = useState('');
@@ -87,6 +87,14 @@ export default function VoteComposeView() {
       setSubmitting(false);
     }
   };
+
+  if (authLoading) {
+    return (
+      <div className="page-shell">
+        <div className="placeholder">권한 정보를 확인하는 중입니다.</div>
+      </div>
+    );
+  }
 
   if (!canWrite) {
     return (
@@ -178,4 +186,3 @@ export default function VoteComposeView() {
     </div>
   );
 }
-

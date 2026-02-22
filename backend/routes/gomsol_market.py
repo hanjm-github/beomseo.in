@@ -196,7 +196,15 @@ def list_posts():
         if approval in {item.value for item in GomsolMarketApprovalStatus}:
             query = query.filter(GomsolMarketPost.approval_status == GomsolMarketApprovalStatus(approval))
     else:
-        query = query.filter(GomsolMarketPost.approval_status == GomsolMarketApprovalStatus.APPROVED)
+        if current_user:
+            query = query.filter(
+                or_(
+                    GomsolMarketPost.approval_status == GomsolMarketApprovalStatus.APPROVED,
+                    GomsolMarketPost.author_id == current_user.id,
+                )
+            )
+        else:
+            query = query.filter(GomsolMarketPost.approval_status == GomsolMarketApprovalStatus.APPROVED)
 
     if q_text:
         pattern = f'%{q_text}%'
@@ -221,12 +229,16 @@ def list_posts():
 
 
 @gomsol_market_bp.route('/<int:post_id>', methods=['GET'])
+@jwt_required()
 def get_post(post_id):
     post = fetch_post_or_404(post_id)
     if not post:
         return jsonify({'error': '게시글을 찾을 수 없습니다.'}), 404
 
-    current_user = optional_current_user()
+    current_user = get_current_user()
+    if not current_user:
+        return jsonify({'error': 'User not found'}), 404
+
     can_read_pending = is_admin(current_user) or (current_user and current_user.id == post.author_id)
     if post.approval_status != GomsolMarketApprovalStatus.APPROVED and not can_read_pending:
         return jsonify({'error': '열람 권한이 없습니다.'}), 403

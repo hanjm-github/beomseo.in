@@ -137,11 +137,11 @@ def list_posts():
     is_admin_user = is_admin(current_user)
 
     if not is_admin_user:
-        status = FreeStatus.APPROVED.value
-        mine = None if mine is None else mine
+        # Non-admin users can still see their own pending posts.
+        status = None
 
     q = FreePost.query
-    q = apply_filters(q, category, status, query_text, mine, bookmarked, current_user_id)
+    q = apply_filters(q, category, status, query_text, mine, bookmarked, current_user_id, current_user)
     total = q.count()
     q = apply_sort(q, sort)
     items = q.offset((page - 1) * page_size).limit(page_size).all()
@@ -172,7 +172,7 @@ def list_posts():
     )
 
 
-def apply_filters(query, category, status, query_text, mine, bookmarked, user_id):
+def apply_filters(query, category, status, query_text, mine, bookmarked, user_id, user=None):
     query = query.filter(FreePost.deleted_at.is_(None))
     if category in {FreeCategory.CHAT.value, FreeCategory.CHAT}:
         query = query.filter(FreePost.category == FreeCategory.CHAT)
@@ -194,6 +194,17 @@ def apply_filters(query, category, status, query_text, mine, bookmarked, user_id
         query = query.filter(FreePost.author_id == user_id)
     if bookmarked and user_id:
         query = query.join(FreeBookmark).filter(FreeBookmark.user_id == user_id)
+
+    if not is_admin(user):
+        if user_id:
+            query = query.filter(
+                or_(
+                    FreePost.status == FreeStatus.APPROVED,
+                    FreePost.author_id == user_id,
+                )
+            )
+        else:
+            query = query.filter(FreePost.status == FreeStatus.APPROVED)
     return query
 
 

@@ -50,14 +50,16 @@ export default function ComposeView({ mode = 'create' }) {
   const { category = 'school', id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, loading: authLoading } = useAuth();
-  const canEdit = ['admin', 'council', 'student_council'].includes(user?.role);
+  const { user, loading: authLoading, isAuthenticated } = useAuth();
+  const canManageNotices = ['admin', 'student_council'].includes(user?.role);
 
   const [state, dispatch] = useReducer(reducer, initialState);
   const [tagsInput, setTagsInput] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [checkingEditPermission, setCheckingEditPermission] = useState(mode === 'edit');
+  const [hasEditPermission, setHasEditPermission] = useState(mode !== 'edit');
 
   useEffect(() => {
     if (!VALID_CATEGORIES.includes(category)) {
@@ -66,36 +68,62 @@ export default function ComposeView({ mode = 'create' }) {
   }, [category, navigate]);
 
   useEffect(() => {
-    if (authLoading) return;
-    if (!canEdit) {
-      navigate('/login', { replace: true, state: { from: location } });
+    if (authLoading || !canManageNotices) return;
+    if (mode !== 'edit' || !id) {
+      setCheckingEditPermission(false);
+      setHasEditPermission(true);
+      return;
     }
-  }, [canEdit, authLoading, navigate, location]);
 
-  useEffect(() => {
-    if (mode === 'edit' && id) {
-      noticesApi
-        .get(id)
-        .then((data) => {
-          dispatch({
-            type: 'SET',
-            payload: {
-              title: data.title,
-              body: data.body,
-              pinned: data.pinned,
-              important: data.important,
-              examRelated: data.examRelated,
-              tags: data.tags || [],
-              attachments: data.attachments || [],
-            },
-          });
-          setTagsInput((data.tags || []).join(', '));
-        })
-        .catch(() => {
-          setError('공지 정보를 불러오지 못했습니다.');
+    let cancelled = false;
+    setCheckingEditPermission(true);
+    setHasEditPermission(false);
+    setError('');
+
+    noticesApi
+      .get(id)
+      .then((data) => {
+        if (cancelled) return;
+        const isAdmin = user?.role === 'admin';
+        const isCouncilAuthor =
+          user?.role === 'student_council' &&
+          user?.id != null &&
+          data?.author?.id != null &&
+          Number(user.id) === Number(data.author.id);
+        if (!isAdmin && !isCouncilAuthor) {
+          setHasEditPermission(false);
+          setError('공지 수정 권한이 없습니다.');
+          setCheckingEditPermission(false);
+          return;
+        }
+
+        setHasEditPermission(true);
+        dispatch({
+          type: 'SET',
+          payload: {
+            title: data.title,
+            body: data.body,
+            pinned: data.pinned,
+            important: data.important,
+            examRelated: data.examRelated,
+            tags: data.tags || [],
+            attachments: data.attachments || [],
+          },
         });
-    }
-  }, [mode, id]);
+        setTagsInput((data.tags || []).join(', '));
+        setCheckingEditPermission(false);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setHasEditPermission(false);
+        setCheckingEditPermission(false);
+        setError('공지 정보를 불러오지 못했습니다.');
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [authLoading, canManageNotices, mode, id, user?.id, user?.role]);
 
   const draftKey = useMemo(
     () => `draft-${category}-${user?.id || 'guest'}-${mode === 'edit' ? id : 'new'}`,
@@ -150,6 +178,10 @@ export default function ComposeView({ mode = 'create' }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    if (mode === 'edit' && !hasEditPermission) {
+      setError('공지 수정 권한이 없습니다.');
+      return;
+    }
     const sanitizedBody = sanitizeRichHtml(state.body);
     if (!state.title.trim() || !toPlainText(sanitizedBody)) {
       setError('제목과 본문을 입력해주세요.');
@@ -175,6 +207,73 @@ export default function ComposeView({ mode = 'create' }) {
       setSubmitting(false);
     }
   };
+
+  if (authLoading) {
+    return (
+      <div className="card surface">
+        <div className="placeholder">권한 정보를 확인하는 중입니다.</div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="card surface">
+        <p className="eyebrow">공지 작성 권한</p>
+        <h2>로그인이 필요합니다.</h2>
+        <p className="muted">공지 작성 및 수정은 로그인한 사용자만 가능합니다.</p>
+        <div className="u-action-stack" style={{ marginTop: 12 }}>
+          <Link className="btn btn-secondary" to={`/notices/${category}`}>
+            목록으로
+          </Link>
+          <Link className="btn btn-primary" to="/login" state={{ from: location.pathname }}>
+            로그인
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (!canManageNotices) {
+    return (
+      <div className="card surface">
+        <p className="eyebrow">공지 작성 권한</p>
+        <h2>권한이 없습니다.</h2>
+        <p className="muted">공지 작성 및 수정은 학생회 또는 관리자 계정만 가능합니다.</p>
+        <div className="u-action-stack" style={{ marginTop: 12 }}>
+          <Link className="btn btn-secondary" to={`/notices/${category}`}>
+            목록으로
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (mode === 'edit' && checkingEditPermission) {
+    return (
+      <div className="card surface">
+        <div className="placeholder">수정 권한을 확인하는 중입니다.</div>
+      </div>
+    );
+  }
+
+  if (mode === 'edit' && !hasEditPermission) {
+    return (
+      <div className="card surface">
+        <p className="eyebrow">공지 수정 권한</p>
+        <h2>권한이 없습니다.</h2>
+        <p className="muted">{error || '해당 공지는 작성자 또는 관리자만 수정할 수 있습니다.'}</p>
+        <div className="u-action-stack" style={{ marginTop: 12 }}>
+          <Link className="btn btn-secondary" to={`/notices/${category}/${id}`}>
+            상세로
+          </Link>
+          <Link className="btn btn-secondary" to={`/notices/${category}`}>
+            목록으로
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="card surface">

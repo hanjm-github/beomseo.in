@@ -4,7 +4,7 @@ import { ENABLE_API_MOCKS, shouldUseMockFallback } from './mockPolicy';
 import { trackPostCreated, trackPostCreateFailed } from '../analytics/zaraz';
 
 const PAGE_SIZE_DEFAULT = 12;
-const WRITER_ROLES = ['admin', 'council', 'student_council'];
+const WRITER_ROLES = ['admin', 'student_council'];
 
 const toSafeNumber = (value, fallback = 0) => {
   const num = Number(value);

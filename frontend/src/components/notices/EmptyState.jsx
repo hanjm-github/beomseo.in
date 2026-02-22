@@ -6,7 +6,7 @@ import { useParams, Link } from 'react-router-dom';
 export default function EmptyState() {
   const { user } = useAuth();
   const { category = 'school' } = useParams();
-  const canCreate = ['admin', 'council', 'student_council'].includes(user?.role);
+  const canCreate = ['admin', 'student_council'].includes(user?.role);
 
   return (
     <div className={styles.empty}>

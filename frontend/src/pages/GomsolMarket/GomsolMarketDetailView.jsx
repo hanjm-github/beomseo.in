@@ -26,7 +26,7 @@ function formatPrice(price) {
 
 export default function GomsolMarketDetailView() {
   const { id } = useParams();
-  const { user } = useAuth();
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
 
   const isAdmin = gomsolMarketApi.canManageApproval(user);
   const [post, setPost] = useState(null);
@@ -40,7 +40,8 @@ export default function GomsolMarketDetailView() {
     [activeImageIndex, post]
   );
   const canManageSaleStatus = gomsolMarketApi.canManageSaleStatus(user, post);
-  const isBlockedPending = post && post.approvalStatus !== 'approved' && !isAdmin;
+  const isOwner = Boolean(user?.id && post?.author?.id && String(user.id) === String(post.author.id));
+  const isBlockedPending = post && post.approvalStatus !== 'approved' && !isAdmin && !isOwner;
 
   const contactItems = useMemo(() => {
     if (!post?.contact) return [];
@@ -63,6 +64,14 @@ export default function GomsolMarketDetailView() {
   }, [post]);
 
   useEffect(() => {
+    if (authLoading) return undefined;
+    if (!isAuthenticated) {
+      setPost(null);
+      setError('');
+      setLoading(false);
+      return undefined;
+    }
+
     let cancelled = false;
     const fetchDetail = async () => {
       setLoading(true);
@@ -83,7 +92,7 @@ export default function GomsolMarketDetailView() {
     return () => {
       cancelled = true;
     };
-  }, [id]);
+  }, [authLoading, id, isAuthenticated]);
 
   const toggleApproval = async () => {
     if (!post || !isAdmin || actionLoading) return;
@@ -116,6 +125,34 @@ export default function GomsolMarketDetailView() {
       setActionLoading(false);
     }
   };
+
+  if (authLoading) {
+    return (
+      <div className="page-shell">
+        <div className={styles.placeholder}>권한 정보를 확인하는 중입니다.</div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="page-shell">
+        <div className={styles.permissionCard}>
+          <p className="eyebrow">곰솔마켓 열람 권한</p>
+          <h1>로그인이 필요합니다.</h1>
+          <p className="lede">곰솔마켓 상세 페이지는 로그인 사용자만 볼 수 있습니다.</p>
+          <div className={styles.permissionActions}>
+            <Link className="btn btn-secondary" to="/community/gomsol-market">
+              목록으로
+            </Link>
+            <Link className="btn btn-primary" to="/login" state={{ from: `/community/gomsol-market/${id}` }}>
+              로그인
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -170,7 +207,7 @@ export default function GomsolMarketDetailView() {
             <span className={styles.categoryBadge}>
               {gomsolMarketApi.categoryLabel[post.category] || gomsolMarketApi.categoryLabel.etc}
             </span>
-            {isAdmin ? (
+            {isAdmin || isOwner ? (
               <span
                 className={`${styles.approvalBadge} ${
                   post.approvalStatus === 'approved' ? styles.approvalApproved : styles.approvalPending

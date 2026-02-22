@@ -25,7 +25,6 @@ export default function DetailView() {
   const { category = 'school', id } = useParams();
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
-  const canEdit = ['admin', 'council', 'student_council'].includes(user?.role);
 
   const [notice, setNotice] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -125,6 +124,13 @@ export default function DetailView() {
   }
 
   const metaTitle = category === 'school' ? '학교 공지' : '학생회 공지';
+  const isAdmin = user?.role === 'admin';
+  const isCouncilOwner =
+    user?.role === 'student_council' &&
+    user?.id != null &&
+    notice?.author?.id != null &&
+    Number(user.id) === Number(notice.author.id);
+  const canEdit = isAdmin || isCouncilOwner;
 
   return (
     <div className={styles.detail}>

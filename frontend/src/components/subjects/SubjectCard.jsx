@@ -23,6 +23,7 @@ export default function SubjectCard({
   item,
   basePath = "/community/subjects",
   showApproval = false,
+  canViewDetail = true,
 }) {
   const status = statusMap[item.status] || statusMap.open;
   const contactLink = item.contactLinks?.[0];
@@ -30,8 +31,8 @@ export default function SubjectCard({
   const authorName = item.author?.name || item.authorNickname || "익명";
   const authorRole = item.author?.role || item.authorRole || "student";
 
-  return (
-    <Link to={`${basePath}/${item.id}`} className={styles.card} aria-label="선택과목 변경 상세 보기">
+  const content = (
+    <>
       <div className={styles.cardHeader}>
         <div className={styles.metaLeft}>
           <RoleName nickname={authorName} role={authorRole} size="sm" className={styles.author} />
@@ -80,6 +81,20 @@ export default function SubjectCard({
           ) : null}
         </div>
       </div>
+    </>
+  );
+
+  if (!canViewDetail) {
+    return (
+      <article className={`${styles.card} ${styles.cardStatic}`} aria-label="선택과목 변경 글 요약">
+        {content}
+      </article>
+    );
+  }
+
+  return (
+    <Link to={`${basePath}/${item.id}`} className={styles.card} aria-label="선택과목 변경 상세 보기">
+      {content}
     </Link>
   );
 }

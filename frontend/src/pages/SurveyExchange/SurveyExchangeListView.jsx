@@ -57,7 +57,7 @@ export default function SurveyExchangeListView() {
         .list({
           sort,
           q: search,
-          status: isAdmin ? (approval === 'all' ? undefined : approval) : 'approved',
+          status: isAdmin ? (approval === 'all' ? undefined : approval) : undefined,
           onlyMine,
           hideAnswered,
           page,
@@ -67,17 +67,10 @@ export default function SurveyExchangeListView() {
           if (cancelled) return;
 
           const rawItems = res.items || [];
-          const filteredItems = isAdmin
-            ? approval === 'all'
-              ? rawItems
-              : rawItems.filter((item) => item.approvalStatus === approval)
-            : rawItems.filter((item) => item.approvalStatus === 'approved');
-          const hasClientFilter = filteredItems.length !== rawItems.length;
-
           setData({
             ...res,
-            items: filteredItems,
-            total: hasClientFilter ? filteredItems.length : res.total,
+            items: rawItems,
+            total: res.total,
           });
         })
         .catch(() => {
@@ -212,7 +205,12 @@ export default function SurveyExchangeListView() {
       ) : data.items?.length ? (
         <div className={styles.grid}>
           {data.items.map((survey) => (
-            <SurveyCard key={survey.id} survey={survey} onOpen={handleOpen} isAdmin={isAdmin} />
+            <SurveyCard
+              key={survey.id}
+              survey={survey}
+              onOpen={handleOpen}
+              isAdmin={isAdmin || Boolean(user?.id && survey.owner?.id && String(user.id) === String(survey.owner.id))}
+            />
           ))}
         </div>
       ) : (

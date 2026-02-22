@@ -238,7 +238,15 @@ def list_surveys():
     query = Survey.query.filter(Survey.deleted_at.is_(None))
 
     if not is_admin:
-        query = query.filter(Survey.status == SurveyStatus.APPROVED)
+        if current_user:
+            query = query.filter(
+                or_(
+                    Survey.status == SurveyStatus.APPROVED,
+                    Survey.owner_id == current_user.id,
+                )
+            )
+        else:
+            query = query.filter(Survey.status == SurveyStatus.APPROVED)
     else:
         if status == SurveyStatus.PENDING.value:
             query = query.filter(Survey.status == SurveyStatus.PENDING)

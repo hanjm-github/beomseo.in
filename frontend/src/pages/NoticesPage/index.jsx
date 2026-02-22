@@ -15,7 +15,7 @@ const tabs = [
 export default function NoticesPage() {
   const { pathname } = useLocation();
   const { user } = useAuth();
-  const canCreate = ['admin', 'council', 'student_council'].includes(user?.role);
+  const canCreate = ['admin', 'student_council'].includes(user?.role);
 
   const active = useMemo(() => {
     const hit = tabs.find((t) => pathname.startsWith(t.path));

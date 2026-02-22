@@ -108,17 +108,25 @@ def list_petitions():
     current_user = User.query.get(current_user_id) if current_user_id else None
     is_admin = current_user and current_user.role == UserRole.ADMIN
 
-    if not is_admin:
-        status = PetitionStatus.APPROVED.value
-
     q = base_query()
-    if status == PetitionStatus.PENDING.value:
-        q = q.filter(Petition.status == PetitionStatus.PENDING)
-    elif status == PetitionStatus.APPROVED.value:
-        q = q.filter(Petition.status == PetitionStatus.APPROVED)
-    elif status == PetitionStatus.REJECTED.value and is_admin:
-        q = q.filter(Petition.status == PetitionStatus.REJECTED)
-    # status == all for admin -> no filter
+    if is_admin:
+        if status == PetitionStatus.PENDING.value:
+            q = q.filter(Petition.status == PetitionStatus.PENDING)
+        elif status == PetitionStatus.APPROVED.value:
+            q = q.filter(Petition.status == PetitionStatus.APPROVED)
+        elif status == PetitionStatus.REJECTED.value:
+            q = q.filter(Petition.status == PetitionStatus.REJECTED)
+        # status == all for admin -> no filter
+    else:
+        if current_user:
+            q = q.filter(
+                or_(
+                    Petition.status == PetitionStatus.APPROVED,
+                    Petition.author_id == current_user.id,
+                )
+            )
+        else:
+            q = q.filter(Petition.status == PetitionStatus.APPROVED)
 
     if category in PETITION_CATEGORIES:
         q = q.filter(Petition.category == category)

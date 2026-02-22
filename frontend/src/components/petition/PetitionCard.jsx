@@ -19,6 +19,7 @@ const statusClass = {
 
 const deriveStatus = (item, threshold) => {
   if (!item) return 'needs-support';
+  if (item.status && item.status !== 'approved') return 'pending';
   if (item.answer) return 'answered';
   const votes = item.votes || 0;
   const th = threshold || 50;
@@ -44,7 +45,7 @@ export default function PetitionCard({
 }) {
   const threshold = item.threshold || 50;
   const pct = Math.min(100, Math.round(((item.votes || 0) / threshold) * 100));
-  const derivedStatus = item.statusDerived || deriveStatus(item, threshold);
+  const derivedStatus = item.status !== 'approved' ? 'pending' : item.statusDerived || deriveStatus(item, threshold);
   const approvalLabel =
     item.status === 'approved' ? '승인됨' : item.status === 'rejected' ? '반려' : '승인 대기';
 

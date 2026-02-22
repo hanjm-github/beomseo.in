@@ -11,7 +11,7 @@ import {
 const PAGE_SIZE_DEFAULT = 12;
 const MAX_IMAGES = UPLOAD_MAX_IMAGES;
 const MAX_FILE_SIZE = UPLOAD_MAX_FILE_SIZE_BYTES;
-const WRITER_ROLES = ['admin', 'student_council', 'council'];
+const WRITER_ROLES = ['admin', 'student_council'];
 
 export const LOST_FOUND_STATUS = {
   searching: '주인 찾는 중',

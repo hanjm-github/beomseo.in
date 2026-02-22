@@ -32,6 +32,7 @@ const statusClassName = (status) => {
 
 const deriveStatus = (item, threshold) => {
   if (!item) return 'needs-support';
+  if (item.status && item.status !== 'approved') return item.status === 'rejected' ? 'rejected' : 'pending';
   if (item.answer) return 'answered';
   const votes = item.votes || 0;
   const th = threshold || THRESHOLD_DEFAULT;
