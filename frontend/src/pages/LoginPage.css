@@ -98,6 +98,108 @@
     color: var(--color-form-placeholder);
 }
 
+.password-input-wrapper {
+    position: relative;
+}
+
+.password-input-wrapper input {
+    width: 100%;
+    padding-right: 88px;
+}
+
+.password-visibility-toggle {
+    position: absolute;
+    top: 50%;
+    right: var(--space-3);
+    transform: translateY(-50%);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    border: 0;
+    background: transparent;
+    color: var(--color-text-muted);
+    font-size: var(--text-xs);
+    font-weight: var(--font-medium);
+    cursor: pointer;
+    padding: 2px;
+}
+
+.password-visibility-toggle:hover:not(:disabled) {
+    color: var(--color-text-primary);
+}
+
+.password-visibility-toggle:focus-visible {
+    outline: 2px solid var(--color-form-border-focus);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+}
+
+.password-visibility-toggle:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.password-rule-guide {
+    margin-top: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    border: 1px solid var(--color-card-border-muted);
+    border-radius: var(--radius-md);
+    background: var(--color-card-bg-soft, rgba(148, 163, 184, 0.08));
+}
+
+.password-rule-guide p {
+    font-size: var(--text-xs);
+    color: var(--color-text-secondary);
+    font-weight: var(--font-semibold);
+    margin-bottom: var(--space-2);
+}
+
+.password-rule-list {
+    list-style: none;
+    display: grid;
+    gap: var(--space-1);
+    padding: 0;
+    margin: 0;
+}
+
+.password-rule-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    color: var(--color-text-muted);
+    font-size: var(--text-xs);
+    line-height: var(--leading-normal);
+}
+
+.password-rule-icon {
+    display: inline-flex;
+    width: 12px;
+    justify-content: center;
+    color: var(--color-text-muted);
+}
+
+.password-rule-item.is-valid {
+    color: var(--color-text-secondary);
+}
+
+.password-rule-item.is-valid .password-rule-icon {
+    color: var(--color-success-500, #16a34a);
+}
+
+.field-help {
+    margin-top: var(--space-2);
+    font-size: var(--text-xs);
+    line-height: var(--leading-relaxed);
+}
+
+.field-help.is-valid {
+    color: var(--color-success-600, #15803d);
+}
+
+.field-help.is-invalid {
+    color: var(--color-alert-danger-text);
+}
+
 .error-message {
     display: flex;
     align-items: center;

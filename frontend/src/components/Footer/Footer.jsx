@@ -79,6 +79,11 @@ export default function Footer() {
                                     beomseo.in GitHub 레포지토리 <ExternalLink size={12} />
                                 </a>
                             </li>
+                            <li>
+                                <a href="https://www.instagram.com/beomseo_hs/" target="_blank" rel="noopener noreferrer">
+                                    범서고등학교 학생회 인스타그램 <ExternalLink size={12} />
+                                </a>
+                            </li>
                         </ul>
                     </div>
                 </div>

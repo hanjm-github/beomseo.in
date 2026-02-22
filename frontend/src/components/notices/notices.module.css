@@ -433,11 +433,23 @@
 .input,
 .textarea,
 .select {
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-form-border);
   border-radius: var(--radius-lg);
   padding: var(--space-3);
-  background: var(--color-surface);
+  background: var(--color-form-bg);
+  color: var(--color-form-text);
   outline: none;
+}
+
+.input::placeholder,
+.textarea::placeholder {
+  color: var(--color-form-placeholder);
+}
+
+.input:focus,
+.textarea:focus,
+.select:focus {
+  border-color: var(--color-form-border-focus);
 }
 
 .inlineCheckbox {

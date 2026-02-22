@@ -132,7 +132,7 @@ export default function PetitionComposeView() {
             value={body}
             onChange={(e) => setBody(e.target.value)}
             rows={8}
-            placeholder="상세 내용을 적어주세요."
+            placeholder="상세 내용을 적어주세요. 모든 글은 학생회 승인 후에 게시됩니다. 모든 작성자는 본인이 작성한 의견에 대해 법적 책임을 갖는다는 점 유의하시기 바랍니다."
             required
           />
         </div>

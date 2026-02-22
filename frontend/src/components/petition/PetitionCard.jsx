@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Bookmark, Clock3, Sparkles, ThumbsUp, BookOpen, CheckCheck } from 'lucide-react';
+import RoleName from '../RoleName/RoleName';
 import styles from './petition.module.css';
 
 const statusLabel = {
@@ -105,7 +106,7 @@ export default function PetitionCard({
         </span>
         <span className={styles.metaItem}>
           <Bookmark size={14} />
-          {item.author?.nickname || '익명'} {item.author?.role === 'teacher' ? '(교사)' : ''}
+          <RoleName nickname={item.author?.nickname || '익명'} role={item.author?.role || 'student'} size="sm" />
         </span>
         {item.answer ? (
           <span className={styles.metaItem}>

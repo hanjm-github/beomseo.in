@@ -21,10 +21,26 @@ const ROLE_MAP = {
   },
 };
 
+const ROLE_ALIASES = {
+  council: 'student_council',
+  studentcouncil: 'student_council',
+  'student-council': 'student_council',
+  'student council': 'student_council',
+};
+
 const normalizeRole = (role) => {
   if (!role) return 'student';
-  const lower = String(role).toLowerCase();
-  return ROLE_MAP[lower] ? lower : 'student';
+  const raw = String(role).trim().toLowerCase();
+  if (!raw) return 'student';
+
+  if (ROLE_MAP[raw]) return raw;
+  if (ROLE_ALIASES[raw]) return ROLE_ALIASES[raw];
+
+  const normalized = raw.replace(/[\s-]+/g, '_');
+  if (ROLE_MAP[normalized]) return normalized;
+  if (ROLE_ALIASES[normalized]) return ROLE_ALIASES[normalized];
+
+  return 'student';
 };
 
 /**

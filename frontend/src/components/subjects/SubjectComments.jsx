@@ -2,6 +2,7 @@
 import { MessageSquare, Trash2, Loader2 } from "lucide-react";
 import { subjectChangesApi } from "../../api/subjectChanges";
 import { useAuth } from "../../context/AuthContext";
+import RoleName from "../RoleName/RoleName";
 import styles from "./subjects.module.css";
 
 export default function SubjectComments({ postId }) {
@@ -99,7 +100,11 @@ export default function SubjectComments({ postId }) {
           items.map((comment) => (
             <div key={comment.id} className={styles.commentItem}>
               <div className={styles.commentMeta}>
-                <strong>{comment.author?.name || "익명"}</strong>
+                <RoleName
+                  nickname={comment.author?.name || "익명"}
+                  role={comment.author?.role || "student"}
+                  size="sm"
+                />
                 <span>·</span>
                 <span>{new Date(comment.createdAt).toLocaleString()}</span>
               </div>

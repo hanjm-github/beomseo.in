@@ -70,8 +70,8 @@ def register():
         return jsonify({'error': '클라이언트 IP를 확인할 수 없습니다.'}), 403
     if not is_ip_allowed(client_ip, allowed_ips):
         return jsonify({
-            'error': '회원가입은 울산광역시교육청 네트워크(범서고등학교)에서만 가능합니다.',
-            'error_en': 'Registration is only allowed from Ulsan Education Office network.'
+            'error': '회원가입은 범서고등학교 교내 와이파이에서만 가능합니다.',
+            'error_en': 'Registration is only allowed from Beomseo High School internal WiFi.'
         }), 403
 
     data = request.get_json()

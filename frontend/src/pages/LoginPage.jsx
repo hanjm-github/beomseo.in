@@ -1,5 +1,5 @@
 /**
- * Login page component for 범서고등학교 website.
+ * Login page component for beomseo.in website.
  */
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';

@@ -130,7 +130,7 @@ export default function FreeBoardComposeView({ mode = 'create' }) {
           <Editor
             value={body}
             onChange={setBody}
-            placeholder="자유롭게 작성하세요. 이미지 버튼으로 사진을 첨부할 수 있습니다."
+            placeholder="자유롭게 작성하세요. 이미지 버튼으로 사진을 첨부할 수 있습니다. 모든 글은 학생회 승인 후에 게시됩니다. 모든 작성자는 본인이 작성한 의견에 대해 법적 책임을 갖는다는 점 유의하시기 바랍니다."
             onUploadImage={handleUploadImage}
             uploading={uploading}
           />

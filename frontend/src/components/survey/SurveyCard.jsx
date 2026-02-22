@@ -1,4 +1,5 @@
 import { Calendar, PieChart, User } from 'lucide-react';
+import RoleName from '../RoleName/RoleName';
 import styles from './survey.module.css';
 
 export default function SurveyCard({ survey, onOpen, onResults, isAdmin }) {
@@ -51,7 +52,8 @@ export default function SurveyCard({ survey, onOpen, onResults, isAdmin }) {
 
       <div className={styles.metaRow} style={{ marginTop: 10 }}>
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-          <User size={14} /> {survey.owner?.name || '작성자'}
+          <User size={14} />
+          <RoleName nickname={survey.owner?.name || '작성자'} role={survey.owner?.role || 'student'} size="sm" />
         </span>
         {survey.expiresAt ? (
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>

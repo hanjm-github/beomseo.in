@@ -4,8 +4,21 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { UserPlus, AlertCircle, Info } from 'lucide-react';
+import { UserPlus, AlertCircle, Info, Eye, EyeOff } from 'lucide-react';
 import './LoginPage.css';
+
+const PASSWORD_MIN_LENGTH = 10;
+const PASSWORD_MAX_LENGTH = 72;
+
+function getPasswordChecks(password) {
+    return {
+        length: password.length >= PASSWORD_MIN_LENGTH && password.length <= PASSWORD_MAX_LENGTH,
+        uppercase: /[A-Z]/.test(password),
+        lowercase: /[a-z]/.test(password),
+        number: /[0-9]/.test(password),
+        special: /[^A-Za-z0-9]/.test(password),
+    };
+}
 
 function SignUpPage() {
     const navigate = useNavigate();
@@ -13,20 +26,54 @@ function SignUpPage() {
     const [nickname, setNickname] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [localError, setLocalError] = useState('');
+    const trimmedNickname = nickname.trim();
+    const passwordChecks = getPasswordChecks(password);
+    const isPasswordStrong = Object.values(passwordChecks).every(Boolean);
+    const isPasswordMatch = password.length > 0 && password === confirmPassword;
+
+    const passwordRuleItems = [
+        {
+            key: 'length',
+            label: `${PASSWORD_MIN_LENGTH}~${PASSWORD_MAX_LENGTH}자`,
+            valid: passwordChecks.length,
+        },
+        {
+            key: 'uppercase',
+            label: '대문자 1개 이상',
+            valid: passwordChecks.uppercase,
+        },
+        {
+            key: 'lowercase',
+            label: '소문자 1개 이상',
+            valid: passwordChecks.lowercase,
+        },
+        {
+            key: 'number',
+            label: '숫자 1개 이상',
+            valid: passwordChecks.number,
+        },
+        {
+            key: 'special',
+            label: '특수문자 1개 이상',
+            valid: passwordChecks.special,
+        },
+    ];
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLocalError('');
         clearError();
 
-        if (!nickname.trim()) {
+        if (!trimmedNickname) {
             setLocalError('닉네임을 입력해주세요.');
             return;
         }
 
-        if (nickname.length < 2 || nickname.length > 50) {
+        if (trimmedNickname.length < 2 || trimmedNickname.length > 50) {
             setLocalError('닉네임은 2-50자 사이로 입력해주세요.');
             return;
         }
@@ -36,8 +83,10 @@ function SignUpPage() {
             return;
         }
 
-        if (password.length < 8) {
-            setLocalError('비밀번호는 최소 8자 이상이어야 합니다.');
+        if (!isPasswordStrong) {
+            setLocalError(
+                `비밀번호는 ${PASSWORD_MIN_LENGTH}~${PASSWORD_MAX_LENGTH}자이며 대문자/소문자/숫자/특수문자를 각각 1개 이상 포함해야 합니다.`
+            );
             return;
         }
 
@@ -47,7 +96,7 @@ function SignUpPage() {
         }
 
         setLoading(true);
-        const result = await register(nickname, password);
+        const result = await register(trimmedNickname, password);
         setLoading(false);
 
         if (result.success) {
@@ -61,13 +110,13 @@ function SignUpPage() {
         <div className="login-page">
             <div className="login-container">
                 <div className="login-header">
-                    <h1>범서고등학교</h1>
+                    <h1>beomseo.in</h1>
                     <p>회원가입</p>
                 </div>
 
                 <div className="ip-notice">
                     <Info size={18} />
-                    <span>회원가입은 울산광역시교육청 네트워크(범서고등학교)에서만 가능합니다.</span>
+                    <span>회원가입은 범서고등학교 교내 와이파이에서만 가능합니다.</span>
                 </div>
 
                 <form className="login-form" onSubmit={handleSubmit}>
@@ -88,33 +137,84 @@ function SignUpPage() {
                             placeholder="닉네임을 입력하세요 (2-50자)"
                             disabled={loading}
                             autoComplete="username"
+                            maxLength={50}
                         />
                     </div>
 
                     <div className="form-group">
                         <label htmlFor="password">비밀번호</label>
-                        <input
-                            type="password"
-                            id="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            placeholder="비밀번호 (8자 이상)"
-                            disabled={loading}
-                            autoComplete="new-password"
-                        />
+                        <div className="password-input-wrapper">
+                            <input
+                                type={showPassword ? 'text' : 'password'}
+                                id="password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                placeholder={`비밀번호 (${PASSWORD_MIN_LENGTH}~${PASSWORD_MAX_LENGTH}자)`}
+                                disabled={loading}
+                                autoComplete="new-password"
+                                aria-describedby="password-rule-guide"
+                                minLength={PASSWORD_MIN_LENGTH}
+                                maxLength={PASSWORD_MAX_LENGTH}
+                            />
+                            <button
+                                type="button"
+                                className="password-visibility-toggle"
+                                onClick={() => setShowPassword((prev) => !prev)}
+                                disabled={loading}
+                                aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 표시'}
+                            >
+                                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                <span>{showPassword ? '숨기기' : '보기'}</span>
+                            </button>
+                        </div>
+                        <div className="password-rule-guide" id="password-rule-guide" aria-live="polite">
+                            <p>비밀번호 규정</p>
+                            <ul className="password-rule-list">
+                                {passwordRuleItems.map((rule) => (
+                                    <li
+                                        key={rule.key}
+                                        className={`password-rule-item ${rule.valid ? 'is-valid' : ''}`}
+                                    >
+                                        <span className="password-rule-icon" aria-hidden="true">
+                                            {rule.valid ? '✓' : '•'}
+                                        </span>
+                                        <span>{rule.label}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
                     </div>
 
                     <div className="form-group">
                         <label htmlFor="confirmPassword">비밀번호 확인</label>
-                        <input
-                            type="password"
-                            id="confirmPassword"
-                            value={confirmPassword}
-                            onChange={(e) => setConfirmPassword(e.target.value)}
-                            placeholder="비밀번호를 다시 입력하세요"
-                            disabled={loading}
-                            autoComplete="new-password"
-                        />
+                        <div className="password-input-wrapper">
+                            <input
+                                type={showConfirmPassword ? 'text' : 'password'}
+                                id="confirmPassword"
+                                value={confirmPassword}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                placeholder="비밀번호를 다시 입력하세요"
+                                disabled={loading}
+                                autoComplete="new-password"
+                                minLength={PASSWORD_MIN_LENGTH}
+                                maxLength={PASSWORD_MAX_LENGTH}
+                            />
+                            <button
+                                type="button"
+                                className="password-visibility-toggle"
+                                onClick={() => setShowConfirmPassword((prev) => !prev)}
+                                disabled={loading}
+                                aria-label={showConfirmPassword ? '비밀번호 확인 숨기기' : '비밀번호 확인 표시'}
+                            >
+                                {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                <span>{showConfirmPassword ? '숨기기' : '보기'}</span>
+                            </button>
+                        </div>
+                        {confirmPassword && (
+                            <p className={`field-help ${isPasswordMatch ? 'is-valid' : 'is-invalid'}`}>
+                                {isPasswordMatch ? '비밀번호가 일치합니다.' : '비밀번호가 일치하지 않습니다.'}
+                            </p>
+                        )}
                     </div>
 
                     <p className="signup-consent">

@@ -1,6 +1,7 @@
 ﻿import { Link } from "react-router-dom";
 import { MessageCircle, ExternalLink } from "lucide-react";
 import { toSafeExternalHref } from "../../security/urlPolicy";
+import RoleName from "../RoleName/RoleName";
 import styles from "./subjects.module.css";
 
 const statusMap = {
@@ -26,12 +27,14 @@ export default function SubjectCard({
   const status = statusMap[item.status] || statusMap.open;
   const contactLink = item.contactLinks?.[0];
   const safeContactLink = contactLink ? toSafeExternalHref(contactLink.url) : null;
+  const authorName = item.author?.name || item.authorNickname || "익명";
+  const authorRole = item.author?.role || item.authorRole || "student";
 
   return (
     <Link to={`${basePath}/${item.id}`} className={styles.card} aria-label="선택과목 변경 상세 보기">
       <div className={styles.cardHeader}>
         <div className={styles.metaLeft}>
-          <span className={styles.author}>{item.authorNickname || "익명"}</span>
+          <RoleName nickname={authorName} role={authorRole} size="sm" className={styles.author} />
           <span>{item.className || `${item.grade}학년`}</span>
           <span aria-label="업데이트">{formatDate(item.updatedAt || item.createdAt)}</span>
         </div>

@@ -3,6 +3,7 @@ import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { ArrowLeft, BookOpen, CheckCircle2, Clock3, Share2, ThumbsUp } from 'lucide-react';
 import { petitionApi, THRESHOLD_DEFAULT } from '../../api/petition';
 import { useAuth } from '../../context/AuthContext';
+import RoleName from '../../components/RoleName/RoleName';
 import styles from '../../components/petition/petition.module.css';
 import '../page-shell.css';
 
@@ -191,7 +192,9 @@ export default function PetitionDetailView() {
               <span>
                 <Clock3 size={14} style={{ verticalAlign: 'text-bottom' }} /> {formatDate(item.createdAt)}
               </span>
-              <span>{item.author?.nickname || '익명'} {item.author?.role === 'teacher' ? '(교사)' : ''}</span>
+              <span>
+                <RoleName nickname={item.author?.nickname || '익명'} role={item.author?.role || 'student'} size="sm" />
+              </span>
             </div>
             <div className={styles.detailActions}>
               <button
