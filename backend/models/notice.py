@@ -3,6 +3,7 @@ Notice and Attachment models for school / student council announcements.
 """
 from datetime import datetime
 from enum import Enum
+import re
 from sqlalchemy import func
 from sqlalchemy.schema import UniqueConstraint
 
@@ -193,12 +194,13 @@ def apply_notice_filters(query, category=None, query_text=None, pinned=None, imp
             db.or_(
                 Notice.title.ilike(pattern),
                 Notice.body.ilike(pattern),
-                Notice.summary.ilike(pattern)
+                Notice.summary.ilike(pattern),
+                Notice.tags.ilike(pattern),
             )
         )
     if tags:
         if isinstance(tags, str):
-            tags = [t.strip() for t in tags.split(',') if t.strip()]
+            tags = [t.strip() for t in re.split(r'[,\n;，]+', tags) if t.strip()]
         if tags:
             for tag in tags:
                 query = query.filter(Notice.tags.ilike(f"%{tag}%"))

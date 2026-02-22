@@ -93,7 +93,8 @@ function applyListFilters(data, params = {}) {
       (n) =>
         n.title.toLowerCase().includes(q) ||
         (n.summary || '').toLowerCase().includes(q) ||
-        (n.body || '').toLowerCase().includes(q)
+        (n.body || '').toLowerCase().includes(q) ||
+        (n.tags || []).some((tag) => String(tag).toLowerCase().includes(q))
     );
   }
 

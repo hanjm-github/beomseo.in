@@ -48,7 +48,7 @@ export default function NoticeToolbar({
           <input
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
-            placeholder="검색 (제목, 본문)"
+            placeholder="검색 (제목, 본문, 태그)"
           />
         </div>
         <div className={styles.sortBox}>
@@ -63,4 +63,3 @@ export default function NoticeToolbar({
     </div>
   );
 }
-

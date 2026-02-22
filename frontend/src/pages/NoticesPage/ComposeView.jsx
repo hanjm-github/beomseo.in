@@ -8,6 +8,20 @@ import { sanitizeRichHtml, toPlainText } from '../../security/htmlSanitizer';
 import { useAuth } from '../../context/AuthContext';
 
 const VALID_CATEGORIES = ['school', 'council'];
+const TAG_SPLIT_REGEX = /[,\n;，]+/;
+
+function normalizeTags(raw) {
+  if (Array.isArray(raw)) {
+    return raw
+      .flatMap((value) => String(value ?? '').split(TAG_SPLIT_REGEX))
+      .map((value) => value.trim())
+      .filter(Boolean);
+  }
+  return String(raw ?? '')
+    .split(TAG_SPLIT_REGEX)
+    .map((value) => value.trim())
+    .filter(Boolean);
+}
 
 const initialState = {
   title: '',
@@ -40,6 +54,7 @@ export default function ComposeView({ mode = 'create' }) {
   const canEdit = ['admin', 'council', 'student_council'].includes(user?.role);
 
   const [state, dispatch] = useReducer(reducer, initialState);
+  const [tagsInput, setTagsInput] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -74,6 +89,7 @@ export default function ComposeView({ mode = 'create' }) {
               attachments: data.attachments || [],
             },
           });
+          setTagsInput((data.tags || []).join(', '));
         })
         .catch(() => {
           setError('공지 정보를 불러오지 못했습니다.');
@@ -91,7 +107,15 @@ export default function ComposeView({ mode = 'create' }) {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        dispatch({ type: 'SET', payload: parsed });
+        const normalizedTags = normalizeTags(parsed.tags);
+        dispatch({
+          type: 'SET',
+          payload: {
+            ...parsed,
+            tags: normalizedTags,
+          },
+        });
+        setTagsInput(normalizedTags.join(', '));
       } catch {
         /* ignore */
       }
@@ -132,10 +156,12 @@ export default function ComposeView({ mode = 'create' }) {
       return;
     }
     setSubmitting(true);
+    const normalizedTags = normalizeTags(tagsInput);
     const payload = {
       ...state,
       body: sanitizedBody,
       category,
+      tags: normalizedTags,
       summary: state.summary || toPlainText(sanitizedBody).slice(0, 120),
     };
     try {
@@ -149,8 +175,6 @@ export default function ComposeView({ mode = 'create' }) {
       setSubmitting(false);
     }
   };
-
-  const tagString = state.tags.join(', ');
 
   return (
     <div className="card surface">
@@ -230,18 +254,17 @@ export default function ComposeView({ mode = 'create' }) {
             <h4 className={styles.sidebarTitle}>태그</h4>
             <input
               className={styles.input}
-              value={tagString}
-              onChange={(e) =>
+              value={tagsInput}
+              onChange={(e) => {
+                const next = e.target.value;
+                setTagsInput(next);
                 dispatch({
                   type: 'SET',
                   payload: {
-                    tags: e.target.value
-                      .split(',')
-                      .map((t) => t.trim())
-                      .filter(Boolean),
+                    tags: normalizeTags(next),
                   },
-                })
-              }
+                });
+              }}
               placeholder="쉼표로 구분 (예: 시험, 일정)"
             />
           </div>

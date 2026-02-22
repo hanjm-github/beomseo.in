@@ -3,6 +3,7 @@ Notice, attachment, comment, and reaction routes.
 """
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+import re
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from flask import Blueprint, request, jsonify, current_app, send_from_directory
@@ -55,6 +56,32 @@ def parse_bool(val):
     if val is None:
         return None
     return str(val).lower() in {'1', 'true', 'yes', 'on'}
+
+
+def parse_tags(value):
+    if value is None:
+        return []
+
+    if isinstance(value, str):
+        raw_items = re.split(r'[,\n;，]+', value)
+    elif isinstance(value, (list, tuple, set)):
+        raw_items = []
+        for item in value:
+            raw_items.extend(re.split(r'[,\n;，]+', str(item or '')))
+    else:
+        raw_items = re.split(r'[,\n;，]+', str(value))
+
+    normalized = []
+    seen = set()
+    for item in raw_items:
+        tag = item.strip()
+        if not tag:
+            continue
+        if tag in seen:
+            continue
+        normalized.append(tag)
+        seen.add(tag)
+    return normalized[:30]
 
 
 def optional_current_user_id():
@@ -145,15 +172,13 @@ def apply_filters(query, category, query_text, pinned, important, exam, tags=Non
             or_(
                 Notice.title.ilike(pattern),
                 Notice.body.ilike(pattern),
-                Notice.summary.ilike(pattern)
+                Notice.summary.ilike(pattern),
+                Notice.tags.ilike(pattern),
             )
         )
     if tags:
-        if isinstance(tags, str):
-            tags_list = [t.strip() for t in tags.split(',') if t.strip()]
-        else:
-            tags_list = tags
-        for tag in tags_list or []:
+        tags_list = parse_tags(tags)
+        for tag in tags_list:
             query = query.filter(Notice.tags.ilike(f"%{tag}%"))
     query = query.filter(Notice.deleted_at.is_(None))
     return query
@@ -172,7 +197,7 @@ def validate_notice_payload(data, is_update=False):
     title = (data.get('title') or '').strip()
     body = (data.get('body') or '').strip()
     category = data.get('category')
-    tags = data.get('tags') or []
+    tags = parse_tags(data.get('tags'))
     pinned = bool(data.get('pinned', False))
     important = bool(data.get('important', False))
     exam_related = bool(data.get('examRelated', False))
