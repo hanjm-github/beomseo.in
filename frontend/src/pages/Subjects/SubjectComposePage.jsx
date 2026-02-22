@@ -1,6 +1,7 @@
 ﻿import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { subjectChangesApi } from "../../api/subjectChanges";
+import { toSafeOpenChatHref } from "../../security/urlPolicy";
 import { useAuth } from "../../context/AuthContext";
 import "../page-shell.css";
 import styles from "../ClubRecruit/ClubRecruitComposePage.module.css";
@@ -15,8 +16,9 @@ export default function SubjectComposePage() {
     offeringSubject: "",
     requestingSubject: "",
     note: "",
-    contactType: "none",
-    contactValue: "",
+    contactStudentId: "",
+    contactOpenChatUrl: "",
+    contactExtra: "",
   });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -29,13 +31,39 @@ export default function SubjectComposePage() {
       setError("받고 싶은 과목과 줄 수 있는 과목은 필수입니다.");
       return;
     }
+
     setSubmitting(true);
     setError("");
+
     try {
-      const contactLinks =
-        form.contactType !== "none" && form.contactValue
-          ? [{ type: form.contactType, url: form.contactValue }]
-          : [];
+      const studentId = form.contactStudentId.trim();
+      const openChatUrl = form.contactOpenChatUrl.trim();
+      const extraContact = form.contactExtra.trim();
+
+      if (!studentId && !openChatUrl && !extraContact) {
+        setError("학번, 오픈채팅 링크, 기타 연락 방법 중 최소 1개를 입력해주세요.");
+        setSubmitting(false);
+        return;
+      }
+
+      const safeOpenChatUrl = openChatUrl ? toSafeOpenChatHref(openChatUrl) : "";
+      if (openChatUrl && !safeOpenChatUrl) {
+        setError("오픈채팅 링크는 open.kakao.com 형식의 안전한 URL만 사용할 수 있습니다.");
+        setSubmitting(false);
+        return;
+      }
+
+      const contactLinks = [];
+      if (studentId) {
+        contactLinks.push({ type: "student_id", value: studentId });
+      }
+      if (safeOpenChatUrl) {
+        contactLinks.push({ type: "kakao", url: safeOpenChatUrl });
+      }
+      if (extraContact) {
+        contactLinks.push({ type: "extra", value: extraContact });
+      }
+
       await subjectChangesApi.create({
         grade: Number(form.grade),
         className: form.className,
@@ -143,24 +171,30 @@ export default function SubjectComposePage() {
         </div>
 
         <label className={styles.field}>
-          <span>연락 수단</span>
-          <div className={styles.contactGrid}>
-            <select
-              value={form.contactType}
-              onChange={(e) => handleChange("contactType", e.target.value)}
-            >
-              <option value="none">댓글로 협의</option>
-              <option value="kakao">카카오 오픈채팅</option>
-              <option value="email">이메일</option>
-              <option value="url">기타 링크</option>
-            </select>
-            <input
-              value={form.contactValue}
-              onChange={(e) => handleChange("contactValue", e.target.value)}
-              placeholder="https://open.kakao.com/..., mailto:you@example.com"
-              disabled={form.contactType === "none"}
-            />
-          </div>
+          <span>학번 (연락 방법 중 1개 이상 필수)</span>
+          <input
+            value={form.contactStudentId}
+            onChange={(e) => handleChange("contactStudentId", e.target.value)}
+            placeholder="예: 23015"
+          />
+        </label>
+
+        <label className={styles.field}>
+          <span>오픈채팅 링크</span>
+          <input
+            value={form.contactOpenChatUrl}
+            onChange={(e) => handleChange("contactOpenChatUrl", e.target.value)}
+            placeholder="https://open.kakao.com/..."
+          />
+        </label>
+
+        <label className={styles.field}>
+          <span>기타 연락 방법</span>
+          <input
+            value={form.contactExtra}
+            onChange={(e) => handleChange("contactExtra", e.target.value)}
+            placeholder="예: 점심시간 2학년 복도에서 직거래 가능"
+          />
         </label>
 
         <label className={styles.field}>

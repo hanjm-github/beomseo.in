@@ -76,14 +76,33 @@ def validate_payload(data):
     else:
         for idx, c in enumerate(contact_links):
             c_type = c.get('type')
-            url = (c.get('url') or '').strip()
-            if c_type not in {ContactType.KAKAO.value, ContactType.EMAIL.value, ContactType.URL.value}:
-                errors.append(f'연락 수단 #{idx+1} type은 kakao/email/url 이어야 합니다.')
+            if c_type in {ContactType.KAKAO.value, ContactType.EMAIL.value, ContactType.URL.value}:
+                url = (c.get('url') or '').strip()
+                if not url or len(url) > 500 or not _valid_url(url):
+                    errors.append(f'연락 수단 #{idx+1}의 링크를 확인해 주세요.')
+                    continue
+                contact_list.append({'type': c_type, 'url': url})
                 continue
-            if not url or len(url) > 500 or not _valid_url(url):
-                errors.append(f'연락 수단 #{idx+1}의 url을 확인해 주세요.')
+
+            if c_type == ContactType.STUDENT_ID.value:
+                value = str(c.get('value') or c.get('url') or '').strip()
+                if not value or len(value) > 50:
+                    errors.append(f'연락 수단 #{idx+1}의 학번을 확인해 주세요.')
+                    continue
+                contact_list.append({'type': c_type, 'value': value})
                 continue
-            contact_list.append({'type': c_type, 'url': url})
+
+            if c_type == ContactType.EXTRA.value:
+                value = str(c.get('value') or c.get('url') or '').strip()
+                if not value or len(value) > 500:
+                    errors.append(f'연락 수단 #{idx+1}의 기타 연락 방법을 확인해 주세요.')
+                    continue
+                contact_list.append({'type': c_type, 'value': value})
+                continue
+
+            errors.append(
+                f'연락 수단 #{idx+1} type은 kakao/email/url/student_id/extra 중 하나여야 합니다.'
+            )
 
     if status_raw not in {m.value for m in MatchStatus}:
         errors.append('status는 open/negotiating/matched 중 하나여야 합니다.')

@@ -26,8 +26,16 @@ export default function SubjectCard({
   canViewDetail = true,
 }) {
   const status = statusMap[item.status] || statusMap.open;
-  const contactLink = item.contactLinks?.[0];
-  const safeContactLink = contactLink ? toSafeExternalHref(contactLink.url) : null;
+  const contactLinks = Array.isArray(item.contactLinks) ? item.contactLinks : [];
+  const studentIdContact = contactLinks.find((contact) => contact?.type === "student_id");
+  const extraContact = contactLinks.find((contact) => contact?.type === "extra");
+  const externalContacts = contactLinks
+    .filter((contact) => ["kakao", "email", "url"].includes(contact?.type))
+    .map((contact) => ({
+      ...contact,
+      safeHref: toSafeExternalHref(contact?.url),
+    }))
+    .filter((contact) => contact.safeHref);
   const authorName = item.author?.name || item.authorNickname || "익명";
   const authorRole = item.author?.role || item.authorRole || "student";
 
@@ -67,18 +75,25 @@ export default function SubjectCard({
           <span className={styles.contactBadge}>
             <MessageCircle size={16} /> 댓글로 협의
           </span>
-          {contactLink && safeContactLink ? (
+          {studentIdContact?.value ? (
+            <span className={styles.contactBadge}>학번 연락 · {studentIdContact.value}</span>
+          ) : null}
+          {extraContact?.value ? (
+            <span className={styles.contactBadge}>기타 연락 · {extraContact.value}</span>
+          ) : null}
+          {externalContacts.map((contact) => (
             <a
+              key={`${contact.type}-${contact.url}`}
               className={styles.contactBtn}
-              href={safeContactLink}
+              href={contact.safeHref}
               target="_blank"
               rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
             >
-              {contactLink.type === "kakao" ? "오픈채팅" : "링크"}
+              {contact.type === "kakao" ? "오픈채팅" : contact.type === "email" ? "이메일" : "링크"}
               <ExternalLink size={14} />
             </a>
-          ) : null}
+          ))}
         </div>
       </div>
     </>

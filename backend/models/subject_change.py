@@ -22,6 +22,8 @@ class ContactType(str, Enum):
     KAKAO = 'kakao'
     EMAIL = 'email'
     URL = 'url'
+    STUDENT_ID = 'student_id'
+    EXTRA = 'extra'
 
 
 class SubjectChange(db.Model):
