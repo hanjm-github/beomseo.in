@@ -1,11 +1,13 @@
-﻿import { useEffect, useState } from 'react';
+﻿import { Suspense, lazy, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { Calendar, Loader2, Pencil, PieChart, Send, CheckCircle2, XCircle } from 'lucide-react';
-import SurveyResponseModal from '../../components/survey/SurveyResponseModal';
+import { Calendar, Loader2, PieChart, Send, CheckCircle2, XCircle } from 'lucide-react';
 import styles from '../../components/survey/survey.module.css';
 import { surveyApi } from '../../api/survey';
 import { useAuth } from '../../context/AuthContext';
 import '../page-shell.css';
+
+const loadSurveyResponseModal = () => import('../../components/survey/SurveyResponseModal');
+const SurveyResponseModal = lazy(loadSurveyResponseModal);
 
 export default function SurveyExchangeDetailView() {
   const { id } = useParams();
@@ -50,6 +52,10 @@ export default function SurveyExchangeDetailView() {
       return false;
     }
     return true;
+  };
+
+  const prefetchResponseModal = () => {
+    void loadSurveyResponseModal();
   };
 
   const handleSubmit = async (answers) => {
@@ -140,6 +146,8 @@ export default function SurveyExchangeDetailView() {
           <button
             className="btn btn-primary"
             onClick={() => (ensureLogin() && !alreadyAnswered ? setModalOpen(true) : null)}
+            onMouseEnter={prefetchResponseModal}
+            onFocus={prefetchResponseModal}
             disabled={survey.status === 'closed' || alreadyAnswered}
             title={alreadyAnswered ? '이미 응답한 설문입니다.' : undefined}
           >
@@ -179,14 +187,17 @@ export default function SurveyExchangeDetailView() {
         </ul>
       </section>
 
-      <SurveyResponseModal
-        survey={survey}
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        onSubmit={handleSubmit}
-        submitting={submitting}
-      />
+      {modalOpen ? (
+        <Suspense fallback={<div className="route-fallback">응답 폼을 불러오는 중...</div>}>
+          <SurveyResponseModal
+            survey={survey}
+            open={modalOpen}
+            onClose={() => setModalOpen(false)}
+            onSubmit={handleSubmit}
+            submitting={submitting}
+          />
+        </Suspense>
+      ) : null}
     </div>
   );
 }
-

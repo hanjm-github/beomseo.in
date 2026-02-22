@@ -1,5 +1,4 @@
 ﻿import { useEffect, useMemo, useState } from 'react';
-import { motion as Motion } from 'framer-motion';
 import {
     Bell,
     MessageCircle,
@@ -18,6 +17,7 @@ import AnnouncementCard from '../../components/AnnouncementCard';
 import MealCard from '../../components/MealCard';
 import { noticesApi } from '../../api/notices';
 import { useAuth } from '../../context/AuthContext';
+import { APP_NAME } from '../../config/env';
 
 import styles from './MainPage.module.css';
 
@@ -66,32 +66,14 @@ export default function MainPage() {
 
     const activeList = useMemo(() => announcements[activeTab] || [], [announcements, activeTab]);
 
-    // Animation variants
-    const containerVariants = {
-        hidden: { opacity: 0 },
-        visible: {
-            opacity: 1,
-            transition: { staggerChildren: 0.1 },
-        },
-    };
-
-    const itemVariants = {
-        hidden: { opacity: 0, y: 20 },
-        visible: {
-            opacity: 1,
-            y: 0,
-            transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] },
-        },
-    };
-
     return (
         <div className={styles.page}>
             <main className={styles.main}>
                 {/* Hero Section */}
                 <section className={styles.hero}>
-                    <Motion.div className={styles.heroContent} initial="hidden" animate="visible" variants={containerVariants}>
-                        <Motion.div className={styles.heroText} variants={itemVariants}>
-                            <span className={styles.heroLabel}>beomseo.in</span>
+                    <div className={styles.heroContent}>
+                        <div className={`${styles.heroText} ${styles.fadeUp} ${styles.delay0}`}>
+                            <span className={styles.heroLabel}>{APP_NAME}</span>
                             <h1 className={styles.heroTitle}>
                                 <span className={styles.heroHighlight}>지혜로운 눈</span>으로 꿈을 이루고
                                 <br />
@@ -111,9 +93,9 @@ export default function MainPage() {
                                     </Link>
                                 )}
                             </div>
-                        </Motion.div>
+                        </div>
 
-                        <Motion.div className={styles.heroWidget} variants={itemVariants}>
+                        <div className={`${styles.heroWidget} ${styles.fadeUp} ${styles.delay1}`}>
                             {countdownLoadError ? (
                                 <div className={`${styles.countdownPlaceholder} ${styles.countdownError}`}>
                                     카운트다운을 불러오지 못했습니다.
@@ -126,8 +108,8 @@ export default function MainPage() {
                             ) : (
                                 <div className={styles.countdownPlaceholder}>예정된 행사가 없습니다.</div>
                             )}
-                        </Motion.div>
-                    </Motion.div>
+                        </div>
+                    </div>
 
                     {/* Decorative elements */}
                     <div className={styles.heroBg}>
@@ -139,24 +121,13 @@ export default function MainPage() {
                 {/* Quick Links Bento Grid */}
                 <section className={styles.section}>
                     <div className={styles.container}>
-                        <Motion.div
-                            className={styles.sectionHeader}
-                            initial={{ opacity: 0, y: 20 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
-                        >
+                        <div className={`${styles.sectionHeader} ${styles.fadeUp}`}>
                             <h2 className={styles.sectionTitle}>바로가기</h2>
                             <p className={styles.sectionDescription}>자주 쓰는 메뉴로 한 번에 이동하세요.</p>
-                        </Motion.div>
+                        </div>
 
-                        <Motion.div
-                            className={styles.quickLinks}
-                            initial="hidden"
-                            whileInView="visible"
-                            viewport={{ once: true }}
-                            variants={containerVariants}
-                        >
-                            <Motion.div variants={itemVariants} className={styles.quickLinkLarge}>
+                        <div className={styles.quickLinks}>
+                            <div className={`${styles.quickLinkLarge} ${styles.fadeUp} ${styles.delay0}`}>
                                 <QuickLinkCard
                                     to="/notices/school"
                                     icon={Bell}
@@ -165,8 +136,8 @@ export default function MainPage() {
                                     variant="default"
                                     size="large"
                                 />
-                            </Motion.div>
-                            <Motion.div variants={itemVariants}>
+                            </div>
+                            <div className={`${styles.fadeUp} ${styles.delay1}`}>
                                 <QuickLinkCard
                                     to="/community/free"
                                     icon={MessageCircle}
@@ -174,8 +145,8 @@ export default function MainPage() {
                                     description="범서고의 커뮤니티 공간"
                                     variant="accent"
                                 />
-                            </Motion.div>
-                            <Motion.div variants={itemVariants}>
+                            </div>
+                            <div className={`${styles.fadeUp} ${styles.delay2}`}>
                                 <QuickLinkCard
                                     to="/school-info/calculator"
                                     icon={Calculator}
@@ -183,8 +154,8 @@ export default function MainPage() {
                                     description="학기별 성적 계산"
                                     variant="info"
                                 />
-                            </Motion.div>
-                            <Motion.div variants={itemVariants}>
+                            </div>
+                            <div className={`${styles.fadeUp} ${styles.delay3}`}>
                                 <QuickLinkCard
                                     to="/school-info/meal"
                                     icon={Utensils}
@@ -192,8 +163,8 @@ export default function MainPage() {
                                     description="오늘 메뉴와 영양정보 확인"
                                     variant="success"
                                 />
-                            </Motion.div>
-                            <Motion.div variants={itemVariants}>
+                            </div>
+                            <div className={`${styles.fadeUp} ${styles.delay4}`}>
                                 <QuickLinkCard
                                     to="/school-info/calendar"
                                     icon={Calendar}
@@ -201,8 +172,8 @@ export default function MainPage() {
                                     description="행사와 학사일정 빠르게 확인"
                                     variant="warning"
                                 />
-                            </Motion.div>
-                            <Motion.div variants={itemVariants}>
+                            </div>
+                            <div className={`${styles.fadeUp} ${styles.delay5}`}>
                                 <QuickLinkCard
                                     to="/gallery"
                                     icon={ImageIcon}
@@ -210,8 +181,8 @@ export default function MainPage() {
                                     description="학교 활동 사진과 소식 보기"
                                     variant="default"
                                 />
-                            </Motion.div>
-                            <Motion.div variants={itemVariants}>
+                            </div>
+                            <div className={`${styles.fadeUp} ${styles.delay5}`}>
                                 <QuickLinkCard
                                     to="/community/club-recruit"
                                     icon={Users}
@@ -219,8 +190,8 @@ export default function MainPage() {
                                     description="동아리 모집 정보와 활동 안내"
                                     variant="default"
                                 />
-                            </Motion.div>
-                        </Motion.div>
+                            </div>
+                        </div>
                     </div>
                 </section>
 
@@ -229,12 +200,7 @@ export default function MainPage() {
                     <div className={styles.container}>
                         <div className={styles.twoColumn}>
                             {/* Announcements */}
-                            <Motion.div
-                                className={styles.announcementsCard}
-                                initial={{ opacity: 0, y: 20 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true }}
-                            >
+                            <div className={`${styles.announcementsCard} ${styles.fadeUp}`}>
                                 <div className={styles.announcementsHeader}>
                                     <h3 className={styles.cardTitle}>최근 공지</h3>
 
@@ -282,17 +248,12 @@ export default function MainPage() {
                                     더 보기
                                     <ChevronRight size={16} />
                                 </Link>
-                            </Motion.div>
+                            </div>
 
                             {/* Meal Card */}
-                            <Motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true }}
-                                transition={{ delay: 0.1 }}
-                            >
+                            <div className={`${styles.fadeUp} ${styles.delay2}`}>
                                 <MealCard />
-                            </Motion.div>
+                            </div>
                         </div>
                     </div>
                 </section>
@@ -300,4 +261,3 @@ export default function MainPage() {
         </div>
     );
 }
-

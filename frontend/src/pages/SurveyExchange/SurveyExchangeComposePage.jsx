@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ReactFormBuilder, ReactFormGenerator } from 'react-form-builder2';
 import 'react-form-builder2/dist/app.css';
+import '../../components/survey/survey-form-builder.css';
 import { ArrowLeft, Check, Eye, Save } from 'lucide-react';
 import { surveyApi } from '../../api/survey';
 import styles from '../../components/survey/survey.module.css';

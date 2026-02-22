@@ -3,10 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { clubRecruitApi } from '../../api/clubRecruit';
 import Editor from '../../components/notices/Editor';
 import { sanitizeRichHtml } from '../../security/htmlSanitizer';
+import { UPLOAD_MAX_FILE_SIZE_BYTES, UPLOAD_MAX_FILE_SIZE_MB } from '../../config/env';
 import '../page-shell.css';
 import styles from './ClubRecruitComposePage.module.css';
 
-const MAX_IMAGE_UPLOAD_SIZE = 10 * 1024 * 1024;
+const MAX_IMAGE_UPLOAD_SIZE = UPLOAD_MAX_FILE_SIZE_BYTES;
 
 export default function ClubRecruitComposePage() {
   const navigate = useNavigate();
@@ -34,7 +35,7 @@ export default function ClubRecruitComposePage() {
       return;
     }
     if (file.size > MAX_IMAGE_UPLOAD_SIZE) {
-      setError('이미지는 10MB 이하만 업로드할 수 있습니다.');
+      setError(`이미지는 ${UPLOAD_MAX_FILE_SIZE_MB}MB 이하만 업로드할 수 있습니다.`);
       return;
     }
     setUploading(true);
@@ -55,7 +56,7 @@ export default function ClubRecruitComposePage() {
       throw new Error('이미지 파일만 업로드할 수 있습니다.');
     }
     if (file.size > MAX_IMAGE_UPLOAD_SIZE) {
-      throw new Error('이미지는 10MB 이하만 업로드할 수 있습니다.');
+      throw new Error(`이미지는 ${UPLOAD_MAX_FILE_SIZE_MB}MB 이하만 업로드할 수 있습니다.`);
     }
     return clubRecruitApi.upload(file);
   };

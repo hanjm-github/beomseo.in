@@ -107,12 +107,13 @@ export default function ComposeView({ mode = 'create' }) {
     setError('');
     const list = Array.from(files);
     if (state.attachments.length + list.length > noticesApi.MAX_ATTACHMENTS) {
-      setError('첨부는 최대 5개까지 가능합니다.');
+      setError(`첨부는 최대 ${noticesApi.MAX_ATTACHMENTS}개까지 가능합니다.`);
       return;
     }
     for (const file of list) {
       if (file.size > noticesApi.MAX_FILE_SIZE) {
-        setError('첨부 용량은 10MB 이하만 가능합니다.');
+        const maxFileSizeMb = Math.floor(noticesApi.MAX_FILE_SIZE / (1024 * 1024));
+        setError(`첨부 용량은 ${maxFileSizeMb}MB 이하만 가능합니다.`);
         return;
       }
     }
@@ -258,7 +259,9 @@ export default function ComposeView({ mode = 'create' }) {
               onRemove={(id) => dispatch({ type: 'REMOVE_ATTACHMENT', id })}
               compact
             />
-            <p className={styles.metaMuted}>최대 5개, 10MB/개</p>
+            <p className={styles.metaMuted}>
+              최대 {noticesApi.MAX_ATTACHMENTS}개, {Math.floor(noticesApi.MAX_FILE_SIZE / (1024 * 1024))}MB/개
+            </p>
           </div>
         </div>
       </form>

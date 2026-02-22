@@ -41,7 +41,8 @@ export default function LostFoundComposeView() {
         return;
       }
       if (file.size > lostFoundApi.MAX_FILE_SIZE) {
-        setError('이미지는 10MB 이하만 업로드할 수 있습니다.');
+        const maxFileSizeMb = Math.floor(lostFoundApi.MAX_FILE_SIZE / (1024 * 1024));
+        setError(`이미지는 ${maxFileSizeMb}MB 이하만 업로드할 수 있습니다.`);
         event.target.value = '';
         return;
       }

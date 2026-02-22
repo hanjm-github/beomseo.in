@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { LogIn, AlertCircle } from 'lucide-react';
+import { APP_NAME } from '../config/env';
 import './LoginPage.css';
 
 function LoginPage() {
@@ -45,7 +46,7 @@ function LoginPage() {
         <div className="login-page">
             <div className="login-container">
                 <div className="login-header">
-                    <h1>beomseo.in</h1>
+                    <h1>{APP_NAME}</h1>
                     <p>로그인</p>
                 </div>
 

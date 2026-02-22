@@ -1,5 +1,4 @@
-import { Link } from 'react-router-dom';
-import { motion as Motion } from 'framer-motion';
+﻿import { Link } from 'react-router-dom';
 import styles from './QuickLinkCard.module.css';
 
 export default function QuickLinkCard({
@@ -14,11 +13,7 @@ export default function QuickLinkCard({
 
     return (
         <Link to={to} className={`${styles.card} ${styles[variant]} ${styles[size]}`}>
-            <Motion.div
-                className={styles.inner}
-                whileHover={{ y: -4 }}
-                transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-            >
+            <div className={styles.inner}>
                 <div className={styles.iconWrapper}>
                     <Icon size={size === 'large' ? 28 : 24} />
                 </div>
@@ -39,7 +34,7 @@ export default function QuickLinkCard({
                         />
                     </svg>
                 </div>
-            </Motion.div>
+            </div>
         </Link>
     );
 }

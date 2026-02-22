@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
+import { APP_NAME } from '../../config/env';
 import styles from './Header.module.css';
 import RoleName from '../RoleName/RoleName';
 
@@ -103,7 +104,7 @@ export default function Header() {
             <span className={styles.logoText}>in</span>
           </div>
           <div className={styles.logoLabels}>
-            <span className={styles.logoName}>beomseo.in</span>
+            <span className={styles.logoName}>{APP_NAME}</span>
             <span className={styles.logoMeta}>범서고 공식 커뮤니티</span>
           </div>
         </Link>

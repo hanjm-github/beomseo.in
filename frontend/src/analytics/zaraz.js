@@ -1,12 +1,47 @@
-const ALLOWED_HOSTS = new Set(['beomseo.in']);
-const BLOCKED_KEY_NAMES = new Set([
+const DEFAULT_ALLOWED_HOSTS = ['beomseo.in'];
+const DEFAULT_BLOCKED_KEY_NAMES = [
   'nickname',
   'password',
   'email',
   'token',
   'refresh_token',
   'access_token',
-]);
+];
+const TRUE_VALUES = new Set(['1', 'true', 'yes', 'on']);
+const FALSE_VALUES = new Set(['0', 'false', 'no', 'off']);
+
+function parseBoolean(value, defaultValue) {
+  if (typeof value !== 'string') return defaultValue;
+  const normalized = value.trim().toLowerCase();
+  if (TRUE_VALUES.has(normalized)) return true;
+  if (FALSE_VALUES.has(normalized)) return false;
+  return defaultValue;
+}
+
+function parseCommaSeparatedList(value, fallback = []) {
+  if (typeof value !== 'string') return [...fallback];
+  const parsed = value
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+  return parsed.length ? parsed : [...fallback];
+}
+
+const ALLOWED_HOSTS = new Set(
+  parseCommaSeparatedList(import.meta.env.VITE_ANALYTICS_ALLOWED_HOSTS, DEFAULT_ALLOWED_HOSTS).map(
+    (host) => host.toLowerCase()
+  )
+);
+const ALLOW_ALL_HOSTS = ALLOWED_HOSTS.has('*');
+
+const BLOCKED_KEY_NAMES = new Set(
+  parseCommaSeparatedList(import.meta.env.VITE_ANALYTICS_BLOCKED_KEYS, DEFAULT_BLOCKED_KEY_NAMES).map(
+    (key) => key.toLowerCase()
+  )
+);
+
+const ANALYTICS_ENABLED = parseBoolean(import.meta.env.VITE_ANALYTICS_ENABLED, true);
+const ANALYTICS_ALLOW_IN_DEV = parseBoolean(import.meta.env.VITE_ANALYTICS_ALLOW_IN_DEV, false);
 
 function isBlockedKey(key) {
   if (typeof key !== 'string') return false;
@@ -82,10 +117,12 @@ export function normalizeErrorType(errorLike) {
 }
 
 export function isAnalyticsEnabled() {
-  if (!import.meta.env.PROD) return false;
+  if (!ANALYTICS_ENABLED) return false;
+  if (!ANALYTICS_ALLOW_IN_DEV && !import.meta.env.PROD) return false;
   if (typeof window === 'undefined') return false;
   const hostname = window.location?.hostname?.toLowerCase();
-  if (!hostname || !ALLOWED_HOSTS.has(hostname)) return false;
+  if (!hostname) return false;
+  if (!ALLOW_ALL_HOSTS && !ALLOWED_HOSTS.has(hostname)) return false;
   return true;
 }
 

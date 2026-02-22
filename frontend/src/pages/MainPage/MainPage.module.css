@@ -11,6 +11,49 @@
     padding-top: calc(var(--header-height) + var(--space-8));
 }
 
+.fadeUp {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeUp 0.6s ease-out forwards;
+    will-change: transform, opacity;
+}
+
+.delay0 {
+    animation-delay: 0s;
+}
+
+.delay1 {
+    animation-delay: 0.08s;
+}
+
+.delay2 {
+    animation-delay: 0.16s;
+}
+
+.delay3 {
+    animation-delay: 0.24s;
+}
+
+.delay4 {
+    animation-delay: 0.32s;
+}
+
+.delay5 {
+    animation-delay: 0.4s;
+}
+
+@keyframes fadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 /* Hero Section */
 .hero {
     position: relative;
@@ -420,3 +463,16 @@
     color: var(--color-primary-700);
 }
 
+@media (prefers-reduced-motion: reduce) {
+    .fadeUp {
+        opacity: 1;
+        transform: none;
+        animation: none;
+    }
+
+    .heroPrimary:hover,
+    .card:hover,
+    .viewMore:hover {
+        transform: none;
+    }
+}

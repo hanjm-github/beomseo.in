@@ -1,6 +1,7 @@
 import { X } from 'lucide-react';
 import { ReactFormGenerator } from 'react-form-builder2';
 import styles from './survey.module.css';
+import './survey-form-builder.css';
 
 export default function SurveyResponseModal({ survey, open, onClose, onSubmit, submitting }) {
   if (!open) return null;

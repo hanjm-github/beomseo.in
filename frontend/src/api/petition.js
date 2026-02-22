@@ -1,16 +1,14 @@
 ﻿/**
- * Petition board API with graceful mock fallback.
- * Mirrors existing board APIs while adding vote-threshold logic.
+ * Petition board API with optional dev-only mock fallback.
  */
 import api from './auth';
 import { normalizePaginatedResponse } from './normalizers';
-import { shouldUseMockFallback } from './mockPolicy';
+import { ENABLE_API_MOCKS, shouldUseMockFallback } from './mockPolicy';
 import { trackPostCreated, trackPostCreateFailed } from '../analytics/zaraz';
+import { PETITION_THRESHOLD_DEFAULT } from '../config/env';
 
 const PAGE_SIZE_DEFAULT = 12;
-export const THRESHOLD_DEFAULT = 50;
-
-const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+export const THRESHOLD_DEFAULT = PETITION_THRESHOLD_DEFAULT;
 
 const CATEGORY_OPTIONS = [
   '기타',
@@ -35,148 +33,17 @@ const deriveStatus = (item) => {
   return 'needs-support';
 };
 
-const summarize = (text = '') => {
-  const clean = text.replace(/<[^>]+>/g, '');
-  return clean.length > 200 ? `${clean.slice(0, 200)}…` : clean;
-};
-
-let mockPetitions = [
-  {
-    id: 'pet-1',
-    title: '급식실 냉난방 온도 조절 개선 요청',
-    summary: '점심시간에 너무 더워서 식사하기 힘들어요. 센서 재조정과 선풍기 추가 요청합니다.',
-    category: '학생지원부',
-    votes: 32,
-    threshold: THRESHOLD_DEFAULT,
-    status: 'approved',
-    createdAt: '2026-03-04T01:00:00Z',
-    author: { nickname: '별빛', role: 'student' },
-  },
-  {
-    id: 'pet-2',
-    title: '3학년 자습실 콘센트 추가 설치',
-    summary: '노트북 사용 인원이 늘어났습니다. 벽면 4구 콘센트 3세트 추가 설치 부탁드립니다.',
-    category: '생활안전부',
-    votes: 54,
-    threshold: THRESHOLD_DEFAULT,
-    status: 'approved',
-    createdAt: '2026-03-05T03:30:00Z',
-    author: { nickname: '공대꿈나무', role: 'student' },
-    answer: {
-      responder: '학생회장',
-      role: 'student-council',
-      content: '행정실과 협의하여 3월 둘째 주에 설치 완료 예정입니다. 진행 상황을 공지로 안내하겠습니다.',
-      updatedAt: '2026-03-06T06:00:00Z',
-    },
-  },
-  {
-    id: 'pet-3',
-    title: '체육대회 종목에 배드민턴 추가',
-    summary: '비인기 종목 다양화를 위해 배드민턴 단식/복식 예선을 도입하면 좋겠습니다.',
-    category: '체육부',
-    votes: 12,
-    threshold: THRESHOLD_DEFAULT,
-    status: 'pending',
-    createdAt: '2026-03-06T09:10:00Z',
-    author: { nickname: '체육부', role: 'student-council' },
-  },
-];
-
-async function mockList(params = {}) {
-  await delay(100);
-  const { status, category, q, sort = 'recent', page = 1, pageSize = PAGE_SIZE_DEFAULT } = params;
-  let data = mockPetitions.map((p) => ({ ...p, statusDerived: deriveStatus(p) }));
-
-  if (status && status !== 'all') data = data.filter((p) => p.status === status);
-  if (category && CATEGORY_OPTIONS.includes(category)) data = data.filter((p) => p.category === category);
-  if (q) {
-    const keyword = q.toLowerCase();
-    data = data.filter(
-      (p) =>
-        p.title.toLowerCase().includes(keyword) ||
-        p.summary.toLowerCase().includes(keyword) ||
-        (p.body || '').toLowerCase().includes(keyword)
-    );
-  }
-
-  if (sort === 'votes') {
-    data.sort((a, b) => (b.votes || 0) - (a.votes || 0));
-  } else {
-    data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  }
-
-  const start = (page - 1) * pageSize;
-  return {
-    items: data.slice(start, start + pageSize),
-    total: data.length,
-    page,
-    pageSize,
-  };
-}
-
-async function mockDetail(id) {
-  await delay(80);
-  const found = mockPetitions.find((p) => p.id === id);
-  if (!found) throw new Error('Not found');
-  return { ...found, statusDerived: deriveStatus(found) };
-}
-
-async function mockCreate(payload) {
-  await delay(120);
-  const now = new Date().toISOString();
-  const item = {
-    id: `pet-${Date.now()}`,
-    title: payload.title,
-    summary: payload.summary || summarize(payload.body),
-    body: payload.body || '',
-    category: payload.category || '기타',
-    votes: 0,
-    threshold: payload.threshold || THRESHOLD_DEFAULT,
-    status: 'pending',
-    createdAt: now,
-    author: payload.author || { nickname: '익명', role: 'student' },
-    isVotedByMe: false,
-  };
-  mockPetitions = [item, ...mockPetitions];
-  return { ...item, statusDerived: deriveStatus(item) };
-}
-
-async function mockVote(id, action) {
-  await delay(60);
-  mockPetitions = mockPetitions.map((p) => {
-    if (p.id !== id) return p;
-    const next = { ...p };
-    const already = !!next.isVotedByMe;
-    if (action === 'up' && !already) {
-      next.votes = (next.votes || 0) + 1;
-      next.isVotedByMe = true;
-    } else if (action === 'cancel' && already) {
-      next.votes = Math.max(0, (next.votes || 0) - 1);
-      next.isVotedByMe = false;
-    }
-    return next;
-  });
-  const updated = mockPetitions.find((p) => p.id === id);
-  return { votes: updated.votes, isVotedByMe: updated.isVotedByMe, status: deriveStatus(updated) };
-}
-
-async function mockAnswer(id, payload) {
-  await delay(80);
-  mockPetitions = mockPetitions.map((p) =>
-    p.id === id
-      ? {
-          ...p,
-          answer: {
-            responder: payload.responder || '학생회장',
-            role: payload.role || 'student-council',
-            content: payload.content || '',
-            updatedAt: new Date().toISOString(),
-          },
+const loadPetitionMockApi = ENABLE_API_MOCKS
+  ? (() => {
+      let petitionMockApiPromise;
+      return () => {
+        if (!petitionMockApiPromise) {
+          petitionMockApiPromise = import('./mocks/petition.mock').then((module) => module.petitionMockApi);
         }
-      : p
-  );
-  return mockDetail(id);
-}
+        return petitionMockApiPromise;
+      };
+    })()
+  : null;
 
 export const petitionApi = {
   async list(params = {}) {
@@ -185,7 +52,8 @@ export const petitionApi = {
       return normalizePaginatedResponse(res.data, PAGE_SIZE_DEFAULT);
     } catch (err) {
       if (!shouldUseMockFallback(err)) throw err;
-      const mock = await mockList(params);
+      const mockApi = await loadPetitionMockApi();
+      const mock = await mockApi.list(params);
       return normalizePaginatedResponse(mock, PAGE_SIZE_DEFAULT);
     }
   },
@@ -196,7 +64,8 @@ export const petitionApi = {
       return res.data;
     } catch (err) {
       if (!shouldUseMockFallback(err)) throw err;
-      return mockDetail(id);
+      const mockApi = await loadPetitionMockApi();
+      return mockApi.detail(id);
     }
   },
 
@@ -220,7 +89,8 @@ export const petitionApi = {
         });
         throw err;
       }
-      return mockCreate(payload);
+      const mockApi = await loadPetitionMockApi();
+      return mockApi.create(payload);
     }
   },
 
@@ -230,7 +100,8 @@ export const petitionApi = {
       return res.data;
     } catch (err) {
       if (!shouldUseMockFallback(err)) throw err;
-      return mockVote(id, action);
+      const mockApi = await loadPetitionMockApi();
+      return mockApi.vote(id, action);
     }
   },
 
@@ -240,7 +111,8 @@ export const petitionApi = {
       return res.data;
     } catch (err) {
       if (!shouldUseMockFallback(err)) throw err;
-      return mockAnswer(id, payload);
+      const mockApi = await loadPetitionMockApi();
+      return mockApi.answer(id, payload);
     }
   },
 
@@ -250,12 +122,8 @@ export const petitionApi = {
       return res.data;
     } catch (err) {
       if (!shouldUseMockFallback(err)) throw err;
-      // mock: mark as approved
-      const found = mockPetitions.find((p) => p.id === id);
-      if (found) {
-        found.status = 'approved';
-      }
-      return mockDetail(id);
+      const mockApi = await loadPetitionMockApi();
+      return mockApi.approve(id);
     }
   },
 
@@ -265,11 +133,8 @@ export const petitionApi = {
       return res.data;
     } catch (err) {
       if (!shouldUseMockFallback(err)) throw err;
-      const found = mockPetitions.find((p) => p.id === id);
-      if (found) {
-        found.status = 'rejected';
-      }
-      return mockDetail(id);
+      const mockApi = await loadPetitionMockApi();
+      return mockApi.unapprove(id);
     }
   },
 
@@ -278,4 +143,3 @@ export const petitionApi = {
 };
 
 export default petitionApi;
-

@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { UserPlus, AlertCircle, Info, Eye, EyeOff } from 'lucide-react';
+import { APP_NAME } from '../config/env';
 import './LoginPage.css';
 
 const PASSWORD_MIN_LENGTH = 10;
@@ -110,7 +111,7 @@ function SignUpPage() {
         <div className="login-page">
             <div className="login-container">
                 <div className="login-header">
-                    <h1>beomseo.in</h1>
+                    <h1>{APP_NAME}</h1>
                     <p>회원가입</p>
                 </div>
 

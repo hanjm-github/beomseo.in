@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { MapPin, User, ExternalLink } from 'lucide-react';
+import { APP_NAME } from '../../config/env';
 import styles from './Footer.module.css';
 
 export default function Footer() {
@@ -16,12 +17,12 @@ export default function Footer() {
                                 <span>in</span>
                             </div>
                             <div>
-                                <h3 className={styles.schoolName}>beomseo.in</h3>
+                                <h3 className={styles.schoolName}>{APP_NAME}</h3>
                                 <p className={styles.motto}>범서인</p>
                             </div>
                         </div>
                         <p className={styles.description}>
-                            beomseo.in은 학교의 공식 입장을 대변하지 않습니다.
+                            {APP_NAME}은 학교의 공식 입장을 대변하지 않습니다.
                         </p>
                     </div>
 
@@ -76,7 +77,7 @@ export default function Footer() {
                             </li>
                             <li>
                                 <a href="https://github.com/hanjm-github/2026-beomseo" target="_blank" rel="noopener noreferrer">
-                                    beomseo.in GitHub 레포지토리 <ExternalLink size={12} />
+                                    {APP_NAME} GitHub 레포지토리 <ExternalLink size={12} />
                                 </a>
                             </li>
                             <li>
@@ -91,7 +92,7 @@ export default function Footer() {
                 {/* Bottom Bar */}
                 <div className={styles.bottom}>
                     <p className={styles.copyright}>
-                        © {currentYear} beomseo.in. All rights reserved.
+                        © {currentYear} {APP_NAME}. All rights reserved.
                     </p>
                     <div className={styles.bottomLinks}>
                         <Link to="/privacy">개인정보처리방침</Link>

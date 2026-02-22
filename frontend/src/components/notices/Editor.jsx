@@ -2,9 +2,10 @@ import { Bold, Italic, Underline, List, Link as LinkIcon, Image as ImageIcon } f
 import { useEffect, useRef } from 'react';
 import { sanitizeRichHtml } from '../../security/htmlSanitizer';
 import { toSafeAssetUrl, toSafeExternalHref } from '../../security/urlPolicy';
+import { UPLOAD_MAX_FILE_SIZE_BYTES, UPLOAD_MAX_FILE_SIZE_MB } from '../../config/env';
 import styles from './notices.module.css';
 
-const MAX_IMAGE_UPLOAD_SIZE = 10 * 1024 * 1024;
+const MAX_IMAGE_UPLOAD_SIZE = UPLOAD_MAX_FILE_SIZE_BYTES;
 
 export default function Editor({ value, onChange, placeholder, onUploadImage, uploading }) {
   const editorRef = useRef(null);
@@ -149,7 +150,7 @@ export default function Editor({ value, onChange, placeholder, onUploadImage, up
       return;
     }
     if (file.size > MAX_IMAGE_UPLOAD_SIZE) {
-      window.alert('이미지는 10MB 이하만 업로드할 수 있습니다.');
+      window.alert(`이미지는 ${UPLOAD_MAX_FILE_SIZE_MB}MB 이하만 업로드할 수 있습니다.`);
       e.target.value = '';
       return;
     }

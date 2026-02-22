@@ -1,0 +1,24 @@
+function readStringEnv(key, fallback) {
+  const value = import.meta.env[key];
+  if (typeof value !== 'string') return fallback;
+  const trimmed = value.trim();
+  return trimmed || fallback;
+}
+
+function readPositiveIntEnv(key, fallback) {
+  const value = Number.parseInt(import.meta.env[key], 10);
+  if (!Number.isFinite(value) || value <= 0) return fallback;
+  return value;
+}
+
+export const APP_NAME = readStringEnv('VITE_APP_NAME', 'beomseo.in');
+
+export const UPLOAD_MAX_ATTACHMENTS = readPositiveIntEnv('VITE_UPLOAD_MAX_ATTACHMENTS', 5);
+export const UPLOAD_MAX_IMAGES = readPositiveIntEnv('VITE_UPLOAD_MAX_IMAGES', 5);
+export const UPLOAD_MAX_FILE_SIZE_MB = readPositiveIntEnv('VITE_UPLOAD_MAX_FILE_SIZE_MB', 10);
+export const UPLOAD_MAX_FILE_SIZE_BYTES = UPLOAD_MAX_FILE_SIZE_MB * 1024 * 1024;
+
+export const PETITION_THRESHOLD_DEFAULT = readPositiveIntEnv(
+  'VITE_PETITION_THRESHOLD_DEFAULT',
+  50
+);
