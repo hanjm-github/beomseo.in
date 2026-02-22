@@ -221,6 +221,7 @@ def list_subject_changes():
 
     current_user = optional_current_user()
     admin_mode = is_admin(current_user)
+    is_authenticated = current_user is not None
     if not admin_mode:
         # Non-admin users can still see their own pending posts.
         status = None
@@ -235,7 +236,20 @@ def list_subject_changes():
 
     return jsonify(
         build_paginated_response(
-            [i.to_list_dict() if view == 'list' else i.to_dict(include_note=True) for i in items],
+            [
+                (
+                    i.to_list_dict(
+                        include_note=is_authenticated,
+                        include_contact=is_authenticated,
+                    )
+                    if view == 'list'
+                    else i.to_dict(
+                        include_note=is_authenticated,
+                        include_contact=is_authenticated,
+                    )
+                )
+                for i in items
+            ],
             total,
             page,
             page_size,

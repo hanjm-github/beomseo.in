@@ -21,7 +21,6 @@ from models import (
     Notice,
     Attachment,
     NoticeCategory,
-    User,
     UserRole,
     Comment,
     NoticeReaction,
@@ -30,9 +29,12 @@ from models import (
 )
 from utils.pagination import parse_pagination, build_paginated_response
 from utils.files import (
+    build_upload_preview_url,
+    canonicalize_upload_urls_in_text,
     save_upload_for_scope,
     resolve_scope_upload_dir,
     ensure_dir,
+    is_valid_upload_preview_token,
     validate_upload,
     build_upload_url,
     normalize_upload_url_for_scope,
@@ -218,6 +220,7 @@ def validate_notice_payload(data, is_update=False):
     errors = []
     title = (data.get('title') or '').strip()
     body = (data.get('body') or '').strip()
+    body = canonicalize_upload_urls_in_text(current_app.config, 'notices', body)
     category = data.get('category')
     tags = parse_tags(data.get('tags'))
     pinned = bool(data.get('pinned', False))
@@ -252,7 +255,7 @@ def validate_notice_payload(data, is_update=False):
         except (TypeError, ValueError):
             file_size = 0
         if file_size > max_size:
-            errors.append(f'첨부파일 용량은 10MB 이하만 가능합니다.')
+            errors.append('첨부파일 용량은 10MB 이하만 가능합니다.')
             continue
 
         normalized_attachments.append(
@@ -470,12 +473,15 @@ def upload_file():
         return jsonify({'error': result.get('error', '파일 검증에 실패했습니다.')}), 422
 
     saved = save_upload_for_scope(file, current_app.config, 'notices')
+    canonical_url = saved['url']
+    preview_url = build_upload_preview_url(current_app.config, 'notices', saved['filename'])
 
     return jsonify({
         'id': saved['filename'],
         'name': result['name'],
         'size': result['size'],
-        'url': saved['url'],
+        'url': preview_url,
+        'canonicalUrl': canonical_url,
         'mime': result['mime'],
         'kind': result['kind'],
     }), 201
@@ -507,7 +513,15 @@ def serve_upload(filename):
     if not notice:
         if not file_path.exists():
             return jsonify({'error': '첨부파일을 찾을 수 없습니다.'}), 404
-        # Allow temporary preview/download for newly uploaded files before notice save.
+        preview_token = request.args.get('preview_token', '')
+        if not is_valid_upload_preview_token(
+            current_app.config,
+            'notices',
+            filename,
+            preview_token,
+        ):
+            return jsonify({'error': '첨부파일을 찾을 수 없습니다.'}), 404
+        # Allow temporary preview/download only with a valid signed preview token.
         ext = Path(filename).suffix.lower()
         inline_exts = {'.jpg', '.jpeg', '.png', '.gif', '.webp'}
         response = send_from_directory(

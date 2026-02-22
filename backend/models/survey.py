@@ -6,7 +6,7 @@ from enum import Enum
 
 from sqlalchemy import UniqueConstraint
 
-from .user import db, User, UserRole
+from .user import db
 
 
 class SurveyStatus(str, Enum):

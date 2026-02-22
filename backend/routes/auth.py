@@ -18,7 +18,12 @@ from utils.security import (
     sanitize_plain_text,
     parse_jwt_identity_to_int,
 )
-from utils.security_tokens import issue_token_pair, revoke_token_jti, revoke_raw_refresh_token
+from utils.security_tokens import (
+    issue_token_pair,
+    rotate_refresh_token_pair,
+    revoke_token_jti,
+    revoke_raw_refresh_token,
+)
 from utils.rate_limit import limiter
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/api/auth')
@@ -27,6 +32,16 @@ PASSWORD_MIN_LENGTH = 10
 PASSWORD_MAX_LENGTH = 72
 NICKNAME_MIN_LENGTH = 2
 NICKNAME_MAX_LENGTH = 50
+TOKEN_ISSUING_ENDPOINTS = {'auth.register', 'auth.login', 'auth.refresh'}
+
+
+@auth_bp.after_request
+def _set_no_store_headers(response):
+    """Disable intermediary/browser caching on token-issuing endpoints."""
+    if request.endpoint in TOKEN_ISSUING_ENDPOINTS:
+        response.headers['Cache-Control'] = 'no-store'
+        response.headers['Pragma'] = 'no-cache'
+    return response
 
 
 def _password_is_strong(password: str) -> bool:
@@ -75,14 +90,23 @@ def register():
             'error_en': 'Registration is only allowed from Beomseo High School internal WiFi.'
         }), 403
 
-    data = request.get_json()
+    data = request.get_json(silent=True)
 
     # Body validation happens before DB access to keep error responses deterministic.
-    if not data:
+    if data is None:
         return jsonify({'error': 'Request body is required'}), 400
+    if not isinstance(data, dict):
+        return jsonify({'error': 'Request body must be a JSON object'}), 400
 
-    nickname = sanitize_plain_text(data.get('nickname', ''), max_length=NICKNAME_MAX_LENGTH)
-    password = data.get('password', '')
+    nickname_raw = data.get('nickname', '')
+    password_raw = data.get('password', '')
+    if not isinstance(nickname_raw, str):
+        return jsonify({'error': 'nickname must be a string'}), 422
+    if not isinstance(password_raw, str):
+        return jsonify({'error': 'password must be a string'}), 422
+
+    nickname = sanitize_plain_text(nickname_raw, max_length=NICKNAME_MAX_LENGTH)
+    password = password_raw
 
     if not nickname:
         return jsonify({'error': '닉네임을 입력해주세요.'}), 400
@@ -145,13 +169,22 @@ def register():
 @limiter.limit(lambda: current_app.config.get('RATELIMIT_LOGIN_LIMIT', '5 per minute'))
 def login():
     """Authenticate user and issue fresh access/refresh token pair."""
-    data = request.get_json()
+    data = request.get_json(silent=True)
 
-    if not data:
+    if data is None:
         return jsonify({'error': 'Request body is required'}), 400
+    if not isinstance(data, dict):
+        return jsonify({'error': 'Request body must be a JSON object'}), 400
 
-    nickname = sanitize_plain_text(data.get('nickname', ''), max_length=NICKNAME_MAX_LENGTH)
-    password = data.get('password', '')
+    nickname_raw = data.get('nickname', '')
+    password_raw = data.get('password', '')
+    if not isinstance(nickname_raw, str):
+        return jsonify({'error': 'nickname must be a string'}), 422
+    if not isinstance(password_raw, str):
+        return jsonify({'error': 'password must be a string'}), 422
+
+    nickname = sanitize_plain_text(nickname_raw, max_length=NICKNAME_MAX_LENGTH)
+    password = password_raw
 
     if not nickname or not password:
         return jsonify({'error': '닉네임과 비밀번호를 입력해주세요.'}), 400
@@ -201,14 +234,19 @@ def refresh():
         return jsonify({'error': 'Invalid refresh token'}), 401
 
     try:
-        access_token, refresh_token = issue_token_pair(
+        access_token, refresh_token, rotate_error = rotate_refresh_token_pair(
             user_id=user_id,
-            rotate_from_refresh_jti=refresh_jti,
+            refresh_jti=refresh_jti,
             user_role=user.role.value,
         )
     except Exception:
         db.session.rollback()
         return jsonify({'error': '토큰 갱신 중 오류가 발생했습니다.'}), 500
+
+    if rotate_error:
+        if rotate_error in {'invalid_refresh_token', 'refresh_token_replayed', 'refresh_token_expired'}:
+            return jsonify({'error': 'Invalid refresh token'}), 401
+        return jsonify({'error': 'Token refresh failed'}), 500
 
     return jsonify({
         'access_token': access_token,

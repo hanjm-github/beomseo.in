@@ -359,7 +359,8 @@ def get_survey(survey_id):
             survey_id=survey.id, respondent_id=current_user.id
         ).first() is not None
 
-    credit = ensure_credit(survey.owner_id)
+    # Read-only GET: do not create credit rows as a side effect.
+    credit = SurveyCredit.query.get(survey.owner_id)
     available = credit.available if credit else current_app.config.get('SURVEY_BASE_QUOTA', 0)
     total_quota = max(0, available) + (survey.responses_received or 0)
 

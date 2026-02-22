@@ -74,6 +74,33 @@ def _normalize_role_value(user_role):
     return str(user_role)
 
 
+def _claims_for_role(user_role: Optional[str]):
+    role_value = _normalize_role_value(user_role)
+    return {'role': role_value} if role_value else None
+
+
+def _issue_and_persist_pair(
+    user_id: int,
+    claims: Optional[dict] = None,
+    parent_refresh_jti: Optional[str] = None,
+):
+    """
+    Create access/refresh pair and persist both token rows in current transaction.
+    """
+    access_token = create_access_token(identity=str(user_id), additional_claims=claims)
+    refresh_token = create_refresh_token(identity=str(user_id), additional_claims=claims)
+
+    # Persist refresh first so access token can point to refresh parent_jti.
+    refresh_rec = _persist_token(
+        refresh_token,
+        AuthTokenType.REFRESH,
+        user_id,
+        parent_jti=parent_refresh_jti,
+    )
+    _persist_token(access_token, AuthTokenType.ACCESS, user_id, parent_jti=refresh_rec.jti)
+    return access_token, refresh_token, refresh_rec
+
+
 def issue_token_pair(
     user_id: int,
     rotate_from_refresh_jti: Optional[str] = None,
@@ -83,21 +110,13 @@ def issue_token_pair(
     Issue access/refresh token pair and persist token state atomically.
     If rotate_from_refresh_jti is provided, revoke that refresh token.
     """
-    role_value = _normalize_role_value(user_role)
     # Embedding role keeps authorization checks cheap on most requests.
-    claims = {'role': role_value} if role_value else None
-
-    access_token = create_access_token(identity=str(user_id), additional_claims=claims)
-    refresh_token = create_refresh_token(identity=str(user_id), additional_claims=claims)
-
-    # Persist refresh first so access token can point to refresh parent_jti.
-    refresh_rec = _persist_token(
-        refresh_token,
-        AuthTokenType.REFRESH,
-        user_id,
-        parent_jti=rotate_from_refresh_jti,
+    claims = _claims_for_role(user_role)
+    access_token, refresh_token, refresh_rec = _issue_and_persist_pair(
+        user_id=user_id,
+        claims=claims,
+        parent_refresh_jti=rotate_from_refresh_jti,
     )
-    _persist_token(access_token, AuthTokenType.ACCESS, user_id, parent_jti=refresh_rec.jti)
 
     if rotate_from_refresh_jti:
         old_refresh = AuthToken.query.filter_by(jti=rotate_from_refresh_jti).first()
@@ -113,6 +132,64 @@ def issue_token_pair(
         raise
 
     return access_token, refresh_token
+
+
+def rotate_refresh_token_pair(
+    user_id: int,
+    refresh_jti: str,
+    user_role: Optional[str] = None,
+):
+    """
+    Rotate one refresh token exactly once.
+
+    Returns tuple(access_token, refresh_token, error_key).
+    """
+    if not refresh_jti:
+        return None, None, 'invalid_refresh_token'
+
+    claims = _claims_for_role(user_role)
+    now = datetime.utcnow()
+
+    # Lock the presented refresh token row to prevent replay race.
+    old_refresh = (
+        AuthToken.query
+        .filter_by(
+            jti=refresh_jti,
+            user_id=user_id,
+            token_type=AuthTokenType.REFRESH,
+        )
+        .with_for_update()
+        .first()
+    )
+    if not old_refresh:
+        return None, None, 'invalid_refresh_token'
+    if old_refresh.revoked_at is not None:
+        return None, None, 'refresh_token_replayed'
+    if old_refresh.expires_at and old_refresh.expires_at <= now:
+        old_refresh.revoked_at = now
+        old_refresh.revoked_reason = 'expired'
+        try:
+            db.session.commit()
+        except SQLAlchemyError:
+            db.session.rollback()
+        return None, None, 'refresh_token_expired'
+
+    old_refresh.revoked_at = now
+    old_refresh.revoked_reason = 'rotated'
+
+    try:
+        access_token, refresh_token, new_refresh = _issue_and_persist_pair(
+            user_id=user_id,
+            claims=claims,
+            parent_refresh_jti=refresh_jti,
+        )
+        old_refresh.replaced_by_jti = new_refresh.jti
+        db.session.commit()
+    except SQLAlchemyError:
+        db.session.rollback()
+        return None, None, 'rotation_failed'
+
+    return access_token, refresh_token, None
 
 
 def revoke_token_jti(jti: Optional[str], reason: str = 'revoked', replaced_by_jti: Optional[str] = None):

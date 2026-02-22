@@ -2,9 +2,15 @@
 File utility helpers for uploads.
 """
 import io
+import base64
+import hashlib
+import re
 import uuid
+from functools import lru_cache
 from pathlib import Path
 from urllib.parse import unquote, urlparse
+import bcrypt
+from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 from werkzeug.utils import secure_filename
 
 
@@ -35,6 +41,8 @@ LEGACY_OFFICE_MIME_TYPES = {
     'application/vnd.ms-excel',
     'application/vnd.ms-powerpoint',
 }
+
+UPLOAD_PREVIEW_TOKEN_SALT_BCRYPT_ROUNDS = 12
 
 
 def ensure_dir(path: str):
@@ -98,7 +106,8 @@ def extract_upload_filename_for_scope(config: dict, scope: str, url_value):
         return None
 
     parsed = urlparse(raw)
-    path = parsed.path if (parsed.scheme or parsed.netloc) else raw
+    # urlparse() also strips query strings for relative URLs.
+    path = parsed.path or raw
     path = _normalize_upload_candidate_path(unquote(path))
     if not path:
         return None
@@ -125,6 +134,143 @@ def normalize_upload_url_for_scope(config: dict, scope: str, url_value):
     if not filename:
         return None
     return build_upload_url(config, scope, filename)
+
+
+def canonicalize_upload_urls_in_text(config: dict, scope: str, text_value):
+    """
+    Canonicalize scope upload URLs embedded in HTML/text to path-only URLs.
+
+    This strips temporary preview query strings (e.g. ``preview_token``) from
+    persisted rich-text bodies while keeping the upload filename/scope binding.
+    """
+    if not isinstance(text_value, str) or not text_value:
+        return text_value
+
+    route_prefixes = config.get('UPLOAD_ROUTE_PREFIXES') or {}
+    prefix = route_prefixes.get(scope)
+    if not prefix:
+        return text_value
+
+    escaped_prefix = re.escape(prefix.rstrip('/'))
+    url_pattern = re.compile(
+        rf'(?P<url>(?:https?://[^"\'\s<>]+)?{escaped_prefix}/[^"\'\s<>]+)',
+        flags=re.IGNORECASE,
+    )
+
+    def _replace(match):
+        raw_url = match.group('url')
+        normalized = normalize_upload_url_for_scope(config, scope, raw_url)
+        return normalized or raw_url
+
+    return url_pattern.sub(_replace, text_value)
+
+
+def _preview_serializer(config: dict):
+    signing_key = (
+        config.get('UPLOAD_TEMP_PREVIEW_SIGNING_KEY')
+        or config.get('JWT_SECRET_KEY')
+        or ''
+    )
+    if not signing_key:
+        return None
+    return URLSafeTimedSerializer(str(signing_key))
+
+
+@lru_cache(maxsize=8)
+def _derive_preview_token_salt_with_bcrypt(signing_key: str) -> str:
+    """
+    Derive a stable token salt from the signing key using bcrypt KDF.
+
+    The derived value stays deterministic for the same key, which keeps token
+    validation consistent across workers and restarts.
+    """
+    key_bytes = str(signing_key).encode('utf-8')
+    # Derive kdf salt from the signing key to avoid fixed-string salt behavior.
+    kdf_salt = hashlib.sha256(key_bytes).digest()[:16]
+    derived = bcrypt.kdf(
+        password=key_bytes,
+        salt=kdf_salt,
+        desired_key_bytes=32,
+        rounds=UPLOAD_PREVIEW_TOKEN_SALT_BCRYPT_ROUNDS,
+        ignore_few_rounds=True,
+    )
+    encoded = base64.urlsafe_b64encode(derived).decode('ascii').rstrip('=')
+    return f'upload-preview-bcrypt-v2:{encoded}'
+
+
+def _preview_token_salt(config: dict):
+    signing_key = (
+        config.get('UPLOAD_TEMP_PREVIEW_SIGNING_KEY')
+        or config.get('JWT_SECRET_KEY')
+        or ''
+    )
+    if not signing_key:
+        return None
+    try:
+        return _derive_preview_token_salt_with_bcrypt(str(signing_key))
+    except Exception:
+        return None
+
+
+def _preview_ttl_seconds(config: dict):
+    try:
+        ttl = int(config.get('UPLOAD_TEMP_PREVIEW_TTL_SECONDS', 86400))
+        return ttl if ttl > 0 else 86400
+    except (TypeError, ValueError):
+        return 86400
+
+
+def generate_upload_preview_token(config: dict, scope: str, filename: str):
+    """Create signed preview token bound to upload scope and filename."""
+    serializer = _preview_serializer(config)
+    salt = _preview_token_salt(config)
+    if serializer is None or not salt:
+        return None
+
+    return serializer.dumps(
+        {
+            'scope': str(scope),
+            'filename': str(filename),
+        },
+        salt=salt,
+    )
+
+
+def build_upload_preview_url(config: dict, scope: str, filename: str):
+    """
+    Build temporary signed preview URL for newly uploaded files.
+
+    Returned URL remains backward-compatible for existing frontend preview flows.
+    """
+    canonical_url = build_upload_url(config, scope, filename)
+    token = generate_upload_preview_token(config, scope, filename)
+    if not token:
+        return canonical_url
+    return f'{canonical_url}?preview_token={token}'
+
+
+def is_valid_upload_preview_token(config: dict, scope: str, filename: str, token: str):
+    """Validate token signature, age, and scope/filename binding."""
+    if not token:
+        return False
+
+    serializer = _preview_serializer(config)
+    salt = _preview_token_salt(config)
+    if serializer is None or not salt:
+        return False
+
+    try:
+        payload = serializer.loads(
+            token,
+            salt=salt,
+            max_age=_preview_ttl_seconds(config),
+        )
+        return (
+            payload.get('scope') == str(scope)
+            and payload.get('filename') == str(filename)
+        )
+    except (SignatureExpired, BadSignature):
+        return False
 
 
 def _read_file_head(file_storage, size=1024):

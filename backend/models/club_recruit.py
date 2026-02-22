@@ -4,7 +4,7 @@ Club recruit (동아리 모집) models with approval workflow.
 from datetime import datetime, date
 from enum import Enum
 
-from .user import db, UserRole
+from .user import db
 
 
 class GradeGroup(str, Enum):

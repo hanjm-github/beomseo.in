@@ -3,9 +3,15 @@ Free (community) board models with approval workflow.
 """
 from datetime import datetime
 from enum import Enum
+from html import unescape
+import re
 from sqlalchemy.schema import UniqueConstraint
 
-from .user import db, UserRole
+from .user import db
+
+
+_HTML_TAG_RE = re.compile(r'<[^>]+>')
+_WHITESPACE_RE = re.compile(r'\s+')
 
 
 class FreeCategory(str, Enum):
@@ -162,8 +168,9 @@ class FreePost(db.Model):
         """Build plain-text summary from rich-text body for list cards."""
         if not body:
             return ''
-        text = body.replace('<', ' <').split()
-        plain = ' '.join(text)
+        no_tags = _HTML_TAG_RE.sub(' ', body)
+        plain = unescape(no_tags).replace('\xa0', ' ')
+        plain = _WHITESPACE_RE.sub(' ', plain).strip()
         if len(plain) > 240:
             return plain[:240] + '…'
         return plain
@@ -202,10 +209,12 @@ class FreePost(db.Model):
     def to_list_dict(self, my_reaction=None, bookmarked=False):
         """Compact serializer used by free-board list APIs."""
         attachments_count = len(self.attachments) if self.attachments is not None else 0
+        summary_source = self.summary or self.body or ''
+        safe_summary = FreePost.summarize(summary_source)
         return {
             'id': self.id,
             'title': self.title,
-            'summary': self.summary,
+            'summary': safe_summary,
             'category': self.category.value if self.category else None,
             'status': self.status.value if self.status else None,
             'author': {

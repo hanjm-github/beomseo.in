@@ -4,7 +4,7 @@ Subject change (선택과목 변경) models with approval, likes, comments.
 from datetime import datetime
 from enum import Enum
 
-from .user import db, UserRole, User
+from .user import db
 
 
 class MatchStatus(str, Enum):
@@ -55,7 +55,7 @@ class SubjectChange(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
-    def to_dict(self, include_note=True):
+    def to_dict(self, include_note=True, include_contact=True):
         """Serialize board item for detail/list responses."""
         return {
             'id': self.id,
@@ -72,7 +72,7 @@ class SubjectChange(db.Model):
             'status': self.status.value if self.status else None,
             'approvalStatus': self.approval_status.value if self.approval_status else None,
             'note': self.note if include_note else None,
-            'contactLinks': self.contact_links or [],
+            'contactLinks': (self.contact_links or []) if include_contact else [],
             'commentCount': self.comment_count,
             'views': self.views,
             'approvedAt': self.approved_at.isoformat() if self.approved_at else None,
@@ -85,8 +85,8 @@ class SubjectChange(db.Model):
             'updatedAt': self.updated_at.isoformat() if self.updated_at else None,
         }
 
-    def to_list_dict(self):
-        return self.to_dict(include_note=True)
+    def to_list_dict(self, include_note=True, include_contact=True):
+        return self.to_dict(include_note=include_note, include_contact=include_contact)
 
 
 class SubjectChangeLike(db.Model):

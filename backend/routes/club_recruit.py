@@ -19,14 +19,17 @@ from models import (
 )
 from utils.pagination import parse_pagination, build_paginated_response
 from utils.files import (
-    save_upload_for_scope,
-    resolve_scope_upload_dir,
-    ensure_dir,
-    validate_upload,
     build_upload_url,
+    build_upload_preview_url,
+    canonicalize_upload_urls_in_text,
+    ensure_dir,
+    is_valid_upload_preview_token,
     normalize_upload_url_for_scope,
+    resolve_scope_upload_dir,
+    save_upload_for_scope,
+    validate_upload,
 )
-from utils.security import require_role, get_current_user
+from utils.security import require_role, get_current_user, is_safe_http_url
 from utils.cache import cache_json_response, invalidate_cache_namespaces
 
 club_recruit_bp = Blueprint('club_recruit', __name__, url_prefix='/api/club-recruit')
@@ -61,6 +64,7 @@ def validate_payload(data):
     apply_link = (data.get('applyLink') or '').strip() or None
     extra_note = (data.get('extraNote') or '').strip()
     body = data.get('body') or ''
+    body = canonicalize_upload_urls_in_text(current_app.config, 'club_recruit', str(body))
     poster_url = (data.get('posterUrl') or '').strip() or None
 
     if poster_url:
@@ -81,6 +85,8 @@ def validate_payload(data):
         errors.append('모집 종료일은 시작일 이후여야 합니다.')
     if apply_link and len(apply_link) > 500:
         errors.append('applyLink는 500자 이하로 입력해주세요.')
+    if apply_link and not is_safe_http_url(apply_link):
+        errors.append('applyLink는 유효한 http/https URL이어야 합니다.')
     if not extra_note or len(extra_note) > 200:
         errors.append('기타 사항은 1~200자로 입력해주세요.')
     if body and len(body) > 20000:
@@ -383,12 +389,15 @@ def upload_poster():
         return jsonify({'error': result.get('error', '파일 검증에 실패했습니다.')}), 422
 
     saved = save_upload_for_scope(file, current_app.config, 'club_recruit')
+    canonical_url = saved['url']
+    preview_url = build_upload_preview_url(current_app.config, 'club_recruit', saved['filename'])
 
     return jsonify({
         'id': saved['filename'],
         'name': result['name'],
         'size': result['size'],
-        'url': saved['url'],
+        'url': preview_url,
+        'canonicalUrl': canonical_url,
         'mime': result['mime'],
         'kind': result['kind']
     }), 201
@@ -420,7 +429,15 @@ def serve_poster(filename):
     if not item:
         if not file_path.exists():
             return jsonify({'error': '첨부파일을 찾을 수 없습니다.'}), 404
-        # Allow temporary preview for newly uploaded poster/editor image before post save.
+        preview_token = request.args.get('preview_token', '')
+        if not is_valid_upload_preview_token(
+            current_app.config,
+            'club_recruit',
+            filename,
+            preview_token,
+        ):
+            return jsonify({'error': '첨부파일을 찾을 수 없습니다.'}), 404
+        # Allow temporary preview only when a valid signed preview token is provided.
         response = send_from_directory(upload_dir, filename, as_attachment=False, download_name=filename)
         response.headers['X-Content-Type-Options'] = 'nosniff'
         return response

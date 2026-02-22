@@ -16,6 +16,7 @@
  */
 import { Bold, Italic, Underline, List, Link as LinkIcon, Image as ImageIcon } from 'lucide-react';
 import { useEffect, useRef } from 'react';
+import { toAbsoluteApiUrl } from '../../api/normalizers';
 import { sanitizeRichHtml } from '../../security/htmlSanitizer';
 import { toSafeAssetUrl, toSafeExternalHref } from '../../security/urlPolicy';
 import { UPLOAD_MAX_FILE_SIZE_BYTES, UPLOAD_MAX_FILE_SIZE_MB } from '../../config/env';
@@ -131,11 +132,12 @@ export default function Editor({ value, onChange, placeholder, onUploadImage, up
   const insertImage = (url) => {
     const safeUrl = toSafeAssetUrl(url);
     if (!safeUrl) return;
+    const absoluteUrl = toAbsoluteApiUrl(safeUrl) || safeUrl;
     const editor = editorRef.current;
     if (!editor) return;
 
     const img = document.createElement('img');
-    img.src = safeUrl;
+    img.src = absoluteUrl;
     img.alt = 'image';
     img.style.maxWidth = '100%';
 

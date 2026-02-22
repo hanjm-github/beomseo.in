@@ -23,7 +23,6 @@ from models import gomsol_market  # noqa: F401 ensure models are registered
 from models import auth_token  # noqa: F401 ensure models are registered
 from utils.cache import init_cache
 from utils.rate_limit import (
-    limiter,
     init_limiter,
     apply_blueprint_write_limit,
     build_rate_limit_response,
@@ -39,6 +38,16 @@ INSECURE_JWT_SECRETS = {
     'secret',
     'changeme',
 }
+
+
+TRUTHY_VALUES = {'1', 'true', 'yes', 'on'}
+
+
+def _env_truthy(name: str, default: bool = False) -> bool:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return str(value).strip().lower() in TRUTHY_VALUES
 
 
 def validate_security_config(app):
@@ -76,13 +85,32 @@ def create_app(config_name=None):
     -> global handlers -> blueprints.
     """
     if config_name is None:
-        config_name = os.getenv('FLASK_ENV', 'development')
+        explicit_env_name = (os.getenv('FLASK_ENV') or '').strip().lower()
+        require_explicit_env = _env_truthy('REQUIRE_EXPLICIT_ENV', default=True)
+        if not explicit_env_name:
+            if require_explicit_env:
+                raise RuntimeError(
+                    'FLASK_ENV must be explicitly set (e.g. development or production).'
+                )
+            explicit_env_name = 'development'
+        config_name = explicit_env_name
+    else:
+        config_name = str(config_name).strip().lower()
+
+    if config_name not in config:
+        raise RuntimeError(f'Unsupported FLASK_ENV: {config_name}')
 
     app = Flask(__name__)
-    app.config.from_object(config.get(config_name, config['default']))
+    app.config.from_object(config[config_name])
     app.config['ENV_NAME'] = config_name
     # Reject insecure runtime configuration before extensions are initialized.
     validate_security_config(app)
+    if app.config.get('TRUST_PROXY_HEADERS') and not app.config.get('TRUSTED_PROXY_CIDRS'):
+        app.logger.warning(
+            'TRUST_PROXY_HEADERS=true and TRUSTED_PROXY_CIDRS is empty. '
+            'Forwarded headers are trusted from any direct peer. '
+            'Ensure reverse proxy strips/replaces inbound X-Forwarded-* headers.'
+        )
 
     # Initialize extensions
     init_cache(app)
@@ -193,10 +221,10 @@ def create_app(config_name=None):
     def health():
         return jsonify({'status': 'healthy', 'message': '범서고등학교 API 서버'}), 200
 
-    # Create tables for environments without migration tooling.
-    # (Production deployments should prefer explicit migration flows.)
-    with app.app_context():
-        db.create_all()
+    if app.config.get('AUTO_CREATE_TABLES', False):
+        # Dev convenience path only; production should use explicit migrations.
+        with app.app_context():
+            db.create_all()
 
     return app
 

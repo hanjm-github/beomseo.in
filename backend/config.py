@@ -61,6 +61,8 @@ class Config:
     """
 
     ENV_NAME = os.getenv('FLASK_ENV', 'development')
+    # Startup can require explicit env selection to prevent accidental defaults.
+    REQUIRE_EXPLICIT_ENV = _parse_bool(os.getenv('REQUIRE_EXPLICIT_ENV', 'true'), default=True)
 
     # Database
     DATABASE_URL = os.getenv('DATABASE_URL')
@@ -90,6 +92,13 @@ class Config:
     CORS_ORIGINS_RAW = os.getenv('CORS_ORIGINS', 'http://localhost:5173')
     CORS_ORIGINS = _parse_origins(CORS_ORIGINS_RAW)
 
+    # Proxy trust
+    # Forwarded headers are only trusted when enabled and (optionally)
+    # when the direct peer IP belongs to TRUSTED_PROXY_CIDRS.
+    TRUST_PROXY_HEADERS = _parse_bool(os.getenv('TRUST_PROXY_HEADERS', 'false'), default=False)
+    TRUSTED_PROXY_CIDRS_RAW = os.getenv('TRUSTED_PROXY_CIDRS', '')
+    TRUSTED_PROXY_CIDRS = _parse_csv(TRUSTED_PROXY_CIDRS_RAW)
+
     # Cache / Redis
     # Redis is optional at runtime; cache helpers degrade to NullCache.
     CACHE_ENABLED = _parse_bool(os.getenv('CACHE_ENABLED', 'true'), default=True)
@@ -108,6 +117,7 @@ class Config:
     RATELIMIT_LOGIN_LIMIT = os.getenv('RATELIMIT_LOGIN_LIMIT', '5 per minute')
     RATELIMIT_REGISTER_LIMIT = os.getenv('RATELIMIT_REGISTER_LIMIT', '5 per 10 minute')
     RATELIMIT_REFRESH_LIMIT = os.getenv('RATELIMIT_REFRESH_LIMIT', '20 per 10 minute')
+    RATELIMIT_SWALLOW_ERRORS = _parse_bool(os.getenv('RATELIMIT_SWALLOW_ERRORS', 'true'), default=True)
 
     # Nickname moderation
     NICKNAME_BANNED_WORDS_RAW = os.getenv(
@@ -160,6 +170,9 @@ class Config:
             )
         )
     )
+    # Temporary preview URLs for uploads that are not yet linked to a saved row.
+    UPLOAD_TEMP_PREVIEW_TTL_SECONDS = _parse_int(os.getenv('UPLOAD_TEMP_PREVIEW_TTL_SECONDS', 86400), 86400)
+    UPLOAD_TEMP_PREVIEW_SIGNING_KEY = os.getenv('UPLOAD_TEMP_PREVIEW_SIGNING_KEY') or JWT_SECRET_KEY
 
     # Petition settings
     DEFAULT_PETITION_THRESHOLD = int(os.getenv('DEFAULT_PETITION_THRESHOLD', 50))
@@ -186,17 +199,24 @@ class Config:
     )
     ALLOWED_SIGNUP_IPS = _parse_csv(ALLOWED_SIGNUP_IPS_RAW)
 
+    # Schema bootstrap behavior
+    AUTO_CREATE_TABLES = _parse_bool(os.getenv('AUTO_CREATE_TABLES', 'false'), default=False)
+
 
 class DevelopmentConfig(Config):
     """Development configuration."""
     DEBUG = True
     # Development fallback only; production must provide an explicit secret.
     JWT_SECRET_KEY = Config.JWT_SECRET_KEY or 'dev-local-only-change-me-please-123'
+    AUTO_CREATE_TABLES = _parse_bool(os.getenv('AUTO_CREATE_TABLES', 'true'), default=True)
+    RATELIMIT_SWALLOW_ERRORS = _parse_bool(os.getenv('RATELIMIT_SWALLOW_ERRORS', 'true'), default=True)
 
 
 class ProductionConfig(Config):
     """Production configuration."""
     DEBUG = False
+    AUTO_CREATE_TABLES = _parse_bool(os.getenv('AUTO_CREATE_TABLES', 'false'), default=False)
+    RATELIMIT_SWALLOW_ERRORS = _parse_bool(os.getenv('RATELIMIT_SWALLOW_ERRORS', 'false'), default=False)
 
 
 # Config mapping

@@ -35,9 +35,14 @@ limiter = Limiter(
 def init_limiter(app):
     """Initialize limiter with app-level storage and safety defaults."""
     storage_uri = app.config.get('RATELIMIT_STORAGE_URI') or 'memory://'
+    swallow_errors = app.config.get('RATELIMIT_SWALLOW_ERRORS')
+    if isinstance(swallow_errors, bool):
+        swallow = swallow_errors
+    else:
+        swallow = str(swallow_errors).strip().lower() in {'1', 'true', 'yes', 'on'}
     app.config.setdefault('RATELIMIT_STORAGE_URI', storage_uri)
     app.config.setdefault('RATELIMIT_HEADERS_ENABLED', True)
-    app.config.setdefault('RATELIMIT_SWALLOW_ERRORS', True)
+    app.config['RATELIMIT_SWALLOW_ERRORS'] = swallow
     limiter.init_app(app)
 
 

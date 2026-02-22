@@ -399,12 +399,21 @@ def vote_petition(petition_id):
     if not petition:
         return jsonify({'error': '청원을 찾을 수 없습니다.'}), 404
 
+    if petition.status != PetitionStatus.APPROVED:
+        return jsonify({'error': '승인된 청원에만 추천할 수 있습니다.'}), 403
+
     user = get_current_user()
     if not user:
         return jsonify({'error': 'User not found'}), 404
 
-    data = request.get_json() or {}
-    action = data.get('action', 'up')
+    data = request.get_json()
+    if data is None:
+        data = {}
+    if not isinstance(data, dict):
+        return jsonify({'error': 'Request body must be a JSON object'}), 400
+    action = str(data.get('action', 'up')).strip().lower()
+    if action not in {'up', 'cancel'}:
+        return jsonify({'error': "action must be either 'up' or 'cancel'"}), 422
     existing = PetitionVote.query.filter_by(petition_id=petition_id, user_id=user.id).first()
 
     try:
@@ -470,3 +479,5 @@ def answer_petition(petition_id):
         return jsonify({'error': '답변 저장 중 오류가 발생했습니다.'}), 500
 
     return jsonify(petition.to_dict())
+
+

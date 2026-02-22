@@ -7,8 +7,9 @@ and input normalization so board routes stay consistent.
 import ipaddress
 import re
 import bcrypt
+from urllib.parse import urlparse
 from functools import wraps
-from flask import request, jsonify, g
+from flask import request, jsonify, g, current_app
 from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request, get_jwt
 
 from models.user import User, UserRole
@@ -22,6 +23,8 @@ def hash_password(password: str) -> str:
 
 def verify_password(password: str, password_hash: str) -> bool:
     """Verify password against hash."""
+    if not isinstance(password, str) or not isinstance(password_hash, str):
+        return False
     return bcrypt.checkpw(
         password.encode('utf-8'),
         password_hash.encode('utf-8')
@@ -44,25 +47,86 @@ def _first_valid_ip_from_forwarded(header_value: str):
     return None
 
 
+def _ip_in_cidrs(ip_value: str, cidr_ranges: list) -> bool:
+    """Return True when ip_value belongs to at least one CIDR/IP entry."""
+    try:
+        addr = ipaddress.ip_address(ip_value)
+    except ValueError:
+        return False
+
+    for raw in cidr_ranges or []:
+        candidate = str(raw or '').strip()
+        if not candidate:
+            continue
+        try:
+            if '/' in candidate:
+                if addr in ipaddress.ip_network(candidate, strict=False):
+                    return True
+            elif addr == ipaddress.ip_address(candidate):
+                return True
+        except ValueError:
+            continue
+    return False
+
+
+def _should_trust_proxy_headers(remote_ip: str) -> bool:
+    """
+    Determine if forwarded headers can be trusted for this request.
+
+    Trust is opt-in. If TRUSTED_PROXY_CIDRS is configured, the direct
+    peer (REMOTE_ADDR) must match one of those ranges.
+    """
+    try:
+        raw_trust_proxy_headers = current_app.config.get('TRUST_PROXY_HEADERS', False)
+        raw_trusted_proxy_cidrs = current_app.config.get('TRUSTED_PROXY_CIDRS', []) or []
+    except RuntimeError:
+        return False
+
+    if isinstance(raw_trust_proxy_headers, bool):
+        trust_proxy_headers = raw_trust_proxy_headers
+    else:
+        trust_proxy_headers = str(raw_trust_proxy_headers).strip().lower() in {'1', 'true', 'yes', 'on'}
+
+    if isinstance(raw_trusted_proxy_cidrs, str):
+        trusted_proxy_cidrs = [part.strip() for part in raw_trusted_proxy_cidrs.split(',') if part.strip()]
+    elif isinstance(raw_trusted_proxy_cidrs, (list, tuple, set)):
+        trusted_proxy_cidrs = list(raw_trusted_proxy_cidrs)
+    else:
+        trusted_proxy_cidrs = []
+
+    if not trust_proxy_headers:
+        return False
+    if not remote_ip:
+        return False
+    if not trusted_proxy_cidrs:
+        return True
+    return _ip_in_cidrs(remote_ip, trusted_proxy_cidrs)
+
+
 def get_client_ip():
     """
     Get client IP safely.
-    Always prefer proxy headers before falling back to remote address.
+    Proxy headers are only used when explicitly trusted.
     """
-    remote_addr = request.remote_addr or ''
-    forwarded = _first_valid_ip_from_forwarded(request.headers.get('X-Forwarded-For', ''))
-    if forwarded:
-        return forwarded
-    real_ip = _first_valid_ip_from_forwarded(request.headers.get('X-Real-IP', ''))
-    if real_ip:
-        return real_ip
-
+    remote_addr = (request.remote_addr or '').strip()
+    remote_ip = None
     if remote_addr:
         try:
             ipaddress.ip_address(remote_addr)
-            return remote_addr
+            remote_ip = remote_addr
         except ValueError:
-            return None
+            remote_ip = None
+
+    if _should_trust_proxy_headers(remote_ip or ''):
+        forwarded = _first_valid_ip_from_forwarded(request.headers.get('X-Forwarded-For', ''))
+        if forwarded:
+            return forwarded
+        real_ip = _first_valid_ip_from_forwarded(request.headers.get('X-Real-IP', ''))
+        if real_ip:
+            return real_ip
+
+    if remote_ip:
+        return remote_ip
     return None
 
 
@@ -235,3 +299,45 @@ def sanitize_plain_text(value: str, max_length: int = None):
     if max_length is not None and max_length >= 0:
         text = text[:max_length]
     return text
+
+
+def is_safe_http_url(value: str) -> bool:
+    """Validate absolute HTTP/HTTPS URL shape for stored external links."""
+    if not isinstance(value, str):
+        return False
+
+    candidate = value.strip()
+    if not candidate:
+        return False
+
+    if any(ch in candidate for ch in ('\r', '\n', '\t', '\x00')):
+        return False
+
+    try:
+        parsed = urlparse(candidate)
+    except ValueError:
+        return False
+
+    if parsed.scheme not in {'http', 'https'}:
+        return False
+    if not parsed.netloc:
+        return False
+    if parsed.username or parsed.password:
+        return False
+    return True
+
+
+def is_safe_open_chat_url(value: str) -> bool:
+    """
+    Validate Kakao Open Chat URL.
+
+    Only open.kakao.com links are accepted.
+    """
+    if not is_safe_http_url(value):
+        return False
+
+    parsed = urlparse(value.strip())
+    host = (parsed.hostname or '').lower()
+    if host != 'open.kakao.com':
+        return False
+    return True

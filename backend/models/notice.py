@@ -4,10 +4,9 @@ Notice and Attachment models for school / student council announcements.
 from datetime import datetime
 from enum import Enum
 import re
-from sqlalchemy import func
 from sqlalchemy.schema import UniqueConstraint
 
-from .user import db, User, UserRole
+from .user import db, UserRole
 
 
 class NoticeCategory(str, Enum):

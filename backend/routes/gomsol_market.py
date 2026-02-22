@@ -22,14 +22,16 @@ from models import (
 )
 from utils.pagination import parse_pagination, build_paginated_response
 from utils.files import (
+    build_upload_preview_url,
     save_upload_for_scope,
     resolve_scope_upload_dir,
     ensure_dir,
     build_upload_url,
+    is_valid_upload_preview_token,
     validate_upload,
     extract_upload_filename_for_scope,
 )
-from utils.security import require_role, get_current_user
+from utils.security import require_role, get_current_user, is_safe_open_chat_url
 from utils.cache import cache_json_response, invalidate_cache_namespaces
 
 gomsol_market_bp = Blueprint('gomsol_market', __name__, url_prefix='/api/community/gomsol-market')
@@ -117,6 +119,8 @@ def validate_create_payload(data):
         errors.append('학번은 50자 이하로 입력해주세요.')
     if len(open_chat_url) > 500:
         errors.append('오픈채팅 링크는 500자 이하로 입력해주세요.')
+    if open_chat_url and not is_safe_open_chat_url(open_chat_url):
+        errors.append('오픈채팅 링크는 open.kakao.com 형식의 유효한 URL이어야 합니다.')
     if len(extra_contact) > 500:
         errors.append('기타 연락 방법은 500자 이하로 입력해주세요.')
     if not (student_id or open_chat_url or extra_contact):
@@ -418,12 +422,15 @@ def upload_image():
         return jsonify({'error': result.get('error', '파일 검증에 실패했습니다.')}), 422
 
     saved = save_upload_for_scope(file, current_app.config, 'gomsol_market')
+    canonical_url = saved['url']
+    preview_url = build_upload_preview_url(current_app.config, 'gomsol_market', saved['filename'])
     return jsonify(
         {
             'id': saved['filename'],
             'name': result['name'],
             'size': result['size'],
-            'url': saved['url'],
+            'url': preview_url,
+            'canonicalUrl': canonical_url,
             'mime': result['mime'],
             'kind': result['kind'],
         }
@@ -444,7 +451,15 @@ def serve_upload(filename):
     if not image or not image.post:
         if not file_path.exists():
             return jsonify({'error': '첨부파일을 찾을 수 없습니다.'}), 404
-        # Allow temporary preview for newly uploaded images before post save.
+        preview_token = request.args.get('preview_token', '')
+        if not is_valid_upload_preview_token(
+            current_app.config,
+            'gomsol_market',
+            filename,
+            preview_token,
+        ):
+            return jsonify({'error': '첨부파일을 찾을 수 없습니다.'}), 404
+        # Allow temporary preview only with a valid signed preview token.
         response = send_from_directory(upload_dir, filename, as_attachment=False, download_name=filename)
         response.headers['X-Content-Type-Options'] = 'nosniff'
         return response

@@ -22,10 +22,12 @@ from models import (
 )
 from utils.pagination import parse_pagination, build_paginated_response
 from utils.files import (
+    build_upload_preview_url,
     save_upload_for_scope,
     resolve_scope_upload_dir,
     ensure_dir,
     build_upload_url,
+    is_valid_upload_preview_token,
     validate_upload,
     extract_upload_filename_for_scope,
 )
@@ -331,12 +333,15 @@ def upload_image():
         return jsonify({'error': result.get('error', '파일 검증에 실패했습니다.')}), 422
 
     saved = save_upload_for_scope(file, current_app.config, 'lost_found')
+    canonical_url = saved['url']
+    preview_url = build_upload_preview_url(current_app.config, 'lost_found', saved['filename'])
     return jsonify(
         {
             'id': saved['filename'],
             'name': result['name'],
             'size': result['size'],
-            'url': saved['url'],
+            'url': preview_url,
+            'canonicalUrl': canonical_url,
             'mime': result['mime'],
             'kind': result['kind'],
         }
@@ -357,7 +362,15 @@ def serve_upload(filename):
     if not attachment:
         if not file_path.exists():
             return jsonify({'error': '첨부파일을 찾을 수 없습니다.'}), 404
-        # Allow temporary preview for newly uploaded images before post save.
+        preview_token = request.args.get('preview_token', '')
+        if not is_valid_upload_preview_token(
+            current_app.config,
+            'lost_found',
+            filename,
+            preview_token,
+        ):
+            return jsonify({'error': '첨부파일을 찾을 수 없습니다.'}), 404
+        # Allow temporary preview only with a valid signed preview token.
         response = send_from_directory(upload_dir, filename, as_attachment=False, download_name=filename)
         response.headers['X-Content-Type-Options'] = 'nosniff'
         return response

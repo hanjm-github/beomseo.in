@@ -20,11 +20,18 @@ const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000').r
 export function toAbsoluteApiUrl(url) {
   const safeUrl = toSafeAssetUrl(url);
   if (!safeUrl) return '';
-  if (safeUrl.startsWith('http://') || safeUrl.startsWith('https://') || safeUrl.startsWith('blob:')) {
+  if (safeUrl.startsWith('blob:')) {
     return safeUrl;
   }
-  const prefix = safeUrl.startsWith('/') ? '' : '/';
-  return `${API_BASE_URL}${prefix}${safeUrl}`;
+
+  if (safeUrl.startsWith('http://') || safeUrl.startsWith('https://')) {
+    // Absolute URLs are trusted as-is to avoid rewriting valid backend origins.
+    return safeUrl;
+  }
+
+  const normalized = safeUrl.startsWith('api/') ? `/${safeUrl}` : safeUrl;
+  const prefix = normalized.startsWith('/') ? '' : '/';
+  return `${API_BASE_URL}${prefix}${normalized}`;
 }
 
 /**

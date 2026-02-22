@@ -16,6 +16,8 @@
 import DOMPurify from 'dompurify';
 import { toSafeAssetUrl, toSafeExternalHref } from './urlPolicy';
 
+const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000').replace(/\/$/, '');
+
 const ALLOWED_TAGS = [
   'p',
   'br',
@@ -39,6 +41,16 @@ const ALLOWED_TAGS = [
 
 const ALLOWED_ATTR = ['href', 'target', 'rel', 'src', 'alt', 'title'];
 
+function toAbsoluteApiUrlIfApiPath(value) {
+  if (typeof value !== 'string' || !value) return value;
+  if (value.startsWith('/api/') || value.startsWith('api/')) {
+    const normalized = value.startsWith('/') ? value : `/${value}`;
+    return `${API_BASE_URL}${normalized}`;
+  }
+  // Keep absolute URLs untouched to avoid accidental origin rewrites.
+  return value;
+}
+
 function sanitizeLinkElement(anchor) {
   const href = anchor.getAttribute('href');
   const safeHref = toSafeExternalHref(href);
@@ -49,7 +61,7 @@ function sanitizeLinkElement(anchor) {
     return;
   }
 
-  anchor.setAttribute('href', safeHref);
+  anchor.setAttribute('href', toAbsoluteApiUrlIfApiPath(safeHref));
   if (anchor.getAttribute('target') === '_blank') {
     anchor.setAttribute('rel', 'noopener noreferrer');
   }
@@ -62,7 +74,7 @@ function sanitizeImageElement(img) {
     img.remove();
     return;
   }
-  img.setAttribute('src', safeSrc);
+  img.setAttribute('src', toAbsoluteApiUrlIfApiPath(safeSrc));
 }
 
 function sanitizeUriAttributes(cleanHtml) {
