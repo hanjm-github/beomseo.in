@@ -295,7 +295,7 @@ export default function PetitionDetailView() {
               </div>
             </div>
           ) : (
-            <div className={styles.answerCard} style={{ background: '#f8fafc' }}>
+            <div className={`${styles.answerCard} ${styles.answerPending}`}>
               답변을 준비 중입니다. 추천 {THRESHOLD_DEFAULT}표 이상 시 학생회가 확인합니다.
             </div>
           )}

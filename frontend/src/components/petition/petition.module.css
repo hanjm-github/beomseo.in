@@ -350,6 +350,11 @@
   box-shadow: var(--shadow-sm);
 }
 
+.answerPending {
+  background: var(--color-form-bg-muted);
+  color: var(--color-text-secondary);
+}
+
 .answerTitle {
   display: flex;
   align-items: center;

@@ -433,6 +433,100 @@
   color: var(--color-text-primary) !important;
 }
 
+/* ReactFormGenerator (survey response modal / compose preview) dark-mode overrides */
+:global(.react-form-builder-form) {
+  color: var(--color-text-primary) !important;
+}
+
+:global(.react-form-builder-form .rfb-item label span) {
+  background: var(--color-surface) !important;
+  color: var(--color-text-primary) !important;
+}
+
+:global(.react-form-builder-form .rfb-item .row) {
+  border: 1px solid var(--color-border) !important;
+  background: var(--color-surface) !important;
+}
+
+:global(.react-form-builder-form .form-control),
+:global(.react-form-builder-form input[type="text"]),
+:global(.react-form-builder-form input[type="number"]),
+:global(.react-form-builder-form input[type="email"]),
+:global(.react-form-builder-form input[type="date"]),
+:global(.react-form-builder-form textarea),
+:global(.react-form-builder-form select) {
+  background: var(--color-form-bg) !important;
+  border: 1px solid var(--color-form-border) !important;
+  border-radius: var(--radius-md) !important;
+  color: var(--color-form-text) !important;
+}
+
+:global(.react-form-builder-form input::placeholder),
+:global(.react-form-builder-form textarea::placeholder) {
+  color: var(--color-form-placeholder) !important;
+}
+
+:global(.react-form-builder-form .form-control:focus),
+:global(.react-form-builder-form input:focus),
+:global(.react-form-builder-form textarea:focus),
+:global(.react-form-builder-form select:focus) {
+  outline: 2px solid var(--color-form-border-focus) !important;
+  outline-offset: -1px;
+  border-color: var(--color-form-border-focus) !important;
+  box-shadow: none !important;
+}
+
+:global(.react-form-builder-form label),
+:global(.react-form-builder-form .checkbox label),
+:global(.react-form-builder-form .radio label) {
+  color: var(--color-text-primary) !important;
+}
+
+:global(.react-form-builder-form .btn-primary) {
+  background: linear-gradient(135deg, var(--color-primary-500), var(--color-accent-500)) !important;
+  border: none !important;
+  color: var(--color-chip-text-active) !important;
+}
+
+:global(.react-form-builder-form .btn-default),
+:global(.react-form-builder-form .btn-secondary) {
+  background: var(--color-bg-muted) !important;
+  border: 1px solid var(--color-border) !important;
+  color: var(--color-text-primary) !important;
+}
+
+:global(.react-form-builder-form .btn-toolbar input.btn.btn-big) {
+  min-height: 44px;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-lg);
+  border: none !important;
+  background: linear-gradient(135deg, var(--color-primary-500), var(--color-accent-500)) !important;
+  color: var(--color-chip-text-active) !important;
+  font-weight: var(--font-semibold);
+}
+
+:global(.react-form-builder-form .btn-toolbar .btn.btn-default.btn-cancel.btn-big) {
+  min-height: 44px;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border) !important;
+  background: var(--color-bg-muted) !important;
+  color: var(--color-text-primary) !important;
+}
+
+:global(.validation-error) {
+  background: var(--color-alert-danger-bg) !important;
+  border: 1px solid var(--color-alert-danger-border) !important;
+  color: var(--color-alert-danger-text) !important;
+}
+
+:global(.validation-error .btn) {
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-alert-danger-border) !important;
+  background: var(--color-bg-elevated) !important;
+  color: var(--color-alert-danger-text) !important;
+}
+
 :global(.rdw-editor-main) {
   background: var(--color-surface) !important;
   border: 1px solid var(--color-border) !important;
