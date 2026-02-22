@@ -77,10 +77,28 @@ let mockPetitions = [
 
 async function list(params = {}) {
   await delay(100);
-  const { status, category, q, sort = 'recent', page = 1, pageSize = PAGE_SIZE_DEFAULT } = params;
+  const {
+    status,
+    approval,
+    statusDerived,
+    category,
+    q,
+    sort = 'recent',
+    page = 1,
+    pageSize = PAGE_SIZE_DEFAULT,
+  } = params;
   let data = mockPetitions.map((p) => ({ ...p, statusDerived: deriveStatus(p) }));
 
-  if (status && status !== 'all') data = data.filter((p) => p.status === status);
+  if (approval === 'approved') {
+    data = data.filter((p) => p.status === 'approved');
+  } else if (approval === 'unapproved') {
+    data = data.filter((p) => p.status !== 'approved');
+  } else if (status && status !== 'all') {
+    data = data.filter((p) => p.status === status);
+  }
+  if (statusDerived && statusDerived !== 'all') {
+    data = data.filter((p) => deriveStatus(p) === statusDerived);
+  }
   if (category && CATEGORY_OPTIONS.includes(category)) data = data.filter((p) => p.category === category);
   if (q) {
     const keyword = q.toLowerCase();

@@ -21,8 +21,9 @@ const loadSubjectChangesMockApi = ENABLE_API_MOCKS
 
 export const subjectChangesApi = {
   async list(params = {}) {
+    const serverParams = { ...params, view: 'list' };
     try {
-      const res = await api.get('/api/subject-changes', { params });
+      const res = await api.get('/api/subject-changes', { params: serverParams });
       return normalizePaginatedResponse(res.data, PAGE_SIZE_DEFAULT);
     } catch (err) {
       if (!shouldUseMockFallback(err)) throw err;

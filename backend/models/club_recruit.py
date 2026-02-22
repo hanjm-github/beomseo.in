@@ -76,6 +76,9 @@ class ClubRecruit(db.Model):
             'updatedAt': self.updated_at.isoformat() if self.updated_at else None,
         }
 
+    def to_list_dict(self):
+        return self.to_dict(include_body=False)
+
     @staticmethod
     def normalize_date(value):
         if not value:

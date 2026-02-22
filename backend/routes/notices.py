@@ -14,6 +14,7 @@ from flask_jwt_extended import (
 )
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import or_
+from sqlalchemy.orm import joinedload, selectinload
 
 from models import (
     db,
@@ -119,9 +120,13 @@ def list_notices():
     exam = parse_bool(request.args.get('exam'))
     sort = request.args.get('sort', 'recent')
     tags = request.args.get('tags')
+    view = request.args.get('view')
     page, page_size = parse_pagination(request)
 
-    q = Notice.query
+    q = Notice.query.options(
+        joinedload(Notice.author),
+        selectinload(Notice.attachments),
+    )
     q = apply_filters(q, category, query_text, pinned, important, exam, tags)
     total = q.count()
     q = apply_sort(q, sort)
@@ -144,7 +149,12 @@ def list_notices():
 
     return jsonify(
         build_paginated_response(
-            [n.to_dict(my_reaction=reactions_map.get(n.id)) for n in items],
+            [
+                n.to_list_dict(my_reaction=reactions_map.get(n.id))
+                if view == 'list'
+                else n.to_dict(my_reaction=reactions_map.get(n.id))
+                for n in items
+            ],
             total,
             page,
             page_size,
@@ -398,7 +408,10 @@ def delete_notice(notice_id):
 
 @notices_bp.route('/<int:notice_id>', methods=['GET'])
 def get_notice(notice_id):
-    notice = Notice.query.get(notice_id)
+    notice = Notice.query.options(
+        joinedload(Notice.author),
+        selectinload(Notice.attachments),
+    ).filter_by(id=notice_id).first()
     if not notice:
         return jsonify({'error': '공지 를 찾을 수 없습니다.'}), 404
     if notice.deleted_at:
@@ -508,7 +521,9 @@ def list_comments(notice_id):
 
     page, page_size = parse_pagination(request)
     order = request.args.get('order', 'asc')
-    q = Comment.query.filter(
+    q = Comment.query.options(
+        joinedload(Comment.user),
+    ).filter(
         Comment.notice_id == notice_id,
         Comment.deleted_at.is_(None)
     )

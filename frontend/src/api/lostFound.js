@@ -44,27 +44,31 @@ const normalizeImages = (images = []) =>
     }))
     .filter((image) => Boolean(image.url));
 
-const normalizeItem = (item = {}) => ({
-  id: String(item.id ?? ''),
-  title: String(item.title ?? ''),
-  description: String(item.description ?? ''),
-  status: item.status === 'found' ? 'found' : 'searching',
-  category: Object.prototype.hasOwnProperty.call(LOST_FOUND_CATEGORIES, item.category) ? item.category : 'etc',
-  images: normalizeImages(item.images),
-  foundAt: asIso(item.foundAt || item.found_at) || new Date().toISOString(),
-  foundLocation: String(item.foundLocation || item.found_location || ''),
-  storageLocation: String(item.storageLocation || item.storage_location || ''),
-  createdAt: asIso(item.createdAt || item.created_at) || new Date().toISOString(),
-  updatedAt: asIso(item.updatedAt || item.updated_at) || new Date().toISOString(),
-  views: Number(item.views ?? 0),
-  commentsCount: Number(item.commentsCount ?? item.comments_count ?? 0),
-  approvalStatus: item.approvalStatus ?? item.approval_status,
-  author: {
-    id: item.author?.id ?? null,
-    name: item.author?.name ?? item.author?.nickname ?? '운영진',
-    role: item.author?.role ?? 'student_council',
-  },
-});
+const normalizeItem = (item = {}) => {
+  const normalizedImages = normalizeImages(item.images);
+  return {
+    id: String(item.id ?? ''),
+    title: String(item.title ?? ''),
+    description: String(item.description ?? ''),
+    status: item.status === 'found' ? 'found' : 'searching',
+    category: Object.prototype.hasOwnProperty.call(LOST_FOUND_CATEGORIES, item.category) ? item.category : 'etc',
+    images: normalizedImages,
+    imageCount: Number(item.imageCount ?? item.image_count ?? normalizedImages.length),
+    foundAt: asIso(item.foundAt || item.found_at) || new Date().toISOString(),
+    foundLocation: String(item.foundLocation || item.found_location || ''),
+    storageLocation: String(item.storageLocation || item.storage_location || ''),
+    createdAt: asIso(item.createdAt || item.created_at) || new Date().toISOString(),
+    updatedAt: asIso(item.updatedAt || item.updated_at) || new Date().toISOString(),
+    views: Number(item.views ?? 0),
+    commentsCount: Number(item.commentsCount ?? item.comments_count ?? 0),
+    approvalStatus: item.approvalStatus ?? item.approval_status,
+    author: {
+      id: item.author?.id ?? null,
+      name: item.author?.name ?? item.author?.nickname ?? '운영진',
+      role: item.author?.role ?? 'student_council',
+    },
+  };
+};
 
 const loadLostFoundMockApi = ENABLE_API_MOCKS
   ? (() => {
@@ -93,7 +97,8 @@ export const lostFoundApi = {
 
   async list(params = {}) {
     try {
-      const res = await api.get('/api/community/lost-found', { params });
+      const serverParams = { ...params, view: 'list' };
+      const res = await api.get('/api/community/lost-found', { params: serverParams });
       const normalized = normalizePaginatedResponse(res.data, PAGE_SIZE_DEFAULT);
       return {
         ...normalized,

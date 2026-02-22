@@ -8,7 +8,7 @@ from flask import request
 from flask_jwt_extended import create_access_token, create_refresh_token, decode_token
 from sqlalchemy.exc import SQLAlchemyError
 
-from models import db, AuthToken, AuthTokenType
+from models import db, AuthToken, AuthTokenType, UserRole
 
 
 def _utc_from_unix(unix_ts):
@@ -57,13 +57,28 @@ def _persist_token(raw_token: str, token_type: AuthTokenType, user_id: int, pare
     return token
 
 
-def issue_token_pair(user_id: int, rotate_from_refresh_jti: Optional[str] = None):
+def _normalize_role_value(user_role):
+    if isinstance(user_role, UserRole):
+        return user_role.value
+    if user_role in (None, ''):
+        return None
+    return str(user_role)
+
+
+def issue_token_pair(
+    user_id: int,
+    rotate_from_refresh_jti: Optional[str] = None,
+    user_role: Optional[str] = None,
+):
     """
     Issue access/refresh token pair and persist token state atomically.
     If rotate_from_refresh_jti is provided, revoke that refresh token.
     """
-    access_token = create_access_token(identity=str(user_id))
-    refresh_token = create_refresh_token(identity=str(user_id))
+    role_value = _normalize_role_value(user_role)
+    claims = {'role': role_value} if role_value else None
+
+    access_token = create_access_token(identity=str(user_id), additional_claims=claims)
+    refresh_token = create_refresh_token(identity=str(user_id), additional_claims=claims)
 
     refresh_rec = _persist_token(
         refresh_token,

@@ -41,8 +41,10 @@ class Petition(db.Model):
     answer = db.relationship('PetitionAnswer', uselist=False, backref='petition', cascade='all, delete-orphan')
     votes = db.relationship('PetitionVote', backref='petition', cascade='all, delete-orphan')
 
-    def status_derived(self):
-        if self.answer:
+    def status_derived(self, has_answer=None):
+        if has_answer is None:
+            has_answer = self.answer is not None
+        if has_answer:
             return 'answered'
         if (self.votes_count or 0) >= (self.threshold or 50):
             return 'waiting-answer'
@@ -74,6 +76,29 @@ class Petition(db.Model):
             'updatedAt': self.updated_at.isoformat() if self.updated_at else None,
             'isVotedByMe': is_voted_by_me,
             'answer': self.answer.to_dict() if self.answer else None,
+        }
+
+    def to_list_dict(self, is_voted_by_me=False):
+        has_answer = self.answer is not None
+        return {
+            'id': self.id,
+            'title': self.title,
+            'summary': self.summary,
+            'category': self.category,
+            'votes': self.votes_count,
+            'threshold': self.threshold,
+            'status': self.status.value if self.status else None,
+            'statusDerived': self.status_derived(has_answer=has_answer),
+            'author': {
+                'id': self.author_id,
+                'nickname': self.author.nickname if self.author else None,
+                'role': self.author_role,
+            },
+            'approvedAt': self.approved_at.isoformat() if self.approved_at else None,
+            'createdAt': self.created_at.isoformat() if self.created_at else None,
+            'updatedAt': self.updated_at.isoformat() if self.updated_at else None,
+            'isVotedByMe': is_voted_by_me,
+            'hasAnswer': has_answer,
         }
 
 

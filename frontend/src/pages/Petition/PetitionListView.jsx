@@ -57,16 +57,6 @@ export default function PetitionListView() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const deriveStatus = (item, threshold) => {
-    if (!item) return 'needs-support';
-    if (item.status && item.status !== 'approved') return 'pending';
-    if (item.answer) return 'answered';
-    const votes = item.votes || 0;
-    const th = item.threshold || threshold || THRESHOLD_DEFAULT;
-    if (votes >= th) return 'waiting-answer';
-    return 'needs-support';
-  };
-
   // sync URL
   useEffect(() => {
     const next = new URLSearchParams();
@@ -86,9 +76,14 @@ export default function PetitionListView() {
 
     const fetchList = async () => {
       try {
-        const approvalParam = isAdmin && approval === 'approved' ? 'approved' : undefined;
+        const approvalParam = isAdmin
+          ? approval === 'pending'
+            ? 'unapproved'
+            : approval
+          : undefined;
         const res = await petitionApi.list({
-          status: approvalParam,
+          approval: approvalParam === 'all' ? undefined : approvalParam,
+          statusDerived: status === 'all' ? undefined : status,
           category: category === '전체' ? undefined : category,
           sort,
           q: search,
@@ -96,27 +91,7 @@ export default function PetitionListView() {
           pageSize: PAGE_SIZE,
         });
         if (cancelled) return;
-
-        const rawItems = res.items || [];
-
-        const approvalFilteredItems = isAdmin
-          ? approval === 'pending'
-            ? rawItems.filter((it) => it.status !== 'approved')
-            : rawItems
-          : rawItems;
-
-        const filteredItems =
-          status === 'all'
-            ? approvalFilteredItems
-            : approvalFilteredItems.filter((it) => deriveStatus(it) === status);
-
-        const hasClientFilter = approval === 'pending' || status !== 'all';
-
-        setData({
-          ...res,
-          items: filteredItems,
-          total: hasClientFilter ? filteredItems.length : res.total,
-        });
+        setData(res);
       } catch (err) {
         if (cancelled) return;
         setError(err);

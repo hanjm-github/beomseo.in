@@ -29,8 +29,9 @@ const loadClubRecruitMockApi = ENABLE_API_MOCKS
 
 export const clubRecruitApi = {
   async list(params = {}) {
+    const serverParams = { ...params, view: 'list' };
     try {
-      const res = await api.get('/api/club-recruit', { params });
+      const res = await api.get('/api/club-recruit', { params: serverParams });
       const normalized = normalizePaginatedResponse(res.data, PAGE_SIZE_DEFAULT);
       return {
         ...normalized,

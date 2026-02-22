@@ -13,6 +13,13 @@ function Badge({ icon: Icon, label, tone = 'neutral' }) {
 }
 
 export default function NoticeCard({ notice, to }) {
+  const attachmentsCount =
+    typeof notice.attachmentsCount === 'number'
+      ? notice.attachmentsCount
+      : Array.isArray(notice.attachments)
+        ? notice.attachments.length
+        : 0;
+
   return (
     <Link to={to} className={styles.card}>
       <div className={styles.cardHeader}>
@@ -51,10 +58,10 @@ export default function NoticeCard({ notice, to }) {
           ))}
         </div>
         <div className={styles.attachmentRow}>
-          {notice.attachments?.length ? (
+          {attachmentsCount > 0 ? (
             <span className={styles.meta}>
               <Paperclip size={12} />
-              {notice.attachments.length}
+              {attachmentsCount}
             </span>
           ) : (
             <span className={styles.metaMuted}>첨부 없음</span>

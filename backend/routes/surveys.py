@@ -8,8 +8,9 @@ from flask_jwt_extended import (
     get_jwt_identity,
     verify_jwt_in_request,
 )
-from sqlalchemy import or_
+from sqlalchemy import or_, func
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
+from sqlalchemy.orm import joinedload
 
 from models import (
     db,
@@ -197,23 +198,12 @@ def fetch_survey_or_404(survey_id):
     return survey
 
 
-def build_quota_map(surveys):
-    owner_ids = {s.owner_id for s in surveys}
+def build_quota_map(owner_ids):
+    owner_ids = {owner_id for owner_id in owner_ids if owner_id is not None}
     if not owner_ids:
         return {}
     credits = SurveyCredit.query.filter(SurveyCredit.user_id.in_(owner_ids)).all()
-    credit_map = {c.user_id: c for c in credits}
-    base = current_app.config.get('SURVEY_BASE_QUOTA', 0)
-    for uid in owner_ids:
-        if uid not in credit_map:
-            c = SurveyCredit(user_id=uid, base=base, earned=0, used=0)
-            db.session.add(c)
-            credit_map[uid] = c
-    try:
-        db.session.commit()
-    except SQLAlchemyError:
-        db.session.rollback()
-    return credit_map
+    return {c.user_id: c for c in credits}
 
 
 # Routes
@@ -221,6 +211,7 @@ def build_quota_map(surveys):
 @surveys_bp.route('/', methods=['GET'])
 @cache_json_response('surveys')
 def list_surveys():
+    view = request.args.get('view')
     status = request.args.get('status')
     q_text = request.args.get('q') or request.args.get('query')
     sort = request.args.get('sort', 'recent')
@@ -235,7 +226,10 @@ def list_surveys():
     if (mine or hide_answered) and not current_user:
         return jsonify({'error': '로그인이 필요합니다.'}), 401
 
-    query = Survey.query.filter(Survey.deleted_at.is_(None))
+    query = Survey.query.options(
+        joinedload(Survey.owner),
+        joinedload(Survey.approved_by),
+    ).filter(Survey.deleted_at.is_(None))
 
     if not is_admin:
         if current_user:
@@ -263,54 +257,63 @@ def list_surveys():
             or_(Survey.title.ilike(pattern), Survey.description.ilike(pattern))
         )
 
-    # answered map for hide/isAnswered flag
-    answered_ids = set()
-    if current_user:
-        resp_sub = SurveyResponse.query.with_entities(SurveyResponse.survey_id).filter(
-            SurveyResponse.respondent_id == current_user.id
+    if current_user and hide_answered:
+        answered_subquery = (
+            db.session.query(SurveyResponse.survey_id)
+            .filter(SurveyResponse.respondent_id == current_user.id)
         )
-        answered_ids = {row[0] for row in resp_sub.all()}
-        if hide_answered and answered_ids:
-            query = query.filter(~Survey.id.in_(answered_ids))
+        query = query.filter(~Survey.id.in_(answered_subquery))
 
-    surveys = query.order_by(Survey.created_at.desc()).all()
-    credit_map = build_quota_map(surveys)
-
-    def remaining_quota(s: Survey):
-        c = credit_map.get(s.owner_id)
-        available = c.available if c else current_app.config.get('SURVEY_BASE_QUOTA', 0)
-        return max(0, available)
+    base_quota = int(current_app.config.get('SURVEY_BASE_QUOTA', 0) or 0)
+    quota_available_expr = (
+        func.coalesce(SurveyCredit.base, base_quota)
+        + func.coalesce(SurveyCredit.earned, 0)
+        - func.coalesce(SurveyCredit.used, 0)
+    )
+    query = query.outerjoin(SurveyCredit, SurveyCredit.user_id == Survey.owner_id)
 
     if sort == 'quota-asc':
-        surveys.sort(
-            key=lambda s: (
-                remaining_quota(s) - (s.responses_received or 0),
-                s.created_at or datetime.min,
-            )
-        )
+        query = query.order_by(quota_available_expr.asc(), Survey.created_at.desc())
     elif sort == 'responses-desc':
-        surveys.sort(key=lambda s: (s.responses_received or 0, s.created_at or datetime.min), reverse=True)
+        query = query.order_by(Survey.responses_received.desc(), Survey.created_at.desc())
     else:  # recent
-        surveys.sort(key=lambda s: s.created_at or datetime.min, reverse=True)
+        query = query.order_by(Survey.created_at.desc())
 
-    total = len(surveys)
-    start = (page - 1) * page_size
-    end = start + page_size
-    paged = surveys[start:end]
+    total = query.count()
+    surveys = query.offset((page - 1) * page_size).limit(page_size).all()
+
+    answered_ids = set()
+    if current_user and surveys:
+        survey_ids = [survey.id for survey in surveys]
+        answered_rows = SurveyResponse.query.with_entities(SurveyResponse.survey_id).filter(
+            SurveyResponse.respondent_id == current_user.id,
+            SurveyResponse.survey_id.in_(survey_ids),
+        ).all()
+        answered_ids = {row[0] for row in answered_rows}
+
+    credit_map = build_quota_map([survey.owner_id for survey in surveys])
 
     items = []
-    for s in paged:
-        credit = credit_map.get(s.owner_id)
-        available = credit.available if credit else current_app.config.get('SURVEY_BASE_QUOTA', 0)
-        total_quota = max(0, available) + (s.responses_received or 0)
-        items.append(
-            s.to_dict(
-                include_form=False,
-                include_body=False,
-                is_answered=s.id in answered_ids,
-                quota_available=total_quota,
+    for survey in surveys:
+        credit = credit_map.get(survey.owner_id)
+        available = credit.available if credit else base_quota
+        quota_total = max(0, available) + (survey.responses_received or 0)
+        if view == 'list':
+            items.append(
+                survey.to_list_dict(
+                    is_answered=survey.id in answered_ids,
+                    quota_available=quota_total,
+                )
             )
-        )
+        else:
+            items.append(
+                survey.to_dict(
+                    include_form=False,
+                    include_body=False,
+                    is_answered=survey.id in answered_ids,
+                    quota_available=quota_total,
+                )
+            )
 
     return jsonify(
         build_paginated_response(

@@ -30,8 +30,9 @@ const loadNoticesMockApi = ENABLE_API_MOCKS
 
 export const noticesApi = {
   async list(params) {
+    const serverParams = { ...(params || {}), view: 'list' };
     try {
-      const response = await api.get('/api/notices', { params });
+      const response = await api.get('/api/notices', { params: serverParams });
       const normalized = normalizePaginatedResponse(response.data, 10);
       return {
         ...normalized,

@@ -6,10 +6,10 @@ from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity, verify_jwt_in_request
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from sqlalchemy import or_
+from sqlalchemy.orm import joinedload, selectinload
 
 from models import (
     db,
-    User,
     UserRole,
     SurveyCredit,
     Vote,
@@ -29,11 +29,11 @@ def parse_bool(value, default=False):
     return str(value).lower() in {'1', 'true', 'yes', 'on'}
 
 
-def optional_current_user():
+def optional_current_user_id():
     try:
         verify_jwt_in_request(optional=True)
         user_id = get_jwt_identity()
-        return User.query.get(int(user_id)) if user_id else None
+        return int(user_id) if user_id else None
     except Exception:
         return None
 
@@ -158,7 +158,13 @@ def validate_create_payload(data):
 
 
 def fetch_vote(vote_id):
-    return Vote.query.filter(Vote.id == vote_id, Vote.deleted_at.is_(None)).first()
+    return Vote.query.options(
+        joinedload(Vote.author),
+        selectinload(Vote.options),
+    ).filter(
+        Vote.id == vote_id,
+        Vote.deleted_at.is_(None),
+    ).first()
 
 
 def vote_option_map(vote_ids, user_id):
@@ -181,6 +187,7 @@ def vote_option_map(vote_ids, user_id):
 @votes_bp.route('/', methods=['GET'])
 @cache_json_response('votes', ttl=20)
 def list_votes():
+    view = request.args.get('view')
     sort = request.args.get('sort', 'recent')
     q_text = (request.args.get('q') or '').strip()
     include_closed = parse_bool(
@@ -190,7 +197,10 @@ def list_votes():
     page, page_size = parse_pagination(request, default_page_size=12, max_page_size=50)
 
     now = datetime.utcnow()
-    query = Vote.query.filter(Vote.deleted_at.is_(None))
+    query = Vote.query.options(
+        joinedload(Vote.author),
+        selectinload(Vote.options),
+    ).filter(Vote.deleted_at.is_(None))
 
     if q_text:
         pattern = f'%{q_text}%'
@@ -215,10 +225,15 @@ def list_votes():
     total = query.count()
     items = query.offset((page - 1) * page_size).limit(page_size).all()
 
-    current_user = optional_current_user()
-    my_votes = vote_option_map([item.id for item in items], current_user.id if current_user else None)
+    current_user_id = optional_current_user_id()
+    my_votes = vote_option_map([item.id for item in items], current_user_id)
 
-    payload_items = [item.to_dict(my_vote_option_id=my_votes.get(item.id), now=now) for item in items]
+    payload_items = [
+        item.to_list_dict(my_vote_option_id=my_votes.get(item.id), now=now)
+        if view == 'list'
+        else item.to_dict(my_vote_option_id=my_votes.get(item.id), now=now)
+        for item in items
+    ]
     return jsonify(build_paginated_response(payload_items, total, page, page_size))
 
 
@@ -229,11 +244,18 @@ def get_vote(vote_id):
     if not vote:
         return jsonify({'error': '투표를 찾을 수 없습니다.'}), 404
 
-    current_user = optional_current_user()
+    current_user_id = optional_current_user_id()
     selected_option = None
-    if current_user:
-        response = VoteResponse.query.filter_by(vote_id=vote.id, respondent_id=current_user.id).first()
-        selected_option = response.option.option_key if response and response.option else None
+    if current_user_id:
+        selected_option = (
+            db.session.query(VoteOption.option_key)
+            .join(VoteResponse, VoteResponse.option_id == VoteOption.id)
+            .filter(
+                VoteResponse.vote_id == vote.id,
+                VoteResponse.respondent_id == current_user_id,
+            )
+            .scalar()
+        )
 
     return jsonify(vote.to_dict(my_vote_option_id=selected_option, now=datetime.utcnow()))
 

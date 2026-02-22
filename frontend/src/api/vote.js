@@ -99,6 +99,7 @@ export const voteApi = {
       includeClosed: params.includeClosed ? '1' : undefined,
       page: params.page,
       pageSize: params.pageSize,
+      view: 'list',
     };
     try {
       const res = await api.get('/api/community/votes', { params: normalizedParams });

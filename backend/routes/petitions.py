@@ -6,6 +6,7 @@ from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity, verify_jwt_in_request
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from sqlalchemy import or_
+from sqlalchemy.orm import joinedload, selectinload
 
 from models import (
     db,
@@ -17,7 +18,7 @@ from models import (
     PetitionAnswer,
 )
 from utils.pagination import parse_pagination, build_paginated_response
-from utils.security import require_role, get_current_user
+from utils.security import require_role, get_current_user, get_current_principal
 from utils.cache import cache_json_response, invalidate_cache_namespaces
 
 petitions_bp = Blueprint('petitions', __name__, url_prefix='/api/community/petitions')
@@ -98,18 +99,34 @@ def base_query(include_deleted=False):
 @petitions_bp.route('', methods=['GET'])
 @cache_json_response('petitions')
 def list_petitions():
+    view = request.args.get('view')
     status = request.args.get('status')
+    approval = request.args.get('approval', 'all')
+    status_derived = request.args.get('statusDerived', 'all')
     category = request.args.get('category')
     query_text = request.args.get('q')
     sort = request.args.get('sort', 'recent')
     page, page_size = parse_pagination(request, default_page_size=12, max_page_size=50)
 
-    current_user_id = optional_current_user_id()
-    current_user = User.query.get(current_user_id) if current_user_id else None
-    is_admin = current_user and current_user.role == UserRole.ADMIN
+    principal = get_current_principal(optional=True)
+    current_user_id = principal['id'] if principal else None
+    current_user_role = principal.get('role') if principal else None
+    if current_user_id and not current_user_role:
+        current_user = User.query.get(current_user_id)
+        current_user_role = current_user.role.value if current_user else None
+    is_admin = current_user_role == UserRole.ADMIN.value
 
-    q = base_query()
+    q = base_query().options(
+        joinedload(Petition.author),
+        joinedload(Petition.approved_by),
+        selectinload(Petition.answer).joinedload(PetitionAnswer.responder),
+    )
     if is_admin:
+        if approval == 'approved':
+            q = q.filter(Petition.status == PetitionStatus.APPROVED)
+        elif approval == 'unapproved':
+            q = q.filter(Petition.status.in_([PetitionStatus.PENDING, PetitionStatus.REJECTED]))
+
         if status == PetitionStatus.PENDING.value:
             q = q.filter(Petition.status == PetitionStatus.PENDING)
         elif status == PetitionStatus.APPROVED.value:
@@ -118,11 +135,11 @@ def list_petitions():
             q = q.filter(Petition.status == PetitionStatus.REJECTED)
         # status == all for admin -> no filter
     else:
-        if current_user:
+        if current_user_id:
             q = q.filter(
                 or_(
                     Petition.status == PetitionStatus.APPROVED,
-                    Petition.author_id == current_user.id,
+                    Petition.author_id == current_user_id,
                 )
             )
         else:
@@ -134,6 +151,19 @@ def list_petitions():
     if query_text:
         pattern = f"%{query_text}%"
         q = q.filter(or_(Petition.title.ilike(pattern), Petition.summary.ilike(pattern), Petition.body.ilike(pattern)))
+
+    if status_derived == 'answered':
+        q = q.join(PetitionAnswer, PetitionAnswer.petition_id == Petition.id)
+    elif status_derived == 'waiting-answer':
+        q = q.outerjoin(PetitionAnswer, PetitionAnswer.petition_id == Petition.id).filter(
+            PetitionAnswer.petition_id.is_(None),
+            Petition.votes_count >= Petition.threshold,
+        )
+    elif status_derived == 'needs-support':
+        q = q.outerjoin(PetitionAnswer, PetitionAnswer.petition_id == Petition.id).filter(
+            PetitionAnswer.petition_id.is_(None),
+            Petition.votes_count < Petition.threshold,
+        )
 
     if sort == 'votes':
         q = q.order_by(Petition.votes_count.desc(), Petition.created_at.desc())
@@ -154,7 +184,12 @@ def list_petitions():
 
     return jsonify(
         build_paginated_response(
-            [p.to_dict(include_body=False, is_voted_by_me=voted_map.get(p.id, False)) for p in items],
+            [
+                p.to_list_dict(is_voted_by_me=voted_map.get(p.id, False))
+                if view == 'list'
+                else p.to_dict(include_body=False, is_voted_by_me=voted_map.get(p.id, False))
+                for p in items
+            ],
             total,
             page,
             page_size,
@@ -198,7 +233,11 @@ def create_petition():
 
 
 def fetch_petition_or_404(petition_id):
-    petition = base_query().filter_by(id=petition_id).first()
+    petition = base_query().options(
+        joinedload(Petition.author),
+        joinedload(Petition.approved_by),
+        selectinload(Petition.answer).joinedload(PetitionAnswer.responder),
+    ).filter_by(id=petition_id).first()
     return petition
 
 
@@ -219,10 +258,14 @@ def get_petition(petition_id):
     if not petition:
         return jsonify({'error': '청원을 찾을 수 없습니다.'}), 404
 
-    current_user_id = optional_current_user_id()
-    current_user = User.query.get(current_user_id) if current_user_id else None
-    is_author = current_user and current_user.id == petition.author_id
-    is_admin = current_user and current_user.role == UserRole.ADMIN
+    principal = get_current_principal(optional=True)
+    current_user_id = principal['id'] if principal else None
+    current_user_role = principal.get('role') if principal else None
+    if current_user_id and not current_user_role:
+        current_user = User.query.get(current_user_id)
+        current_user_role = current_user.role.value if current_user else None
+    is_author = bool(current_user_id and current_user_id == petition.author_id)
+    is_admin = current_user_role == UserRole.ADMIN.value
 
     if petition.status != PetitionStatus.APPROVED and not (is_admin or is_author):
         return jsonify({'error': '열람 권한이 없습니다.'}), 403

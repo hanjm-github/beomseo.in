@@ -40,8 +40,9 @@ const loadCommunityMockApi = ENABLE_API_MOCKS
 
 export const communityApi = {
   async list(params = {}) {
+    const serverParams = { ...params, view: 'list' };
     try {
-      const res = await api.get('/api/community/free', { params });
+      const res = await api.get('/api/community/free', { params: serverParams });
       return normalizePaginatedResponse(res.data, PAGE_SIZE_DEFAULT);
     } catch (err) {
       if (!shouldUseMockFallback(err)) throw err;

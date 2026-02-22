@@ -5,8 +5,8 @@ import ipaddress
 import re
 import bcrypt
 from functools import wraps
-from flask import request, jsonify
-from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request
+from flask import request, jsonify, g
+from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request, get_jwt
 
 from models.user import User, UserRole
 
@@ -100,23 +100,32 @@ def require_role(*roles: UserRole):
         @wraps(f)
         def decorated_function(*args, **kwargs):
             verify_jwt_in_request()
-            
-            user_id = parse_jwt_identity_to_int()
-            if user_id is None:
+
+            principal = get_current_principal(optional=False)
+            if principal is None:
                 return jsonify({'error': 'Invalid token identity'}), 401
-            user = User.query.get(user_id)
-            
+
+            # Prefer trusted JWT role claim to avoid extra DB lookups on hot paths.
+            principal_role = principal.get('role')
+            if principal_role:
+                if principal_role == UserRole.ADMIN.value:
+                    return f(*args, **kwargs)
+                allowed_roles = {role.value if isinstance(role, UserRole) else str(role) for role in roles}
+                if principal_role in allowed_roles:
+                    return f(*args, **kwargs)
+                return jsonify({'error': 'Insufficient permissions'}), 403
+
+            # Fallback for legacy tokens without role claim.
+            user = get_current_user()
             if not user:
                 return jsonify({'error': 'User not found'}), 404
-            
-            # Admin has access to everything
+
             if user.role == UserRole.ADMIN:
                 return f(*args, **kwargs)
-            
-            # Check if user has required role
+
             if user.role not in roles:
                 return jsonify({'error': 'Insufficient permissions'}), 403
-            
+
             return f(*args, **kwargs)
         return decorated_function
     return decorator
@@ -124,10 +133,62 @@ def require_role(*roles: UserRole):
 
 def get_current_user():
     """Get current authenticated user from JWT."""
+    if hasattr(g, '_current_user'):
+        return g._current_user
+
+    principal = get_current_principal(optional=True)
+    if principal is None:
+        g._current_user = None
+        return None
+
+    user = User.query.get(principal['id'])
+    g._current_user = user
+    return user
+
+
+def get_current_principal(optional=True):
+    """
+    Return current auth principal with lightweight fields.
+    Shape: {'id': int, 'role': str|None}
+    """
+    if hasattr(g, '_current_principal'):
+        return g._current_principal
+
+    try:
+        verify_jwt_in_request(optional=optional)
+    except Exception:
+        g._current_principal = None
+        return None
+
     user_id = parse_jwt_identity_to_int()
-    if user_id is not None:
-        return User.query.get(user_id)
-    return None
+    if user_id is None:
+        g._current_principal = None
+        return None
+
+    claims = get_jwt() or {}
+    role = claims.get('role')
+    principal = {
+        'id': user_id,
+        'role': str(role) if role not in (None, '') else None,
+    }
+    g._current_principal = principal
+    return principal
+
+
+def get_current_user_role():
+    """
+    Return current authenticated role string.
+    Uses JWT role claim first; falls back to DB lookup for legacy tokens.
+    """
+    principal = get_current_principal(optional=True)
+    if principal is None:
+        return None
+
+    if principal.get('role'):
+        return principal['role']
+
+    user = get_current_user()
+    return user.role.value if user else None
 
 
 def parse_jwt_identity_to_int():
@@ -135,6 +196,10 @@ def parse_jwt_identity_to_int():
     Parse JWT identity as integer user id.
     Returns None if identity is missing or malformed.
     """
+    principal = getattr(g, '_current_principal', None)
+    if isinstance(principal, dict) and principal.get('id') is not None:
+        return principal['id']
+
     user_id_str = get_jwt_identity()
     if user_id_str in (None, ''):
         return None

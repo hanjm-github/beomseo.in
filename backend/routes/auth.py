@@ -127,7 +127,7 @@ def register():
         return jsonify({'error': '회원가입 처리 중 오류가 발생했습니다.'}), 500
 
     try:
-        access_token, refresh_token = issue_token_pair(user.id)
+        access_token, refresh_token = issue_token_pair(user.id, user_role=user.role.value)
     except Exception:
         db.session.rollback()
         return jsonify({'error': '토큰 발급 중 오류가 발생했습니다.'}), 500
@@ -162,7 +162,7 @@ def login():
         return jsonify({'error': '닉네임 또는 비밀번호가 올바르지 않습니다.'}), 401
 
     try:
-        access_token, refresh_token = issue_token_pair(user.id)
+        access_token, refresh_token = issue_token_pair(user.id, user_role=user.role.value)
     except Exception:
         db.session.rollback()
         return jsonify({'error': '토큰 발급 중 오류가 발생했습니다.'}), 500
@@ -198,6 +198,7 @@ def refresh():
         access_token, refresh_token = issue_token_pair(
             user_id=user_id,
             rotate_from_refresh_jti=refresh_jti,
+            user_role=user.role.value,
         )
     except Exception:
         db.session.rollback()

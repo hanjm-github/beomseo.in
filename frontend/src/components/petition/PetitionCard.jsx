@@ -20,7 +20,7 @@ const statusClass = {
 const deriveStatus = (item, threshold) => {
   if (!item) return 'needs-support';
   if (item.status && item.status !== 'approved') return 'pending';
-  if (item.answer) return 'answered';
+  if (item.hasAnswer || item.answer) return 'answered';
   const votes = item.votes || 0;
   const th = threshold || 50;
   if (votes >= th) return 'waiting-answer';
@@ -109,7 +109,7 @@ export default function PetitionCard({
           <Bookmark size={14} />
           <RoleName nickname={item.author?.nickname || '익명'} role={item.author?.role || 'student'} size="sm" />
         </span>
-        {item.answer ? (
+        {item.hasAnswer || item.answer ? (
           <span className={styles.metaItem}>
             <CheckCheck size={14} />
             답변 등록

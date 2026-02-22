@@ -47,8 +47,9 @@ const loadPetitionMockApi = ENABLE_API_MOCKS
 
 export const petitionApi = {
   async list(params = {}) {
+    const serverParams = { ...params, view: 'list' };
     try {
-      const res = await api.get('/api/community/petitions', { params });
+      const res = await api.get('/api/community/petitions', { params: serverParams });
       return normalizePaginatedResponse(res.data, PAGE_SIZE_DEFAULT);
     } catch (err) {
       if (!shouldUseMockFallback(err)) throw err;

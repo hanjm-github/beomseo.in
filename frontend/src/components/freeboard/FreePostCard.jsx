@@ -25,6 +25,12 @@ const categoryTone = {
 export default function FreePostCard({ post, to }) {
   const hot = (post.likes || 0) + (post.commentsCount || 0) >= 20;
   const badgeClass = categoryTone[post.category] || styles.badgeInfo;
+  const attachmentsCount =
+    typeof post.attachmentsCount === 'number'
+      ? post.attachmentsCount
+      : Array.isArray(post.attachments)
+        ? post.attachments.length
+        : 0;
 
   const authorName = post.author?.name || '작성자';
   const authorRole = post.author?.role || 'student';
@@ -67,10 +73,10 @@ export default function FreePostCard({ post, to }) {
             <Heart size={14} />
             {post.likes || 0}
           </span>
-          {post.attachments?.length ? (
+          {attachmentsCount > 0 ? (
             <span className={styles.metaItem}>
               <Paperclip size={14} />
-              {post.attachments.length}
+              {attachmentsCount}
             </span>
           ) : null}
         </div>

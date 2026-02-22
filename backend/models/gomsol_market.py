@@ -93,6 +93,27 @@ class GomsolMarketPost(db.Model):
             'views': int(self.views or 0),
         }
 
+    def to_list_dict(self):
+        images = [image.to_dict() for image in self.images]
+        return {
+            'id': self.id,
+            'title': self.title,
+            'price': int(self.price or 0),
+            'category': self.category.value if self.category else GomsolMarketCategory.ETC.value,
+            'status': self.status.value if self.status else GomsolMarketSaleStatus.SELLING.value,
+            'approvalStatus': self.approval_status.value if self.approval_status else GomsolMarketApprovalStatus.PENDING.value,
+            'images': images[:1],
+            'imageCount': len(images),
+            'author': {
+                'id': self.author_id,
+                'name': self.author.nickname if self.author else None,
+                'role': self.author_role,
+            },
+            'createdAt': self.created_at.isoformat() if self.created_at else None,
+            'updatedAt': self.updated_at.isoformat() if self.updated_at else None,
+            'views': int(self.views or 0),
+        }
+
 
 class GomsolMarketImage(db.Model):
     __tablename__ = 'gomsol_market_images'
@@ -116,4 +137,3 @@ class GomsolMarketImage(db.Model):
             'mime': self.mime,
             'kind': self.kind,
         }
-

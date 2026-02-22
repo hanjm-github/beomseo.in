@@ -81,6 +81,31 @@ class LostFoundPost(db.Model):
             },
         }
 
+    def to_list_dict(self):
+        images = [image.to_dict() for image in self.images]
+        preview_images = images[:1]
+        return {
+            'id': self.id,
+            'title': self.title,
+            'status': self.status.value if self.status else LostFoundStatus.SEARCHING.value,
+            'category': self.category.value if self.category else LostFoundCategory.ETC.value,
+            'images': preview_images,
+            'imageCount': len(images),
+            'foundAt': self.found_at.isoformat() if self.found_at else None,
+            'foundLocation': self.found_location,
+            'storageLocation': self.storage_location,
+            'createdAt': self.created_at.isoformat() if self.created_at else None,
+            'updatedAt': self.updated_at.isoformat() if self.updated_at else None,
+            'views': self.views,
+            'commentsCount': self.comments_count,
+            'approvalStatus': 'approved',
+            'author': {
+                'id': self.author_id,
+                'name': self.author.nickname if self.author else None,
+                'role': self.author_role,
+            },
+        }
+
 
 class LostFoundImage(db.Model):
     __tablename__ = 'lost_found_images'
@@ -132,4 +157,3 @@ class LostFoundComment(db.Model):
             'createdAt': self.created_at.isoformat() if self.created_at else None,
             'updatedAt': self.updated_at.isoformat() if self.updated_at else None,
         }
-

@@ -127,7 +127,7 @@ class Notice(db.Model):
         'Attachment',
         backref='notice',
         cascade='all, delete-orphan',
-        lazy='joined',
+        lazy='selectin',
         order_by='Attachment.id.asc()'
     )
 
@@ -148,7 +148,7 @@ class Notice(db.Model):
         role_alias = 'council' if self.author_role == UserRole.STUDENT_COUNCIL.value else self.author_role
         return {
             'id': self.id,
-            'category': self.category.value,
+            'category': self.category.value if self.category else None,
             'title': self.title,
             'summary': self.summary,
             'pinned': self.pinned,
@@ -163,14 +163,41 @@ class Notice(db.Model):
             },
             'createdAt': self.created_at.isoformat() if self.created_at else None,
             'updatedAt': self.updated_at.isoformat() if self.updated_at else None,
-        'views': self.views,
-        'attachments': [a.to_dict() for a in self.attachments],
-        'body': self.body,
-        'deletedAt': self.deleted_at.isoformat() if self.deleted_at else None,
-        'likes': self.like_count,
-        'dislikes': self.dislike_count,
-        'myReaction': my_reaction,
-    }
+            'views': self.views,
+            'attachments': [a.to_dict() for a in self.attachments],
+            'body': self.body,
+            'deletedAt': self.deleted_at.isoformat() if self.deleted_at else None,
+            'likes': self.like_count,
+            'dislikes': self.dislike_count,
+            'myReaction': my_reaction,
+        }
+
+    def to_list_dict(self, my_reaction=None):
+        role_alias = 'council' if self.author_role == UserRole.STUDENT_COUNCIL.value else self.author_role
+        attachments_count = len(self.attachments) if self.attachments is not None else 0
+        return {
+            'id': self.id,
+            'category': self.category.value if self.category else None,
+            'title': self.title,
+            'summary': self.summary,
+            'pinned': self.pinned,
+            'important': self.important,
+            'examRelated': self.exam_related,
+            'tags': self.tags_list(),
+            'author': {
+                'id': self.author_id,
+                'name': self.author.nickname if self.author else None,
+                'role': self.author_role,
+                'role_alias': role_alias,
+            },
+            'createdAt': self.created_at.isoformat() if self.created_at else None,
+            'updatedAt': self.updated_at.isoformat() if self.updated_at else None,
+            'views': self.views,
+            'attachmentsCount': attachments_count,
+            'likes': self.like_count,
+            'dislikes': self.dislike_count,
+            'myReaction': my_reaction,
+        }
 
 
 # Helpful scopes

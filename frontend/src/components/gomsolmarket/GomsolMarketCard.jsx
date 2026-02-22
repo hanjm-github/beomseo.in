@@ -15,7 +15,9 @@ function formatDate(value) {
 }
 
 export default function GomsolMarketCard({ item, to, showApproval = false }) {
-  const coverImage = item.images?.[0];
+  const images = Array.isArray(item.images) ? item.images : [];
+  const imageCount = typeof item.imageCount === 'number' ? item.imageCount : images.length;
+  const coverImage = images[0];
   const statusClass = item.status === 'sold' ? styles.statusSold : styles.statusSelling;
   const approvalClass = item.approvalStatus === 'approved' ? styles.approvalApproved : styles.approvalPending;
 
@@ -38,9 +40,14 @@ export default function GomsolMarketCard({ item, to, showApproval = false }) {
           <span className={`${styles.statusBadge} ${statusClass}`}>
             {gomsolMarketApi.statusLabel[item.status]}
           </span>
-          <span className={styles.categoryBadge}>
-            {gomsolMarketApi.categoryLabel[item.category] || gomsolMarketApi.categoryLabel.etc}
-          </span>
+          <div style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
+            <span className={styles.categoryBadge}>
+              {gomsolMarketApi.categoryLabel[item.category] || gomsolMarketApi.categoryLabel.etc}
+            </span>
+            {imageCount > 1 ? (
+              <span className={styles.categoryBadge}>+{imageCount - 1}</span>
+            ) : null}
+          </div>
         </div>
         {showApproval ? (
           <div className={styles.adminBadgeWrap}>

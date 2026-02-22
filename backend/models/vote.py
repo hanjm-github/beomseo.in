@@ -67,6 +67,9 @@ class Vote(db.Model):
             'myVoteOptionId': my_vote_option_id,
         }
 
+    def to_list_dict(self, my_vote_option_id=None, now=None):
+        return self.to_dict(my_vote_option_id=my_vote_option_id, now=now)
+
 
 class VoteOption(db.Model):
     __tablename__ = 'vote_options'

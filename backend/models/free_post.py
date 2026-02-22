@@ -133,7 +133,7 @@ class FreePost(db.Model):
         FreeAttachment,
         backref='post',
         cascade='all, delete-orphan',
-        lazy='joined',
+        lazy='selectin',
         order_by='FreeAttachment.id.asc()'
     )
     reactions = db.relationship(
@@ -172,8 +172,8 @@ class FreePost(db.Model):
             'title': self.title,
             'body': self.body,
             'summary': self.summary,
-            'category': self.category.value,
-            'status': self.status.value,
+            'category': self.category.value if self.category else None,
+            'status': self.status.value if self.status else None,
             'author': {
                 'id': self.author_id,
                 'name': self.author.nickname if self.author else None,
@@ -192,6 +192,36 @@ class FreePost(db.Model):
             'dislikes': self.dislike_count,
             'commentsCount': self.comments_count,
             'attachments': [a.to_dict() for a in self.attachments],
+            'myReaction': my_reaction,
+            'bookmarked': bookmarked,
+        }
+
+    def to_list_dict(self, my_reaction=None, bookmarked=False):
+        attachments_count = len(self.attachments) if self.attachments is not None else 0
+        return {
+            'id': self.id,
+            'title': self.title,
+            'summary': self.summary,
+            'category': self.category.value if self.category else None,
+            'status': self.status.value if self.status else None,
+            'author': {
+                'id': self.author_id,
+                'name': self.author.nickname if self.author else None,
+                'role': self.author_role,
+            },
+            'approvedAt': self.approved_at.isoformat() if self.approved_at else None,
+            'approvedBy': {
+                'id': self.approved_by_id,
+                'name': self.approved_by.nickname if self.approved_by else None,
+                'role': self.approved_by.role.value if self.approved_by else None,
+            } if self.approved_by_id else None,
+            'createdAt': self.created_at.isoformat() if self.created_at else None,
+            'updatedAt': self.updated_at.isoformat() if self.updated_at else None,
+            'views': self.views,
+            'likes': self.like_count,
+            'dislikes': self.dislike_count,
+            'commentsCount': self.comments_count,
+            'attachmentsCount': attachments_count,
             'myReaction': my_reaction,
             'bookmarked': bookmarked,
         }

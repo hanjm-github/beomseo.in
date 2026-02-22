@@ -8,6 +8,7 @@ from flask import Blueprint, request, jsonify, current_app, send_from_directory
 from flask_jwt_extended import jwt_required, get_jwt_identity, verify_jwt_in_request
 from sqlalchemy import or_
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import joinedload, selectinload
 
 from models import (
     db,
@@ -48,7 +49,11 @@ def is_admin(user):
 
 
 def fetch_post_or_404(post_id):
-    return GomsolMarketPost.query.filter(
+    return GomsolMarketPost.query.options(
+        joinedload(GomsolMarketPost.author),
+        joinedload(GomsolMarketPost.approved_by),
+        selectinload(GomsolMarketPost.images),
+    ).filter(
         GomsolMarketPost.id == post_id,
         GomsolMarketPost.deleted_at.is_(None),
     ).first()
@@ -179,12 +184,17 @@ def list_posts():
     approval = request.args.get('approval')
     q_text = (request.args.get('q') or request.args.get('query') or '').strip()
     sort = request.args.get('sort', 'recent')
+    view = request.args.get('view')
     page, page_size = parse_pagination(request, default_page_size=12, max_page_size=50)
 
     current_user = optional_current_user()
     admin_mode = is_admin(current_user)
 
-    query = GomsolMarketPost.query.filter(GomsolMarketPost.deleted_at.is_(None))
+    query = GomsolMarketPost.query.options(
+        joinedload(GomsolMarketPost.author),
+        joinedload(GomsolMarketPost.approved_by),
+        selectinload(GomsolMarketPost.images),
+    ).filter(GomsolMarketPost.deleted_at.is_(None))
 
     if status in {item.value for item in GomsolMarketSaleStatus}:
         query = query.filter(GomsolMarketPost.status == GomsolMarketSaleStatus(status))
@@ -225,7 +235,14 @@ def list_posts():
 
     total = query.count()
     items = query.offset((page - 1) * page_size).limit(page_size).all()
-    return jsonify(build_paginated_response([item.to_dict() for item in items], total, page, page_size))
+    return jsonify(
+        build_paginated_response(
+            [item.to_list_dict() if view == 'list' else item.to_dict() for item in items],
+            total,
+            page,
+            page_size,
+        )
+    )
 
 
 @gomsol_market_bp.route('/<int:post_id>', methods=['GET'])

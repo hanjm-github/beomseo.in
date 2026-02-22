@@ -44,6 +44,7 @@ export const surveyApi = {
       hide: params.hideAnswered ? '1' : undefined,
       page: params.page,
       pageSize: params.pageSize,
+      view: 'list',
     };
     try {
       const res = await api.get('/api/surveys', { params: normalized });

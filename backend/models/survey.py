@@ -81,6 +81,18 @@ class Survey(db.Model):
             'isAnsweredByMe': is_answered,
         }
 
+    def to_list_dict(
+        self,
+        is_answered: bool = False,
+        quota_available: int = None,
+    ):
+        return self.to_dict(
+            include_form=False,
+            include_body=False,
+            is_answered=is_answered,
+            quota_available=quota_available,
+        )
+
 
 class SurveyResponse(db.Model):
     __tablename__ = 'survey_responses'

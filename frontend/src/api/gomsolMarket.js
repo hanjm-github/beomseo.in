@@ -64,6 +64,7 @@ const normalizePost = (post = {}) => {
     : 'etc';
   const status = post.status === 'sold' ? 'sold' : 'selling';
   const approvalStatus = post.approvalStatus === 'approved' ? 'approved' : 'pending';
+  const normalizedImages = normalizeImages(post.images);
 
   return {
     id: String(post.id ?? ''),
@@ -73,7 +74,8 @@ const normalizePost = (post = {}) => {
     category,
     status,
     approvalStatus,
-    images: normalizeImages(post.images),
+    images: normalizedImages,
+    imageCount: Number(post.imageCount ?? post.image_count ?? normalizedImages.length),
     contact: normalizeContact(post.contact),
     author: {
       id: post.author?.id ?? null,
@@ -131,6 +133,7 @@ export const gomsolMarketApi = {
         q: params.q,
         page: params.page,
         pageSize: params.pageSize,
+        view: 'list',
       };
       const res = await api.get('/api/community/gomsol-market', { params: serverParams });
       const normalized = normalizePaginatedResponse(res.data, PAGE_SIZE_DEFAULT);

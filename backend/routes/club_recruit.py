@@ -7,6 +7,7 @@ from flask import Blueprint, request, jsonify, current_app, send_from_directory
 from flask_jwt_extended import jwt_required, get_jwt_identity, verify_jwt_in_request
 from sqlalchemy import or_, case
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import joinedload
 
 from models import (
     db,
@@ -162,6 +163,7 @@ def list_recruits():
     q_text = request.args.get('q') or request.args.get('query')
     sort = request.args.get('sort', 'recent')
     status = request.args.get('status')
+    view = request.args.get('view')
     page, page_size = parse_pagination(request, default_page_size=12, max_page_size=50)
 
     current_user = optional_current_user()
@@ -169,14 +171,20 @@ def list_recruits():
         # Non-admin users can still see their own pending posts.
         status = None
 
-    query = ClubRecruit.query
+    query = ClubRecruit.query.options(
+        joinedload(ClubRecruit.author),
+        joinedload(ClubRecruit.approved_by),
+    )
     query = apply_filters(query, grade_group, status, q_text, current_user)
     total = query.count()
     items = apply_sort(query, sort).offset((page - 1) * page_size).limit(page_size).all()
 
     return jsonify(
         build_paginated_response(
-            [i.to_dict(include_body=False) for i in items],
+            [
+                i.to_list_dict() if view == 'list' else i.to_dict(include_body=False)
+                for i in items
+            ],
             total,
             page,
             page_size,
@@ -223,7 +231,10 @@ def create_recruit():
 
 
 def fetch_or_404(item_id):
-    item = ClubRecruit.query.get(item_id)
+    item = ClubRecruit.query.options(
+        joinedload(ClubRecruit.author),
+        joinedload(ClubRecruit.approved_by),
+    ).filter_by(id=item_id).first()
     if not item or item.deleted_at:
         return None
     return item

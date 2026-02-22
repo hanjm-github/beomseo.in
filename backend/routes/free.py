@@ -11,6 +11,7 @@ from flask_jwt_extended import (
 )
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from sqlalchemy import or_
+from sqlalchemy.orm import joinedload, selectinload
 
 from models import (
     db,
@@ -130,6 +131,7 @@ def list_posts():
     mine = parse_bool(request.args.get('mine'))
     bookmarked = parse_bool(request.args.get('bookmarked'))
     status = request.args.get('status')  # admin only: pending|approved|all
+    view = request.args.get('view')
     page, page_size = parse_pagination(request, default_page_size=10, max_page_size=50)
 
     current_user_id = optional_current_user_id()
@@ -140,7 +142,11 @@ def list_posts():
         # Non-admin users can still see their own pending posts.
         status = None
 
-    q = FreePost.query
+    q = FreePost.query.options(
+        joinedload(FreePost.author),
+        joinedload(FreePost.approved_by),
+        selectinload(FreePost.attachments),
+    )
     q = apply_filters(q, category, status, query_text, mine, bookmarked, current_user_id, current_user)
     total = q.count()
     q = apply_sort(q, sort)
@@ -164,7 +170,12 @@ def list_posts():
 
     return jsonify(
         build_paginated_response(
-            [p.to_dict(my_reaction=reactions_map.get(p.id), bookmarked=bookmarks_map.get(p.id, False)) for p in items],
+            [
+                p.to_list_dict(my_reaction=reactions_map.get(p.id), bookmarked=bookmarks_map.get(p.id, False))
+                if view == 'list'
+                else p.to_dict(my_reaction=reactions_map.get(p.id), bookmarked=bookmarks_map.get(p.id, False))
+                for p in items
+            ],
             total,
             page,
             page_size,
@@ -262,7 +273,11 @@ def create_post():
 
 
 def fetch_post_or_404(post_id):
-    post = FreePost.query.get(post_id)
+    post = FreePost.query.options(
+        joinedload(FreePost.author),
+        joinedload(FreePost.approved_by),
+        selectinload(FreePost.attachments),
+    ).filter_by(id=post_id).first()
     if not post or post.deleted_at:
         return None
     return post
@@ -504,7 +519,9 @@ def list_comments(post_id):
 
     page, page_size = parse_pagination(request)
     order = request.args.get('order', 'asc')
-    q = FreeComment.query.filter(FreeComment.post_id == post_id, FreeComment.deleted_at.is_(None))
+    q = FreeComment.query.options(
+        joinedload(FreeComment.user),
+    ).filter(FreeComment.post_id == post_id, FreeComment.deleted_at.is_(None))
     total = q.count()
     if order == 'desc':
         q = q.order_by(FreeComment.created_at.desc())

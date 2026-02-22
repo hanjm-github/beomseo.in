@@ -6,6 +6,7 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity, verify_jwt_in_request
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import or_
+from sqlalchemy.orm import joinedload
 
 from models import (
     db,
@@ -182,7 +183,10 @@ def apply_filters(query, grade=None, q_text=None, subject_tag=None, hide_closed=
 
 
 def fetch_or_404(item_id):
-    item = SubjectChange.query.get(item_id)
+    item = SubjectChange.query.options(
+        joinedload(SubjectChange.author),
+        joinedload(SubjectChange.approved_by),
+    ).filter_by(id=item_id).first()
     if not item or item.deleted_at:
         return None
     return item
@@ -202,6 +206,7 @@ def list_subject_changes():
     only_mine = parse_bool(request.args.get('onlyMine'))
     hide_closed = parse_bool(request.args.get('hideClosed'))
     status = request.args.get('status')
+    view = request.args.get('view')
 
     page, page_size = parse_pagination(request, default_page_size=12, max_page_size=50)
 
@@ -211,14 +216,17 @@ def list_subject_changes():
         # Non-admin users can still see their own pending posts.
         status = None
 
-    query = SubjectChange.query
+    query = SubjectChange.query.options(
+        joinedload(SubjectChange.author),
+        joinedload(SubjectChange.approved_by),
+    )
     query = apply_filters(query, grade, q_text, subject_tag, hide_closed, only_mine, status, current_user)
     total = query.count()
     items = query.order_by(SubjectChange.updated_at.desc()).offset((page - 1) * page_size).limit(page_size).all()
 
     return jsonify(
         build_paginated_response(
-            [i.to_dict(include_note=True) for i in items],
+            [i.to_list_dict() if view == 'list' else i.to_dict(include_note=True) for i in items],
             total,
             page,
             page_size,
@@ -432,7 +440,9 @@ def list_comments(item_id):
 
     page, page_size = parse_pagination(request)
     order = request.args.get('order', 'asc')
-    q = SubjectChangeComment.query.filter(
+    q = SubjectChangeComment.query.options(
+        joinedload(SubjectChangeComment.user),
+    ).filter(
         SubjectChangeComment.subject_change_id == item.id,
         SubjectChangeComment.deleted_at.is_(None)
     )

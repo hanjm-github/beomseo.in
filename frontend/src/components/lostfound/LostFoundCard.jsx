@@ -10,7 +10,9 @@ function formatFoundDate(value) {
 }
 
 export default function LostFoundCard({ item, to }) {
-  const coverImage = item.images?.[0];
+  const images = Array.isArray(item.images) ? item.images : [];
+  const imageCount = typeof item.imageCount === 'number' ? item.imageCount : images.length;
+  const coverImage = images[0];
   const statusClass = item.status === 'found' ? styles.statusFound : styles.statusSearching;
 
   return (
@@ -32,9 +34,14 @@ export default function LostFoundCard({ item, to }) {
           <span className={`${styles.statusBadge} ${statusClass}`}>
             {lostFoundApi.statusLabel[item.status]}
           </span>
-          <span className={styles.categoryBadge}>
-            {lostFoundApi.categoryLabel[item.category] || lostFoundApi.categoryLabel.etc}
-          </span>
+          <div style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
+            <span className={styles.categoryBadge}>
+              {lostFoundApi.categoryLabel[item.category] || lostFoundApi.categoryLabel.etc}
+            </span>
+            {imageCount > 1 ? (
+              <span className={styles.categoryBadge}>+{imageCount - 1}</span>
+            ) : null}
+          </div>
         </div>
       </div>
 

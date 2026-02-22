@@ -83,6 +83,9 @@ class SubjectChange(db.Model):
             'updatedAt': self.updated_at.isoformat() if self.updated_at else None,
         }
 
+    def to_list_dict(self):
+        return self.to_dict(include_note=True)
+
 
 class SubjectChangeLike(db.Model):
     __tablename__ = 'subject_change_likes'
