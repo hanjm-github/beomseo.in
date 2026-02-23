@@ -6,7 +6,6 @@
  * Key dependencies:
  * - react
  * - ../api/auth
- * - ../security/tokenStore
  * - ../analytics/zaraz
  * Side effects:
  * - Interacts with browser runtime APIs.
@@ -19,7 +18,6 @@
  */
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { AUTH_EXPIRED_EVENT, authApi } from '../api/auth';
-import tokenStore from '../security/tokenStore';
 import { trackAuthFailure, trackAuthSuccess } from '../analytics/zaraz';
 
 const AuthContext = createContext(null);
@@ -35,16 +33,11 @@ export function AuthProvider({ children }) {
     // Check if user is authenticated on mount
     useEffect(() => {
         const initAuth = async () => {
-            const token = tokenStore.getAccessToken();
-            if (token) {
-                try {
-                    const data = await authApi.getMe();
-                    setUser(data.user);
-                } catch {
-                    // Token invalid or expired - clear storage
-                    tokenStore.clearTokens();
-                    setUser(null);
-                }
+            try {
+                const data = await authApi.getMe();
+                setUser(data.user);
+            } catch {
+                setUser(null);
             }
             setLoading(false);
         };
@@ -54,7 +47,6 @@ export function AuthProvider({ children }) {
 
     useEffect(() => {
         const handleAuthExpired = () => {
-            tokenStore.clearTokens();
             setUser(null);
             setError('세션이 만료되었습니다. 다시 로그인해주세요.');
         };
@@ -72,7 +64,6 @@ export function AuthProvider({ children }) {
         setError(null);
         try {
             const data = await authApi.login(nickname, password);
-            tokenStore.setTokens(data.access_token, data.refresh_token);
             setUser(data.user);
             trackAuthSuccess({
                 eventName: 'login',
@@ -97,7 +88,6 @@ export function AuthProvider({ children }) {
         setError(null);
         try {
             const data = await authApi.register(nickname, password);
-            tokenStore.setTokens(data.access_token, data.refresh_token);
             setUser(data.user);
             trackAuthSuccess({
                 eventName: 'sign_up',
@@ -124,7 +114,6 @@ export function AuthProvider({ children }) {
         } catch {
             // Ignore logout errors
         } finally {
-            tokenStore.clearTokens();
             setUser(null);
             setError(null);
         }

@@ -19,6 +19,7 @@ import { Loader2, Table } from 'lucide-react';
 import { surveyApi } from '../../api/survey';
 import SurveyResultsCharts from '../../components/survey/SurveyResultsCharts';
 import styles from '../../components/survey/survey.module.css';
+import { escapeCsvCell } from '../../security/csvSanitizer';
 import '../page-shell.css';
 
 /**
@@ -30,6 +31,7 @@ export default function SurveyResultsView() {
   const [summary, setSummary] = useState(null);
   const [raw, setRaw] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [tab, setTab] = useState('summary');
 
   useEffect(() => {
@@ -45,6 +47,13 @@ export default function SurveyResultsView() {
         setSurvey(detailRes);
         setSummary(summaryRes);
         setRaw(rawRes);
+        setError('');
+      } catch {
+        if (cancelled) return;
+        setSurvey(null);
+        setSummary(null);
+        setRaw(null);
+        setError('결과를 불러오지 못했습니다.');
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -64,41 +73,29 @@ export default function SurveyResultsView() {
     }));
   }, [raw]);
 
-  const exportSheet = (type) => {
+  const exportSheet = (format) => {
     if (!flattenedRows.length) return;
     const headers = Object.keys(flattenedRows[0]);
-    const escapeCsv = (v) => {
-      let s = v == null ? '' : String(v);
-      if (typeof v === 'object') {
-        try {
-          s = JSON.stringify(v);
-        } catch {
-          s = String(v);
-        }
-      }
-      if (/[",\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
-      return s;
-    };
 
-    const lines = [headers.map(escapeCsv).join(',')];
+    const lines = [headers.map(escapeCsvCell).join(',')];
     flattenedRows.forEach((row) => {
-      lines.push(headers.map((h) => escapeCsv(row[h])).join(','));
+      lines.push(headers.map((h) => escapeCsvCell(row[h])).join(','));
     });
 
     // Excel에서 한글/UTF-8 깨짐 방지를 위해 BOM 추가
     const csvWithBom = '\uFEFF' + lines.join('\n');
 
-    // 'XLSX' 버튼도 실제로는 Excel 호환 CSV를 .xls 확장자로 저장해 깨짐/열기 오류를 방지
-    const isXlsx = type === 'xlsx';
+    // Excel 버튼은 XLSX가 아닌 Excel 호환 CSV(.xls 확장자)로 다운로드됩니다.
+    const isExcel = format === 'xls';
     const blob = new Blob([csvWithBom], {
-      type: isXlsx
+      type: isExcel
         ? 'application/vnd.ms-excel;charset=utf-8;'
         : 'text/csv;charset=utf-8;',
     });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `survey-${id}.${isXlsx ? 'xls' : 'csv'}`;
+    a.download = `survey-${id}.${isExcel ? 'xls' : 'csv'}`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -134,7 +131,7 @@ export default function SurveyResultsView() {
   if (!survey) {
     return (
       <div className="page-shell">
-        <p>결과를 불러오지 못했습니다.</p>
+        <p>{error || '결과를 불러오지 못했습니다.'}</p>
       </div>
     );
   }
@@ -151,8 +148,8 @@ export default function SurveyResultsView() {
           <button className="btn btn-secondary" onClick={() => exportSheet('csv')}>
             CSV 다운로드
           </button>
-          <button className="btn btn-primary" onClick={() => exportSheet('xlsx')}>
-            XLSX 다운로드
+          <button className="btn btn-primary" onClick={() => exportSheet('xls')}>
+            Excel(.xls) 다운로드
           </button>
         </div>
       </div>

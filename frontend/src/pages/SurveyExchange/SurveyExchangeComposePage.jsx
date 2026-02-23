@@ -13,7 +13,7 @@
  * Role in app flow:
  * - Owns route-level user flows and composes feature components.
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ReactFormBuilder } from 'react-form-builder2';
 import 'react-form-builder2/dist/app.css';
@@ -21,6 +21,7 @@ import '../../components/survey/survey-form-builder.css';
 import { ArrowLeft, Save } from 'lucide-react';
 import { surveyApi } from '../../api/survey';
 import { useAuth } from '../../context/AuthContext';
+import { sanitizeSurveyFormSchema } from '../../security/surveySchemaSanitizer';
 import styles from '../../components/survey/survey.module.css';
 import '../page-shell.css';
 
@@ -42,6 +43,7 @@ export default function SurveyExchangeComposePage() {
   const [formJson, setFormJson] = useState([]);
   const [saving, setSaving] = useState(false);
   const loading = isEdit;
+  const safeFormJson = useMemo(() => sanitizeSurveyFormSchema(formJson), [formJson]);
 
   useEffect(() => {
     if (authLoading || !isAuthenticated) return;
@@ -51,7 +53,7 @@ export default function SurveyExchangeComposePage() {
   }, [authLoading, id, isAuthenticated, isEdit, navigate]);
 
   const handleSaveForm = (data) => {
-    setFormJson(data.task_data || data);
+    setFormJson(sanitizeSurveyFormSchema(data.task_data || data));
   };
 
   const handleSubmit = async (e) => {
@@ -70,7 +72,7 @@ export default function SurveyExchangeComposePage() {
       title: meta.title,
       description: meta.description,
       expiresAt: meta.expiresAt || null,
-      formJson,
+      formJson: safeFormJson,
     };
 
     try {
@@ -170,7 +172,7 @@ export default function SurveyExchangeComposePage() {
               </button>
             </div>
           </div>
-          <ReactFormBuilder data={formJson} onPost={handleSaveForm} />
+          <ReactFormBuilder data={safeFormJson} onPost={handleSaveForm} />
         </section>
       </form>
     </div>

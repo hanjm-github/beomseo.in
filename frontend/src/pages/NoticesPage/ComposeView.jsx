@@ -27,6 +27,33 @@ import { useAuth } from '../../context/AuthContext';
 const VALID_CATEGORIES = ['school', 'council'];
 const TAG_SPLIT_REGEX = /[,\n;，]+/;
 
+function safeGetLocalStorageItem(key) {
+  if (typeof window === 'undefined') return null;
+  try {
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function safeSetLocalStorageItem(key, value) {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(key, value);
+  } catch {
+    // Ignore storage failures (private mode, quota exceeded, etc.).
+  }
+}
+
+function safeRemoveLocalStorageItem(key) {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.removeItem(key);
+  } catch {
+    // Ignore storage failures.
+  }
+}
+
 function normalizeTags(raw) {
   if (Array.isArray(raw)) {
     return raw
@@ -153,7 +180,7 @@ export default function ComposeView({ mode = 'create' }) {
   );
 
   useEffect(() => {
-    const saved = localStorage.getItem(draftKey);
+    const saved = safeGetLocalStorageItem(draftKey);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -175,12 +202,13 @@ export default function ComposeView({ mode = 'create' }) {
   useEffect(() => {
     // Persist full draft state so route changes or refreshes do not destroy in-progress notice writing.
     const payload = { ...state, attachments: state.attachments };
-    localStorage.setItem(draftKey, JSON.stringify(payload));
+    safeSetLocalStorageItem(draftKey, JSON.stringify(payload));
   }, [state, draftKey]);
 
   const handleFileChange = async (files) => {
     setError('');
-    const list = Array.from(files);
+    const list = Array.from(files || []);
+    if (!list.length) return;
     if (state.attachments.length + list.length > noticesApi.MAX_ATTACHMENTS) {
       setError(`첨부는 최대 ${noticesApi.MAX_ATTACHMENTS}개까지 가능합니다.`);
       return;
@@ -192,9 +220,24 @@ export default function ComposeView({ mode = 'create' }) {
         return;
       }
     }
+    let uploadedCount = 0;
+    let failedCount = 0;
     for (const file of list) {
-      const uploaded = await noticesApi.upload(file);
-      dispatch({ type: 'ADD_ATTACHMENT', payload: uploaded });
+      try {
+        const uploaded = await noticesApi.upload(file);
+        dispatch({ type: 'ADD_ATTACHMENT', payload: uploaded });
+        uploadedCount += 1;
+      } catch {
+        failedCount += 1;
+      }
+    }
+
+    if (failedCount > 0) {
+      setError(
+        uploadedCount > 0
+          ? `일부 첨부 업로드에 실패했습니다. (${uploadedCount}개 성공, ${failedCount}개 실패)`
+          : '첨부 업로드에 실패했습니다. 잠시 후 다시 시도해주세요.'
+      );
     }
   };
 
@@ -224,7 +267,7 @@ export default function ComposeView({ mode = 'create' }) {
     try {
       const res =
         mode === 'edit' && id ? await noticesApi.update(id, payload) : await noticesApi.create(payload);
-      localStorage.removeItem(draftKey);
+      safeRemoveLocalStorageItem(draftKey);
       navigate(`/notices/${category}/${res.id}`, { replace: true });
     } catch {
       setError('저장에 실패했습니다. 잠시 후 다시 시도해주세요.');

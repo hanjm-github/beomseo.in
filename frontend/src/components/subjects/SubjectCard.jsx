@@ -15,7 +15,7 @@
  */
 import { Link } from "react-router-dom";
 import { MessageCircle, ExternalLink } from "lucide-react";
-import { toSafeExternalHref } from "../../security/urlPolicy";
+import { toSafeExternalHref, toSafeOpenChatHref } from "../../security/urlPolicy";
 import RoleName from "../RoleName/RoleName";
 import styles from "./subjects.module.css";
 
@@ -51,7 +51,10 @@ export default function SubjectCard({
     .filter((contact) => ["kakao", "email", "url"].includes(contact?.type))
     .map((contact) => ({
       ...contact,
-      safeHref: toSafeExternalHref(contact?.url),
+      safeHref:
+        contact?.type === "kakao"
+          ? toSafeOpenChatHref(contact?.url)
+          : toSafeExternalHref(contact?.url),
     }))
     .filter((contact) => contact.safeHref);
   const authorName = item.author?.name || item.authorNickname || "익명";

@@ -32,7 +32,12 @@ export default function SurveyCard({ survey, onOpen, onResults, isAdmin }) {
       onClick={() => onOpen?.(survey)}
       role="button"
       tabIndex={0}
-      onKeyDown={(e) => (e.key === 'Enter' ? onOpen?.(survey) : null)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+          e.preventDefault();
+          onOpen?.(survey);
+        }
+      }}
     >
       <div className={styles.cardHeader}>
         <div className={styles.badgeRow} style={{ gap: 6 }}>

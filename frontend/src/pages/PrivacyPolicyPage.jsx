@@ -283,10 +283,11 @@ export default function PrivacyPolicyPage() {
             <section id="auto-collection" className="legal-section">
                 <h2>제8조 (자동 수집 정보 및 쿠키)</h2>
 
-                <h3>가. 웹 저장소 (Web Storage)</h3>
+                <h3>가. 인증 쿠키</h3>
                 <p>
-                    사이트는 이용자 인증을 위해 브라우저의 localStorage에 JWT(JSON Web Token)
-                    기반의 인증 토큰(access_token, refresh_token)을 저장합니다.
+                    사이트는 이용자 인증을 위해 HttpOnly 쿠키 기반 인증 토큰을 사용합니다.
+                    토큰은 브라우저의 JavaScript에서 직접 접근할 수 없도록 설정되어 XSS로 인한
+                    토큰 탈취 위험을 낮춥니다.
                 </p>
                 <ul>
                     <li>
@@ -299,8 +300,8 @@ export default function PrivacyPolicyPage() {
                     </li>
                 </ul>
                 <p>
-                    이용자는 브라우저의 개발자 도구를 통해 localStorage의 데이터를 직접
-                    확인·삭제할 수 있으며, 로그아웃 시 자동으로 삭제됩니다.
+                    이용자는 로그아웃 또는 세션 만료 시 인증 쿠키가 자동 폐기되며, 서버는 토큰
+                    회전 및 폐기 정책을 통해 장기 세션 노출을 제한합니다.
                 </p>
 
                 <h3>나. Cloudflare 쿠키</h3>
@@ -347,9 +348,9 @@ export default function PrivacyPolicyPage() {
                         라운드)으로 단방향 암호화하여 저장하며, 원본 비밀번호는 저장하지 않습니다.
                     </li>
                     <li>
-                        <strong>인증 토큰 보안:</strong> JWT 기반 인증을 사용하며, Access Token은
-                        30분, Refresh Token은 7일의 만료 기간을 설정하여 토큰 탈취 위험을
-                        최소화합니다.
+                        <strong>인증 토큰 보안:</strong> JWT 기반 인증을 HttpOnly 쿠키 채널로
+                        처리하며, Access Token은 30분, Refresh Token은 7일의 만료 기간을
+                        설정하고 회전 정책을 적용하여 토큰 탈취 및 재사용 위험을 최소화합니다.
                     </li>
                     <li>
                         <strong>네트워크 보안:</strong> Cloudflare CDN 및 WAF(웹 애플리케이션

@@ -4,15 +4,37 @@
  * Responsibilities:
  * - Enforce frontend trust boundaries before rendering or navigating untrusted values.
  * Key dependencies:
- * - Module-local logic without direct import dependencies.
+ * - ../config/env
  * Side effects:
  * - Applies frontend trust-boundary checks for URLs, HTML content, and token persistence.
  * - Applies sanitization before rendering or using external URL/HTML values.
  * Role in app flow:
  * - Protects rendering and navigation surfaces against unsafe input.
  */
+import { ALLOWED_ASSET_HOSTS } from '../config/env.js';
+
 const DANGEROUS_SCHEME_RE = /^(?:javascript|data|vbscript|file):/i;
 const EXTERNAL_SCHEME_RE = /^[a-z][a-z0-9+.-]*:\/\//i;
+const WILDCARD_HOST = '*';
+
+const NORMALIZED_ALLOWED_ASSET_HOSTS = (ALLOWED_ASSET_HOSTS || [])
+  .map((value) => String(value || '').trim().toLowerCase())
+  .filter(Boolean);
+
+function isAllowedAssetHost(hostname) {
+  if (!hostname) return false;
+  if (!NORMALIZED_ALLOWED_ASSET_HOSTS.length) return true;
+  if (NORMALIZED_ALLOWED_ASSET_HOSTS.includes(WILDCARD_HOST)) return true;
+
+  const host = hostname.toLowerCase();
+  return NORMALIZED_ALLOWED_ASSET_HOSTS.some((allowed) => {
+    if (allowed.startsWith('*.')) {
+      const suffix = allowed.slice(2);
+      return host === suffix || host.endsWith(`.${suffix}`);
+    }
+    return host === allowed;
+  });
+}
 
 function sanitizeInput(raw) {
   if (typeof raw !== 'string') return '';
@@ -87,10 +109,9 @@ export function toSafeAssetUrl(rawUrl) {
     const parsed = safeParse(value);
     if (!parsed) return null;
     if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null;
+    if (!isAllowedAssetHost(parsed.hostname)) return null;
     return parsed.href;
   }
 
   return value;
 }
-
-

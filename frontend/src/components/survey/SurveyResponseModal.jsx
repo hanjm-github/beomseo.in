@@ -13,15 +13,57 @@
  * Role in app flow:
  * - Implements reusable view logic consumed by route-level pages.
  */
+import { useEffect, useMemo, useRef } from 'react';
 import { X } from 'lucide-react';
 import { ReactFormGenerator } from 'react-form-builder2';
 import styles from './survey.module.css';
 import './survey-form-builder.css';
+import { sanitizeSurveyFormSchema } from '../../security/surveySchemaSanitizer';
+import { toSafeExternalHref } from '../../security/urlPolicy';
 
 /**
  * SurveyResponseModal module entry point.
  */
 export default function SurveyResponseModal({ survey, open, onClose, onSubmit, submitting }) {
+  const modalRef = useRef(null);
+  const safeFormJson = useMemo(() => sanitizeSurveyFormSchema(survey?.formJson || []), [survey?.formJson]);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const root = modalRef.current;
+    if (!root) return undefined;
+
+    const handleSafeLinkNavigation = (event) => {
+      const targetElement = event.target;
+      if (!(targetElement instanceof Element)) return;
+      const anchor = targetElement.closest('a[href]');
+      if (!anchor || !root.contains(anchor)) return;
+
+      const safeHref = toSafeExternalHref(anchor.getAttribute('href'));
+      if (!safeHref || safeHref === '#') {
+        event.preventDefault();
+        return;
+      }
+
+      const target = String(anchor.getAttribute('target') || '').toLowerCase();
+      if (target === '_blank') {
+        event.preventDefault();
+        window.open(safeHref, '_blank', 'noopener,noreferrer');
+        return;
+      }
+
+      if (anchor.getAttribute('href') !== safeHref) {
+        event.preventDefault();
+        window.location.assign(safeHref);
+      }
+    };
+
+    root.addEventListener('click', handleSafeLinkNavigation);
+    return () => {
+      root.removeEventListener('click', handleSafeLinkNavigation);
+    };
+  }, [open]);
+
   if (!open) return null;
 
   const handleAnswerSubmit = (data) => {
@@ -31,7 +73,7 @@ export default function SurveyResponseModal({ survey, open, onClose, onSubmit, s
 
   return (
     <div className={styles.modalBackdrop} role="dialog" aria-modal="true" aria-busy={submitting}>
-      <div className={styles.modal}>
+      <div className={styles.modal} ref={modalRef}>
         <div className={styles.modalHeader}>
           <h3>{survey?.title} 응답하기</h3>
           <button type="button" className="btn btn-ghost" onClick={onClose} disabled={submitting}>
@@ -41,7 +83,7 @@ export default function SurveyResponseModal({ survey, open, onClose, onSubmit, s
         <p className={styles.modalDescription}>{survey?.description}</p>
 
         <ReactFormGenerator
-          data={survey?.formJson || []}
+          data={safeFormJson}
           onSubmit={handleAnswerSubmit}
           action_name="응답 제출"
           back_name="취소"

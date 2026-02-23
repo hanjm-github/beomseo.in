@@ -83,10 +83,29 @@ class Config:
     JWT_MIN_SECRET_LENGTH = _parse_int(os.getenv('JWT_MIN_SECRET_LENGTH', 32), 32)
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=30)
     JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=7)
-    JWT_TOKEN_LOCATION = ['headers']
+    JWT_TOKEN_LOCATION = ['cookies']
     JWT_HEADER_NAME = 'Authorization'
     JWT_HEADER_TYPE = 'Bearer'
     JWT_ERROR_MESSAGE_KEY = 'error'
+    JWT_COOKIE_SECURE = _parse_bool(
+        os.getenv(
+            'JWT_COOKIE_SECURE',
+            'true' if os.getenv('FLASK_ENV', 'development').lower() == 'production' else 'false',
+        ),
+        default=False,
+    )
+    JWT_COOKIE_SAMESITE = os.getenv('JWT_COOKIE_SAMESITE', 'Lax')
+    JWT_COOKIE_CSRF_PROTECT = _parse_bool(os.getenv('JWT_COOKIE_CSRF_PROTECT', 'true'), default=True)
+    JWT_ACCESS_COOKIE_NAME = os.getenv('JWT_ACCESS_COOKIE_NAME', 'access_token_cookie')
+    JWT_REFRESH_COOKIE_NAME = os.getenv('JWT_REFRESH_COOKIE_NAME', 'refresh_token_cookie')
+    JWT_ACCESS_COOKIE_PATH = os.getenv('JWT_ACCESS_COOKIE_PATH', '/')
+    JWT_REFRESH_COOKIE_PATH = os.getenv('JWT_REFRESH_COOKIE_PATH', '/api/auth')
+    # Keep CSRF names fixed so frontend/backed contracts do not drift by env.
+    JWT_ACCESS_CSRF_COOKIE_NAME = 'csrf_access_token'
+    JWT_REFRESH_CSRF_COOKIE_NAME = 'csrf_refresh_token'
+    JWT_ACCESS_CSRF_HEADER_NAME = 'X-CSRF-TOKEN'
+    JWT_REFRESH_CSRF_HEADER_NAME = 'X-CSRF-TOKEN'
+    JWT_COOKIE_DOMAIN = os.getenv('JWT_COOKIE_DOMAIN', None)
 
     # CORS Settings (managed via .env CORS_ORIGINS)
     CORS_ORIGINS_RAW = os.getenv('CORS_ORIGINS', 'http://localhost:5173')

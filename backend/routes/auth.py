@@ -5,7 +5,10 @@ import re
 from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import (
     jwt_required,
-    get_jwt
+    get_jwt,
+    set_access_cookies,
+    set_refresh_cookies,
+    unset_jwt_cookies,
 )
 
 from models.user import db, User, UserRole
@@ -33,6 +36,32 @@ PASSWORD_MAX_LENGTH = 72
 NICKNAME_MIN_LENGTH = 2
 NICKNAME_MAX_LENGTH = 50
 TOKEN_ISSUING_ENDPOINTS = {'auth.register', 'auth.login', 'auth.refresh'}
+
+
+def _uses_cookie_transport() -> bool:
+    locations = [str(location).strip().lower() for location in current_app.config.get('JWT_TOKEN_LOCATION', [])]
+    return 'cookies' in locations
+
+
+def _build_auth_response(message, user_dict, access_token, refresh_token, status_code):
+    payload = {
+        'message': message,
+        'user': user_dict,
+    }
+
+    response = jsonify(payload)
+    if _uses_cookie_transport():
+        set_access_cookies(response, access_token)
+        set_refresh_cookies(response, refresh_token)
+    return response, status_code
+
+
+def _build_refresh_response(access_token, refresh_token):
+    response = jsonify({'message': '토큰이 갱신되었습니다.'})
+    if _uses_cookie_transport():
+        set_access_cookies(response, access_token)
+        set_refresh_cookies(response, refresh_token)
+    return response, 200
 
 
 @auth_bp.after_request
@@ -157,12 +186,13 @@ def register():
         db.session.rollback()
         return jsonify({'error': '토큰 발급 중 오류가 발생했습니다.'}), 500
     
-    return jsonify({
-        'message': '회원가입이 완료되었습니다.',
-        'user': user.to_dict(),
-        'access_token': access_token,
-        'refresh_token': refresh_token
-    }), 201
+    return _build_auth_response(
+        message='회원가입이 완료되었습니다.',
+        user_dict=user.to_dict(),
+        access_token=access_token,
+        refresh_token=refresh_token,
+        status_code=201,
+    )
 
 
 @auth_bp.route('/login', methods=['POST'])
@@ -201,12 +231,13 @@ def login():
         db.session.rollback()
         return jsonify({'error': '토큰 발급 중 오류가 발생했습니다.'}), 500
     
-    return jsonify({
-        'message': '로그인 성공',
-        'user': user.to_dict(),
-        'access_token': access_token,
-        'refresh_token': refresh_token
-    }), 200
+    return _build_auth_response(
+        message='로그인 성공',
+        user_dict=user.to_dict(),
+        access_token=access_token,
+        refresh_token=refresh_token,
+        status_code=200,
+    )
 
 
 @auth_bp.route('/refresh', methods=['POST'])
@@ -248,10 +279,7 @@ def refresh():
             return jsonify({'error': 'Invalid refresh token'}), 401
         return jsonify({'error': 'Token refresh failed'}), 500
 
-    return jsonify({
-        'access_token': access_token,
-        'refresh_token': refresh_token,
-    }), 200
+    return _build_refresh_response(access_token=access_token, refresh_token=refresh_token)
 
 
 @auth_bp.route('/logout', methods=['POST'])
@@ -259,7 +287,7 @@ def refresh():
 def logout():
     """
     Logout current user and revoke presented tokens.
-    Client should discard local token storage after this call.
+    Server clears auth cookies via unset_jwt_cookies.
     """
     user = get_current_user()
     if not user:
@@ -269,11 +297,20 @@ def logout():
     jwt_payload = get_jwt() or {}
     revoke_token_jti(jwt_payload.get('jti'), reason='logout')
 
-    data = request.get_json(silent=True) or {}
-    provided_refresh_token = data.get('refresh_token')
-    refresh_revoke_error = None
-    if provided_refresh_token:
-        _, refresh_revoke_error = revoke_raw_refresh_token(provided_refresh_token, expected_user_id=user.id)
+    cookie_refresh_token = None
+    if _uses_cookie_transport():
+        refresh_cookie_name = current_app.config.get('JWT_REFRESH_COOKIE_NAME', 'refresh_token_cookie')
+        cookie_refresh_token = request.cookies.get(refresh_cookie_name)
+
+    refresh_revoke_errors = []
+    tokens_to_revoke = []
+    if cookie_refresh_token:
+        tokens_to_revoke.append(cookie_refresh_token)
+
+    for token_value in tokens_to_revoke:
+        _, refresh_revoke_error = revoke_raw_refresh_token(token_value, expected_user_id=user.id)
+        if refresh_revoke_error:
+            refresh_revoke_errors.append(refresh_revoke_error)
 
     try:
         db.session.commit()
@@ -281,13 +318,17 @@ def logout():
         db.session.rollback()
         return jsonify({'error': '로그아웃 처리 중 오류가 발생했습니다.'}), 500
 
-    if refresh_revoke_error:
-        return jsonify({
+    if refresh_revoke_errors:
+        response = jsonify({
             'message': '로그아웃 되었습니다.',
             'warning': 'refresh_token을 폐기하지 못했습니다.',
-        }), 200
+        })
+    else:
+        response = jsonify({'message': '로그아웃 되었습니다.'})
 
-    return jsonify({'message': '로그아웃 되었습니다.'}), 200
+    if _uses_cookie_transport():
+        unset_jwt_cookies(response)
+    return response, 200
 
 
 @auth_bp.route('/me', methods=['GET'])

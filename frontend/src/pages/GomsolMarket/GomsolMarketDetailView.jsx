@@ -17,7 +17,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { CalendarDays, Eye, ShieldCheck, Store, UserRound } from 'lucide-react';
 import { gomsolMarketApi } from '../../api/gomsolMarket';
-import { toSafeExternalHref } from '../../security/urlPolicy';
+import { toSafeOpenChatHref } from '../../security/urlPolicy';
 import { useAuth } from '../../context/AuthContext';
 import RoleName from '../../components/RoleName/RoleName';
 import styles from '../../components/gomsolmarket/gomsolmarket.module.css';
@@ -71,7 +71,7 @@ export default function GomsolMarketDetailView() {
       next.push({
         label: '오픈채팅',
         value: post.contact.openChatUrl,
-        safeHref: toSafeExternalHref(post.contact.openChatUrl),
+        safeHref: toSafeOpenChatHref(post.contact.openChatUrl),
         type: 'link',
       });
     }

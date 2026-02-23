@@ -121,8 +121,8 @@ def create_app(config_name=None):
     CORS(
         app,
         origins=app.config['CORS_ORIGINS'],
-        supports_credentials=False,
-        allow_headers=['Content-Type', 'Authorization'],
+        supports_credentials=True,
+        allow_headers=['Content-Type', 'Authorization', 'X-CSRF-TOKEN', 'X-CSRF-Token'],
         methods=['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS']
     )
 
