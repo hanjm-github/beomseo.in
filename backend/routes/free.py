@@ -11,14 +11,13 @@ from flask_jwt_extended import (
 )
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from sqlalchemy import or_
-from sqlalchemy.orm import joinedload, selectinload
+from sqlalchemy.orm import joinedload
 
 from models import (
     db,
     User,
     UserRole,
     FreePost,
-    FreeAttachment,
     FreeReaction,
     FreeReactionType,
     FreeComment,
@@ -36,7 +35,6 @@ from utils.files import (
     is_valid_upload_preview_token,
     validate_upload,
     build_upload_url,
-    normalize_upload_url_for_scope,
 )
 from utils.security import require_role, get_current_user
 from utils.cache import cache_json_response, invalidate_cache_namespaces
@@ -62,13 +60,12 @@ def optional_current_user_id():
 
 
 def validate_payload(data, is_update=False):
-    """Validate free-board payload including attachment metadata."""
+    """Validate free-board payload."""
     errors = []
     title = (data.get('title') or '').strip()
     body = (data.get('body') or '').strip()
     body = canonicalize_upload_urls_in_text(current_app.config, 'free', body)
     category = data.get('category')
-    attachments = data.get('attachments') or []
 
     if not title or len(title) < 2 or len(title) > 200:
         errors.append('제목은 2~200자로 입력해주세요.')
@@ -77,44 +74,11 @@ def validate_payload(data, is_update=False):
     if category not in (FreeCategory.CHAT.value, FreeCategory.INFO.value, FreeCategory.QNA.value):
         errors.append('category는 chat, info, qna 중 하나여야 합니다.')
 
-    max_attach = current_app.config.get('MAX_ATTACH_COUNT', 5)
-    max_size = current_app.config.get('MAX_ATTACH_SIZE', 10 * 1024 * 1024)
-    if len(attachments) > max_attach:
-        errors.append(f'첨부파일은 최대 {max_attach}개까지 가능합니다.')
-    normalized_attachments = []
-    for a in attachments:
-        if not isinstance(a, dict):
-            errors.append('첨부파일 형식이 올바르지 않습니다.')
-            continue
-
-        attachment_url = normalize_upload_url_for_scope(current_app.config, 'free', a.get('url'))
-        if not attachment_url:
-            errors.append('첨부파일 URL이 올바르지 않습니다.')
-            continue
-
-        try:
-            file_size = int(a.get('size') or 0)
-        except (TypeError, ValueError):
-            file_size = 0
-        if file_size > max_size:
-            errors.append('첨부파일 용량은 10MB 이하만 가능합니다.')
-            continue
-
-        normalized_attachments.append(
-            {
-                'name': a.get('name'),
-                'url': attachment_url,
-                'mime': a.get('mime'),
-                'size': file_size or None,
-                'kind': a.get('kind', 'file'),
-            }
-        )
 
     return errors, {
         'title': title,
         'body': body,
         'category': category,
-        'attachments': normalized_attachments,
     }
 
 
@@ -159,7 +123,6 @@ def list_posts():
     q = FreePost.query.options(
         joinedload(FreePost.author),
         joinedload(FreePost.approved_by),
-        selectinload(FreePost.attachments),
     )
     q = apply_filters(q, category, status, query_text, mine, bookmarked, current_user_id, current_user)
     total = q.count()
@@ -267,17 +230,6 @@ def create_post():
         author_role=user.role.value,
     )
 
-    for a in payload['attachments']:
-        post.attachments.append(
-            FreeAttachment(
-                name=a.get('name'),
-                url=a.get('url'),
-                mime=a.get('mime'),
-                size=a.get('size'),
-                kind=a.get('kind', 'file'),
-            )
-        )
-
     try:
         db.session.add(post)
         db.session.commit()
@@ -294,7 +246,6 @@ def fetch_post_or_404(post_id):
     post = FreePost.query.options(
         joinedload(FreePost.author),
         joinedload(FreePost.approved_by),
-        selectinload(FreePost.attachments),
     ).filter_by(id=post_id).first()
     if not post or post.deleted_at:
         return None
@@ -304,7 +255,7 @@ def fetch_post_or_404(post_id):
 @free_bp.route('/<int:post_id>', methods=['PUT'])
 @jwt_required()
 def update_post(post_id):
-    """Update post content and attachment set when caller can edit."""
+    """Update post content when caller can edit."""
     post = fetch_post_or_404(post_id)
     if not post:
         return jsonify({'error': '게시글을 찾을 수 없습니다.'}), 404
@@ -322,18 +273,6 @@ def update_post(post_id):
     post.body = payload['body']
     post.summary = data.get('summary') or FreePost.summarize(payload['body'])
     post.category = FreeCategory(payload['category'])
-
-    post.attachments = []
-    for a in payload['attachments']:
-        post.attachments.append(
-            FreeAttachment(
-                name=a.get('name'),
-                url=a.get('url'),
-                mime=a.get('mime'),
-                size=a.get('size'),
-                kind=a.get('kind', 'file'),
-            )
-        )
 
     try:
         db.session.commit()
@@ -626,7 +565,7 @@ def delete_comment(post_id, comment_id):
 @free_bp.route('/uploads/', methods=['POST'])
 @jwt_required()
 def upload_file():
-    """Validate and store upload for free-board attachments."""
+    """Validate and store upload for free-board editor files."""
     if 'file' not in request.files:
         return jsonify({'error': 'file 필드가 필요합니다.'}), 400
     file = request.files['file']
@@ -657,18 +596,10 @@ def serve_upload(filename):
     ensure_dir(upload_dir)
     file_path = Path(upload_dir) / filename
     attachment_url = build_upload_url(current_app.config, 'free', filename)
-    attachment = FreeAttachment.query.filter_by(url=attachment_url).first()
-    if not attachment:
-        # Backward compatibility for rows that stored absolute URLs.
-        attachment = FreeAttachment.query.filter(FreeAttachment.url.like(f'%{attachment_url}')).first()
-
-    post = attachment.post if attachment else None
-    if not post:
-        # Inline editor images can exist only in body HTML (without attachment rows).
-        post = FreePost.query.filter(
-            FreePost.deleted_at.is_(None),
-            FreePost.body.ilike(f'%{attachment_url}%')
-        ).first()
+    post = FreePost.query.filter(
+        FreePost.deleted_at.is_(None),
+        FreePost.body.ilike(f'%{attachment_url}%')
+    ).first()
     if not post:
         if not file_path.exists():
             return jsonify({'error': '첨부파일을 찾을 수 없습니다.'}), 404
@@ -699,13 +630,13 @@ def serve_upload(filename):
 
     ext = Path(filename).suffix.lower()
     inline_exts = {'.jpg', '.jpeg', '.png', '.gif', '.webp'}
-    download_name = attachment.name if attachment and attachment.name else filename
-    inline_mime = (attachment.mime or '').startswith('image/') if attachment else ext in inline_exts
+    inline_mime = ext in inline_exts
     response = send_from_directory(
         upload_dir,
         filename,
         as_attachment=not inline_mime,
-        download_name=download_name,
+        download_name=filename,
     )
     response.headers['X-Content-Type-Options'] = 'nosniff'
     return response
+

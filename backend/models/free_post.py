@@ -25,29 +25,6 @@ class FreeStatus(str, Enum):
     APPROVED = 'approved'
 
 
-class FreeAttachment(db.Model):
-    __tablename__ = 'free_attachments'
-
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    post_id = db.Column(db.Integer, db.ForeignKey('free_posts.id', ondelete='CASCADE'), nullable=False, index=True)
-    name = db.Column(db.String(255), nullable=False)
-    url = db.Column(db.String(500), nullable=False)
-    mime = db.Column(db.String(128), nullable=True)
-    size = db.Column(db.Integer, nullable=True)
-    kind = db.Column(db.String(20), nullable=True)  # file | image
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'name': self.name,
-            'url': self.url,
-            'mime': self.mime,
-            'size': self.size,
-            'kind': self.kind,
-        }
-
-
 class FreeReactionType(str, Enum):
     LIKE = 'like'
     DISLIKE = 'dislike'
@@ -136,13 +113,6 @@ class FreePost(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
-    attachments = db.relationship(
-        FreeAttachment,
-        backref='post',
-        cascade='all, delete-orphan',
-        lazy='selectin',
-        order_by='FreeAttachment.id.asc()'
-    )
     reactions = db.relationship(
         FreeReaction,
         backref='post',
@@ -201,14 +171,13 @@ class FreePost(db.Model):
             'likes': self.like_count,
             'dislikes': self.dislike_count,
             'commentsCount': self.comments_count,
-            'attachments': [a.to_dict() for a in self.attachments],
+            'attachments': [],
             'myReaction': my_reaction,
             'bookmarked': bookmarked,
         }
 
     def to_list_dict(self, my_reaction=None, bookmarked=False):
         """Compact serializer used by free-board list APIs."""
-        attachments_count = len(self.attachments) if self.attachments is not None else 0
         summary_source = self.summary or self.body or ''
         safe_summary = FreePost.summarize(summary_source)
         return {
@@ -234,7 +203,7 @@ class FreePost(db.Model):
             'likes': self.like_count,
             'dislikes': self.dislike_count,
             'commentsCount': self.comments_count,
-            'attachmentsCount': attachments_count,
+            'attachmentsCount': 0,
             'myReaction': my_reaction,
             'bookmarked': bookmarked,
         }

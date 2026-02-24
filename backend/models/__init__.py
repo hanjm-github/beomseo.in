@@ -9,7 +9,6 @@ from .notice import (
 )
 from .free_post import (
     FreePost,
-    FreeAttachment,
     FreeReaction,
     FreeReactionType,
     FreeComment,
@@ -73,7 +72,6 @@ __all__ = [
     'ReactionType',
     'Comment',
     'FreePost',
-    'FreeAttachment',
     'FreeReaction',
     'FreeReactionType',
     'FreeComment',
