@@ -103,6 +103,11 @@ export default function Footer() {
                                     범서고등학교 학생회 인스타그램 <ExternalLink size={12} />
                                 </a>
                             </li>
+                            <li>
+                                <a href="http://pf.kakao.com/_KZxmIX" target="_blank" rel="noopener noreferrer">
+                                    범서고등학교 17대 학생회 카카오톡 채널 <ExternalLink size={12} />
+                                </a>
+                            </li>
                         </ul>
                     </div>
                 </div>
