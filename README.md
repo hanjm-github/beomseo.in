@@ -254,8 +254,8 @@ beomseo.in/
 ### 1단계: 저장소 클론
 
 ```bash
-git clone https://github.com/hanjm-github/2026-beomseo.git
-cd 2026-beomseo
+git clone https://github.com/hanjm-github/beomseo.in.git
+cd beomseo.in
 ```
 
 ### 2단계: 백엔드 설정

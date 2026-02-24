@@ -94,8 +94,8 @@ export default function Footer() {
                                 </a>
                             </li>
                             <li>
-                                <a href="https://github.com/hanjm-github/2026-beomseo" target="_blank" rel="noopener noreferrer">
-                                    {APP_NAME} GitHub 레포지토리 <ExternalLink size={12} />
+                                <a href="https://github.com/hanjm-github/beomseo.in" target="_blank" rel="noopener noreferrer">
+                                    beomseo.in GitHub 레포지토리 <ExternalLink size={12} />
                                 </a>
                             </li>
                             <li>
