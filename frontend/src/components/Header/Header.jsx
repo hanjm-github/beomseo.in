@@ -121,7 +121,7 @@ export default function Header() {
       <div className={styles.container}>
         <Link to="/" className={styles.logo}>
           <div className={styles.logoIcon}>
-            <span className={styles.logoText}>in</span>
+            <img src="/mit_logo.png" alt="" className={styles.logoImage} />
           </div>
           <div className={styles.logoLabels}>
             <span className={styles.logoName}>{APP_NAME}</span>
