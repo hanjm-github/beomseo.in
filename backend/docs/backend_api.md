@@ -84,8 +84,11 @@ JWT 공통 에러 코드:
 ### 1.7 캐시/레이트리밋 공통
 
 - 캐시:
-  - `@cache_json_response(namespace)` GET 응답 캐시
-  - 쓰기 성공 시 `invalidate_cache_namespaces(...)`
+  - `@cache_json_response(namespace)` 데코레이터 기반 응답 캐시
+  - 실동작 조건: `GET` + `CACHE_RUNTIME_MODE=redis` + `admin 아님`
+  - 키 구성: `method + path + normalized query + actor_scope(anon | user:{id}:role:{role})`
+  - 권한/개인화 응답(`myReaction`, `myVote`, 승인+본인 pending 목록`)도 actor_scope로 사용자별 분리
+  - 쓰기 성공 시 `invalidate_cache_namespaces(...)`로 네임스페이스 일괄 무효화
 - 레이트리밋 키:
   - 로그인 사용자: `user:<id>`
   - 익명: `ip:<remote>`

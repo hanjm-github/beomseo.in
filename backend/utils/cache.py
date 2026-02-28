@@ -79,16 +79,49 @@ def init_cache(app):
     app.logger.info('Cache initialized: mode=%s', runtime_mode)
 
 
-def _auth_fingerprint() -> str:
+def _cache_actor_context() -> tuple[str, str | None]:
     """
-    Build a stable privacy-preserving auth discriminator for cache keys.
+    Resolve cache actor context from auth principal.
 
-    We hash Authorization instead of storing raw header values in Redis keys.
+    Returns:
+        (actor_scope, actor_role)
+        actor_scope: anon or user:{id}:role:{role_or_unknown}
+        actor_role: normalized role string when known, else None
     """
-    auth = (request.headers.get('Authorization') or '').strip()
-    if not auth:
-        return 'anon'
-    return hashlib.sha256(auth.encode('utf-8')).hexdigest()[:16]
+    try:
+        from utils.security import get_current_principal, get_current_user
+    except Exception:
+        return 'anon', None
+
+    try:
+        principal = get_current_principal(optional=True)
+    except Exception:
+        principal = None
+
+    if not principal:
+        return 'anon', None
+
+    user_id = principal.get('id')
+    if user_id in (None, ''):
+        return 'anon', None
+
+    role = principal.get('role')
+    if role in (None, ''):
+        # Legacy tokens can miss role claim; recover once from DB.
+        try:
+            user = get_current_user()
+        except Exception:
+            user = None
+        if user is not None:
+            user_role = getattr(user, 'role', None)
+            if hasattr(user_role, 'value'):
+                role = user_role.value
+            elif user_role not in (None, ''):
+                role = str(user_role)
+
+    normalized_role = str(role).strip().lower() if role not in (None, '') else 'unknown'
+    actor_scope = f"user:{user_id}:role:{normalized_role}"
+    return actor_scope, (normalized_role if normalized_role != 'unknown' else None)
 
 
 def _normalized_query() -> str:
@@ -101,9 +134,9 @@ def _normalized_query() -> str:
     return urlencode(pairs, doseq=True)
 
 
-def _cache_key(namespace: str) -> str:
-    # Include path/query/auth fingerprint to avoid cross-user data leakage.
-    base = f"resp|{namespace}|{request.method}|{request.path}|{_normalized_query()}|{_auth_fingerprint()}"
+def _cache_key(namespace: str, actor_scope: str) -> str:
+    # Include path/query/actor scope to avoid cross-user visibility leakage.
+    base = f"resp|{namespace}|{request.method}|{request.path}|{_normalized_query()}|{actor_scope}"
     digest = hashlib.sha256(base.encode('utf-8')).hexdigest()
     return f"resp:{namespace}:{digest}"
 
@@ -171,22 +204,29 @@ def _deserialize_response(raw_payload):
 def cache_json_response(namespace: str, ttl: int | None = None):
     """
     Cache JSON GET responses for a namespace.
-    Cache key includes path, normalized query string, and auth fingerprint.
+    Cache key includes path, normalized query string, and actor scope.
+    Admin requests always bypass cache read/write.
     """
     def decorator(view_func):
         @wraps(view_func)
         def wrapped(*args, **kwargs):
             debug_headers = bool(current_app.config.get('CACHE_DEBUG_HEADERS', False))
             runtime_mode = current_app.config.get('CACHE_RUNTIME_MODE', 'disabled')
+            actor_scope = 'anon'
+            actor_role = None
+
+            if request.method == 'GET':
+                # Compute once per request and reuse for bypass + keying.
+                actor_scope, actor_role = _cache_actor_context()
 
             # Cache is intentionally read-only for idempotent GET traffic.
-            if request.method != 'GET' or runtime_mode != 'redis':
+            if request.method != 'GET' or runtime_mode != 'redis' or actor_role == 'admin':
                 response = make_response(view_func(*args, **kwargs))
                 if debug_headers and request.method == 'GET':
                     response.headers['X-Cache'] = 'BYPASS'
                 return response
 
-            key = _cache_key(namespace)
+            key = _cache_key(namespace, actor_scope)
             try:
                 cached_payload = cache.get(key)
             except Exception:

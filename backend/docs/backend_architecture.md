@@ -136,22 +136,116 @@ stateDiagram-v2
 
 ## 6. 캐시 아키텍처
 
-### 6.1 전략
+### 6.1 런타임 모드
 
-- 데코레이터: `@cache_json_response(namespace, ttl?)`
-- 대상: GET JSON 응답만
-- 키: `method + path + normalized query + auth fingerprint`
-- `Authorization` 원문을 저장하지 않고 해시 지문 사용
+`init_cache()`는 부팅 시 Redis 실연결(`PING`) 성공 여부를 검사해 캐시 모드를 결정합니다.
 
-### 6.2 무효화
+- `redis`: 실제 캐시 read/write 활성
+- `fallback-null`: `CACHE_ENABLED=true`지만 Redis 연결 실패 → `NullCache`로 강등
+- `disabled`: `CACHE_ENABLED=false`로 명시 비활성
 
-- 쓰기 완료 후 `invalidate_cache_namespaces(...)`
-- 네임스페이스 인덱스(`nsidx:*`)를 통해 관련 키 일괄 삭제
+핵심은 **API 가용성을 우선**한다는 점입니다. Redis 장애가 발생해도 요청은 계속 처리되고, 캐시만 비활성화됩니다.
 
-### 6.3 장애 대응
+### 6.2 캐시 저장/조회 조건
 
-- Redis 불가 시 `NullCache`로 자동 강등
-- 캐시 실패가 비즈니스 실패로 전파되지 않도록 예외 삼킴
+`@cache_json_response(namespace, ttl?)`는 아래 조건을 모두 만족할 때만 동작합니다.
+
+1. 요청 메서드가 `GET`
+2. 런타임 모드가 `redis`
+3. 호출자가 `admin`이 아님
+4. 응답이 `2xx + JSON + non-streaming(direct_passthrough=False)`
+
+즉, admin GET/비GET/에러 응답/파일 스트리밍 응답은 캐시하지 않습니다.
+
+디버깅이 필요하면 `CACHE_DEBUG_HEADERS=true`로 `X-Cache: HIT|MISS|BYPASS`를 확인할 수 있습니다.
+
+### 6.3 키 설계와 권한 격리
+
+캐시 키 원문은 아래 요소를 결합한 뒤 SHA-256 해시로 축약합니다.
+
+- `namespace`
+- `request.method`
+- `request.path`
+- `normalized query` (키/값 정렬로 동치 쿼리 통합)
+- `actor_scope`
+
+`actor_scope` 규칙:
+
+- 비로그인: `anon`
+- 로그인: `user:{id}:role:{role_or_unknown}`
+
+role claim이 없는 legacy 토큰은 DB에서 role을 1회 복구한 뒤 scope를 결정합니다.  
+이 구조 때문에 **같은 URL이라도 사용자별로 캐시가 분리**됩니다.
+
+### 6.4 "승인 전 본인 글만 보임"과 캐시의 결합 방식
+
+승인 워크플로우가 있는 목록 엔드포인트는 비관리자에서 공통적으로 다음 가시성 조건을 갖습니다.
+
+- 공개: `APPROVED`
+- 예외 허용: `author_id == current_user.id` (본인 글)
+
+대표 라우트:
+
+- `free.list_posts`
+- `club_recruit.list_recruits`
+- `subject_changes.list_subject_changes`
+- `petitions.list_petitions`
+- `surveys.list_surveys`
+- `gomsol_market.list_posts`
+
+`free.list_posts`를 예로 들면:
+
+1. 비관리자 요청 시 `status` 관리자 필터를 무력화
+2. 최종 where 절에서 `approved OR author_id=current_user` 적용
+3. 같은 요청 URL이어도 `actor_scope`가 사용자마다 달라 별도 캐시 키 생성
+
+결과적으로:
+
+- 사용자 A의 캐시에는 "A의 pending 글"이 포함될 수 있음
+- 사용자 B/익명은 다른 scope 키를 사용하므로 A의 pending 결과를 재사용하지 않음
+
+즉, "일반 사용자가 자신의 미승인 글을 본다"는 요구사항은 **라우트 SQL 가시성 규칙 + actor_scope 기반 캐시 분리**의 조합으로 안전하게 구현됩니다.
+
+```mermaid
+sequenceDiagram
+    participant UA as User A
+    participant UB as User B
+    participant API as list_posts()
+    participant CA as Redis Cache
+    participant DB as MariaDB
+
+    UA->>API: GET /api/community/free?sort=recent
+    API->>API: visibility = approved OR author_id=A
+    API->>CA: key(..., actor_scope=user:A:role:student)
+    CA-->>API: MISS
+    API->>DB: 조회 (A pending 포함 가능)
+    API->>CA: set key(A_scope)
+    API-->>UA: A 전용 결과
+
+    UB->>API: 동일 URL 요청
+    API->>API: visibility = approved OR author_id=B
+    API->>CA: key(..., actor_scope=user:B:role:student)
+    CA-->>API: A와 다른 키 (HIT/MISS 별개)
+    API-->>UB: B 전용 결과
+```
+
+### 6.5 detail 캐시와 권한 체크
+
+일부 detail GET도 캐시를 사용합니다(예: `petitions.get_petition`, `surveys.get_survey`, `votes.get_vote`).  
+이 경우에도 권한 체크/개인화 필드 계산이 view 함수 내부에 존재하며, actor_scope가 다르면 캐시도 분리됩니다.
+
+반대로 `free.get_post`, `club_recruit.get_recruit`, `subject_changes.get_subject_change`, `gomsol_market.get_post`는 캐시 데코레이터를 사용하지 않습니다.
+
+### 6.6 무효화/인덱스 관리
+
+쓰기 성공 경로는 `invalidate_cache_namespaces(...)`를 호출합니다.
+
+- 네임스페이스 인덱스 키: `nsidx:{namespace}`
+- 인덱스에는 실제 응답 키 목록을 저장
+- 인덱스 최대 길이: 5000 (초과 시 오래된 키 제거)
+- 인덱스 TTL: `max(CACHE_DEFAULT_TIMEOUT * 20, 3600)`
+
+무효화/캐시 I/O 예외는 요청 실패로 전파하지 않습니다(운영 안정성 우선).
 
 ## 7. 레이트리밋 아키텍처
 
