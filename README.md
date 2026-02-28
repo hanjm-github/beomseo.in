@@ -1,9 +1,14 @@
 <p align="center">
-
+  <img src="frontend/public/mit_logo.png" width="120" alt="beomseo.in MIT 로고"/>
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/범서고등학교-17대%20학생회%20정보기술부-1a73e8?style=for-the-badge" alt="범서고등학교 17대 학생회 정보기술부"/>
+  <a href="https://www.instagram.com/beomseo_mit/" target="_blank" rel="noopener noreferrer">
+    <img src="https://img.shields.io/badge/범서고등학교-17대%20학생회%20정보기술부-1a73e8?style=for-the-badge" alt="범서고등학교 17대 학생회 정보기술부"/>
+  </a>
+  <a href="https://www.instagram.com/beomseo_mit/" target="_blank" rel="noopener noreferrer">
+    <img src="https://img.shields.io/badge/Instagram-@beomseo__mit-E4405F?style=for-the-badge&logo=instagram&logoColor=white" alt="범서고등학교 정보기술부 인스타그램"/>
+  </a>
 </p>
 
 <h1 align="center">🏫 beomseo.in</h1>
@@ -14,12 +19,24 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Flask-3.1-000000?logo=flask&logoColor=white" alt="Flask 3.1"/>
-  <img src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black" alt="React 19"/>
-  <img src="https://img.shields.io/badge/Vite-7-646CFF?logo=vite&logoColor=white" alt="Vite 7"/>
-  <img src="https://img.shields.io/badge/MariaDB-003545?logo=mariadb&logoColor=white" alt="MariaDB"/>
-  <img src="https://img.shields.io/badge/Redis-DC382D?logo=redis&logoColor=white" alt="Redis"/>
-  <img src="https://img.shields.io/badge/License-GPL--3.0-blue" alt="GPL-3.0"/>
+  <a href="https://flask.palletsprojects.com/" target="_blank" rel="noopener noreferrer">
+    <img src="https://img.shields.io/badge/Flask-3.1-000000?logo=flask&logoColor=white" alt="Flask 3.1"/>
+  </a>
+  <a href="https://react.dev/" target="_blank" rel="noopener noreferrer">
+    <img src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black" alt="React 19"/>
+  </a>
+  <a href="https://vite.dev/" target="_blank" rel="noopener noreferrer">
+    <img src="https://img.shields.io/badge/Vite-7-646CFF?logo=vite&logoColor=white" alt="Vite 7"/>
+  </a>
+  <a href="https://mariadb.org/" target="_blank" rel="noopener noreferrer">
+    <img src="https://img.shields.io/badge/MariaDB-003545?logo=mariadb&logoColor=white" alt="MariaDB"/>
+  </a>
+  <a href="https://redis.io/" target="_blank" rel="noopener noreferrer">
+    <img src="https://img.shields.io/badge/Redis-DC382D?logo=redis&logoColor=white" alt="Redis"/>
+  </a>
+  <a href="LICENSE">
+    <img src="https://img.shields.io/badge/License-GPL--3.0-blue" alt="GPL-3.0"/>
+  </a>
 </p>
 
 ---

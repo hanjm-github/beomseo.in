@@ -126,6 +126,7 @@ function SignUpPage() {
         <div className="login-page">
             <div className="login-container">
                 <div className="login-header">
+                    <img src="/mit_logo.png" alt={`${APP_NAME} 로고`} className="auth-logo" width="72" height="72" />
                     <h1>{APP_NAME}</h1>
                     <p>회원가입</p>
                 </div>

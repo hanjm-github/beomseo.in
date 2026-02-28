@@ -32,7 +32,7 @@ export default function Footer() {
                     <div className={styles.section}>
                         <div className={styles.logo}>
                             <div className={styles.logoIcon}>
-                                <span>in</span>
+                                <img src="/mit_logo.png" alt="" className={styles.logoImage} />
                             </div>
                             <div>
                                 <h3 className={styles.schoolName}>{APP_NAME}</h3>
