@@ -28,6 +28,8 @@ class User(db.Model):
         default=UserRole.STUDENT,
         nullable=False
     )
+    ip_address = db.Column(db.String(64), nullable=True)
+    user_agent = db.Column(db.String(255), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     
     def __repr__(self):

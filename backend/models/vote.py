@@ -20,6 +20,8 @@ class Vote(db.Model):
 
     author_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
     author_role = db.Column(db.String(50), nullable=False)
+    ip_address = db.Column(db.String(64), nullable=True)
+    user_agent = db.Column(db.String(255), nullable=True)
     author = db.relationship('User', foreign_keys=[author_id], backref=db.backref('votes', lazy='dynamic'))
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
@@ -110,6 +112,8 @@ class VoteResponse(db.Model):
     option_id = db.Column(db.Integer, db.ForeignKey('vote_options.id'), nullable=False, index=True)
     respondent_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
     credits_earned = db.Column(db.Integer, nullable=False, default=1)
+    ip_address = db.Column(db.String(64), nullable=True)
+    user_agent = db.Column(db.String(255), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
     option = db.relationship('VoteOption')

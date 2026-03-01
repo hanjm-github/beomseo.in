@@ -5,7 +5,7 @@
 
 ## 1. 시스템 개요
 
-이 서비스는 **Flask 단일 API 애플리케이션**이며, 인증·인가·캐시·레이트리밋·업로드 검증을 공통 유틸 계층에서 제공한 뒤 기능별 블루프린트(`routes/*`)로 도메인 API를 분리합니다.
+이 서비스는 **Flask 단일 API 애플리케이션**이며, 인증·인가·캐시·레이트리밋·업로드 검증, 그리고 요청 메타데이터(IP/User-Agent) 감사 수집을 공통 유틸 계층에서 제공한 뒤 기능별 블루프린트(`routes/*`)로 도메인 API를 분리합니다.
 
 ```mermaid
 flowchart LR
@@ -14,7 +14,9 @@ flowchart LR
     Flask --> RL[Rate Limiter<br/>utils/rate_limit.py]
     Flask --> Cache[Response Cache<br/>utils/cache.py]
     Flask --> Upload[Upload Guard<br/>utils/files.py]
+    Flask --> ReqMeta[Request Metadata Hook<br/>utils/request_metadata.py]
     Flask --> Routes[Blueprint Routes<br/>routes/*.py]
+    ReqMeta --> ORM
     Routes --> ORM[SQLAlchemy Models<br/>models/*.py]
     ORM --> DB[(MariaDB)]
     Cache --> Redis[(Redis)]
@@ -26,7 +28,8 @@ flowchart LR
 1. 인증: JWT를 **쿠키(`JWT_TOKEN_LOCATION=['cookies']`)**로 운용
 2. 세션 무효화: `auth_tokens` 테이블 기반 서버 주도 토큰 폐기
 3. 운영 방어: 보안 설정 fail-fast + 레이트리밋 + 보안 헤더
-4. 데이터 일관성: 소프트 삭제(`deleted_at`) + 카운터 캐시 + 유니크 제약
+4. 쓰기 감사: `before_flush` 훅으로 신규 row의 `ip_address`/`user_agent` 자동 주입(best-effort)
+5. 데이터 일관성: 소프트 삭제(`deleted_at`) + 카운터 캐시 + 유니크 제약
 
 ## 2. 앱 부팅 순서 (`app.py:create_app`)
 
@@ -47,6 +50,7 @@ sequenceDiagram
     Note over App: JWT_SECRET 길이/값<br/>CORS_ORIGINS(운영)<br/>MAX_CONTENT_LENGTH 검증
     App->>Ext: init_cache()
     App->>Ext: db.init_app()
+    App->>Ext: Session before_flush hook 등록(request metadata)
     App->>Ext: init_limiter()
     App->>Ext: CORS/JWT 핸들러 등록
     App->>BP: 블루프린트별 write limit 적용
@@ -63,6 +67,7 @@ sequenceDiagram
 | Route Layer | `routes/*.py` | HTTP 입력 검증, 권한 체크, 응답 직렬화, 도메인 흐름 오케스트레이션 |
 | Domain/Data Layer | `models/*.py` | 엔티티, enum, 관계, 직렬화(`to_dict`) |
 | Security Utils | `utils/security.py`, `utils/security_tokens.py` | 비밀번호 해시, 권한 데코레이터, principal 해석, 토큰 회전/폐기 |
+| Audit Utils | `utils/request_metadata.py` | IP/User-Agent 정규화 및 신규 row 감사 메타데이터 자동 주입 |
 | Infra Utils | `utils/cache.py`, `utils/rate_limit.py`, `utils/files.py`, `utils/pagination.py` | 캐시/레이트리밋/업로드 검증/페이지네이션 규약 |
 
 ## 4. 요청 처리 시퀀스
@@ -91,6 +96,18 @@ sequenceDiagram
     end
     F-->>C: JSON 응답
 ```
+
+### 4.1 쓰기 요청 메타데이터 주입 파이프라인
+
+`app.py`는 부팅 과정에서 SQLAlchemy `Session.before_flush` 이벤트를 1회 등록합니다.
+이 훅은 요청 컨텍스트 안에서 `session.new` 엔티티를 순회하며, 대상 모델이 `ip_address`, `user_agent` 컬럼을 가지고 있고 값이 비어 있을 때만 메타데이터를 채웁니다.
+
+- IP 소스: `utils.security.get_client_ip()` (신뢰 프록시 정책 반영)
+- User-Agent 소스: `request.headers['User-Agent']`
+- 정규화: `ip_address` 64자, `user_agent` 255자 제한
+- 예외 처리: 추출 실패 시 `None`으로 남기고 요청 플로우는 계속 진행
+
+토큰 발급 경로(`utils/security_tokens.py`)도 동일 헬퍼를 사용해 저장 정책을 일치시킵니다.
 
 ## 5. 인증/인가 아키텍처
 
@@ -310,8 +327,11 @@ sequenceDiagram
 2. 카운터 캐시: `views`, `comments_count`, `votes_count`, `total_votes` 등
 3. 중복 방지 유니크 제약:
    - 반응/북마크/투표/설문 응답
-4. 직렬화 계약:
+4. 감사 메타데이터 컬럼: 주요 쓰기 엔티티에 `ip_address(64)`, `user_agent(255)` nullable 적용
+5. 직렬화 계약:
    - 프론트 계약 안정화를 위해 camelCase 중심 응답 유지
+
+감사 메타데이터는 `users`, `notices`, `free_posts`, `club_recruits`, `subject_changes`, `petitions`, `surveys`, `votes`, `lost_found_*`, `gomsol_market_*` 및 관련 댓글/반응/이미지/응답 엔티티에 적용됩니다.
 
 ### 9.1 ER 다이어그램 (핵심 관계)
 
@@ -434,11 +454,12 @@ erDiagram
 2. `config.py`
 3. `utils/security.py`
 4. `utils/security_tokens.py`
-5. `utils/cache.py`
-6. `utils/files.py`
-7. `routes/surveys.py`
-8. `routes/petitions.py`
-9. `routes/notices.py`
+5. `utils/request_metadata.py`
+6. `utils/cache.py`
+7. `utils/files.py`
+8. `routes/surveys.py`
+9. `routes/petitions.py`
+10. `routes/notices.py`
 
 ## 14. 변경 시 아키텍처 체크리스트
 
@@ -447,3 +468,4 @@ erDiagram
 3. 응답 키(camelCase) 변경 시 프론트 문서/코드 동기화가 되었는가
 4. 업로드 URL을 canonical URL로 정규화하고 있는가
 5. 레이트리밋 정책(특히 auth/쓰기)이 의도대로 적용되는가
+6. 신규 쓰기 엔티티가 `ip_address`, `user_agent` 감사 정책과 충돌하지 않는가

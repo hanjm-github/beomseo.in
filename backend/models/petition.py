@@ -30,6 +30,8 @@ class Petition(db.Model):
 
     author_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
     author_role = db.Column(db.String(50), nullable=False)
+    ip_address = db.Column(db.String(64), nullable=True)
+    user_agent = db.Column(db.String(255), nullable=True)
     author = db.relationship('User', foreign_keys=[author_id], backref=db.backref('petitions', lazy='dynamic'))
 
     approved_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True, index=True)
@@ -111,6 +113,8 @@ class PetitionVote(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     petition_id = db.Column(db.Integer, db.ForeignKey('petitions.id'), nullable=False, index=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    ip_address = db.Column(db.String(64), nullable=True)
+    user_agent = db.Column(db.String(255), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
     # Enforces one support vote per user per petition.
@@ -126,6 +130,8 @@ class PetitionAnswer(db.Model):
     responder = db.relationship('User', foreign_keys=[responder_id])
     role = db.Column(db.String(50), nullable=False, default=UserRole.STUDENT_COUNCIL.value)
     content = db.Column(db.Text, nullable=False)
+    ip_address = db.Column(db.String(64), nullable=True)
+    user_agent = db.Column(db.String(255), nullable=True)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
     def to_dict(self):

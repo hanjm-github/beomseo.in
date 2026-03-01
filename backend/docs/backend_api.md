@@ -117,6 +117,22 @@ JWT 공통 에러 코드:
 - `canonicalUrl`: DB/본문 저장에 사용하는 정규 URL
 - DB 미연결 임시 파일은 `preview_token` 없이 접근 불가
 
+### 1.9 요청 메타데이터 감사 필드(서버 자동)
+
+쓰기 요청에서 생성되는 리소스는 서버가 `ip_address`, `user_agent`를 자동 수집할 수 있습니다.
+
+- 클라이언트 입력: 불필요(요청 바디에 보내지 않음)
+- 수집 시점: 신규 ORM row flush 직전(`before_flush`)
+- 수집 조건: 요청 컨텍스트 존재 + 대상 컬럼이 비어 있음
+- 정규화: `ip_address` 최대 64자, `user_agent` 최대 255자
+- 오류 처리: 수집 실패가 API 실패로 이어지지 않음(best-effort)
+
+적용 범위(요약):
+
+- 사용자/인증: `users`, `auth_tokens`
+- 공지/자유게시판/댓글/반응/북마크
+- 청원/설문/투표/분실물/곰솔마켓/동아리모집/과목변경 관련 쓰기 엔티티
+
 ## 2. 엔드포인트 인덱스
 
 ```mermaid
@@ -994,3 +1010,4 @@ flowchart TD
 3. 페이지네이션 정합성: `backend/utils/pagination.py`
 4. 업로드 토큰 정합성: `backend/utils/files.py`
 5. 문서 계약은 Bearer 문구가 아닌 쿠키 JWT + CSRF 기준으로 유지
+6. 요청 메타데이터 정합성: `backend/utils/request_metadata.py`와 `backend/app.py`의 hook 등록 확인

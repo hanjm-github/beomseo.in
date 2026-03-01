@@ -30,6 +30,8 @@ class Survey(db.Model):
 
     owner_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
     owner_role = db.Column(db.String(50), nullable=False)
+    ip_address = db.Column(db.String(64), nullable=True)
+    user_agent = db.Column(db.String(255), nullable=True)
     owner = db.relationship('User', foreign_keys=[owner_id], backref=db.backref('surveys', lazy='dynamic'))
 
     approved_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True, index=True)
@@ -102,6 +104,8 @@ class SurveyResponse(db.Model):
     survey_id = db.Column(db.Integer, db.ForeignKey('surveys.id'), nullable=False, index=True)
     respondent_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
     answers = db.Column(db.JSON, nullable=False)
+    ip_address = db.Column(db.String(64), nullable=True)
+    user_agent = db.Column(db.String(255), nullable=True)
     submitted_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
     survey = db.relationship('Survey', backref=db.backref('responses', lazy='dynamic'))

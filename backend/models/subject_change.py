@@ -46,6 +46,8 @@ class SubjectChange(db.Model):
 
     author_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
     author_role = db.Column(db.String(50), nullable=False)
+    ip_address = db.Column(db.String(64), nullable=True)
+    user_agent = db.Column(db.String(255), nullable=True)
     author = db.relationship('User', foreign_keys=[author_id], backref=db.backref('subject_changes', lazy='dynamic'))
 
     approved_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True, index=True)
@@ -110,6 +112,8 @@ class SubjectChangeComment(db.Model):
     subject_change_id = db.Column(db.Integer, db.ForeignKey('subject_changes.id', ondelete='CASCADE'), nullable=False, index=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False, index=True)
     body = db.Column(db.Text, nullable=False)
+    ip_address = db.Column(db.String(64), nullable=True)
+    user_agent = db.Column(db.String(255), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     deleted_at = db.Column(db.DateTime, nullable=True, index=True)

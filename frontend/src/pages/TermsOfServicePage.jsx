@@ -23,7 +23,7 @@ export default function TermsOfServicePage() {
             {/* Hero */}
             <header className="legal-hero">
                 <h1>이용약관</h1>
-                <p className="effective-date">시행일: 2026년 3월 4일</p>
+                <p className="effective-date">시행일: 2026년 3월 2일</p>
             </header>
 
             {/* TOC */}
@@ -37,6 +37,7 @@ export default function TermsOfServicePage() {
                     <li><a href="#membership">회원가입 및 탈퇴</a></li>
                     <li><a href="#member-duties">회원의 의무</a></li>
                     <li><a href="#post-management">게시물의 관리</a></li>
+                    <li><a href="#data-collection">접속 정보의 수집</a></li>
                     <li><a href="#service-restriction">서비스 이용 제한</a></li>
                     <li><a href="#ip-rights">지식재산권</a></li>
                     <li><a href="#disclaimer">면책 조항</a></li>
@@ -85,6 +86,11 @@ export default function TermsOfServicePage() {
                     <li>
                         <strong>"관리자"</strong>란 사이트의 전반적인 운영과 관리를 담당하는
                         자를 말합니다.
+                    </li>
+                    <li>
+                        <strong>&quot;접속 정보&quot;</strong>란 회원의 서비스 이용 과정에서 자동으로
+                        수집되는 IP 주소, User-Agent(브라우저·운영체제 정보), 접속 시간 등의
+                        기술적 정보를 말합니다.
                     </li>
                 </ol>
             </section>
@@ -137,6 +143,11 @@ export default function TermsOfServicePage() {
                     <li>
                         사이트는 무료로 제공되며, 이용자에게 별도의 요금을 부과하지 않습니다.
                     </li>
+                    <li>
+                        사이트는 서비스 개선 및 기술적 사유로 인해 서비스를 일시적으로 중단할
+                        수 있으며, 이 경우 사전에 공지합니다. 단, 긴급한 기술적 사유가 있는
+                        경우 사후 공지할 수 있습니다.
+                    </li>
                 </ol>
             </section>
 
@@ -163,6 +174,10 @@ export default function TermsOfServicePage() {
                     <li>
                         비밀번호는 최소 8자 이상이어야 합니다.
                     </li>
+                    <li>
+                        회원가입 시 이용약관 및 개인정보처리방침에 대한 동의가 필요합니다.
+                        가입 시점에 IP 주소와 User-Agent가 자동으로 기록됩니다.
+                    </li>
                 </ol>
 
                 <h3>나. 회원 탈퇴</h3>
@@ -174,6 +189,10 @@ export default function TermsOfServicePage() {
                     <li>
                         탈퇴 시 회원의 계정 정보는 삭제되며, 작성한 게시물은 별도 요청이 없는 한
                         비공개 처리됩니다.
+                    </li>
+                    <li>
+                        단, 「통신비밀보호법」, 「개인정보 보호법」 등 관련 법령에 따라 보존
+                        의무가 있는 정보(접속 로그 등)는 해당 법정 기간 동안 보존 후 파기됩니다.
                     </li>
                 </ol>
             </section>
@@ -198,12 +217,17 @@ export default function TermsOfServicePage() {
                             <li>서비스를 통해 불법적인 상거래 행위를 하는 행위</li>
                             <li>사이트의 보안 시스템을 우회하거나 무력화하려는 행위</li>
                             <li>자동화된 수단(봇, 크롤러 등)을 이용하여 서비스에 접근하는 행위</li>
+                            <li>다른 이용자의 개인정보(닉네임, IP 주소 등)를 무단으로 수집·이용하는 행위</li>
                             <li>기타 관련 법령에 위배되는 행위</li>
                         </ul>
                     </li>
                     <li>
                         회원은 자신의 닉네임과 비밀번호를 적절히 관리할 책임이 있으며, 제3자에게
                         이를 제공하거나 공유하여서는 안 됩니다.
+                    </li>
+                    <li>
+                        회원은 자신의 계정이 무단으로 사용된 것을 알게 된 경우, 즉시 관리자에게
+                        통보하여야 합니다.
                     </li>
                 </ol>
             </section>
@@ -241,6 +265,11 @@ export default function TermsOfServicePage() {
                     <li>
                         회원은 자신이 작성한 게시물에 대한 책임을 집니다.
                     </li>
+                    <li>
+                        「정보통신망법」 제44조의2에 의한 명예훼손 등 권리 침해 주장이 있는 경우,
+                        관리자는 해당 게시물을 임시 조치(비공개)할 수 있으며, 관련 분쟁 해결을
+                        위한 법적 절차가 진행될 수 있습니다.
+                    </li>
                 </ol>
                 <div className="legal-highlight">
                     곰솔마켓(중고거래 게시판)에서의 거래는 회원 간의 자율적인 거래이며,
@@ -249,9 +278,40 @@ export default function TermsOfServicePage() {
                 </div>
             </section>
 
-            {/* 8. 이용 제한 */}
+            {/* 8. 접속 정보의 수집 */}
+            <section id="data-collection" className="legal-section">
+                <h2>제8조 (접속 정보의 수집)</h2>
+                <ol>
+                    <li>
+                        사이트는 서비스 보안, 부정 이용 방지, 법적 분쟁 대응을 위해
+                        회원의 <strong>모든 콘텐츠 생성 행위</strong>(게시물 작성, 댓글 작성,
+                        투표, 설문 응답, 청원 동의, 반응(좋아요), 파일 업로드 등) 시점에
+                        IP 주소와 User-Agent(브라우저·운영체제 정보)를 자동으로 기록합니다.
+                    </li>
+                    <li>
+                        수집된 접속 정보는 관리자만 열람할 수 있으며, 다음의 목적으로만
+                        이용됩니다.
+                        <ul>
+                            <li>부정 게시물·스팸 탐지 및 대응</li>
+                            <li>복수 계정·도용 등 부정 이용 방지</li>
+                            <li>분쟁 발생 시 사실 관계 확인</li>
+                            <li>법령에 의한 수사기관 요청 대응</li>
+                        </ul>
+                    </li>
+                    <li>
+                        수집된 접속 정보는 개인정보처리방침에 명시된 보유기간에 따라 처리되며,
+                        보유기간 경과 시 지체 없이 파기됩니다.
+                    </li>
+                    <li>
+                        접속 정보의 수집에 관한 상세한 사항은 개인정보처리방침을 참고하시기
+                        바랍니다.
+                    </li>
+                </ol>
+            </section>
+
+            {/* 9. 이용 제한 */}
             <section id="service-restriction" className="legal-section">
-                <h2>제8조 (서비스 이용 제한)</h2>
+                <h2>제9조 (서비스 이용 제한)</h2>
                 <ol>
                     <li>
                         사이트는 회원이 이 약관의 의무를 위반하거나 서비스의 정상적인 운영을
@@ -270,12 +330,16 @@ export default function TermsOfServicePage() {
                         사이트는 이용 제한 조치 시 그 사유를 회원에게 통지해야 하며, 회원은
                         이에 대해 이의를 제기할 수 있습니다.
                     </li>
+                    <li>
+                        회원이 이의를 제기하는 경우, 사이트는 이를 확인하고 적절한 조치를
+                        취합니다.
+                    </li>
                 </ol>
             </section>
 
-            {/* 9. 지식재산권 */}
+            {/* 10. 지식재산권 */}
             <section id="ip-rights" className="legal-section">
-                <h2>제9조 (지식재산권)</h2>
+                <h2>제10조 (지식재산권)</h2>
                 <ol>
                     <li>
                         사이트가 작성한 저작물에 대한 저작권 및 기타 지식재산권은 사이트에
@@ -292,9 +356,9 @@ export default function TermsOfServicePage() {
                 </ol>
             </section>
 
-            {/* 10. 면책 */}
+            {/* 11. 면책 */}
             <section id="disclaimer" className="legal-section">
-                <h2>제10조 (면책 조항)</h2>
+                <h2>제11조 (면책 조항)</h2>
                 <ol>
                     <li>
                         사이트는 학교의 공식 입장을 대변하지 않으며, 사이트에 게시된 내용은
@@ -324,9 +388,9 @@ export default function TermsOfServicePage() {
                 </ol>
             </section>
 
-            {/* 11. 분쟁 해결 */}
+            {/* 12. 분쟁 해결 */}
             <section id="dispute" className="legal-section">
-                <h2>제11조 (분쟁 해결)</h2>
+                <h2>제12조 (분쟁 해결)</h2>
                 <ol>
                     <li>
                         사이트와 회원 간에 발생한 분쟁에 관한 소송은 대한민국 법을 적용하며,
@@ -340,23 +404,25 @@ export default function TermsOfServicePage() {
                 </ol>
             </section>
 
-            {/* 12. 부칙 */}
+            {/* 13. 부칙 */}
             <section id="misc" className="legal-section">
-                <h2>제12조 (부칙)</h2>
+                <h2>제13조 (부칙)</h2>
                 <ol>
                     <li>
-                        이 약관은 2026년 3월 4일부터 시행합니다.
+                        이 약관은 2026년 3월 2일부터 시행합니다.
                     </li>
                     <li>
                         이 약관에 명시되지 않은 사항은 「개인정보 보호법」, 「정보통신망 이용촉진
-                        및 정보보호 등에 관한 법률」 등 관련 법령 및 사이트의 운영 정책에 따릅니다.
+                        및 정보보호 등에 관한 법률」, 「약관의 규제에 관한 법률」, 「전자상거래
+                        등에서의 소비자보호에 관한 법률」 등 관련 법령 및 사이트의 운영 정책에
+                        따릅니다.
                     </li>
                 </ol>
             </section>
 
             {/* Footer */}
             <footer className="legal-footer">
-                <p>본 이용약관은 2026년 3월 4일에 제정되었습니다.</p>
+                <p>본 이용약관은 2026년 3월 2일에 제정되었습니다.</p>
                 <button className="legal-back-top" onClick={scrollToTop} type="button">
                     ↑ 맨 위로
                 </button>
@@ -364,6 +430,3 @@ export default function TermsOfServicePage() {
         </div>
     );
 }
-
-
-

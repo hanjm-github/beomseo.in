@@ -4,11 +4,11 @@ Token issuance, rotation, and revocation helpers.
 from datetime import datetime, timezone
 from typing import Optional
 
-from flask import request
 from flask_jwt_extended import create_access_token, create_refresh_token, decode_token
 from sqlalchemy.exc import SQLAlchemyError
 
 from models import db, AuthToken, AuthTokenType, UserRole
+from utils.request_metadata import get_request_ip_for_storage, get_request_ua_for_storage
 
 
 def _utc_from_unix(unix_ts):
@@ -21,16 +21,16 @@ def _utc_from_unix(unix_ts):
 
 def _safe_user_agent():
     try:
-        return (request.headers.get('User-Agent') or '')[:255]
+        return get_request_ua_for_storage()
     except Exception:
-        return ''
+        return None
 
 
 def _safe_client_ip():
     try:
-        return (request.remote_addr or '')[:64]
+        return get_request_ip_for_storage()
     except Exception:
-        return ''
+        return None
 
 
 def _persist_token(raw_token: str, token_type: AuthTokenType, user_id: int, parent_jti: Optional[str] = None):
