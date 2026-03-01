@@ -37,6 +37,8 @@ class ClubRecruit(db.Model):
 
     author_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
     author_role = db.Column(db.String(50), nullable=False)
+    ip_address = db.Column(db.String(64), nullable=True)
+    user_agent = db.Column(db.String(255), nullable=True)
     author = db.relationship('User', foreign_keys=[author_id], backref=db.backref('club_recruits', lazy='dynamic'))
 
     approved_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True, index=True)

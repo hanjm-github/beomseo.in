@@ -10,6 +10,8 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from flask_limiter.errors import RateLimitExceeded
+from sqlalchemy import event
+from sqlalchemy.orm import Session
 
 from config import config
 from models.user import db
@@ -28,6 +30,7 @@ from utils.rate_limit import (
     build_rate_limit_response,
 )
 from utils.security_tokens import is_token_blocked
+from utils.request_metadata import populate_new_row_request_metadata
 
 
 INSECURE_JWT_SECRETS = {
@@ -41,6 +44,16 @@ INSECURE_JWT_SECRETS = {
 
 
 TRUTHY_VALUES = {'1', 'true', 'yes', 'on'}
+_REQUEST_METADATA_HOOK_REGISTERED = False
+
+
+def _register_request_metadata_hook():
+    """Register SQLAlchemy before_flush hook once per process."""
+    global _REQUEST_METADATA_HOOK_REGISTERED
+    if _REQUEST_METADATA_HOOK_REGISTERED:
+        return
+    event.listen(Session, 'before_flush', populate_new_row_request_metadata, propagate=True)
+    _REQUEST_METADATA_HOOK_REGISTERED = True
 
 
 def _env_truthy(name: str, default: bool = False) -> bool:
@@ -115,6 +128,7 @@ def create_app(config_name=None):
     # Initialize extensions
     init_cache(app)
     db.init_app(app)
+    _register_request_metadata_hook()
     init_limiter(app)
 
     # CORS setup for React frontend

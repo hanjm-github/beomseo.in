@@ -1,7 +1,7 @@
 # beomseo.in Backend
 
 범서고 커뮤니티 서비스 `beomseo.in`의 Flask 기반 백엔드 API입니다.  
-공지/커뮤니티/설문/투표/인증 기능을 단일 API 서버로 제공하며, 인증·권한·레이트리밋·캐시·업로드 보안을 공통 정책으로 강제합니다.
+공지/커뮤니티/설문/투표/인증 기능을 단일 API 서버로 제공하며, 인증·권한·레이트리밋·캐시·업로드 보안을 공통 정책으로 강제하고 쓰기 요청 메타데이터(IP/User-Agent)도 일관 수집합니다.
 
 ## 시스템 개요
 
@@ -30,6 +30,7 @@ flowchart LR
 | DB Driver | PyMySQL |
 | Password Hash | bcrypt |
 | Config | python-dotenv |
+| Request Audit | SQLAlchemy `before_flush` + `utils/request_metadata.py` |
 
 ## 빠른 시작
 
@@ -89,7 +90,9 @@ sequenceDiagram
     A->>C: app.config.from_object(...)
     A->>A: validate_security_config()
     Note over A: JWT_SECRET 길이/값<br/>CORS_ORIGINS (운영)<br/>MAX_CONTENT_LENGTH 검증
-    A->>E: init_cache() / db.init_app() / init_limiter()
+    A->>E: init_cache() / db.init_app()
+    A->>E: request metadata before_flush hook 등록
+    A->>E: init_limiter()
     A->>E: CORS / JWTManager / 에러 핸들러
     A->>B: 블루프린트별 write limit 적용
     A->>B: 10개 블루프린트 등록
@@ -149,6 +152,7 @@ backend/
 ├─ utils/                  # 보안/토큰/캐시/레이트리밋/업로드 유틸
 │  ├─ security.py          #   비밀번호 해시, IP 검증, 권한 데코레이터
 │  ├─ security_tokens.py   #   토큰 발급/회전/폐기
+│  ├─ request_metadata.py  #   IP/User-Agent 정규화 및 before_flush 자동 주입
 │  ├─ cache.py             #   Redis 캐시 + NullCache fallback
 │  ├─ rate_limit.py        #   레이트리밋 초기화/정책
 │  ├─ files.py             #   업로드 검증/저장/미리보기 토큰
@@ -194,6 +198,22 @@ CSRF 쿠키/헤더 이름:
 - Access CSRF Cookie: `csrf_access_token`
 - Refresh CSRF Cookie: `csrf_refresh_token`
 - Header: `X-CSRF-TOKEN`
+
+## 요청 메타데이터 자동 기록
+
+쓰기 경로 감사 목적으로, 서버는 신규 DB 행 생성 시 `ip_address`, `user_agent`를 자동 채웁니다.
+
+- 실행 시점: SQLAlchemy `before_flush` 훅(앱 부팅 시 1회 등록)
+- 채움 조건: 요청 컨텍스트가 있고 대상 컬럼 값이 비어 있을 때만 채움
+- IP 소스: `utils.security.get_client_ip()` (신뢰 프록시 설정 반영)
+- 문자열 정규화: `ip_address` 최대 64자, `user_agent` 최대 255자
+- 실패 처리: 메타데이터 추출 실패가 요청 실패로 전파되지 않음(best-effort)
+
+주요 적용 대상(예시):
+
+- 사용자/인증: `users`, `auth_tokens`
+- 게시판/상호작용: `notices`, `comments`, `notice_reactions`, `free_posts`, `free_comments`, `free_reactions`, `free_bookmarks`
+- 도메인 기능: `club_recruits`, `subject_changes`, `subject_change_comments`, `petitions`, `petition_votes`, `petition_answers`, `surveys`, `survey_responses`, `votes`, `vote_responses`, `lost_found_*`, `gomsol_market_*`
 
 ## 환경 변수 핵심표
 
@@ -275,6 +295,7 @@ CSRF 쿠키/헤더 이름:
 3. 운영에서 `CORS_ORIGINS` 비어 있지 않게 설정
 4. `MAX_CONTENT_LENGTH` 양수 확인 (부팅 시 fail-fast)
 5. 프록시 환경이면 `TRUST_PROXY_HEADERS` + `TRUSTED_PROXY_CIDRS`를 함께 설정
+6. 프록시 체인 변경 시 원본 IP 추출(`get_client_ip`)과 감사 컬럼 저장값을 함께 점검
 
 ### 캐시/레이트리밋
 

@@ -39,6 +39,8 @@ class LostFoundPost(db.Model):
 
     author_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
     author_role = db.Column(db.String(50), nullable=False)
+    ip_address = db.Column(db.String(64), nullable=True)
+    user_agent = db.Column(db.String(255), nullable=True)
     author = db.relationship('User', foreign_keys=[author_id], backref=db.backref('lost_found_posts', lazy='dynamic'))
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
@@ -121,6 +123,8 @@ class LostFoundImage(db.Model):
     size = db.Column(db.Integer, nullable=True)
     kind = db.Column(db.String(20), nullable=True)
     display_order = db.Column(db.Integer, nullable=False, default=0)
+    ip_address = db.Column(db.String(64), nullable=True)
+    user_agent = db.Column(db.String(255), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
     def to_dict(self):
@@ -142,6 +146,8 @@ class LostFoundComment(db.Model):
     post_id = db.Column(db.Integer, db.ForeignKey('lost_found_posts.id', ondelete='CASCADE'), nullable=False, index=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False, index=True)
     body = db.Column(db.Text, nullable=False)
+    ip_address = db.Column(db.String(64), nullable=True)
+    user_agent = db.Column(db.String(255), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     deleted_at = db.Column(db.DateTime, nullable=True, index=True)
