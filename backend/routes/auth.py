@@ -31,7 +31,7 @@ from utils.rate_limit import limiter
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/api/auth')
 
-PASSWORD_MIN_LENGTH = 10
+PASSWORD_MIN_LENGTH = 8
 PASSWORD_MAX_LENGTH = 72
 NICKNAME_MIN_LENGTH = 2
 NICKNAME_MAX_LENGTH = 50
@@ -76,8 +76,6 @@ def _set_no_store_headers(response):
 def _password_is_strong(password: str) -> bool:
     """Validate password policy used during registration."""
     if len(password) < PASSWORD_MIN_LENGTH or len(password) > PASSWORD_MAX_LENGTH:
-        return False
-    if not re.search(r'[A-Z]', password):
         return False
     if not re.search(r'[a-z]', password):
         return False
@@ -157,7 +155,7 @@ def register():
         return jsonify({
             'error': (
                 f'비밀번호는 {PASSWORD_MIN_LENGTH}~{PASSWORD_MAX_LENGTH}자이며 '
-                '대문자/소문자/숫자/특수문자를 각각 1개 이상 포함해야 합니다.'
+                '소문자/숫자/특수문자를 각각 1개 이상 포함해야 합니다.'
             )
         }), 400
     

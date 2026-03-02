@@ -81,7 +81,7 @@ class Config:
     # Secret quality is enforced again during app bootstrap (fail-fast).
     JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', '')
     JWT_MIN_SECRET_LENGTH = _parse_int(os.getenv('JWT_MIN_SECRET_LENGTH', 32), 32)
-    JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=30)
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=3)
     JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=7)
     JWT_TOKEN_LOCATION = ['cookies']
     JWT_HEADER_NAME = 'Authorization'

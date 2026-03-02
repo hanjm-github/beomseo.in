@@ -40,7 +40,7 @@ import styles from './MainPage.module.css';
  * MainPage module entry point.
  */
 export default function MainPage() {
-    const [activeTab, setActiveTab] = useState('school');
+    const [activeTab, setActiveTab] = useState('council');
     const [announcements, setAnnouncements] = useState({ school: [], council: [] });
     const [countdownEvent, setCountdownEvent] = useState(null);
     const [countdownLoadError, setCountdownLoadError] = useState(false);
