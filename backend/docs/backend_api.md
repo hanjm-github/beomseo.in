@@ -198,8 +198,8 @@ flowchart TD
   - 닉네임 금칙어(`NICKNAME_BANNED_WORDS`) 검사
 - Body:
   - `nickname` string, 길이 `2~50`, 필수
-  - `password` string, 길이 `10~72`, 필수
-  - 비밀번호 강도: 대문자/소문자/숫자/특수문자 각 1개 이상
+  - `password` string, 길이 `8~72`, 필수
+  - 비밀번호 강도: 소문자/숫자/특수문자 각 1개 이상
 - 성공 `201`: `message + user`, 쿠키 발급
 - 대표 실패:
 

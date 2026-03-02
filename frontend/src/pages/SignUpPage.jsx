@@ -23,13 +23,12 @@ import { UserPlus, AlertCircle, Info, Eye, EyeOff } from 'lucide-react';
 import { APP_NAME } from '../config/env';
 import './LoginPage.css';
 
-const PASSWORD_MIN_LENGTH = 10;
+const PASSWORD_MIN_LENGTH = 8;
 const PASSWORD_MAX_LENGTH = 72;
 
 function getPasswordChecks(password) {
     return {
         length: password.length >= PASSWORD_MIN_LENGTH && password.length <= PASSWORD_MAX_LENGTH,
-        uppercase: /[A-Z]/.test(password),
         lowercase: /[a-z]/.test(password),
         number: /[0-9]/.test(password),
         special: /[^A-Za-z0-9]/.test(password),
@@ -56,11 +55,6 @@ function SignUpPage() {
             key: 'length',
             label: `${PASSWORD_MIN_LENGTH}~${PASSWORD_MAX_LENGTH}자`,
             valid: passwordChecks.length,
-        },
-        {
-            key: 'uppercase',
-            label: '대문자 1개 이상',
-            valid: passwordChecks.uppercase,
         },
         {
             key: 'lowercase',
@@ -101,7 +95,7 @@ function SignUpPage() {
 
         if (!isPasswordStrong) {
             setLocalError(
-                `비밀번호는 ${PASSWORD_MIN_LENGTH}~${PASSWORD_MAX_LENGTH}자이며 대문자/소문자/숫자/특수문자를 각각 1개 이상 포함해야 합니다.`
+                `비밀번호는 ${PASSWORD_MIN_LENGTH}~${PASSWORD_MAX_LENGTH}자이며 소문자/숫자/특수문자를 각각 1개 이상 포함해야 합니다.`
             );
             return;
         }
