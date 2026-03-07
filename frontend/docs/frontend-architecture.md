@@ -120,9 +120,26 @@ flowchart TD
 ## 6. 라우팅 설계 원칙
 
 - 최상위 라우트는 `src/App.jsx`에서만 정의
-- 세부 기능 라우트는 기능별 라우터(`CommunityRouter`, `NoticesPage/index.jsx`)로 위임
+- 세부 기능 라우트는 기능별 라우터(`CommunityRouter`, `NoticesPage/index.jsx`, `SchoolInfo/index.jsx`)로 위임
 - 페이지 컴포넌트는 가능한 한 API 호출 orchestration에 집중
 - 표시 로직은 `src/components/*`로 분리
+
+## 6.1 정적 템플릿 기반 화면 패턴
+
+시간표 다운로드 화면은 백엔드 API 없이 번들된 정적 템플릿을 직접 소비합니다.
+
+```mermaid
+flowchart LR
+    A["timetableTemplates.json"] --> B["TimetableDownloadPage"]
+    B --> C["TimetableSvg"]
+    C --> D["PNG Export (canvas)"]
+```
+
+핵심 포인트:
+
+- 시간표 데이터는 `src/components/timetable/timetableTemplates.json`에서 직접 제공
+- 하단 브랜딩 문구는 SVG 내부 텍스트로 직접 렌더링
+- SVG 미리보기와 PNG 내보내기가 동일한 데이터 소스를 사용해 출력 일관성 유지
 
 ## 7. 기능 확장 규칙 (새 보드 추가 기준)
 

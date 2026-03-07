@@ -1,0 +1,59 @@
+.resourceCard {
+  background: var(--color-card-bg);
+  border: 1px solid var(--color-card-border);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-card);
+  padding: clamp(18px, 2.4vw, 26px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.resourceCard h2 {
+  font-size: var(--text-xl);
+}
+
+.resourceList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.resourceList li {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  color: var(--color-text-secondary);
+}
+
+.resourceList a {
+  color: var(--color-primary-600);
+  font-weight: var(--font-semibold);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.resourceLabel {
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  color: var(--color-text-primary);
+}
+
+.resourceLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+}
+
+.workspace {
+  display: grid;
+  gap: var(--space-5);
+  align-items: start;
+}
+
+@media (min-width: 1080px) {
+  .workspace {
+    grid-template-columns: minmax(320px, 420px) minmax(0, 1fr);
+  }
+}

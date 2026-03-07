@@ -46,7 +46,7 @@
 | `/signup` | `SignUpPage` |
 | `/notices/*` | `NoticesPage` |
 | `/community/*` | `CommunityRouter` |
-| `/school-info/*` | `SchoolInfoPage` |
+| `/school-info/*` | `SchoolInfoRouter` (`src/pages/SchoolInfo/index.jsx`) |
 | `/gallery/*` | `GalleryPage` |
 | `/privacy` | `PrivacyPolicyPage` |
 | `/terms` | `TermsOfServicePage` |
@@ -144,6 +144,18 @@ graph TD
 | `/community/gomsol-market/:id` | `GomsolMarketDetailView` |
 | `/community/*` (fallback) | `Navigate` → `/community/free/` |
 
+### 3.4 학교 생활 정보 라우트 (`src/pages/SchoolInfo/index.jsx`)
+
+| 경로 | 요소 |
+|---|---|
+| `/school-info` | `SchoolInfoHub` |
+| `/school-info/timetable` | `TimetableDownloadPage` |
+| `/school-info/teachers` | `SchoolInfoPlaceholderPage(교무실 찾기)` |
+| `/school-info/calculator` | `SchoolInfoPlaceholderPage(점공 계산기)` |
+| `/school-info/meal` | `SchoolInfoPlaceholderPage(오늘의 급식)` |
+| `/school-info/calendar` | `SchoolInfoPlaceholderPage(학사 캘린더)` |
+| `/school-info/*` (fallback) | `Navigate` → `/school-info` |
+
 ## 4. 기능별 수직 슬라이스 탐색
 
 | 기능 | 페이지 레이어 | 컴포넌트 레이어 | API 레이어 |
@@ -157,6 +169,7 @@ graph TD
 | 투표 | `src/pages/Vote/*` | `src/components/vote/*` | `src/api/vote.js` |
 | 분실물 | `src/pages/LostFound/*` | `src/components/lostfound/*` | `src/api/lostFound.js` |
 | 곰솔마켓 | `src/pages/GomsolMarket/*` | `src/components/gomsolmarket/*` | `src/api/gomsolMarket.js` |
+| 학교 생활 정보(시간표) | `src/pages/SchoolInfo/*` | `src/components/timetable/*` | 없음 (`src/components/timetable/timetableTemplates.json` 정적 템플릿 사용) |
 
 ## 5. 컨텍스트 책임
 
@@ -201,6 +214,7 @@ graph TD
 |---|---|
 | `src/pages/NoticesPage.jsx` | 레거시 import 호환용 wrapper (`./NoticesPage/index.jsx` re-export) |
 | `src/pages/MainPage/index.js` | `MainPage.jsx` 진입점 재-export |
+| `src/pages/SchoolInfoPage.jsx` | 레거시 import 호환용 wrapper (`./SchoolInfo/index.jsx` re-export) |
 
 새 코드에서는 폴더 기반 엔트리(`src/pages/NoticesPage/index.jsx`)를 우선 사용합니다.
 
@@ -236,6 +250,20 @@ graph TD
 | `QuickLinkCard/` | 바로가기 카드 | `MainPage` |
 | `RoleName/` | 역할 기반 닉네임 렌더링 | 게시판 상세/목록 전역 |
 | `security/SafeHtml.jsx` | sanitize 후 `dangerouslySetInnerHTML` 렌더링 경계 | 리치 HTML 출력 전역 |
+
+## 11.1 시간표 다운로드 모듈
+
+`학교 생활 정보 > 시간표 다운로드` 기능은 정적 템플릿 + SVG 렌더링 조합으로 구성됩니다.
+
+| 파일 | 역할 |
+|---|---|
+| `src/pages/SchoolInfo/TimetableDownloadPage.jsx` | 학년/반 선택, 입력 상태, 다운로드 액션 orchestration |
+| `src/components/timetable/TimetableControls.jsx` | 학년/반 드롭다운과 선택과목 입력 폼 |
+| `src/components/timetable/TimetablePreview.jsx` | 미리보기 카드와 SVG 프리뷰 래퍼 |
+| `src/components/timetable/TimetableSvg.jsx` | 시간표 SVG 렌더링 |
+| `src/components/timetable/exportTimetablePng.js` | SVG → PNG 다운로드 |
+| `src/components/timetable/timetableUtils.js` | 템플릿 조회, 글자 크기 계산, 폰트 로딩 유틸 |
+| `src/components/timetable/timetableTemplates.json` | 반별 시간표 템플릿 데이터 |
 
 ## 12. 유틸리티 & 설정 파일
 

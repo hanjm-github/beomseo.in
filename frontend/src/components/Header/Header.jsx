@@ -59,6 +59,7 @@ const navigationItems = [
     label: '학교 생활 정보',
     path: '/school-info',
     children: [
+      { label: '시간표 다운로드', path: '/school-info/timetable' },
       { label: '교무실 찾기', path: '/school-info/teachers' },
       { label: '점공 계산기', path: '/school-info/calculator' },
       { label: '오늘의 급식', path: '/school-info/meal' },
