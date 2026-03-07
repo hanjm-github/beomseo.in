@@ -20,6 +20,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
+  min-width: 0;
   transition: transform var(--transition-base), box-shadow var(--transition-base), border-color var(--transition-base);
 }
 
@@ -51,6 +52,7 @@
   gap: var(--space-2);
   flex-wrap: wrap;
   align-items: center;
+  min-width: 0;
 }
 
 .status {
@@ -104,6 +106,8 @@
   line-height: 1.3;
   font-family: var(--font-display);
   letter-spacing: var(--tracking-tight);
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .summary {
@@ -114,6 +118,8 @@
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .metaRow {

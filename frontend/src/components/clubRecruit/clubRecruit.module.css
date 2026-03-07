@@ -112,6 +112,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
+  min-width: 0;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.04));
   border: 1px solid var(--cr-border);
   border-radius: 18px;
@@ -130,16 +131,19 @@
 
 .poster {
   position: relative;
+  display: grid;
+  place-items: center;
   width: 100%;
   aspect-ratio: 3 / 4;
   background: var(--cr-bg);
   overflow: hidden;
+  padding: 12px;
 }
 
 .poster img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   display: block;
 }
 
@@ -194,6 +198,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
+  min-width: 0;
 }
 
 .cardChips {
@@ -223,6 +228,8 @@
   margin: 0;
   font-size: var(--text-lg);
   line-height: 1.35;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .cardNote {
@@ -232,6 +239,8 @@
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .metaRow {
