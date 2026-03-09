@@ -50,13 +50,15 @@ export default function RecruitCard({ item, basePath = '/community/club-recruit'
   return (
     <Link to={`${basePath}/${id}`} className={styles.card} aria-label={`${clubName} 상세 보기`}>
       <div className={styles.poster}>
-        {posterUrl ? (
-          <img src={posterUrl} alt={`${clubName} 포스터`} loading="lazy" />
-        ) : (
-          <div className={styles.posterFallback} aria-hidden="true">
-            <span>{initials(clubName)}</span>
-          </div>
-        )}
+        <div className={styles.posterMedia}>
+          {posterUrl ? (
+            <img src={posterUrl} alt={`${clubName} 포스터`} loading="lazy" />
+          ) : (
+            <div className={styles.posterFallback} aria-hidden="true">
+              <span>{initials(clubName)}</span>
+            </div>
+          )}
+        </div>
         <span className={styles.gradeBadge}>{gradeLabel[gradeGroup] || '학년 구분'}</span>
         {showStatus ? (
           <span

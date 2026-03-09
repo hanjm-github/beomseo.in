@@ -1,0 +1,34 @@
+.root {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.root img,
+.root video,
+.root canvas,
+.root iframe {
+  display: block;
+  max-width: 100% !important;
+  height: auto !important;
+}
+
+.root img {
+  margin: var(--space-3) 0;
+}
+
+.root figure,
+.root table,
+.root pre {
+  max-width: 100%;
+}
+
+.root table {
+  display: block;
+  overflow-x: auto;
+}
+
+.root pre {
+  overflow-x: auto;
+  white-space: pre-wrap;
+}

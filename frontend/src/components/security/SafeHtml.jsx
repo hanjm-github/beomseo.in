@@ -13,6 +13,7 @@
  */
 import { useMemo } from 'react';
 import { sanitizeRichHtml } from '../../security/htmlSanitizer';
+import styles from './SafeHtml.module.css';
 
 /**
  * SafeHtml module entry point.
@@ -22,9 +23,10 @@ export default function SafeHtml({ html, className, fallback = '', as = 'div' })
   const sanitized = useMemo(() => sanitizeRichHtml(html || ''), [html]);
   const safeFallback = useMemo(() => sanitizeRichHtml(fallback || ''), [fallback]);
   const safeContent = sanitized || safeFallback;
+  const mergedClassName = [styles.root, className].filter(Boolean).join(' ');
 
   if (!safeContent) return null;
 
-  return <Tag className={className} dangerouslySetInnerHTML={{ __html: safeContent }} />;
+  return <Tag className={mergedClassName} dangerouslySetInnerHTML={{ __html: safeContent }} />;
 }
 
