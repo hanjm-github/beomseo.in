@@ -141,6 +141,24 @@ flowchart LR
 - 하단 브랜딩 문구는 SVG 내부 텍스트로 직접 렌더링
 - SVG 미리보기와 PNG 내보내기가 동일한 데이터 소스를 사용해 출력 일관성 유지
 
+## 6.2 정적 학사 캘린더 데이터 흐름
+
+학사 캘린더는 백엔드 호출 없이 정적 데이터 모듈을 여러 화면에서 재사용하는 패턴을 사용합니다.
+
+```mermaid
+flowchart LR
+    A["1. 2026학년도 학사일정.pdf"] --> B["src/features/academicCalendar/data.js"]
+    B --> C["src/features/academicCalendar/utils.js"]
+    C --> D["AcademicCalendarPage"]
+    C --> E["AcademicUpcomingCard"]
+    E --> F["MainPage hero aside"]
+```
+
+핵심 포인트:
+
+- PDF 원문을 구현 시점에 정규화해 `data.js`에 저장하고, 런타임 PDF 파싱은 하지 않음
+- 날짜 계산, 월 그리드 생성, 다음 일정 탐색은 `utils.js`에 모아 화면 간 중복을 줄임
+- 메인 페이지와 학사 캘린더 페이지가 같은 데이터 소스를 공유해 일정 표현이 일관되게 유지됨
 ## 7. 기능 확장 규칙 (새 보드 추가 기준)
 
 1. `src/pages/<Feature>/`에 `List/Detail/Compose` 라우트 화면 추가
@@ -216,3 +234,4 @@ flowchart LR
 | `student` | (없음) | `role-student` |
 
 `getRoleDisplay()`는 `displayPrefix`, `ariaLabel`, `roleClassName`, `safeNickname`을 반환하며, `RoleName` 컴포넌트와 게시판 UI에서 공통으로 사용됩니다.
+

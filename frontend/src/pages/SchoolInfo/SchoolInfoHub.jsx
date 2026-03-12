@@ -1,4 +1,4 @@
-import { CalendarDays, Calculator, Download, Hammer, Soup, Waypoints } from 'lucide-react';
+﻿import { CalendarDays, Calculator, Download, Hammer, Soup, Waypoints } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import '../page-shell.css';
 
@@ -7,37 +7,39 @@ const schoolInfoCards = [
     key: 'timetable',
     to: '/school-info/timetable',
     title: '시간표 다운로드',
-    description: '반별 시간표를 바로 확인하고, 2·3학년 선택과목을 반영한 개인 시간표 PNG를 저장할 수 있어요.',
+    description:
+      '반별 시간표를 바로 확인하고, 2·3학년 선택과목을 반영한 개인 시간표 PNG를 저장할 수 있어요.',
     icon: Download,
     active: true,
   },
   {
     key: 'teachers',
     to: '/school-info/teachers',
-    title: '교무실 찾기',
-    description: '교무실 위치와 선생님 배치 지도를 준비 중입니다.',
+    title: '선생님 찾기',
+    description: '교무실 위치와 담당 과목 지도를 준비 중입니다.',
     icon: Waypoints,
   },
   {
     key: 'calculator',
     to: '/school-info/calculator',
-    title: '점공 계산기',
-    description: '점공 계산 규칙과 입력 UX를 다듬고 있습니다.',
+    title: '내신 계산기',
+    description: '내신 계산 규칙과 입력 경험을 다듬고 있습니다.',
     icon: Calculator,
   },
   {
     key: 'meal',
     to: '/school-info/meal',
     title: '오늘의 급식',
-    description: '급식 정보와 알레르기 표시를 안정화하고 있습니다.',
+    description: '급식 정보와 알레르기 표시를 안정적으로 연결하고 있습니다.',
     icon: Soup,
   },
   {
     key: 'calendar',
     to: '/school-info/calendar',
     title: '학사 캘린더',
-    description: '학사 일정과 시험 일정을 캘린더로 보여줄 예정입니다.',
+    description: '학사 일정, 시험, 방학, 진학 일정을 월간 캘린더와 리스트로 확인할 수 있습니다.',
     icon: CalendarDays,
+    active: true,
   },
 ];
 
@@ -46,10 +48,11 @@ export default function SchoolInfoHub() {
     <div className="page-shell">
       <div className="page-header">
         <div>
-          <p className="eyebrow">생활 정보</p>
+          <p className="eyebrow">학교 생활 정보</p>
           <h1>학교 생활 허브</h1>
           <p className="lede">
-            학교 생활에 자주 필요한 기능을 한곳에 모읍니다. 이번 업데이트에서는 시간표 다운로드를 먼저 공개합니다.
+            학교 생활에 자주 필요한 기능을 한 곳에 모았습니다. 시간표 다운로드와 학사 캘린더를
+            먼저 공개합니다.
           </p>
         </div>
         <div className="header-actions">
@@ -88,10 +91,12 @@ export default function SchoolInfoHub() {
         <div className="card-body">
           <h3>업데이트 방향</h3>
           <p className="muted">
-            기존 디자인 톤은 유지하면서, 실사용 빈도가 높은 생활 정보 도구부터 하나씩 안정화해 공개합니다.
+            기존 사용자 흐름을 유지하면서도, 자주 찾는 학교 생활 정보부터 순차적으로 완성도 있게
+            확장하고 있습니다.
           </p>
         </div>
       </div>
     </div>
   );
 }
+
