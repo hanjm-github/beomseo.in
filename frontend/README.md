@@ -2,7 +2,7 @@
 # beomseo.in Frontend
 
 범서고 커뮤니티 서비스 `beomseo.in`의 React/Vite 프론트엔드입니다.  
-공지, 커뮤니티(자유/동아리/청원/설문/투표/분실물/곰솔마켓), 인증, 분석 트래킹을 단일 SPA로 제공합니다.
+공지, 커뮤니티(자유/동아리/청원/설문/투표/분실물/곰솔마켓), 학교 생활 정보(시간표/학사 캘린더/스포츠리그 문자중계/팀별 라인업/개인별 순위), 인증, 분석 트래킹을 단일 SPA로 제공합니다.
 
 ## 프로젝트 개요
 
@@ -10,6 +10,7 @@
 - 빌드 도구: Vite
 - 데이터 통신: Axios 기반 API 모듈 (`src/api/*`)
 - 상태 관리: React Context (`AuthContext`, `ThemeContext`)
+- 실시간 동기화: 스포츠리그 화면에서 `EventSource + BroadcastChannel/localStorage + polling fallback`
 - 보안 경계: URL/HTML/CSV sanitize 유틸리티 (`src/security/*`)
 - 분석: Cloudflare Zaraz + GA4 이벤트 래퍼 (`src/analytics/zaraz.js`)
 
@@ -36,6 +37,7 @@ flowchart LR
     end
 
     G -->|"Axios + Cookie Auth"| K[("Flask Backend")]
+    G -->|"sportsApi + Cookie Auth"| L[("FastAPI Server")]
     F --> H
     F --> I
     F --> J
@@ -105,6 +107,7 @@ npm run preview
 | `VITE_UPLOAD_MAX_IMAGES` | `5` | 이미지 최대 개수 |
 | `VITE_UPLOAD_MAX_FILE_SIZE_MB` | `10` | 업로드 파일 최대 용량(MB) |
 | `VITE_PETITION_THRESHOLD_DEFAULT` | `50` | 청원 기본 임계치 |
+| `VITE_SPORTS_LEAGUE_API_URL` | `VITE_API_URL` | 스포츠리그 FastAPI 서버 URL (미설정 시 Flask fallback) |
 
 ## 라우팅 개요
 
@@ -137,9 +140,22 @@ graph TD
     C --> CV["vote/*"]
     C --> CL["lost-found/*"]
     C --> CG["gomsol-market/*"]
+    SI --> SIT["/school-info/timetable"]
+    SI --> SIC["/school-info/calendar"]
+    SI --> SIL["/school-info/sports-league/:categoryId"]
 ```
 
 세부 라우트/기능별 연결은 [frontend-code-map.md](docs/frontend-code-map.md)에서 확인할 수 있습니다.
+
+## 스포츠리그 문자중계 동기화
+
+- 초기 진입은 `src/api/sportsLeague.js`가 메모리/`localStorage` 캐시를 먼저 읽고, 백엔드 snapshot을 백그라운드에서 다시 가져오는 **stale-while-revalidate** 방식으로 시작합니다.
+- 스포츠리그 REST 호출과 SSE 스트림은 전용 `sportsApi` Axios 인스턴스를 사용합니다. `VITE_SPORTS_LEAGUE_API_URL` 환경변수로 FastAPI 서버 주소를 지정하며, 미설정 시 기존 Flask 서버로 fallback합니다.
+- 실시간 수신은 `GET /api/sports-league/categories/:categoryId/stream` EventSource를 사용하고, 스트림 오류 시 5초 polling + 3초 재연결로 복구를 시도합니다.
+- 팀별 라인업/개인별 순위는 `usePlayersStore`가 별도 `/players` API로 관리합니다. 즉, 선수 데이터는 snapshot/SSE에 포함되지 않고 진입 시 조회 + 수정 응답으로만 갱신됩니다.
+- 다른 탭과의 동기화는 `BroadcastChannel`을 우선 사용하고, 지원되지 않는 브라우저에서는 `storage` 이벤트로 폴백합니다.
+- 개발 환경에서 `VITE_ENABLE_API_MOCKS=1`이고 네트워크 계열 실패가 나면 `src/api/mocks/sportsLeague.mock.js`가 동일한 snapshot 계약을 흉내 냅니다.
+- mock transport는 선수 라인업도 별도 `beomseo:sports-league:players:{categoryId}` localStorage 키 공간에 저장해 snapshot 캐시와 분리합니다.
 
 ## 404 처리 및 Nginx 운영 메모
 
@@ -167,6 +183,8 @@ map $uri $spa_route_ok {
     ~^/community/survey/[0-9]+/(edit|results)/?$ 1;
     ~^/school-info/?$ 1;
     ~^/school-info/(timetable|teachers|calculator|meal|calendar)/?$ 1;
+    ~^/school-info/sports-league/?$ 1;
+    ~^/school-info/sports-league/[A-Za-z0-9._-]+/?$ 1;
 }
 
 server {

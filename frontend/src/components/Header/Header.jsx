@@ -30,6 +30,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { APP_NAME } from '../../config/env';
 import { buildAuthRedirectState, resolveAuthRedirectTarget } from '../../utils/authRedirect';
+import { SPORTS_LEAGUE_CATEGORY_ID } from '../../features/sportsLeague/data';
 import styles from './Header.module.css';
 import RoleName from '../RoleName/RoleName';
 
@@ -65,6 +66,10 @@ const navigationItems = [
       { label: '점공 계산기', path: '/school-info/calculator' },
       { label: '오늘의 급식', path: '/school-info/meal' },
       { label: '학사 캘린더', path: '/school-info/calendar' },
+      {
+        label: '스포츠리그',
+        path: `/school-info/sports-league/${SPORTS_LEAGUE_CATEGORY_ID}`,
+      },
     ],
   },
   { label: '범서고 갤러리', path: '/gallery' },

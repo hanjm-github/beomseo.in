@@ -1,20 +1,24 @@
 # beomseo.in Backend
 
 범서고 커뮤니티 서비스 `beomseo.in`의 Flask 기반 백엔드 API입니다.  
-공지/커뮤니티/설문/투표/인증 기능을 단일 API 서버로 제공하며, 인증·권한·레이트리밋·캐시·업로드 보안을 공통 정책으로 강제하고 쓰기 요청 메타데이터(IP/User-Agent)도 일관 수집합니다.
+공지/커뮤니티/설문/투표/인증 기능을 단일 API 서버로 제공하며, 스포츠리그 문자중계와 선수 라인업/개인 순위 API도 함께 운영합니다. 인증·권한·레이트리밋·캐시·업로드 보안을 공통 정책으로 강제하고 쓰기 요청 메타데이터(IP/User-Agent)도 일관 수집합니다.
 
 ## 시스템 개요
 
 ```mermaid
 flowchart LR
     Client["웹 프론트엔드<br/>(React / Vite)"]
-    Flask["Flask API Server"]
+    Flask["Flask API Server<br/>:5000"]
+    FastAPI["FastAPI Server<br/>:8000 (스포츠리그)"]
     MariaDB[("MariaDB")]
     Redis[("Redis")]
 
     Client -->|"HTTPS<br/>Cookie JWT + CSRF"| Flask
+    Client -->|"HTTPS<br/>Cookie JWT + CSRF"| FastAPI
     Flask -->|SQLAlchemy ORM| MariaDB
+    FastAPI -->|async SQLAlchemy| MariaDB
     Flask -->|Cache / Rate Limit| Redis
+    FastAPI -->|SSE pub/sub| Redis
 ```
 
 ## 핵심 기술 스택
@@ -22,14 +26,15 @@ flowchart LR
 | 구분 | 기술 |
 |---|---|
 | Language | Python |
-| Web Framework | Flask 3.1 |
-| ORM | Flask-SQLAlchemy |
-| Auth | Flask-JWT-Extended (Cookie + CSRF) |
+| Web Framework | Flask 3.1 (메인 API), **FastAPI** (스포츠리그 전용) |
+| ASGI Server | **Uvicorn** (FastAPI 런타임) |
+| ORM | Flask-SQLAlchemy / **async SQLAlchemy** (aiomysql) |
+| Auth | Flask-JWT-Extended (Cookie + CSRF) / **PyJWT** (FastAPI) |
 | Rate Limiting | Flask-Limiter |
 | Cache | Flask-Caching + Redis (장애 시 NullCache fallback) |
-| DB Driver | PyMySQL |
+| DB Driver | PyMySQL / **aiomysql** |
 | Password Hash | bcrypt |
-| Config | python-dotenv |
+| Config | python-dotenv / **Pydantic Settings** |
 | Request Audit | SQLAlchemy `before_flush` + `utils/request_metadata.py` |
 
 ## 빠른 시작
@@ -73,6 +78,25 @@ python app.py
 curl http://127.0.0.1:5000/api/health
 ```
 
+스포츠리그 시드 반영:
+
+```bash
+python scripts/bootstrap_sports_league.py
+```
+
+### FastAPI 스포츠리그 서버 (선택)
+
+Flask 서버와 별도로 실행합니다. 같은 `.env` 파일을 공유합니다.
+
+```bash
+cd backend
+pip install -r requirements_fastapi.txt
+python -m uvicorn fastapi_app.main:app --host 127.0.0.1 --port 8000 --reload
+```
+
+- Swagger UI: `http://127.0.0.1:8000/docs`
+- 상세 배포 가이드: [docs/fastapi_deployment.md](./docs/fastapi_deployment.md)
+
 ## 앱 부팅 순서
 
 `create_app()` 팩토리가 아래 순서대로 초기화합니다. 순서가 중요하며, 설정 검증이 확장 초기화보다 먼저 실행됩니다.
@@ -95,14 +119,14 @@ sequenceDiagram
     A->>E: init_limiter()
     A->>E: CORS / JWTManager / 에러 핸들러
     A->>B: 블루프린트별 write limit 적용
-    A->>B: 10개 블루프린트 등록
+    A->>B: 11개 블루프린트 등록
     A->>A: /api/health 등록
     A-->>R: Flask app 반환
 ```
 
 ## 블루프린트 인덱스
 
-서버에 등록된 10개 블루프린트와 URL 접두사:
+서버에 등록된 11개 블루프린트와 URL 접두사:
 
 | Blueprint | URL Prefix | 주요 기능 |
 |---|---|---|
@@ -116,6 +140,16 @@ sequenceDiagram
 | `votes` | `/api/community/votes` | 실시간 투표 |
 | `lost_found` | `/api/community/lost-found` | 분실물 게시판 |
 | `gomsol_market` | `/api/community/gomsol-market` | 곰솔 중고마켓 |
+| `sports_league` | `/api/sports-league` | 스포츠리그 문자중계 + 선수 라인업/개인 순위 + SSE |
+
+스포츠리그 공개 feed 보안 기본값:
+
+- snapshot read는 익명 접근을 유지하되 `60 per minute`로 제한합니다.
+- SSE stream은 최초 snapshot, 이후 변경 snapshot, heartbeat comment를 전송합니다.
+- 선수 라인업/개인 순위 데이터는 snapshot payload에 포함하지 않고 별도 `/players` 엔드포인트로 조회/관리합니다.
+- public event `author` payload는 `{ nickname }`만 노출합니다.
+- active sports league events는 최신 `250`개까지만 유지합니다.
+- `RATELIMIT_SPORTS_LEAGUE_STREAM_CONNECT`, `SPORTS_LEAGUE_MAX_STREAMS_PER_CLIENT` 설정값은 현재 `config.py`에 정의되어 있으나 route에는 아직 연결되지 않았습니다.
 
 ## 디렉터리 구조
 
@@ -124,6 +158,7 @@ backend/
 ├─ app.py                  # Flask 앱 팩토리, 공통 미들웨어/헤더/블루프린트 등록
 ├─ config.py               # 환경별 정책 (보안, 캐시, 레이트리밋, 업로드)
 ├─ requirements.txt
+├─ requirements_fastapi.txt    # FastAPI 전용 의존성
 ├─ .env.example
 ├─ routes/                 # 기능별 API 엔드포인트
 │  ├─ auth.py              #   인증/회원
@@ -135,7 +170,23 @@ backend/
 │  ├─ surveys.py            #   설문 교환
 │  ├─ votes.py              #   실시간 투표
 │  ├─ lost_found.py         #   분실물
-│  └─ gomsol_market.py      #   곰솔 마켓
+│  ├─ gomsol_market.py      #   곰솔 마켓
+│  └─ sports_league.py      #   스포츠리그 문자중계
+├─ fastapi_app/            # FastAPI 스포츠리그 전용 서버
+│  ├─ main.py              #   앱 팩토리, CORS, 보안 헤더, 라이프사이클
+│  ├─ config.py            #   Pydantic Settings (.env 공유)
+│  ├─ database.py          #   async SQLAlchemy 엔진/세션 (aiomysql)
+│  ├─ models.py            #   순수 SQLAlchemy ORM (Flask 테이블 매핑)
+│  ├─ schemas.py           #   Pydantic V2 요청 스키마
+│  ├─ deps.py              #   JWT 쿠키 인증 + 역할 검사 의존성
+│  ├─ utils.py             #   sanitize, SSE 포맷
+│  ├─ routes/
+│  │  └─ sports_league.py  #   13개 엔드포인트 (문자중계/라인업 + SSE)
+│  └─ services/
+│     ├─ sports_league.py          #   비동기 도메인 로직 (스냅샷 빌드)
+│     ├─ sports_league_players.py  #   선수 라인업/개인기록 CRUD
+│     ├─ sports_league_realtime.py #   asyncio + Redis pub/sub
+│     └─ sports_league_seed.py     #   시드 데이터 상수
 ├─ models/                 # SQLAlchemy 모델 및 enum
 │  ├─ user.py              #   User, UserRole, db
 │  ├─ auth_token.py        #   AuthToken, AuthTokenType
@@ -148,7 +199,15 @@ backend/
 │  ├─ vote.py              #   Vote, VoteOption, VoteResponse
 │  ├─ lost_found.py        #   LostFoundPost, Image, Comment
 │  ├─ gomsol_market.py     #   GomsolMarketPost, Image
+│  ├─ sports_league.py     #   SportsLeagueCategory/Team/Match/Player/Event/StandingOverride
 │  └─ countdown_event.py   #   CountdownEvent (메인 위젯)
+├─ services/               # 도메인 서비스/실시간 보조 로직
+│  ├─ sports_league.py     #   snapshot 계산, 이벤트 검증, seed upsert
+│  ├─ sports_league_players.py # 선수 라인업/개인기록 CRUD
+│  ├─ sports_league_seed.py    #   1차 카테고리 seed 데이터
+│  └─ sports_league_realtime.py # Redis pub/sub + in-process fallback
+├─ scripts/
+│  └─ bootstrap_sports_league.py # 스포츠리그 seed 반영 스크립트
 ├─ utils/                  # 보안/토큰/캐시/레이트리밋/업로드 유틸
 │  ├─ security.py          #   비밀번호 해시, IP 검증, 권한 데코레이터
 │  ├─ security_tokens.py   #   토큰 발급/회전/폐기
@@ -160,7 +219,8 @@ backend/
 ├─ uploads/                # 로컬 업로드 저장 루트
 └─ docs/
    ├─ backend_api.md       # API 레퍼런스
-   └─ backend_architecture.md  # 아키텍처 문서
+   ├─ backend_architecture.md  # 아키텍처 문서
+   └─ fastapi_deployment.md    # FastAPI 스포츠리그 서버 배포 가이드
 ```
 
 ## 인증 흐름 (Cookie JWT + CSRF)
@@ -274,6 +334,17 @@ CSRF 쿠키/헤더 이름:
 | `RATELIMIT_REGISTER_LIMIT` | `5 per 10 minute` | 회원가입 제한 |
 | `RATELIMIT_REFRESH_LIMIT` | `20 per 10 minute` | 토큰 갱신 제한 |
 
+### 스포츠리그 문자중계
+
+| 변수 | 기본값 | 설명 |
+|---|---|---|
+| `RATELIMIT_SPORTS_LEAGUE_READ` | `60 per minute` | `GET /api/sports-league/categories/:id` snapshot 조회 제한 |
+| `SPORTS_LEAGUE_SSE_HEARTBEAT_SECONDS` | `15` | SSE heartbeat comment 주기 |
+| `SPORTS_LEAGUE_SSE_RETRY_MS` | `3000` | EventSource `retry:` 힌트 |
+| `SPORTS_LEAGUE_MAX_ACTIVE_EVENTS` | `250` | active 이벤트 soft delete 보존 한도 |
+| `RATELIMIT_SPORTS_LEAGUE_STREAM_CONNECT` | `12 per minute` | 현재는 config에만 존재하며 stream route에 직접 연결되지는 않음 |
+| `SPORTS_LEAGUE_MAX_STREAMS_PER_CLIENT` | `2` | 현재는 helper 함수용 설정이며 route-level enforcement는 미연결 |
+
 ### 업로드
 
 | 변수 | 기본값 | 설명 |
@@ -315,6 +386,7 @@ CSRF 쿠키/헤더 이름:
 
 - [백엔드 API 레퍼런스](./docs/backend_api.md)
 - [백엔드 아키텍처](./docs/backend_architecture.md)
+- [FastAPI 스포츠리그 서버 배포 가이드](./docs/fastapi_deployment.md)
 
 프론트 연계 문서:
 

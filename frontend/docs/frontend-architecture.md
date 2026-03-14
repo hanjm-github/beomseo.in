@@ -107,6 +107,61 @@ flowchart TD
 - `VITE_ENABLE_API_MOCKS === '1'`
 - `!error.response` (transport/network 계열 실패)
 
+## 4.1 스포츠리그 실시간 동기화 흐름
+
+스포츠리그 화면은 단순 REST 조회가 아니라 `snapshot + SSE + 탭 간 동기화 + mock transport`를 함께 사용합니다.
+스포츠리그 API 호출은 `VITE_SPORTS_LEAGUE_API_URL`을 기준으로 하는 전용 `sportsApi` Axios 인스턴스를 사용합니다.
+미설정 시 `VITE_API_URL` (Flask 서버)로 fallback합니다.
+
+```mermaid
+flowchart TD
+    A["SportsLeagueCategoryPage"] --> B["useSportsLeagueLive(categoryId)"]
+    B --> C["sportsLeagueApi.getCategory()"]
+    C --> D["memory/localStorage hydrate"]
+    C --> E["sportsApi: GET /api/sports-league/categories/:categoryId"]
+    B --> F["sportsLeagueApi.subscribe()"]
+    F --> G["EventSource (SPORTS_LEAGUE_API_URL)/stream"]
+    G --> H["snapshot event"]
+    H --> I["pushSnapshot()"]
+    I --> J["BroadcastChannel or storage event"]
+    J --> K["다른 탭 listener 갱신"]
+    G --> L["오류"]
+    L --> M["5초 polling + 3초 reconnect"]
+    L --> N["DEV + transport error + mocks=1"]
+    N --> O["sportsLeague.mock.js"]
+```
+
+핵심 포인트:
+
+- category별 구독 상태를 공유해 컴포넌트가 여러 개여도 EventSource는 1개만 유지됩니다.
+- 최초 진입은 캐시된 snapshot을 먼저 보여주고, 백그라운드 refresh로 최신 값을 덮어씁니다.
+- SSE가 끊기면 즉시 실패 처리하지 않고 polling/reconnect로 복구를 시도합니다.
+- mock 전환은 개발 환경 transport 오류에만 열리고, 한 번 전환된 category는 세션 동안 mock transport를 유지합니다.
+- `sportsApi` 인스턴스는 `auth.js`의 token refresh interceptor를 공유하지 않으며, CSRF 토큰만 자체 interceptor로 첨부합니다.
+
+### 4.2 스포츠리그 선수 라인업/개인 순위 흐름
+
+라인업/개인 순위는 실시간 문자중계 snapshot과 분리된 별도 데이터 흐름입니다.
+
+```mermaid
+flowchart TD
+    A["SportsLeagueCategoryPage"] --> B["usePlayersStore(categoryId)"]
+    B --> C["sportsLeagueApi.getPlayers()"]
+    C --> D["GET /api/sports-league/categories/:categoryId/players"]
+    B --> E["addPlayer / removePlayer / incrementStat / decrementStat"]
+    E --> F["POST/DELETE/PATCH /players"]
+    F --> G["응답의 players 배열 전체 반환"]
+    G --> H["store 전체 교체"]
+    H --> I["TeamLineupPanel + PlayerRankingPanel 동시 반영"]
+```
+
+핵심 포인트:
+
+- 선수 데이터는 `build_snapshot()` 결과에 포함되지 않으므로 SSE만으로는 갱신되지 않습니다.
+- `TeamLineupPanel`과 `PlayerRankingPanel`은 같은 `usePlayersStore` 상태를 공유합니다.
+- 운영진 조작은 절대값 overwrite가 아니라 `delta=-1|1` 증감형 계약으로 전달됩니다.
+- mock transport도 snapshot과 선수 라인업을 별도 localStorage 키 공간으로 분리해 저장합니다.
+
 ## 5. 보안 경계와 데이터 신뢰 수준
 
 | 경계 | 파일 | 방어 대상 |
@@ -123,6 +178,7 @@ flowchart TD
 - 세부 기능 라우트는 기능별 라우터(`CommunityRouter`, `NoticesPage/index.jsx`, `SchoolInfo/index.jsx`)로 위임
 - 페이지 컴포넌트는 가능한 한 API 호출 orchestration에 집중
 - 표시 로직은 `src/components/*`로 분리
+- data-dense 기능은 `src/features/<feature>/*`에 hook/data/utils를 묶어 페이지와 공용 API 사이를 정리
 
 ## 6.1 정적 템플릿 기반 화면 패턴
 

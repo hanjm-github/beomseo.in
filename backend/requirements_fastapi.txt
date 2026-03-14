@@ -1,0 +1,27 @@
+# FastAPI server dependencies for sports league live text relay.
+# Install with: pip install -r requirements_fastapi.txt
+
+# ASGI framework
+fastapi>=0.115.0
+uvicorn[standard]>=0.34.0
+gunicorn
+uvicorn-worker
+
+# Configuration
+pydantic-settings>=2.0.0
+python-dotenv>=1.0.0
+
+# Async database (same MySQL as Flask)
+SQLAlchemy[asyncio]>=2.0.0
+aiomysql>=0.2.0
+PyMySQL>=1.1.0
+cryptography>=42.0.0
+
+# Redis (async pub/sub for SSE)
+redis[hiredis]>=5.0.0
+
+# JWT authentication (compatible with Flask-JWT-Extended tokens)
+PyJWT>=2.8.0
+
+# Security
+bcrypt>=4.0.0

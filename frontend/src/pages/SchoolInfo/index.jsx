@@ -1,9 +1,13 @@
-import { Route, Routes } from 'react-router-dom';
+import { Suspense, lazy } from 'react';
+import { Navigate, Route, Routes } from 'react-router-dom';
 import NotFoundPage from '../NotFoundPage';
-import AcademicCalendarPage from './AcademicCalendarPage';
-import SchoolInfoHub from './SchoolInfoHub';
-import SchoolInfoPlaceholderPage from './SchoolInfoPlaceholderPage';
-import TimetableDownloadPage from './TimetableDownloadPage';
+import { SPORTS_LEAGUE_CATEGORY_ID } from '../../features/sportsLeague/data';
+
+const AcademicCalendarPage = lazy(() => import('./AcademicCalendarPage'));
+const SchoolInfoHub = lazy(() => import('./SchoolInfoHub'));
+const SchoolInfoPlaceholderPage = lazy(() => import('./SchoolInfoPlaceholderPage'));
+const SportsLeagueCategoryPage = lazy(() => import('./SportsLeagueCategoryPage'));
+const TimetableDownloadPage = lazy(() => import('./TimetableDownloadPage'));
 
 const placeholderPages = {
   teachers: {
@@ -23,21 +27,38 @@ const placeholderPages = {
   },
 };
 
+const lazyRoute = (Component, props = {}) => (
+  <Suspense fallback={<div className="route-fallback">페이지를 불러오는 중...</div>}>
+    <Component {...props} />
+  </Suspense>
+);
+
 export default function SchoolInfoRouter() {
   return (
     <Routes>
-      <Route index element={<SchoolInfoHub />} />
-      <Route path="timetable" element={<TimetableDownloadPage />} />
+      <Route index element={lazyRoute(SchoolInfoHub)} />
+      <Route path="timetable" element={lazyRoute(TimetableDownloadPage)} />
       <Route
         path="teachers"
-        element={<SchoolInfoPlaceholderPage {...placeholderPages.teachers} />}
+        element={lazyRoute(SchoolInfoPlaceholderPage, placeholderPages.teachers)}
       />
       <Route
         path="calculator"
-        element={<SchoolInfoPlaceholderPage {...placeholderPages.calculator} />}
+        element={lazyRoute(SchoolInfoPlaceholderPage, placeholderPages.calculator)}
       />
-      <Route path="meal" element={<SchoolInfoPlaceholderPage {...placeholderPages.meal} />} />
-      <Route path="calendar" element={<AcademicCalendarPage />} />
+      <Route
+        path="meal"
+        element={lazyRoute(SchoolInfoPlaceholderPage, placeholderPages.meal)}
+      />
+      <Route path="calendar" element={lazyRoute(AcademicCalendarPage)} />
+      <Route
+        path="sports-league"
+        element={<Navigate to={`/school-info/sports-league/${SPORTS_LEAGUE_CATEGORY_ID}`} replace />}
+      />
+      <Route
+        path="sports-league/:categoryId"
+        element={lazyRoute(SportsLeagueCategoryPage)}
+      />
       <Route
         path="*"
         element={
@@ -49,6 +70,7 @@ export default function SchoolInfoRouter() {
             secondaryActions={[
               { label: '시간표 다운로드', to: '/school-info/timetable' },
               { label: '학사 캘린더', to: '/school-info/calendar' },
+              { label: '스포츠리그', to: `/school-info/sports-league/${SPORTS_LEAGUE_CATEGORY_ID}` },
             ]}
           />
         }

@@ -29,6 +29,7 @@
 | `src/pages` | 라우트 단위 화면 컴포넌트 |
 | `src/components` | 재사용 UI 컴포넌트 |
 | `src/api` | 백엔드 연동 모듈 및 mock fallback |
+| `src/features` | 기능 단위 data/hook/utils 묶음 |
 | `src/context` | 전역 상태 컨텍스트(Auth/Theme) |
 | `src/security` | URL/HTML/CSV/설문 스키마 sanitize 정책 |
 | `src/analytics` | Zaraz 이벤트 전송 래퍼 |
@@ -156,6 +157,8 @@ graph TD
 | `/school-info/calculator` | `SchoolInfoPlaceholderPage(점공 계산기)` |
 | `/school-info/meal` | `SchoolInfoPlaceholderPage(오늘의 급식)` |
 | `/school-info/calendar` | `AcademicCalendarPage` |
+| `/school-info/sports-league` | `Navigate` → `/school-info/sports-league/2026-spring-grade3-boys-soccer` |
+| `/school-info/sports-league/:categoryId` | `SportsLeagueCategoryPage` |
 | `/school-info/*` (invalid path) | `NotFoundPage` |
 
 ## 4. 기능별 수직 슬라이스 탐색
@@ -173,6 +176,18 @@ graph TD
 | 곰솔마켓 | `src/pages/GomsolMarket/*` | `src/components/gomsolmarket/*` | `src/api/gomsolMarket.js` |
 | 학교 생활 정보(시간표) | `src/pages/SchoolInfo/*` | `src/components/timetable/*` | 없음 (`src/components/timetable/timetableTemplates.json` 정적 템플릿 사용) |
 | 학교 생활 정보(학사 캘린더) | `src/pages/SchoolInfo/AcademicCalendarPage.jsx` | `src/components/AcademicUpcomingCard/*`, `src/features/academicCalendar/*` | 없음 (`src/features/academicCalendar/data.js` 정적 데이터 사용) |
+| 학교 생활 정보(스포츠리그 문자중계/라인업/개인 순위) | `src/pages/SchoolInfo/SportsLeagueCategoryPage.jsx` | `src/features/sportsLeague/*` (`useSportsLeagueLive`, `usePlayersStore`, `TeamLineupPanel`, `PlayerRankingPanel`) | `src/api/sportsLeague.js` |
+
+### 4.1 스포츠리그 feature 슬라이스 (`src/features/sportsLeague/*`)
+
+| 파일 | 역할 |
+|---|---|
+| `data.js` | 카테고리 ID, 탭/이벤트 템플릿, 운영진 역할 상수 |
+| `useSportsLeagueLive.js` | snapshot 조회 + SSE 구독 + 이벤트 CRUD orchestration |
+| `usePlayersStore.js` | 선수 라인업/개인 순위 전용 상태 훅 (`getPlayers`, add/remove/stat) |
+| `TeamLineupPanel.jsx` | 팀별 라인업 탭 UI, 팀 선택/선수 추가·삭제 |
+| `PlayerRankingPanel.jsx` | 개인별 순위 탭 UI, 득점/어시스트 정렬 및 inline +/- 조정 |
+| `utils.js` | 경기 정렬, 현재/다음 경기 판별, 순위 계산, tone/label 헬퍼 |
 
 ## 5. 컨텍스트 책임
 

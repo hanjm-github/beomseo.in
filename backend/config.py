@@ -136,6 +136,11 @@ class Config:
     RATELIMIT_LOGIN_LIMIT = os.getenv('RATELIMIT_LOGIN_LIMIT', '5 per minute')
     RATELIMIT_REGISTER_LIMIT = os.getenv('RATELIMIT_REGISTER_LIMIT', '5 per 10 minute')
     RATELIMIT_REFRESH_LIMIT = os.getenv('RATELIMIT_REFRESH_LIMIT', '20 per 10 minute')
+    RATELIMIT_SPORTS_LEAGUE_READ = os.getenv('RATELIMIT_SPORTS_LEAGUE_READ', '60 per minute')
+    RATELIMIT_SPORTS_LEAGUE_STREAM_CONNECT = os.getenv(
+        'RATELIMIT_SPORTS_LEAGUE_STREAM_CONNECT',
+        '12 per minute',
+    )
     RATELIMIT_SWALLOW_ERRORS = _parse_bool(os.getenv('RATELIMIT_SWALLOW_ERRORS', 'true'), default=True)
 
     # Nickname moderation
@@ -209,6 +214,22 @@ class Config:
     VOTE_MAX_OPTIONS = int(os.getenv('VOTE_MAX_OPTIONS', 8))
     VOTE_MAX_OPTION_LENGTH = int(os.getenv('VOTE_MAX_OPTION_LENGTH', 80))
     VOTE_REWARD_CREDITS = int(os.getenv('VOTE_REWARD_CREDITS', 1))
+
+    # Sports league live text
+    SPORTS_LEAGUE_CACHE_TTL = _parse_int(os.getenv('SPORTS_LEAGUE_CACHE_TTL', 10), 10)
+    SPORTS_LEAGUE_SSE_HEARTBEAT_SECONDS = _parse_int(
+        os.getenv('SPORTS_LEAGUE_SSE_HEARTBEAT_SECONDS', 15),
+        15,
+    )
+    SPORTS_LEAGUE_SSE_RETRY_MS = _parse_int(os.getenv('SPORTS_LEAGUE_SSE_RETRY_MS', 3000), 3000)
+    SPORTS_LEAGUE_MAX_STREAMS_PER_CLIENT = _parse_int(
+        os.getenv('SPORTS_LEAGUE_MAX_STREAMS_PER_CLIENT', 2),
+        2,
+    )
+    SPORTS_LEAGUE_MAX_ACTIVE_EVENTS = _parse_int(
+        os.getenv('SPORTS_LEAGUE_MAX_ACTIVE_EVENTS', 250),
+        250,
+    )
 
     # IP Restriction for signup (Ulsan Education Office network)
     # Comma-separated IP/CIDR ranges from .env

@@ -23,6 +23,7 @@ from models import lost_found  # noqa: F401 ensure models are registered
 from models import countdown_event  # noqa: F401 ensure models are registered
 from models import gomsol_market  # noqa: F401 ensure models are registered
 from models import auth_token  # noqa: F401 ensure models are registered
+from models import sports_league  # noqa: F401 ensure models are registered
 from utils.cache import init_cache
 from utils.rate_limit import (
     init_limiter,

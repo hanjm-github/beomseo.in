@@ -366,6 +366,14 @@ erDiagram
     VOTES ||--o{ VOTE_OPTIONS : has
     VOTES ||--o{ VOTE_RESPONSES : has
 
+    SPORTS_LEAGUE_CATEGORIES ||--o{ SPORTS_LEAGUE_TEAMS : has
+    SPORTS_LEAGUE_CATEGORIES ||--o{ SPORTS_LEAGUE_MATCHES : has
+    SPORTS_LEAGUE_CATEGORIES ||--o{ SPORTS_LEAGUE_PLAYERS : has
+    SPORTS_LEAGUE_CATEGORIES ||--o{ SPORTS_LEAGUE_EVENTS : has
+    SPORTS_LEAGUE_CATEGORIES ||--o{ SPORTS_LEAGUE_STANDING_OVERRIDES : has
+    SPORTS_LEAGUE_TEAMS ||--o{ SPORTS_LEAGUE_PLAYERS : owns
+    SPORTS_LEAGUE_MATCHES ||--o{ SPORTS_LEAGUE_EVENTS : receives
+
     USERS ||--o{ LOST_FOUND_POSTS : writes
     LOST_FOUND_POSTS ||--o{ LOST_FOUND_IMAGES : has
     LOST_FOUND_POSTS ||--o{ LOST_FOUND_COMMENTS : has
@@ -381,6 +389,41 @@ erDiagram
 ```
 
 > **참고:** `COUNTDOWN_EVENTS`는 사용자 소유가 아닌 독립 엔티티입니다. 공지 목록 응답에 다음 카운트다운 이벤트가 부가 데이터로 포함됩니다.
+
+### 9.2 스포츠리그 문자중계 도메인
+
+스포츠리그는 일반 게시판과 달리 `카테고리 → 팀/경기 → 이벤트 → snapshot` 계층으로 동작합니다.
+
+- 기준 read 모델은 `build_snapshot(category_id)`가 만드는 단일 snapshot입니다.
+- `SportsLeagueMatch`의 스코어/상태는 독립 입력값이 아니라 **최신 active event를 다시 계산한 projection**입니다.
+- 예선 순위는 완료 경기만으로 자동 계산하고, `SportsLeagueStandingOverride`가 있으면 운영진 확정 순위가 자동 계산을 완전히 덮어씁니다.
+- 선수 라인업/개인 순위는 `SportsLeaguePlayer` + `services/sports_league_players.py`가 별도 CRUD로 관리하며, snapshot/SSE 응답에는 포함하지 않습니다.
+
+```mermaid
+sequenceDiagram
+    participant Operator as 학생회/Admin
+    participant Route as routes/sports_league.py
+    participant Service as services/sports_league.py
+    participant DB as MariaDB
+    participant RT as services/sports_league_realtime.py
+    participant FE as Frontend SSE
+
+    Operator->>Route: POST/PATCH/DELETE event
+    Route->>Service: payload 정규화 + 검증
+    Service->>DB: event 저장 / match projection 재계산 / category.updated_at touch
+    Service->>RT: publish_category_update(category_id)
+    RT-->>FE: pub/sub 신호 or in-process fallback
+    FE->>Route: GET /stream 재수신 대기
+    Route->>Service: build_snapshot(category_id)
+    Service-->>FE: event:snapshot + 전체 snapshot
+```
+
+현재 구현 기준으로:
+
+1. snapshot 조회(`GET /categories/:id`)만 `60 per minute` limiter가 직접 연결되어 있습니다.
+2. SSE route는 pub/sub 신호가 없어도 `updatedAt` 변화를 감지하기 위해 유휴 시 snapshot을 다시 읽습니다.
+3. `RATELIMIT_SPORTS_LEAGUE_STREAM_CONNECT`, `SPORTS_LEAGUE_MAX_STREAMS_PER_CLIENT`는 config/helper에 존재하지만 route-level enforcement는 아직 연결되지 않았습니다.
+4. 선수 라인업 탭은 `GET/POST/DELETE/PATCH /players` 엔드포인트를 사용하고, 실시간 중계와는 별도 상태 흐름으로 유지됩니다.
 
 ## 10. 보드 공통 승인(Moderation) 패턴
 
@@ -445,6 +488,7 @@ erDiagram
 | `petitions` | `Petition`, `PetitionVote`, `PetitionAnswer` | `petitions` | 공통 write limit |
 | `surveys` | `Survey`, `SurveyResponse`, `SurveyCredit` | `surveys` | 공통 write limit |
 | `votes` | `Vote`, `VoteOption`, `VoteResponse` | `votes` | 공통 write limit |
+| `sports_league` | `SportsLeagueCategory`, `SportsLeagueMatch`, `SportsLeaguePlayer`, `SportsLeagueEvent`, `SportsLeagueStandingOverride` | `sports_league` | 공통 write limit |
 | `lost_found` | `LostFoundPost`, `LostFoundImage`, `LostFoundComment` | `lost_found` | 공통 write limit |
 | `gomsol_market` | `GomsolMarketPost`, `GomsolMarketImage` | `gomsol_market` | 공통 write limit |
 
@@ -460,6 +504,10 @@ erDiagram
 8. `routes/surveys.py`
 9. `routes/petitions.py`
 10. `routes/notices.py`
+11. `routes/sports_league.py`
+12. `services/sports_league.py`
+13. `services/sports_league_players.py`
+14. `services/sports_league_realtime.py`
 
 ## 14. 변경 시 아키텍처 체크리스트
 

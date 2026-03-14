@@ -61,6 +61,14 @@ from .gomsol_market import (
 )
 from .countdown_event import CountdownEvent
 from .auth_token import AuthToken, AuthTokenType
+from .sports_league import (
+    SportsLeagueCategory,
+    SportsLeagueTeam,
+    SportsLeagueMatch,
+    SportsLeaguePlayer,
+    SportsLeagueEvent,
+    SportsLeagueStandingOverride,
+)
 
 __all__ = [
     'User',
@@ -110,5 +118,11 @@ __all__ = [
     'CountdownEvent',
     'AuthToken',
     'AuthTokenType',
+    'SportsLeagueCategory',
+    'SportsLeagueTeam',
+    'SportsLeagueMatch',
+    'SportsLeaguePlayer',
+    'SportsLeagueEvent',
+    'SportsLeagueStandingOverride',
     'db',
 ]

@@ -13,9 +13,11 @@
 ## 1. 공통 규칙
 
 - Base URL: `VITE_API_URL` (기본 `http://localhost:5000`)
+- 스포츠리그 Base URL: `VITE_SPORTS_LEAGUE_API_URL` (미설정 시 `VITE_API_URL`로 fallback)
 - 공통 클라이언트: `src/api/auth.js`의 Axios 인스턴스
+- 스포츠리그 클라이언트: `src/api/sportsLeague.js`의 전용 `sportsApi` Axios 인스턴스
 - 인증 채널: `withCredentials=true` (cookie 기반)
-- CSRF 헤더: unsafe method에서 `X-CSRF-TOKEN` 자동 추가
+- CSRF 헤더: unsafe method에서 `X-CSRF-TOKEN` 자동 추가 (두 인스턴스 모두 동일)
 - 날짜 문자열 정규화: timezone 없는 ISO 문자열에 `Z` 보정
 - mock fallback: `src/api/mockPolicy.js` (`DEV + VITE_ENABLE_API_MOCKS=1 + !error.response`)
 
@@ -186,6 +188,60 @@
 - `statusLabel`, `approvalLabel`, `categoryLabel`
 - `MAX_IMAGES`, `MAX_FILE_SIZE`
 
+### 2.11 `src/api/sportsLeague.js` (`sportsLeagueApi`)
+
+| 메서드 | HTTP/Endpoint | Mock fallback | 비고 |
+|---|---|---|---|
+| `getCategory(categoryId)` | `GET /api/sports-league/categories/:categoryId` | 예 | 캐시된 snapshot이 있으면 즉시 반환 후 백그라운드 refresh |
+| `getPlayers(categoryId)` | `GET /api/sports-league/categories/:categoryId/players` | 예 | 선수 라인업/개인 순위용 별도 읽기 계약 |
+| `createPlayer(categoryId, teamId, payload)` | `POST /api/sports-league/categories/:categoryId/teams/:teamId/players` | 예 | 학생회/admin만 선수 추가 |
+| `deletePlayer(categoryId, playerId)` | `DELETE /api/sports-league/categories/:categoryId/players/:playerId` | 예 | 학생회/admin만 선수 삭제 |
+| `adjustPlayerStat(categoryId, playerId, payload)` | `PATCH /api/sports-league/categories/:categoryId/players/:playerId/stats` | 예 | `goals/assists`를 `delta=-1|1`로 조정 |
+| `createEvent(categoryId, payload)` | `POST /api/sports-league/categories/:categoryId/events` | 예 | 운영진 이벤트 등록 |
+| `updateEvent(categoryId, eventId, payload)` | `PATCH /api/sports-league/categories/:categoryId/events/:eventId` | 예 | 운영진 이벤트 수정 |
+| `deleteEvent(categoryId, eventId)` | `DELETE /api/sports-league/categories/:categoryId/events/:eventId` | 예 | 운영진 이벤트 삭제 |
+| `updateMatchParticipants(categoryId, matchId, payload)` | `PATCH /api/sports-league/categories/:categoryId/matches/:matchId/participants` | 예 | admin용 토너먼트 참가 팀 교체 |
+| `subscribe(categoryId, listener)` | `GET /api/sports-league/categories/:categoryId/stream` | 예 | category별 단일 EventSource 공유 |
+
+추가 export:
+
+- `managerRoles`
+- 클라이언트 동작:
+  - category별 transport 상태를 공유해 여러 listener가 있어도 EventSource는 1개만 유지
+  - `getCategory()`는 memory/`localStorage` 캐시를 먼저 읽고 stale-while-revalidate로 최신 snapshot을 다시 가져옴
+  - 선수 라인업/개인 순위는 `getPlayers()`와 mutation 응답으로만 갱신되며, snapshot/SSE에는 포함되지 않음
+  - `createPlayer()/deletePlayer()/adjustPlayerStat()`는 응답에 포함된 `players` 배열 전체로 로컬 store를 교체
+  - `subscribe()`는 `BroadcastChannel` 우선, 미지원 브라우저에서는 `storage` 이벤트로 탭 간 동기화
+  - SSE 오류 시 5초 polling + 3초 재연결을 시도
+  - 개발 환경에서 transport 오류가 나고 `VITE_ENABLE_API_MOCKS=1`이면 category 단위로 mock transport로 전환
+- 백엔드 계약 요약:
+  - snapshot/SSE는 익명 조회 가능
+  - 이벤트 `author` payload는 `{ nickname }`만 노출
+  - backend는 active event를 최대 `250`개까지만 유지
+  - 코드 기준 route-level limiter는 snapshot 조회(`60 per minute`)에만 직접 연결되어 있음
+  - standings override 저장/삭제, bootstrap endpoint는 현재 프론트 API 모듈에 노출되지 않음
+- 서버 분리:
+  - `VITE_SPORTS_LEAGUE_API_URL` 환경변수로 FastAPI 서버 주소를 지정할 수 있음
+  - 미설정 시 기존 `VITE_API_URL` (Flask 서버)로 fallback
+  - 전용 `sportsApi` Axios 인스턴스가 CSRF 토큰을 자동 첨부하며, `auth.js`의 refresh interceptor는 공유하지 않음
+- 이벤트 입력 시간:
+  - `minute` 필드는 제거됨 — 입력 시점의 `createdAt` 서버 타임스탬프가 초 단위(HH:MM:SS)로 표시됨
+
+선수 라인업/개인 순위 요청 바디 요약:
+
+| 메서드 | 요청 바디 |
+|---|---|
+| `createPlayer(categoryId, teamId, payload)` | `{ "name": "홍길동" }` |
+| `adjustPlayerStat(categoryId, playerId, payload)` | `{ "stat": "goals" \| "assists", "delta": -1 \| 1 }` |
+
+선수 mutation 공통 응답 키:
+
+| 키 | 설명 |
+|---|---|
+| `player` | 방금 생성/수정된 선수 (`deletePlayer`는 제외) |
+| `players` | 정렬된 전체 선수 배열 |
+| `updatedAt` | 전체 선수 배열 기준 최신 갱신 시각 |
+
 ## 3. 공통 유틸리티 및 지원 모듈
 
 ### 3.1 `src/api/normalizers.js`
@@ -230,6 +286,7 @@
 | `vote.mock.js` | `src/api/vote.js` |
 | `lostFound.mock.js` | `src/api/lostFound.js` |
 | `gomsolMarket.mock.js` | `src/api/gomsolMarket.js` |
+| `sportsLeague.mock.js` | `src/api/sportsLeague.js` (`snapshot`과 `players` localStorage 키를 분리 보관) |
 
 ## 4. 화면-API 연결 빠른 찾기
 
@@ -244,6 +301,7 @@
 | `pages/Vote/*` | `voteApi` |
 | `pages/LostFound/*` | `lostFoundApi` |
 | `pages/GomsolMarket/*` | `gomsolMarketApi` |
+| `pages/SchoolInfo/SportsLeagueCategoryPage.jsx` | `sportsLeagueApi` |
 | `context/AuthContext.jsx` | `authApi` |
 
 ## 5. 변경 시 동기화 규칙

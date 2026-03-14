@@ -147,6 +147,7 @@ flowchart TD
     API --> Petition["/api/community/petitions/*"]
     API --> Survey["/api/surveys/*"]
     API --> Vote["/api/community/votes/*"]
+    API --> SportsLeague["/api/sports-league/*"]
     API --> Lost["/api/community/lost-found/*"]
     API --> Market["/api/community/gomsol-market/*"]
 
@@ -168,6 +169,7 @@ flowchart TD
 - Petitions: `/api/community/petitions/*`
 - Surveys: `/api/surveys/*`
 - Votes: `/api/community/votes/*`
+- Sports League: `/api/sports-league/*`
 - Lost & Found: `/api/community/lost-found/*`
 - Gomsol Market: `/api/community/gomsol-market/*`
 
@@ -897,6 +899,182 @@ flowchart TD
 ### 12.10 `DELETE /api/community/lost-found/{post_id}/comments/{comment_id}`
 
 - 권한: `admin`
+
+---
+
+## 12A. Sports League API (`/api/sports-league`)
+
+- 공개 읽기 경로는 익명 접근을 허용합니다.
+- `GET /categories/{category_id}`에는 `60 per minute` 제한이 연결되어 있습니다.
+- 선수 라인업/개인 순위 데이터는 snapshot에 포함되지 않으며, 별도 `/players` 엔드포인트로 읽고 씁니다.
+- `liveEvents[].author`는 `{ nickname }`만 노출합니다.
+- active event는 최신 `250`개까지만 유지되고, 오래된 항목은 soft delete 됩니다.
+- `RATELIMIT_SPORTS_LEAGUE_STREAM_CONNECT`, client/category 동시 연결 제한 helper는 현재 코드에 정의되어 있지만 stream route에는 직접 연결되지 않았습니다.
+
+### 12A.1 `GET /api/sports-league/categories/{category_id}`
+
+- 권한: 없음
+- 캐시: `sports_league` (TTL 10초)
+- 반환: `category`, `teams`, `matches`, `rules`, `liveEvents`, `standingsOverrides`, `updatedAt`, `storageVersion`
+
+응답 예시:
+
+```json
+{
+  "category": {
+    "id": "2026-spring-grade3-boys-soccer",
+    "title": "2026 1학기 3학년 남자 축구"
+  },
+  "teams": [],
+  "matches": [],
+  "rules": {
+    "format": [],
+    "points": [],
+    "ranking": [],
+    "notes": []
+  },
+  "liveEvents": [],
+  "standingsOverrides": {
+    "A": null,
+    "B": null
+  },
+  "updatedAt": "2026-03-15T12:00:00Z",
+  "storageVersion": "2026.03.15"
+}
+```
+
+### 12A.2 `GET /api/sports-league/categories/{category_id}/players`
+
+- 권한: 없음
+- 반환: `players`, `updatedAt`
+- 정렬 규칙:
+  - 팀 group (`A` → `B`)
+  - 팀 `displayOrder`
+  - 선수 이름
+  - 생성 시각
+
+응답 예시:
+
+```json
+{
+  "players": [
+    {
+      "id": "sports-player-3f2b6d8d7f5b4c37b8a2b0ef5d92e44f",
+      "categoryId": "2026-spring-grade3-boys-soccer",
+      "teamId": "class-3-1",
+      "name": "김민준",
+      "goals": 2,
+      "assists": 1,
+      "createdAt": "2026-03-15T04:10:00Z",
+      "updatedAt": "2026-03-15T04:32:00Z"
+    }
+  ],
+  "updatedAt": "2026-03-15T04:32:00Z"
+}
+```
+
+### 12A.3 `POST /api/sports-league/categories/{category_id}/teams/{team_id}/players`
+
+- 권한: `student_council | admin`
+- Body:
+  - `name` required, `1~20`자
+- 제약:
+  - `team_id`는 현재 카테고리에 속한 실제 반 팀(`group=A|B`)이어야 함
+- 성공 `201`:
+  - `player`: 생성된 선수
+  - `players`: 정렬된 전체 라인업
+  - `updatedAt`: 전체 라인업 최신 갱신 시각
+
+### 12A.4 `DELETE /api/sports-league/categories/{category_id}/players/{player_id}`
+
+- 권한: `student_council | admin`
+- 동작: 선수를 라인업에서 제거하고, 남은 전체 라인업을 다시 반환
+
+### 12A.5 `PATCH /api/sports-league/categories/{category_id}/players/{player_id}/stats`
+
+- 권한: `student_council | admin`
+- Body:
+  - `stat`: `goals | assists`
+  - `delta`: `-1 | 1`
+- 제약:
+  - 누적 값은 0 아래로 내려가지 않음
+- 성공 응답:
+  - `player`: 수정된 선수
+  - `players`: 정렬된 전체 라인업
+  - `updatedAt`: 전체 라인업 최신 갱신 시각
+
+### 12A.6 `GET /api/sports-league/categories/{category_id}/stream`
+
+- 권한: 없음
+- 형식: `text/event-stream`
+- 헤더:
+  - `Cache-Control: no-cache, no-transform`
+  - `X-Accel-Buffering: no`
+- 이벤트:
+  - `retry: <ms>`
+  - `event: snapshot`
+  - `data: <snapshot-json>`
+- 동작:
+  - 최초 연결 직후 현재 snapshot 1회 전송
+  - pub/sub 신호를 받으면 전체 snapshot을 다시 전송
+  - 유휴 시에도 최신 `updatedAt`을 비교하기 위해 최대 3초 간격으로 snapshot을 재검사
+  - heartbeat comment를 주기적으로 전송
+
+### 12A.7 `POST /api/sports-league/categories/{category_id}/events`
+
+- 권한: `student_council | admin`
+- Body:
+  - `matchId` required
+  - `eventType` required
+  - `status`, `minute`, `message`, `subjectTeamId`, `scoreSnapshot`, `winnerTeamId`
+- 제약:
+  - `message` 최대 240자
+  - 점수는 0 이상 정수
+  - 토너먼트 경기 동점 종료 시 `winnerTeamId` 필수
+
+### 12A.8 `PATCH /api/sports-league/categories/{category_id}/events/{event_id}`
+
+- 권한: `student_council | admin`
+- 동작: 기존 이벤트를 수정하고 match 상태를 최신 이벤트 기준으로 재계산
+
+### 12A.9 `DELETE /api/sports-league/categories/{category_id}/events/{event_id}`
+
+- 권한: `student_council | admin`
+- 동작: soft delete 후 match 상태를 재계산
+
+### 12A.10 `PUT /api/sports-league/categories/{category_id}/standings-overrides/{group_id}`
+
+- 권한: `student_council | admin`
+- `group_id`: `A | B`
+- Body:
+  - `rows[]`
+  - 각 row: `teamId`, `rank`, `points`, `goalDifference`, `goalsFor`, `goalsAgainst`, `wins`, `draws`, `losses`, `note`
+- 동작: 자동 계산 순위 전체를 운영진 확정 순위로 대체
+
+### 12A.11 `DELETE /api/sports-league/categories/{category_id}/standings-overrides/{group_id}`
+
+- 권한: `student_council | admin`
+- 동작: 해당 조의 공식 override를 제거하고 자동 계산 순위로 복귀
+
+### 12A.12 `PATCH /api/sports-league/categories/{category_id}/matches/{match_id}/participants`
+
+- 권한: `admin`
+- 조건: `phase`가 `knockout` 또는 `final`인 경기만 허용
+- Body:
+  - `teamAId` required
+  - `teamBId` required
+- 제약:
+  - 두 팀은 서로 달라야 함
+  - 둘 다 현재 카테고리의 팀이어야 함
+- 동작: 토너먼트 placeholder를 실제 참가 팀으로 교체하며, 기존 `winnerTeamId`가 새 팀 조합과 맞지 않으면 비웁니다.
+
+### 12A.13 `POST /api/sports-league/bootstrap/{category_id}`
+
+- 권한: `admin`
+- 동작:
+  - 카테고리/팀/경기 seed를 upsert
+  - 기존 live event와 standings override는 유지
+  - 최신 snapshot을 `201`과 함께 반환
 
 ---
 

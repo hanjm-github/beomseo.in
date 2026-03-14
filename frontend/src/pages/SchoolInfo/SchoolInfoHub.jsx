@@ -1,5 +1,15 @@
-﻿import { CalendarDays, Calculator, Download, Hammer, Soup, Waypoints } from 'lucide-react';
+import {
+  CalendarDays,
+  Calculator,
+  Download,
+  Hammer,
+  Radio,
+  Soup,
+  Waypoints,
+} from 'lucide-react';
 import { Link } from 'react-router-dom';
+
+import { SPORTS_LEAGUE_CATEGORY_ID } from '../../features/sportsLeague/data';
 import '../page-shell.css';
 
 const schoolInfoCards = [
@@ -41,6 +51,14 @@ const schoolInfoCards = [
     icon: CalendarDays,
     active: true,
   },
+  {
+    key: 'sports-league',
+    to: `/school-info/sports-league/${SPORTS_LEAGUE_CATEGORY_ID}`,
+    title: '스포츠리그',
+    description: '실시간 중계, 예선 순위판, 주차별 대진표, 경기 규칙을 탭으로 나눠 빠르게 확인할 수 있습니다.',
+    icon: Radio,
+    active: true,
+  },
 ];
 
 export default function SchoolInfoHub() {
@@ -52,12 +70,18 @@ export default function SchoolInfoHub() {
           <h1>학교 생활 허브</h1>
           <p className="lede">
             학교 생활에 자주 필요한 기능을 한 곳에 모았습니다. 시간표 다운로드와 학사 캘린더를
-            먼저 공개합니다.
+            먼저 공개하고, 스포츠리그 문자중계도 함께 제공합니다.
           </p>
         </div>
         <div className="header-actions">
           <Link className="btn btn-primary" to="/school-info/timetable">
             시간표 다운로드 열기
+          </Link>
+          <Link
+            className="btn btn-secondary"
+            to={`/school-info/sports-league/${SPORTS_LEAGUE_CATEGORY_ID}`}
+          >
+            스포츠리그 보기
           </Link>
         </div>
       </div>
@@ -99,4 +123,3 @@ export default function SchoolInfoHub() {
     </div>
   );
 }
-
