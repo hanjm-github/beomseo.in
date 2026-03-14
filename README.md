@@ -1,4 +1,4 @@
-<p align="center">
+﻿<p align="center">
   <img src="frontend/public/mit_logo.png" width="120" alt="beomseo.in MIT 로고"/>
 </p>
 
@@ -58,7 +58,7 @@
 
 **beomseo.in**은 범서고등학교 17대 학생회 정보기술부에서 기획·개발한 **학생 커뮤니티 웹 플랫폼**입니다.
 
-학생들이 학교 생활에서 필요한 정보를 한곳에서 쉽게 찾고, 서로 소통할 수 있는 공간을 만들기 위해 시작되었습니다. 공지사항 확인부터 자유 게시판, 동아리 모집, 학생 청원, 설문조사, 실시간 투표, 분실물 게시판, 그리고 교내 중고거래까지 — 범서고 학생이라면 누구나 참여할 수 있습니다.
+학생들이 학교 생활에서 필요한 정보를 한곳에서 쉽게 찾고, 서로 소통할 수 있는 공간을 만들기 위해 시작되었습니다. 공지사항 확인부터 자유 게시판, 동아리 모집, 학생 청원, 설문조사, 실시간 투표, 분실물 게시판, 교내 중고거래, 그리고 학교 생활 정보 허브 안의 스포츠리그 문자중계까지 — 범서고 학생이라면 누구나 참여할 수 있습니다.
 
 > **개발 철학**
 > 1. 첫째도 **개발의 편리함**, 둘째도 **학생들의 편리함** 🛠️
@@ -103,6 +103,7 @@
 - **분실물 게시판** — 사진 첨부, 댓글
 - **곰솔 마켓** — 교내 중고거래 플랫폼
 - **과목 변경 매칭** — 과목 교환 요청 & 상태 관리
+- **학교 생활 정보 허브** — 시간표 다운로드, 학사 캘린더, 스포츠리그 문자중계
 
 </td>
 <td>
@@ -167,7 +168,7 @@ flowchart TB
     subgraph Backend["🐍 백엔드 (Flask)"]
         App["App Factory"]
         Auth["인증 (JWT Cookie)"]
-        Routes["블루프린트 ×10"]
+        Routes["블루프린트 ×11"]
         Models["SQLAlchemy Models"]
         Utils["Utils (보안/캐시/업로드)"]
     end
@@ -227,8 +228,11 @@ beomseo.in/
 │   │   ├── surveys.py         #   설문 교환
 │   │   ├── votes.py           #   실시간 투표
 │   │   ├── lost_found.py      #   분실물
-│   │   └── gomsol_market.py   #   곰솔 마켓
+│   │   ├── gomsol_market.py   #   곰솔 마켓
+│   │   └── sports_league.py   #   스포츠리그 문자중계
 │   ├── models/                # SQLAlchemy 모델
+│   ├── services/              # 도메인 서비스/실시간 보조 로직
+│   ├── scripts/               # 운영용 부트스트랩 스크립트
 │   ├── utils/                 # 보안·캐시·업로드 유틸
 │   ├── uploads/               # 파일 업로드 저장소
 │   └── docs/                  # 백엔드 문서
@@ -241,8 +245,9 @@ beomseo.in/
     ├── src/
     │   ├── App.jsx            # 라우터 + Provider
     │   ├── main.jsx           # 엔트리포인트
-    │   ├── api/               # Axios 기반 API 모듈 (22개)
+    │   ├── api/               # Axios 기반 API 모듈
     │   ├── components/        # 재사용 컴포넌트 (70개)
+    │   ├── features/          # 기능 단위 hook/data/utils 묶음
     │   ├── pages/             # 페이지 컴포넌트 (45개)
     │   ├── context/           # AuthContext, ThemeContext
     │   ├── security/          # URL/HTML/CSV sanitize

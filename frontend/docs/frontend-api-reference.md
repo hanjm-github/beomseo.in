@@ -186,6 +186,33 @@
 - `statusLabel`, `approvalLabel`, `categoryLabel`
 - `MAX_IMAGES`, `MAX_FILE_SIZE`
 
+### 2.11 `src/api/sportsLeague.js` (`sportsLeagueApi`)
+
+| 메서드 | HTTP/Endpoint | Mock fallback | 비고 |
+|---|---|---|---|
+| `getCategory(categoryId)` | `GET /api/sports-league/categories/:categoryId` | 예 | 캐시된 snapshot이 있으면 즉시 반환 후 백그라운드 refresh |
+| `createEvent(categoryId, payload)` | `POST /api/sports-league/categories/:categoryId/events` | 예 | 운영진 이벤트 등록 |
+| `updateEvent(categoryId, eventId, payload)` | `PATCH /api/sports-league/categories/:categoryId/events/:eventId` | 예 | 운영진 이벤트 수정 |
+| `deleteEvent(categoryId, eventId)` | `DELETE /api/sports-league/categories/:categoryId/events/:eventId` | 예 | 운영진 이벤트 삭제 |
+| `updateMatchParticipants(categoryId, matchId, payload)` | `PATCH /api/sports-league/categories/:categoryId/matches/:matchId/participants` | 예 | admin용 토너먼트 참가 팀 교체 |
+| `subscribe(categoryId, listener)` | `GET /api/sports-league/categories/:categoryId/stream` | 예 | category별 단일 EventSource 공유 |
+
+추가 export:
+
+- `managerRoles`
+- 클라이언트 동작:
+  - category별 transport 상태를 공유해 여러 listener가 있어도 EventSource는 1개만 유지
+  - `getCategory()`는 memory/`localStorage` 캐시를 먼저 읽고 stale-while-revalidate로 최신 snapshot을 다시 가져옴
+  - `subscribe()`는 `BroadcastChannel` 우선, 미지원 브라우저에서는 `storage` 이벤트로 탭 간 동기화
+  - SSE 오류 시 5초 polling + 3초 재연결을 시도
+  - 개발 환경에서 transport 오류가 나고 `VITE_ENABLE_API_MOCKS=1`이면 category 단위로 mock transport로 전환
+- 백엔드 계약 요약:
+  - snapshot/SSE는 익명 조회 가능
+  - 이벤트 `author` payload는 `{ nickname }`만 노출
+  - backend는 active event를 최대 `250`개까지만 유지
+  - 코드 기준 route-level limiter는 snapshot 조회(`60 per minute`)에만 직접 연결되어 있음
+  - standings override 저장/삭제, bootstrap endpoint는 현재 프론트 API 모듈에 노출되지 않음
+
 ## 3. 공통 유틸리티 및 지원 모듈
 
 ### 3.1 `src/api/normalizers.js`
@@ -230,6 +257,7 @@
 | `vote.mock.js` | `src/api/vote.js` |
 | `lostFound.mock.js` | `src/api/lostFound.js` |
 | `gomsolMarket.mock.js` | `src/api/gomsolMarket.js` |
+| `sportsLeague.mock.js` | `src/api/sportsLeague.js` |
 
 ## 4. 화면-API 연결 빠른 찾기
 
@@ -244,6 +272,7 @@
 | `pages/Vote/*` | `voteApi` |
 | `pages/LostFound/*` | `lostFoundApi` |
 | `pages/GomsolMarket/*` | `gomsolMarketApi` |
+| `pages/SchoolInfo/SportsLeagueCategoryPage.jsx` | `sportsLeagueApi` |
 | `context/AuthContext.jsx` | `authApi` |
 
 ## 5. 변경 시 동기화 규칙

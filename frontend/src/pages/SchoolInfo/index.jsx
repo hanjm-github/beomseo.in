@@ -1,9 +1,11 @@
-import { Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes } from 'react-router-dom';
 import NotFoundPage from '../NotFoundPage';
 import AcademicCalendarPage from './AcademicCalendarPage';
 import SchoolInfoHub from './SchoolInfoHub';
 import SchoolInfoPlaceholderPage from './SchoolInfoPlaceholderPage';
+import SportsLeagueCategoryPage from './SportsLeagueCategoryPage';
 import TimetableDownloadPage from './TimetableDownloadPage';
+import { SPORTS_LEAGUE_CATEGORY_ID } from '../../features/sportsLeague/data';
 
 const placeholderPages = {
   teachers: {
@@ -39,6 +41,11 @@ export default function SchoolInfoRouter() {
       <Route path="meal" element={<SchoolInfoPlaceholderPage {...placeholderPages.meal} />} />
       <Route path="calendar" element={<AcademicCalendarPage />} />
       <Route
+        path="sports-league"
+        element={<Navigate to={`/school-info/sports-league/${SPORTS_LEAGUE_CATEGORY_ID}`} replace />}
+      />
+      <Route path="sports-league/:categoryId" element={<SportsLeagueCategoryPage />} />
+      <Route
         path="*"
         element={
           <NotFoundPage
@@ -49,6 +56,7 @@ export default function SchoolInfoRouter() {
             secondaryActions={[
               { label: '시간표 다운로드', to: '/school-info/timetable' },
               { label: '학사 캘린더', to: '/school-info/calendar' },
+              { label: '스포츠리그 문자중계', to: `/school-info/sports-league/${SPORTS_LEAGUE_CATEGORY_ID}` },
             ]}
           />
         }

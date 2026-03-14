@@ -73,6 +73,12 @@ python app.py
 curl http://127.0.0.1:5000/api/health
 ```
 
+스포츠리그 시드 반영:
+
+```bash
+python scripts/bootstrap_sports_league.py
+```
+
 ## 앱 부팅 순서
 
 `create_app()` 팩토리가 아래 순서대로 초기화합니다. 순서가 중요하며, 설정 검증이 확장 초기화보다 먼저 실행됩니다.
@@ -95,14 +101,14 @@ sequenceDiagram
     A->>E: init_limiter()
     A->>E: CORS / JWTManager / 에러 핸들러
     A->>B: 블루프린트별 write limit 적용
-    A->>B: 10개 블루프린트 등록
+    A->>B: 11개 블루프린트 등록
     A->>A: /api/health 등록
     A-->>R: Flask app 반환
 ```
 
 ## 블루프린트 인덱스
 
-서버에 등록된 10개 블루프린트와 URL 접두사:
+서버에 등록된 11개 블루프린트와 URL 접두사:
 
 | Blueprint | URL Prefix | 주요 기능 |
 |---|---|---|
@@ -116,6 +122,15 @@ sequenceDiagram
 | `votes` | `/api/community/votes` | 실시간 투표 |
 | `lost_found` | `/api/community/lost-found` | 분실물 게시판 |
 | `gomsol_market` | `/api/community/gomsol-market` | 곰솔 중고마켓 |
+| `sports_league` | `/api/sports-league` | 스포츠리그 문자중계 + SSE |
+
+스포츠리그 공개 feed 보안 기본값:
+
+- snapshot read는 익명 접근을 유지하되 `60 per minute`로 제한합니다.
+- SSE stream은 최초 snapshot, 이후 변경 snapshot, heartbeat comment를 전송합니다.
+- public event `author` payload는 `{ nickname }`만 노출합니다.
+- active sports league events는 최신 `250`개까지만 유지합니다.
+- `RATELIMIT_SPORTS_LEAGUE_STREAM_CONNECT`, `SPORTS_LEAGUE_MAX_STREAMS_PER_CLIENT` 설정값은 현재 `config.py`에 정의되어 있으나 route에는 아직 연결되지 않았습니다.
 
 ## 디렉터리 구조
 
@@ -135,7 +150,8 @@ backend/
 │  ├─ surveys.py            #   설문 교환
 │  ├─ votes.py              #   실시간 투표
 │  ├─ lost_found.py         #   분실물
-│  └─ gomsol_market.py      #   곰솔 마켓
+│  ├─ gomsol_market.py      #   곰솔 마켓
+│  └─ sports_league.py      #   스포츠리그 문자중계
 ├─ models/                 # SQLAlchemy 모델 및 enum
 │  ├─ user.py              #   User, UserRole, db
 │  ├─ auth_token.py        #   AuthToken, AuthTokenType
@@ -148,7 +164,14 @@ backend/
 │  ├─ vote.py              #   Vote, VoteOption, VoteResponse
 │  ├─ lost_found.py        #   LostFoundPost, Image, Comment
 │  ├─ gomsol_market.py     #   GomsolMarketPost, Image
+│  ├─ sports_league.py     #   SportsLeagueCategory/Team/Match/Event/StandingOverride
 │  └─ countdown_event.py   #   CountdownEvent (메인 위젯)
+├─ services/               # 도메인 서비스/실시간 보조 로직
+│  ├─ sports_league.py     #   snapshot 계산, 이벤트 검증, seed upsert
+│  ├─ sports_league_seed.py    #   1차 카테고리 seed 데이터
+│  └─ sports_league_realtime.py # Redis pub/sub + in-process fallback
+├─ scripts/
+│  └─ bootstrap_sports_league.py # 스포츠리그 seed 반영 스크립트
 ├─ utils/                  # 보안/토큰/캐시/레이트리밋/업로드 유틸
 │  ├─ security.py          #   비밀번호 해시, IP 검증, 권한 데코레이터
 │  ├─ security_tokens.py   #   토큰 발급/회전/폐기
@@ -273,6 +296,17 @@ CSRF 쿠키/헤더 이름:
 | `RATELIMIT_LOGIN_LIMIT` | `5 per minute` | 로그인 제한 |
 | `RATELIMIT_REGISTER_LIMIT` | `5 per 10 minute` | 회원가입 제한 |
 | `RATELIMIT_REFRESH_LIMIT` | `20 per 10 minute` | 토큰 갱신 제한 |
+
+### 스포츠리그 문자중계
+
+| 변수 | 기본값 | 설명 |
+|---|---|---|
+| `RATELIMIT_SPORTS_LEAGUE_READ` | `60 per minute` | `GET /api/sports-league/categories/:id` snapshot 조회 제한 |
+| `SPORTS_LEAGUE_SSE_HEARTBEAT_SECONDS` | `15` | SSE heartbeat comment 주기 |
+| `SPORTS_LEAGUE_SSE_RETRY_MS` | `3000` | EventSource `retry:` 힌트 |
+| `SPORTS_LEAGUE_MAX_ACTIVE_EVENTS` | `250` | active 이벤트 soft delete 보존 한도 |
+| `RATELIMIT_SPORTS_LEAGUE_STREAM_CONNECT` | `12 per minute` | 현재는 config에만 존재하며 stream route에 직접 연결되지는 않음 |
+| `SPORTS_LEAGUE_MAX_STREAMS_PER_CLIENT` | `2` | 현재는 helper 함수용 설정이며 route-level enforcement는 미연결 |
 
 ### 업로드
 

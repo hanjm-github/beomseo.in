@@ -107,6 +107,35 @@ flowchart TD
 - `VITE_ENABLE_API_MOCKS === '1'`
 - `!error.response` (transport/network 계열 실패)
 
+## 4.1 스포츠리그 실시간 동기화 흐름
+
+스포츠리그 화면은 단순 REST 조회가 아니라 `snapshot + SSE + 탭 간 동기화 + mock transport`를 함께 사용합니다.
+
+```mermaid
+flowchart TD
+    A["SportsLeagueCategoryPage"] --> B["useSportsLeagueLive(categoryId)"]
+    B --> C["sportsLeagueApi.getCategory()"]
+    C --> D["memory/localStorage hydrate"]
+    C --> E["GET /api/sports-league/categories/:categoryId"]
+    B --> F["sportsLeagueApi.subscribe()"]
+    F --> G["EventSource /stream"]
+    G --> H["snapshot event"]
+    H --> I["pushSnapshot()"]
+    I --> J["BroadcastChannel or storage event"]
+    J --> K["다른 탭 listener 갱신"]
+    G --> L["오류"]
+    L --> M["5초 polling + 3초 reconnect"]
+    L --> N["DEV + transport error + mocks=1"]
+    N --> O["sportsLeague.mock.js"]
+```
+
+핵심 포인트:
+
+- category별 구독 상태를 공유해 컴포넌트가 여러 개여도 EventSource는 1개만 유지됩니다.
+- 최초 진입은 캐시된 snapshot을 먼저 보여주고, 백그라운드 refresh로 최신 값을 덮어씁니다.
+- SSE가 끊기면 즉시 실패 처리하지 않고 polling/reconnect로 복구를 시도합니다.
+- mock 전환은 개발 환경 transport 오류에만 열리고, 한 번 전환된 category는 세션 동안 mock transport를 유지합니다.
+
 ## 5. 보안 경계와 데이터 신뢰 수준
 
 | 경계 | 파일 | 방어 대상 |
@@ -123,6 +152,7 @@ flowchart TD
 - 세부 기능 라우트는 기능별 라우터(`CommunityRouter`, `NoticesPage/index.jsx`, `SchoolInfo/index.jsx`)로 위임
 - 페이지 컴포넌트는 가능한 한 API 호출 orchestration에 집중
 - 표시 로직은 `src/components/*`로 분리
+- data-dense 기능은 `src/features/<feature>/*`에 hook/data/utils를 묶어 페이지와 공용 API 사이를 정리
 
 ## 6.1 정적 템플릿 기반 화면 패턴
 

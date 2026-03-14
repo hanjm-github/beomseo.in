@@ -1,0 +1,1215 @@
+.page {
+  --sports-indigo: #17155f;
+  --sports-indigo-soft: rgba(23, 21, 95, 0.9);
+  --sports-coral: #ff7043;
+  --sports-coral-strong: #ff4f40;
+  --sports-cyan: #4ecbe4;
+  --sports-cyan-strong: #2e8ed8;
+  --sports-knockout-a: #787bff;
+  --sports-knockout-b: #e46cbc;
+  --sports-surface:
+    radial-gradient(circle at top right, rgba(78, 203, 228, 0.16), transparent 30%),
+    radial-gradient(circle at left center, rgba(255, 112, 67, 0.14), transparent 28%),
+    linear-gradient(160deg, rgba(20, 24, 96, 0.94), rgba(16, 18, 56, 0.98));
+  --sports-glow: 0 18px 48px rgba(24, 24, 86, 0.22);
+  padding-top: var(--space-3) !important;
+  gap: var(--space-4);
+}
+
+.hero,
+.panelCard,
+.summaryCard,
+.railCard,
+.loadingCard,
+.errorCard {
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-card-border);
+  box-shadow: var(--shadow-card);
+}
+
+.hero {
+  order: 1;
+  position: relative;
+  overflow: hidden;
+  padding: var(--space-5);
+  background: var(--sports-surface);
+  border-color: rgba(128, 140, 255, 0.24);
+  color: #ffffff;
+  box-shadow: var(--sports-glow);
+}
+
+.broadcastGrid {
+  order: 2;
+  display: grid;
+  gap: var(--space-3);
+}
+
+.broadcastGridSingle {
+  grid-template-columns: 1fr;
+}
+
+.quickRail {
+  order: 3;
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: 1fr;
+}
+
+.standingsSection {
+  order: 4;
+}
+
+.summaryGrid {
+  order: 5;
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: 1fr;
+}
+
+.scheduleSection {
+  order: 6;
+}
+
+.archiveSection {
+  order: 7;
+}
+
+.rulesSection {
+  order: 8;
+}
+
+.panelCard,
+.summaryCard,
+.railCard,
+.loadingCard,
+.errorCard {
+  padding: var(--space-4);
+  background: var(--color-card-bg);
+}
+
+.loadingCard,
+.errorCard {
+  color: var(--color-text-primary);
+}
+
+.errorCard {
+  color: var(--color-error);
+}
+
+.heroContent {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: var(--space-4);
+}
+
+.heroText {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.heroEyebrowRow,
+.heroBadges,
+.heroMeta,
+.heroUpdated,
+.feedMetaRow,
+.standingsTeamCell,
+.mobileStandingTop,
+.mobileStandingStats,
+.eventRowMeta,
+.scoreEditorHeader,
+.viewerNotice,
+.ruleHeading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.heroEyebrowRow {
+  justify-content: space-between;
+}
+
+.heroEyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 0.76rem;
+  font-weight: var(--font-semibold);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.heroBroadcast {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.1);
+  font-size: 0.76rem;
+}
+
+.heroTitle {
+  color: #ffffff;
+  font-size: clamp(1.45rem, 6vw, 2rem);
+  line-height: 1.2;
+}
+
+.heroMeta,
+.heroUpdated {
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 0.87rem;
+  line-height: 1.5;
+}
+
+.heroScoreboard {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.heroTeamBlock,
+.scoreTeam {
+  min-width: 0;
+}
+
+.heroScore,
+.scoreValue,
+.archiveScore {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-family: var(--font-accent);
+  font-weight: var(--font-bold);
+  letter-spacing: var(--tracking-tight);
+}
+
+.heroScore {
+  font-size: clamp(2.05rem, 12vw, 3rem);
+  line-height: 1;
+}
+
+.scoreValue,
+.archiveScore {
+  font-size: clamp(1.05rem, 4.8vw, 1.45rem);
+}
+
+.heroScoreDivider,
+.scoreDivider {
+  opacity: 0.64;
+}
+
+.scoreVs {
+  font-size: 0.92rem;
+  letter-spacing: 0.1em;
+}
+
+.heroEmpty,
+.feedEmpty,
+.archiveEmpty,
+.archiveEmptyState,
+.placeholderBlock {
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  background: var(--color-form-bg-muted);
+  color: var(--color-text-secondary);
+}
+
+.heroEmpty {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.heroDecoration {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.heroStripeTop,
+.heroStripeBottom {
+  position: absolute;
+  width: 78px;
+  height: 10px;
+  opacity: 0.7;
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      transparent 0,
+      transparent 10px,
+      rgba(255, 66, 66, 0.9) 10px,
+      rgba(255, 66, 66, 0.9) 16px
+    );
+}
+
+.heroStripeTop {
+  top: 16px;
+  right: 18px;
+}
+
+.heroStripeBottom {
+  display: none;
+}
+
+.railCard {
+  display: grid;
+  gap: 6px;
+  padding: var(--space-4);
+  text-decoration: none;
+  color: inherit;
+  transition: transform var(--transition-fast), border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+.railCard:hover {
+  transform: translateY(-1px);
+  border-color: var(--color-card-border-hover);
+  box-shadow: var(--shadow-card-hover);
+}
+
+.railLabel,
+.summaryLabel,
+.sectionEyebrow {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.summaryCard {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.summaryIcon {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-lg);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(23, 21, 95, 0.08);
+  color: var(--sports-indigo);
+}
+
+.summaryValue {
+  font-size: clamp(1.05rem, 4.2vw, 1.35rem);
+  line-height: 1.25;
+}
+
+.summaryDescription,
+.sectionHint,
+.helperText,
+.matchCardMeta,
+.archiveMeta,
+.eventScoreHint {
+  color: var(--color-text-secondary);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.sectionHeader {
+  display: grid;
+  gap: 6px;
+  margin-bottom: var(--space-3);
+}
+
+.sectionTitle {
+  font-size: clamp(1.2rem, 4.8vw, 1.45rem);
+  line-height: 1.25;
+}
+
+.sectionHint {
+  max-width: 36ch;
+}
+
+.teamBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  max-width: 100%;
+  padding: 0 12px;
+  border-radius: 999px;
+  color: #ffffff;
+  font-size: 0.88rem;
+  font-weight: var(--font-bold);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.teamBadgegroupA {
+  background: linear-gradient(120deg, var(--sports-coral-strong), var(--sports-coral));
+}
+
+.teamBadgegroupB {
+  background: linear-gradient(120deg, var(--sports-cyan), var(--sports-cyan-strong));
+}
+
+.teamBadgeknockout {
+  background: linear-gradient(120deg, var(--sports-knockout-a), var(--sports-knockout-b));
+}
+
+.statusPill,
+.eventMarker,
+.overrideBadge,
+.rankBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: var(--radius-full);
+  font-size: 0.76rem;
+  font-weight: var(--font-semibold);
+}
+
+.statusPilllive {
+  color: #ffffff;
+  background: linear-gradient(120deg, #ff4848, #ff7b3d);
+  box-shadow: 0 0 0 4px rgba(255, 72, 72, 0.12);
+}
+
+.statusPillhalftime {
+  background: rgba(255, 199, 87, 0.18);
+  color: #9a6500;
+}
+
+.statusPillcompleted {
+  background: rgba(32, 199, 120, 0.18);
+  color: #0e7b53;
+}
+
+.statusPillupcoming,
+.statusPillpending {
+  background: rgba(76, 201, 240, 0.16);
+  color: #0b6aa7;
+}
+
+.eventMarkerneutral {
+  background: var(--color-status-neutral-bg);
+  color: var(--color-status-neutral-text);
+}
+
+.eventMarkergoal {
+  background: rgba(255, 112, 67, 0.18);
+  color: #af3c16;
+}
+
+.eventMarkerwarning {
+  background: rgba(245, 158, 11, 0.18);
+  color: #8f5e08;
+}
+
+.eventMarkerdanger {
+  background: rgba(239, 68, 68, 0.18);
+  color: #9f2727;
+}
+
+.eventMarkeraccent {
+  background: rgba(120, 123, 255, 0.18);
+  color: #4d58c4;
+}
+
+.eventMarkerinfo {
+  background: rgba(59, 130, 246, 0.16);
+  color: #1d5fbf;
+}
+
+.eventMarkersuccess {
+  background: rgba(34, 197, 94, 0.16);
+  color: #15803d;
+}
+
+.overrideBadge {
+  background: rgba(120, 123, 255, 0.18);
+  color: #4d58c4;
+}
+
+.rankBadge {
+  min-width: 28px;
+  padding-inline: 0;
+  background: rgba(23, 21, 95, 0.1);
+  color: var(--sports-indigo);
+}
+
+.matchCard,
+.mobileStandingCard,
+.liveFeedItem,
+.archiveEventItem,
+.scoreEditor {
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border-light);
+  background: var(--color-form-bg-muted);
+}
+
+.matchCard {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+  padding: 14px;
+  text-align: left;
+  transition: transform var(--transition-fast), border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+.matchCard:hover {
+  transform: translateY(-1px);
+  border-color: var(--color-card-border-hover);
+  box-shadow: var(--shadow-card-hover);
+}
+
+.matchCardSelected {
+  border-color: rgba(120, 123, 255, 0.46);
+  box-shadow: 0 14px 28px rgba(23, 21, 95, 0.08);
+}
+
+.matchCardStrong {
+  background:
+    linear-gradient(150deg, rgba(23, 21, 95, 0.06), rgba(120, 123, 255, 0.08)),
+    var(--color-form-bg-muted);
+}
+
+.matchCardTop,
+.matchCardMeta,
+.archiveSummary,
+.archiveScoreline,
+.groupStandingsHeader,
+.weekHeader {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.matchStage,
+.archiveStage {
+  font-weight: var(--font-semibold);
+}
+
+.scoreRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+}
+
+.feedPanel,
+.editorPanel,
+.viewerPanel {
+  min-width: 0;
+}
+
+.liveFeed,
+.archiveBody,
+.archiveStack,
+.weekStacks,
+.scheduleGrid,
+.warningStack,
+.mobileStandingsList {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.liveFeedItem,
+.archiveEventItem,
+.mobileStandingCard {
+  padding: 12px;
+}
+
+.liveFeedItem,
+.archiveEventItem {
+  position: relative;
+  overflow: hidden;
+}
+
+.liveFeedItem::before,
+.archiveEventItem::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 100%;
+  height: 4px;
+  opacity: 0.9;
+}
+
+.eventCardneutral {
+  background:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.92), rgba(244, 247, 255, 0.96)),
+    var(--color-form-bg-muted);
+  border-color: rgba(122, 135, 168, 0.22);
+}
+
+.eventCardneutral::before {
+  background: linear-gradient(90deg, rgba(104, 119, 150, 0.7), rgba(150, 162, 188, 0.3));
+}
+
+.eventCardgoal {
+  background:
+    radial-gradient(circle at top right, rgba(255, 180, 120, 0.28), transparent 34%),
+    linear-gradient(150deg, rgba(255, 248, 241, 0.98), rgba(255, 236, 228, 0.94));
+  border-color: rgba(255, 112, 67, 0.34);
+  box-shadow: 0 18px 30px rgba(255, 112, 67, 0.14);
+}
+
+.eventCardgoal::before {
+  background: linear-gradient(90deg, #ff5e3a, #ff8c42 68%, rgba(255, 140, 66, 0.22));
+}
+
+.eventCardwarning {
+  background:
+    radial-gradient(circle at top right, rgba(255, 222, 110, 0.26), transparent 34%),
+    linear-gradient(150deg, rgba(255, 251, 237, 0.98), rgba(255, 244, 214, 0.95));
+  border-color: rgba(245, 158, 11, 0.3);
+  box-shadow: 0 18px 30px rgba(245, 158, 11, 0.12);
+}
+
+.eventCardwarning::before {
+  background: linear-gradient(90deg, #f59e0b, #facc15 68%, rgba(250, 204, 21, 0.24));
+}
+
+.eventCarddanger {
+  background:
+    radial-gradient(circle at top right, rgba(255, 160, 160, 0.24), transparent 34%),
+    linear-gradient(150deg, rgba(255, 244, 244, 0.98), rgba(255, 228, 228, 0.95));
+  border-color: rgba(239, 68, 68, 0.3);
+  box-shadow: 0 18px 30px rgba(239, 68, 68, 0.12);
+}
+
+.eventCarddanger::before {
+  background: linear-gradient(90deg, #ef4444, #fb7185 68%, rgba(251, 113, 133, 0.24));
+}
+
+.eventCardaccent {
+  background:
+    radial-gradient(circle at top right, rgba(157, 141, 255, 0.24), transparent 34%),
+    linear-gradient(150deg, rgba(245, 243, 255, 0.98), rgba(236, 233, 255, 0.95));
+  border-color: rgba(120, 123, 255, 0.32);
+  box-shadow: 0 18px 30px rgba(120, 123, 255, 0.12);
+}
+
+.eventCardaccent::before {
+  background: linear-gradient(90deg, #787bff, #a855f7 68%, rgba(168, 85, 247, 0.2));
+}
+
+.eventCardinfo {
+  background:
+    radial-gradient(circle at top right, rgba(133, 214, 255, 0.24), transparent 34%),
+    linear-gradient(150deg, rgba(240, 249, 255, 0.98), rgba(226, 244, 255, 0.95));
+  border-color: rgba(59, 130, 246, 0.28);
+  box-shadow: 0 18px 30px rgba(59, 130, 246, 0.12);
+}
+
+.eventCardinfo::before {
+  background: linear-gradient(90deg, #3b82f6, #38bdf8 68%, rgba(56, 189, 248, 0.22));
+}
+
+.eventCardsuccess {
+  background:
+    radial-gradient(circle at top right, rgba(134, 239, 172, 0.22), transparent 34%),
+    linear-gradient(150deg, rgba(240, 253, 244, 0.98), rgba(226, 250, 232, 0.95));
+  border-color: rgba(34, 197, 94, 0.28);
+  box-shadow: 0 18px 30px rgba(34, 197, 94, 0.12);
+}
+
+.eventCardsuccess::before {
+  background: linear-gradient(90deg, #22c55e, #4ade80 68%, rgba(74, 222, 128, 0.22));
+}
+
+.eventRowTop {
+  display: grid;
+  gap: 6px;
+}
+
+.eventOperator {
+  color: var(--color-text-secondary);
+  font-size: 0.88rem;
+  font-weight: var(--font-medium);
+}
+
+.eventMessage {
+  color: var(--color-text-primary);
+  line-height: 1.55;
+}
+
+.feedEmpty,
+.archiveEmpty,
+.archiveEmptyState,
+.placeholderBlock {
+  line-height: 1.55;
+}
+
+.standingsGrid {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: 1fr;
+}
+
+.groupStandings {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.mobileStandingTop {
+  justify-content: space-between;
+}
+
+.mobileStandingStats {
+  gap: 8px;
+}
+
+.desktopStandingsTable {
+  display: none;
+}
+
+.weekBlock {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.standingsTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.standingsTable th,
+.standingsTable td {
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--color-border-light);
+  text-align: center;
+}
+
+.standingsTable th:first-child,
+.standingsTable td:first-child {
+  text-align: left;
+}
+
+.warningText {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #a76300;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.editorForm {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.fieldLabel,
+.scoreField {
+  display: grid;
+  gap: 8px;
+  font-weight: var(--font-medium);
+}
+
+.inputField,
+.selectField,
+.textareaField {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-form-border);
+  background: var(--color-form-bg);
+  color: var(--color-form-text);
+}
+
+.textareaField {
+  min-height: 112px;
+  padding-block: var(--space-3);
+  resize: vertical;
+}
+
+.templateRow {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.templateChip,
+.syncButton {
+  min-height: 40px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  background: var(--color-form-bg-muted);
+  color: var(--color-text-primary);
+  font-weight: var(--font-medium);
+  transition: background-color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.templateChip {
+  flex: 0 0 auto;
+  padding: 0 14px;
+  white-space: nowrap;
+}
+
+.templateChip:hover,
+.syncButton:hover {
+  background: var(--color-surface-hover);
+  border-color: var(--color-card-border-hover);
+}
+
+.templateChipActive {
+  background: linear-gradient(120deg, rgba(120, 123, 255, 0.18), rgba(228, 108, 188, 0.18));
+  border-color: rgba(120, 123, 255, 0.5);
+}
+
+.formGrid {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: 1fr;
+}
+
+.scoreEditor {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+}
+
+.scoreEditorHeader {
+  justify-content: space-between;
+}
+
+.syncButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 12px;
+}
+
+.scoreEditorGrid {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.errorText {
+  color: var(--color-error);
+  font-size: 0.88rem;
+}
+
+.eventActions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.eventActionButton {
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-form-bg);
+  color: var(--color-text-primary);
+  font-size: 0.82rem;
+  font-weight: var(--font-medium);
+}
+
+.eventActionButtonDanger {
+  color: var(--color-error);
+}
+
+.editorModeBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: 12px 14px;
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(120, 123, 255, 0.35);
+  background: linear-gradient(120deg, rgba(120, 123, 255, 0.12), rgba(228, 108, 188, 0.08));
+  color: var(--color-text-primary);
+}
+
+.knockoutConfigurator {
+  display: grid;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border-light);
+}
+
+.knockoutConfiguratorHeader {
+  display: grid;
+  gap: 6px;
+}
+
+.knockoutConfiguratorTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1rem;
+}
+
+.knockoutTeamGrid {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: 1fr;
+}
+
+.archiveItem {
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-xl);
+  background: var(--color-card-bg);
+  overflow: hidden;
+}
+
+.archiveSummary {
+  list-style: none;
+  padding: var(--space-4);
+  cursor: pointer;
+}
+
+.archiveSummary::-webkit-details-marker {
+  display: none;
+}
+
+.archiveBody {
+  padding: 0 var(--space-4) var(--space-4);
+}
+
+.rulesGrid {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: 1fr;
+}
+
+.ruleColumns {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: 1fr;
+}
+
+.ruleHeading {
+  font-size: 1rem;
+  margin-bottom: 0;
+}
+
+.ruleList {
+  display: grid;
+  gap: 8px;
+}
+
+.ruleList li {
+  position: relative;
+  padding-left: 14px;
+  color: var(--color-text-secondary);
+  line-height: 1.55;
+}
+
+.ruleList li::before {
+  content: '';
+  position: absolute;
+  top: 0.7em;
+  left: 0;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: linear-gradient(120deg, var(--sports-coral), var(--sports-cyan));
+}
+
+@media (max-width: 359px) {
+  .scoreEditorGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 768px) {
+  .page {
+    padding-top: var(--space-6) !important;
+    gap: var(--space-5);
+  }
+
+  .hero,
+  .panelCard,
+  .summaryCard,
+  .railCard {
+    border-radius: var(--radius-2xl);
+  }
+
+  .hero {
+    padding: var(--space-6);
+  }
+
+  .heroTitle {
+    font-size: clamp(1.8rem, 4vw, 2.5rem);
+  }
+
+  .heroScore {
+    font-size: clamp(2.5rem, 6vw, 4rem);
+  }
+
+  .heroStripeTop,
+  .heroStripeBottom {
+    width: 112px;
+    height: 12px;
+  }
+
+  .heroStripeBottom {
+    display: block;
+    bottom: 18px;
+    left: 18px;
+  }
+
+  .broadcastGrid {
+    grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+  }
+
+  .broadcastGridSingle {
+    grid-template-columns: 1fr;
+  }
+
+  .quickRail {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .summaryGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .standingsGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .sectionHeader,
+  .matchCardTop,
+  .matchCardMeta,
+  .archiveSummary,
+  .archiveScoreline,
+  .groupStandingsHeader,
+  .weekHeader,
+  .eventRowTop {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+
+  .formGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .templateRow {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(94px, 1fr));
+    overflow: visible;
+  }
+
+  .templateChip {
+    width: 100%;
+  }
+
+  .ruleColumns {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .knockoutTeamGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 900px) {
+  .mobileStandingsList {
+    display: none;
+  }
+
+  .desktopStandingsTable {
+    display: block;
+  }
+}
+
+@media (min-width: 1024px) {
+  .page {
+    gap: var(--space-6);
+  }
+
+  .hero {
+    padding: clamp(26px, 3vw, 34px);
+  }
+
+  .heroContent {
+    gap: var(--space-5);
+  }
+
+  .summaryCard,
+  .panelCard,
+  .railCard {
+    padding: var(--space-5);
+  }
+
+  .teamBadge {
+    min-height: 40px;
+    padding: 0 14px;
+  }
+
+  .sectionTitle {
+    font-size: clamp(1.25rem, 2vw, 1.6rem);
+  }
+}
+
+[data-theme='dark'] .hero {
+  border-color: rgba(131, 142, 255, 0.4);
+}
+
+[data-theme='dark'] .summaryIcon,
+[data-theme='dark'] .rankBadge {
+  background: rgba(120, 123, 255, 0.2);
+  color: #c7cdff;
+}
+
+[data-theme='dark'] .feedPanel,
+[data-theme='dark'] .editorPanel,
+[data-theme='dark'] .viewerPanel {
+  background:
+    linear-gradient(180deg, rgba(18, 24, 34, 0.96), rgba(15, 20, 29, 0.98)),
+    var(--color-card-bg);
+  border-color: rgba(120, 123, 255, 0.18);
+}
+
+[data-theme='dark'] .liveFeedItem,
+[data-theme='dark'] .archiveEventItem {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 18px 30px rgba(0, 0, 0, 0.22);
+}
+
+[data-theme='dark'] .eventCardneutral {
+  background:
+    radial-gradient(circle at top right, rgba(148, 163, 184, 0.12), transparent 34%),
+    linear-gradient(155deg, rgba(22, 28, 39, 0.96), rgba(14, 18, 28, 0.98));
+  border-color: rgba(148, 163, 184, 0.18);
+}
+
+[data-theme='dark'] .eventCardneutral::before {
+  background: linear-gradient(90deg, rgba(148, 163, 184, 0.75), rgba(148, 163, 184, 0.18));
+}
+
+[data-theme='dark'] .eventCardgoal {
+  background:
+    radial-gradient(circle at top right, rgba(255, 128, 81, 0.2), transparent 34%),
+    linear-gradient(155deg, rgba(56, 26, 20, 0.94), rgba(29, 16, 14, 0.98));
+  border-color: rgba(255, 122, 86, 0.34);
+  box-shadow: inset 0 1px 0 rgba(255, 187, 160, 0.08), 0 22px 34px rgba(255, 112, 67, 0.14);
+}
+
+[data-theme='dark'] .eventCardgoal::before {
+  background: linear-gradient(90deg, rgba(255, 112, 67, 0.98), rgba(255, 161, 88, 0.24));
+}
+
+[data-theme='dark'] .eventCardwarning {
+  background:
+    radial-gradient(circle at top right, rgba(255, 214, 102, 0.18), transparent 34%),
+    linear-gradient(155deg, rgba(54, 41, 16, 0.94), rgba(29, 22, 10, 0.98));
+  border-color: rgba(245, 188, 64, 0.32);
+  box-shadow: inset 0 1px 0 rgba(255, 224, 148, 0.08), 0 22px 34px rgba(245, 158, 11, 0.12);
+}
+
+[data-theme='dark'] .eventCardwarning::before {
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.94), rgba(250, 204, 21, 0.24));
+}
+
+[data-theme='dark'] .eventCarddanger {
+  background:
+    radial-gradient(circle at top right, rgba(255, 118, 118, 0.18), transparent 34%),
+    linear-gradient(155deg, rgba(58, 20, 24, 0.94), rgba(31, 12, 17, 0.98));
+  border-color: rgba(248, 113, 113, 0.32);
+  box-shadow: inset 0 1px 0 rgba(255, 180, 180, 0.08), 0 22px 34px rgba(239, 68, 68, 0.14);
+}
+
+[data-theme='dark'] .eventCarddanger::before {
+  background: linear-gradient(90deg, rgba(248, 113, 113, 0.96), rgba(251, 113, 133, 0.24));
+}
+
+[data-theme='dark'] .eventCardaccent {
+  background:
+    radial-gradient(circle at top right, rgba(164, 141, 255, 0.18), transparent 34%),
+    linear-gradient(155deg, rgba(34, 22, 63, 0.94), rgba(18, 12, 34, 0.98));
+  border-color: rgba(139, 122, 255, 0.32);
+  box-shadow: inset 0 1px 0 rgba(198, 188, 255, 0.08), 0 22px 34px rgba(120, 123, 255, 0.14);
+}
+
+[data-theme='dark'] .eventCardaccent::before {
+  background: linear-gradient(90deg, rgba(120, 123, 255, 0.96), rgba(168, 85, 247, 0.24));
+}
+
+[data-theme='dark'] .eventCardinfo {
+  background:
+    radial-gradient(circle at top right, rgba(117, 214, 255, 0.18), transparent 34%),
+    linear-gradient(155deg, rgba(17, 34, 60, 0.94), rgba(10, 20, 39, 0.98));
+  border-color: rgba(96, 165, 250, 0.3);
+  box-shadow: inset 0 1px 0 rgba(191, 219, 254, 0.08), 0 22px 34px rgba(59, 130, 246, 0.12);
+}
+
+[data-theme='dark'] .eventCardinfo::before {
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.96), rgba(56, 189, 248, 0.24));
+}
+
+[data-theme='dark'] .eventCardsuccess {
+  background:
+    radial-gradient(circle at top right, rgba(134, 239, 172, 0.16), transparent 34%),
+    linear-gradient(155deg, rgba(19, 47, 37, 0.94), rgba(9, 25, 20, 0.98));
+  border-color: rgba(74, 222, 128, 0.28);
+  box-shadow: inset 0 1px 0 rgba(167, 243, 208, 0.08), 0 22px 34px rgba(34, 197, 94, 0.12);
+}
+
+[data-theme='dark'] .eventCardsuccess::before {
+  background: linear-gradient(90deg, rgba(34, 197, 94, 0.94), rgba(74, 222, 128, 0.22));
+}
+
+[data-theme='dark'] .warningText {
+  color: #ffd38f;
+}
+
+[data-theme='dark'] .eventOperator {
+  color: #c4d2ea;
+}
+
+[data-theme='dark'] .eventMessage {
+  color: #f3f7fd;
+}
+
+[data-theme='dark'] .eventScoreHint {
+  color: #b6c3da;
+}
+
+[data-theme='dark'] .eventMarkergoal {
+  color: #ffb79a;
+}
+
+[data-theme='dark'] .eventMarkerwarning {
+  color: #f7d07f;
+}
+
+[data-theme='dark'] .eventMarkerdanger {
+  color: #fecaca;
+}
+
+[data-theme='dark'] .eventMarkeraccent,
+[data-theme='dark'] .overrideBadge {
+  color: #cbd5ff;
+}
+
+[data-theme='dark'] .eventMarkerinfo,
+[data-theme='dark'] .statusPillupcoming,
+[data-theme='dark'] .statusPillpending {
+  color: #b4e6ff;
+}
+
+[data-theme='dark'] .statusPillhalftime {
+  color: #f7d07f;
+}
+
+[data-theme='dark'] .statusPillcompleted {
+  color: #a8f0ca;
+}

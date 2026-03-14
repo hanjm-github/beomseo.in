@@ -23,6 +23,7 @@ from models import lost_found  # noqa: F401 ensure models are registered
 from models import countdown_event  # noqa: F401 ensure models are registered
 from models import gomsol_market  # noqa: F401 ensure models are registered
 from models import auth_token  # noqa: F401 ensure models are registered
+from models import sports_league  # noqa: F401 ensure models are registered
 from utils.cache import init_cache
 from utils.rate_limit import (
     init_limiter,
@@ -206,6 +207,7 @@ def create_app(config_name=None):
     from routes.votes import votes_bp
     from routes.lost_found import lost_found_bp
     from routes.gomsol_market import gomsol_market_bp
+    from routes.sports_league import sports_league_bp
 
     # Apply shared write throttling before blueprint registration.
     write_limit = app.config.get('RATELIMIT_WRITE_LIMIT', '120 per minute')
@@ -218,6 +220,7 @@ def create_app(config_name=None):
     apply_blueprint_write_limit(votes_bp, write_limit)
     apply_blueprint_write_limit(lost_found_bp, write_limit)
     apply_blueprint_write_limit(gomsol_market_bp, write_limit)
+    apply_blueprint_write_limit(sports_league_bp, write_limit)
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(notices_bp)
@@ -229,6 +232,7 @@ def create_app(config_name=None):
     app.register_blueprint(votes_bp)
     app.register_blueprint(lost_found_bp)
     app.register_blueprint(gomsol_market_bp)
+    app.register_blueprint(sports_league_bp)
 
     # Health check endpoint
     @app.route('/api/health')
