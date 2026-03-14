@@ -23,8 +23,6 @@ import Attachments from '../../components/notices/Attachments';
 import { noticesApi } from '../../api/notices';
 import { sanitizeRichHtml, toPlainText } from '../../security/htmlSanitizer';
 import { useAuth } from '../../context/AuthContext';
-
-const VALID_CATEGORIES = ['school', 'council'];
 const TAG_SPLIT_REGEX = /[,\n;，]+/;
 
 function safeGetLocalStorageItem(key) {
@@ -107,12 +105,6 @@ export default function ComposeView({ mode = 'create' }) {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [checkingEditPermission, setCheckingEditPermission] = useState(mode === 'edit');
   const [hasEditPermission, setHasEditPermission] = useState(mode !== 'edit');
-
-  useEffect(() => {
-    if (!VALID_CATEGORIES.includes(category)) {
-      navigate('/notices/school', { replace: true });
-    }
-  }, [category, navigate]);
 
   useEffect(() => {
     if (authLoading || !canManageNotices) return;

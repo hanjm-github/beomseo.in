@@ -16,7 +16,7 @@
  * - Owns route-level user flows and composes feature components.
  */
 import { useEffect, useState, useMemo } from 'react';
-import { useNavigate, useParams, Link } from 'react-router-dom';
+import { useNavigate, useParams, Link, useLocation } from 'react-router-dom';
 import {
   Pin,
   AlertTriangle,
@@ -35,14 +35,14 @@ import SafeHtml from '../../components/security/SafeHtml';
 import { useAuth } from '../../context/AuthContext';
 import RoleName from '../../components/RoleName/RoleName';
 import CommentsPanel from '../../components/notices/CommentsPanel';
-
-const VALID_CATEGORIES = ['school', 'council'];
+import { buildAuthRedirectState } from '../../utils/authRedirect';
 
 /**
  * DetailView module entry point.
  */
 export default function DetailView() {
   const { category = 'school', id } = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
 
@@ -51,10 +51,6 @@ export default function DetailView() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (!VALID_CATEGORIES.includes(category)) {
-      navigate('/notices/school', { replace: true });
-      return;
-    }
     let cancelled = false;
     const timer = setTimeout(() => {
       setLoading(true);
@@ -76,11 +72,11 @@ export default function DetailView() {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [category, id, navigate]);
+  }, [category, id]);
 
   const handleReact = async (type) => {
     if (!isAuthenticated) {
-      navigate('/login');
+      navigate('/login', { state: buildAuthRedirectState(location) });
       return;
     }
     if (!notice) return;

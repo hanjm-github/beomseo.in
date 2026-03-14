@@ -17,19 +17,23 @@
  * Login page component for beomseo.in website.
  */
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { LogIn, AlertCircle } from 'lucide-react';
 import { APP_NAME } from '../config/env';
+import { resolveAuthRedirectTarget } from '../utils/authRedirect';
 import './LoginPage.css';
 
 function LoginPage() {
+    const location = useLocation();
     const navigate = useNavigate();
     const { login, error, clearError } = useAuth();
     const [nickname, setNickname] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [localError, setLocalError] = useState('');
+    const redirectTarget = resolveAuthRedirectTarget(location.state?.from);
+    const authEntryState = location.state?.from ? { from: location.state.from } : undefined;
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -51,7 +55,7 @@ function LoginPage() {
         setLoading(false);
 
         if (result.success) {
-            navigate('/');
+            navigate(redirectTarget, { replace: true });
         }
     };
 
@@ -115,7 +119,7 @@ function LoginPage() {
                 <div className="login-footer">
                     <p>
                         계정이 없으신가요?{' '}
-                        <Link to="/signup">회원가입</Link>
+                        <Link to="/signup" state={authEntryState}>회원가입</Link>
                     </p>
                 </div>
             </div>

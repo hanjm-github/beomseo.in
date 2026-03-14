@@ -24,7 +24,7 @@ import {
   Users,
   ChevronRight,
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 import CountdownWidget from '../../components/CountdownWidget';
 import AcademicUpcomingCard from '../../components/AcademicUpcomingCard/AcademicUpcomingCard';
@@ -35,6 +35,7 @@ import { noticesApi } from '../../api/notices';
 import { useAuth } from '../../context/AuthContext';
 import { APP_NAME } from '../../config/env';
 import { getNextAcademicEvent } from '../../features/academicCalendar/utils';
+import { buildAuthRedirectState } from '../../utils/authRedirect';
 
 import styles from './MainPage.module.css';
 
@@ -42,6 +43,7 @@ import styles from './MainPage.module.css';
  * MainPage module entry point.
  */
 export default function MainPage() {
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState('council');
   const [announcements, setAnnouncements] = useState({ school: [], council: [] });
   const [countdownEvent, setCountdownEvent] = useState(null);
@@ -99,6 +101,7 @@ export default function MainPage() {
   const upcomingAcademicHref = nextAcademicEvent
     ? `/school-info/calendar?month=${nextAcademicEvent.startDate.slice(0, 7)}&event=${nextAcademicEvent.id}`
     : '/school-info/calendar';
+  const authRedirectState = buildAuthRedirectState(location);
 
   return (
     <div className={styles.page}>
@@ -121,7 +124,7 @@ export default function MainPage() {
                   <ChevronRight size={18} />
                 </Link>
                 {!isAuthenticated && (
-                  <Link to="/login" className={styles.heroSecondary}>
+                  <Link to="/login" state={authRedirectState} className={styles.heroSecondary}>
                     로그인
                   </Link>
                 )}

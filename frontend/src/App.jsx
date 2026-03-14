@@ -30,6 +30,7 @@ const SchoolInfoPage = lazy(() => import('./pages/SchoolInfoPage'));
 const GalleryPage = lazy(() => import('./pages/GalleryPage'));
 const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage'));
 const TermsOfServicePage = lazy(() => import('./pages/TermsOfServicePage'));
+const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 
 import './styles/globals.css';
 
@@ -63,9 +64,21 @@ function App() {
                 <Route path="/notices/*" element={<NoticesPage />} />
                 <Route path="/community/*" element={<CommunityRouter />} />
                 <Route path="/school-info/*" element={<SchoolInfoPage />} />
-                <Route path="/gallery/*" element={<GalleryPage />} />
+                <Route path="/gallery" element={<GalleryPage />} />
                 <Route path="/privacy" element={<PrivacyPolicyPage />} />
                 <Route path="/terms" element={<TermsOfServicePage />} />
+                <Route
+                  path="*"
+                  element={
+                    <NotFoundPage
+                      eyebrow="페이지 없음"
+                      title="찾을 수 없는 페이지입니다."
+                      description="입력한 주소가 잘못되었거나 페이지가 이동되었습니다. 홈이나 공지 메뉴에서 다시 시작해 주세요."
+                      primaryAction={{ label: '홈으로', to: '/' }}
+                      secondaryActions={[{ label: '공지 보기', to: '/notices/school' }]}
+                    />
+                  }
+                />
               </Routes>
             </Suspense>
           </AppLayout>

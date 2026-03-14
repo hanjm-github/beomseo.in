@@ -29,6 +29,7 @@ import {
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { APP_NAME } from '../../config/env';
+import { buildAuthRedirectState, resolveAuthRedirectTarget } from '../../utils/authRedirect';
 import styles from './Header.module.css';
 import RoleName from '../RoleName/RoleName';
 
@@ -77,6 +78,8 @@ export default function Header() {
   const { user, isAuthenticated, logout, loading } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const authRedirectState = buildAuthRedirectState(location);
+  const logoutRedirectTarget = resolveAuthRedirectTarget(location);
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null);
@@ -100,7 +103,7 @@ export default function Header() {
   const handleLogout = async () => {
     await logout();
     setShowUserMenu(false);
-    navigate('/');
+    navigate(logoutRedirectTarget, { replace: true });
   };
 
   const closeMobileMenu = () => {
@@ -213,7 +216,7 @@ export default function Header() {
                 )}
               </div>
             ) : (
-              <Link to="/login" className={styles.loginButton}>
+              <Link to="/login" state={authRedirectState} className={styles.loginButton}>
                 <User size={18} />
                 <span>로그인</span>
               </Link>
@@ -285,7 +288,12 @@ export default function Header() {
                   </button>
                 </>
               ) : (
-                <Link to="/login" className={styles.mobileAuthButton} onClick={closeMobileMenu}>
+                <Link
+                  to="/login"
+                  state={authRedirectState}
+                  className={styles.mobileAuthButton}
+                  onClick={closeMobileMenu}
+                >
                   <User size={16} />
                   <span>로그인 / 회원가입</span>
                 </Link>

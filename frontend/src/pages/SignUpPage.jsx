@@ -17,10 +17,11 @@
  * Sign Up page component for beomseo.in website.
  */
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { UserPlus, AlertCircle, Info, Eye, EyeOff } from 'lucide-react';
 import { APP_NAME } from '../config/env';
+import { resolveAuthRedirectTarget } from '../utils/authRedirect';
 import './LoginPage.css';
 
 const PASSWORD_MIN_LENGTH = 8;
@@ -36,6 +37,7 @@ function getPasswordChecks(password) {
 }
 
 function SignUpPage() {
+    const location = useLocation();
     const navigate = useNavigate();
     const { register, error, clearError } = useAuth();
     const [nickname, setNickname] = useState('');
@@ -46,6 +48,8 @@ function SignUpPage() {
     const [loading, setLoading] = useState(false);
     const [localError, setLocalError] = useState('');
     const trimmedNickname = nickname.trim();
+    const redirectTarget = resolveAuthRedirectTarget(location.state?.from);
+    const authEntryState = location.state?.from ? { from: location.state.from } : undefined;
     const passwordChecks = getPasswordChecks(password);
     const isPasswordStrong = Object.values(passwordChecks).every(Boolean);
     const isPasswordMatch = password.length > 0 && password === confirmPassword;
@@ -110,7 +114,7 @@ function SignUpPage() {
         setLoading(false);
 
         if (result.success) {
-            navigate('/');
+            navigate(redirectTarget, { replace: true });
         }
     };
 
@@ -251,7 +255,7 @@ function SignUpPage() {
                 <div className="login-footer">
                     <p>
                         이미 계정이 있으신가요?{' '}
-                        <Link to="/login">로그인</Link>
+                        <Link to="/login" state={authEntryState}>로그인</Link>
                     </p>
                 </div>
             </div>

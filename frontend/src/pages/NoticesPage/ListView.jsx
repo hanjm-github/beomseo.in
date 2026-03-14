@@ -15,14 +15,12 @@
  * - Owns route-level user flows and composes feature components.
  */
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams, Link, useLocation } from 'react-router-dom';
+import { useParams, Link, useLocation } from 'react-router-dom';
 import NoticeToolbar from '../../components/notices/NoticeToolbar';
 import NoticeList from '../../components/notices/NoticeList';
 import styles from '../../components/notices/notices.module.css';
 import { noticesApi } from '../../api/notices';
 import { useAuth } from '../../context/AuthContext';
-
-const VALID_CATEGORIES = ['school', 'council'];
 const PAGE_SIZE = 10;
 
 /**
@@ -30,7 +28,6 @@ const PAGE_SIZE = 10;
  */
 export default function ListView() {
   const { category = 'school' } = useParams();
-  const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
   const canCreate = ['admin', 'student_council'].includes(user?.role);
@@ -43,12 +40,6 @@ export default function ListView() {
   const [page, setPage] = useState(1);
   const [data, setData] = useState({ items: [], total: 0 });
   const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (!VALID_CATEGORIES.includes(category)) {
-      navigate('/notices/school', { replace: true });
-    }
-  }, [category, navigate]);
 
   useEffect(() => {
     let cancelled = false;

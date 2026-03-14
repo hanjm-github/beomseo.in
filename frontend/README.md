@@ -119,9 +119,10 @@ graph TD
     R --> N["/notices/*  NoticesPage"]
     R --> C["/community/*  CommunityRouter"]
     R --> SI["/school-info/*  SchoolInfoPage"]
-    R --> G["/gallery/*  GalleryPage"]
+    R --> G["/gallery  GalleryPage"]
     R --> P["/privacy  PrivacyPolicyPage"]
     R --> T["/terms  TermsOfServicePage"]
+    R --> X["/*  NotFoundPage"]
 
     N --> N1["/notices/:category"]
     N --> N2["/notices/:category/new"]
@@ -139,6 +140,68 @@ graph TD
 ```
 
 세부 라우트/기능별 연결은 [frontend-code-map.md](docs/frontend-code-map.md)에서 확인할 수 있습니다.
+
+## 404 처리 및 Nginx 운영 메모
+
+- React 라우터는 존재하지 않는 경로를 전역 `NotFoundPage`로 렌더링합니다.
+- `community`, `notices`, `school-info` 내부의 잘못된 하위 경로도 더 이상 기본 목록으로 리다이렉트하지 않고 404 화면을 보여줍니다.
+- 브라우저가 이미 로드된 뒤의 클라이언트 내비게이션에서는 HTTP 상태코드를 바꿀 수 없습니다. 직접 URL 진입/새로고침 시의 HTTP `404`는 Nginx에서 route allowlist로 제어해야 합니다.
+- 프론트 라우트를 추가/변경하면 React 라우트와 함께 Nginx allowlist도 반드시 같이 갱신해야 합니다.
+
+예시 스케치:
+
+```nginx
+map $uri $spa_route_ok {
+    default 0;
+    ~^/$ 1;
+    ~^/(login|signup|privacy|terms|gallery)/?$ 1;
+    ~^/notices/?$ 1;
+    ~^/notices/(school|council)/?$ 1;
+    ~^/notices/(school|council)/new/?$ 1;
+    ~^/notices/(school|council)/[0-9]+/?$ 1;
+    ~^/notices/(school|council)/[0-9]+/edit/?$ 1;
+    ~^/community/?$ 1;
+    ~^/community/(free|club-recruit|subjects|petition|survey|vote|lost-found|gomsol-market)/?$ 1;
+    ~^/community/(free|club-recruit|subjects|petition|survey|vote|lost-found|gomsol-market)/new/?$ 1;
+    ~^/community/(free|club-recruit|subjects|petition|survey|vote|lost-found|gomsol-market)/[0-9]+/?$ 1;
+    ~^/community/survey/[0-9]+/(edit|results)/?$ 1;
+    ~^/school-info/?$ 1;
+    ~^/school-info/(timetable|teachers|calculator|meal|calendar)/?$ 1;
+}
+
+server {
+    root /var/www/beomseo/frontend/dist;
+    index index.html;
+
+    location /api/ {
+        proxy_pass http://backend_upstream;
+    }
+
+    location /assets/ {
+        try_files $uri =404;
+    }
+
+    location / {
+        try_files $uri $uri/ @spa;
+    }
+
+    location @spa {
+        error_page 404 /index.html;
+
+        if ($spa_route_ok = 0) {
+            return 404;
+        }
+
+        rewrite ^ /index.html break;
+    }
+}
+```
+
+주의:
+
+- 위 예시는 운영 서버 블록 구조에 맞게 조정해야 합니다.
+- `/assets`, 이미지, favicon 같은 정적 파일 요청은 반드시 실제 파일 기준 `404`를 유지해야 합니다.
+- `/api/...` 경로는 SPA fallback에 포함하지 않습니다.
 
 ## 백엔드 인증 계약
 

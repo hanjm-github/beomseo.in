@@ -47,25 +47,27 @@
 | `/notices/*` | `NoticesPage` |
 | `/community/*` | `CommunityRouter` |
 | `/school-info/*` | `SchoolInfoRouter` (`src/pages/SchoolInfo/index.jsx`) |
-| `/gallery/*` | `GalleryPage` |
+| `/gallery` | `GalleryPage` |
 | `/privacy` | `PrivacyPolicyPage` |
 | `/terms` | `TermsOfServicePage` |
+| `*` | `NotFoundPage` |
 
 ### 3.2 공지 라우트 (`src/pages/NoticesPage/index.jsx`)
 
 | 경로 | 요소 |
 |---|---|
 | `/notices` | `Navigate -> /notices/school` |
-| `/notices/:category` | `ListView` |
+| `/notices/:category` | `ListView` (`school`, `council`만 허용) |
 | `/notices/:category/new` | `ComposeView(mode=create)` |
-| `/notices/:category/:id` | `DetailView` |
+| `/notices/:category/:id` | `DetailView` (`id` 숫자 경로만 허용) |
 | `/notices/:category/:id/edit` | `ComposeView(mode=edit)` |
+| `/notices/*` (invalid path) | `NotFoundPage` |
 
 ### 3.3 커뮤니티 라우트 (`src/pages/CommunityRouter.jsx`)
 
 ```mermaid
 graph TD
-    CR["CommunityRouter"] -->|index| DEF["Navigate → /community/free/"]
+    CR["CommunityRouter"] -->|index| DEF["Navigate → /community/free"]
     CR --> F["free/*"]
     CR --> CLB["club-recruit/*"]
     CR --> SUB["subjects/*"]
@@ -74,7 +76,7 @@ graph TD
     CR --> VOT["vote/*"]
     CR --> LF["lost-found/*"]
     CR --> GM["gomsol-market/*"]
-    CR -->|"*"| FALL["Navigate → /community/free/"]
+    CR -->|"*"| FALL["NotFoundPage"]
 
     F --> F1["FreeBoardListView"]
     F --> F2["FreeBoardComposeView(create)"]
@@ -114,35 +116,35 @@ graph TD
 
 | 경로 | 요소 |
 |---|---|
-| `/community` | `Navigate` → `/community/free/` |
+| `/community` | `Navigate` → `/community/free` |
 | `/community/free` | `FreeBoardListView` |
 | `/community/free/new` | `FreeBoardComposeView(mode=create)` |
-| `/community/free/:id` | `FreeBoardDetailView` |
-| `/community/free/:id/edit` | `FreeBoardComposeView(mode=edit)` |
+| `/community/free/:id` | `FreeBoardDetailView` (`id` 숫자 경로만 허용) |
+| `/community/free/:id/edit` | `FreeBoardComposeView(mode=edit)` (`id` 숫자 경로만 허용) |
 | `/community/club-recruit` | `ClubRecruitListPage` |
 | `/community/club-recruit/new` | `ClubRecruitComposePage` |
-| `/community/club-recruit/:id` | `ClubRecruitDetailPage` |
+| `/community/club-recruit/:id` | `ClubRecruitDetailPage` (`id` 숫자 경로만 허용) |
 | `/community/subjects` | `SubjectsListPage` |
 | `/community/subjects/new` | `SubjectComposePage` |
-| `/community/subjects/:id` | `SubjectDetailPage` |
+| `/community/subjects/:id` | `SubjectDetailPage` (`id` 숫자 경로만 허용) |
 | `/community/petition` | `PetitionListView` |
 | `/community/petition/new` | `PetitionComposeView` |
-| `/community/petition/:id` | `PetitionDetailView` |
+| `/community/petition/:id` | `PetitionDetailView` (`id` 숫자 경로만 허용) |
 | `/community/survey` | `SurveyExchangeListView` |
 | `/community/survey/new` | `SurveyExchangeComposePage` |
-| `/community/survey/:id` | `SurveyExchangeDetailView` |
-| `/community/survey/:id/edit` | `SurveyExchangeComposePage` |
-| `/community/survey/:id/results` | `SurveyResultsView` |
+| `/community/survey/:id` | `SurveyExchangeDetailView` (`id` 숫자 경로만 허용) |
+| `/community/survey/:id/edit` | `SurveyExchangeComposePage` (`id` 숫자 경로만 허용) |
+| `/community/survey/:id/results` | `SurveyResultsView` (`id` 숫자 경로만 허용) |
 | `/community/vote` | `VoteListView` |
 | `/community/vote/new` | `VoteComposeView` |
-| `/community/vote/:id` | `VoteDetailView` |
+| `/community/vote/:id` | `VoteDetailView` (`id` 숫자 경로만 허용) |
 | `/community/lost-found` | `LostFoundListView` |
 | `/community/lost-found/new` | `LostFoundComposeView` |
-| `/community/lost-found/:id` | `LostFoundDetailView` |
+| `/community/lost-found/:id` | `LostFoundDetailView` (`id` 숫자 경로만 허용) |
 | `/community/gomsol-market` | `GomsolMarketListView` |
 | `/community/gomsol-market/new` | `GomsolMarketComposeView` |
-| `/community/gomsol-market/:id` | `GomsolMarketDetailView` |
-| `/community/*` (fallback) | `Navigate` → `/community/free/` |
+| `/community/gomsol-market/:id` | `GomsolMarketDetailView` (`id` 숫자 경로만 허용) |
+| `/community/*` (invalid path) | `NotFoundPage` |
 
 ### 3.4 학교 생활 정보 라우트 (`src/pages/SchoolInfo/index.jsx`)
 
@@ -154,7 +156,7 @@ graph TD
 | `/school-info/calculator` | `SchoolInfoPlaceholderPage(점공 계산기)` |
 | `/school-info/meal` | `SchoolInfoPlaceholderPage(오늘의 급식)` |
 | `/school-info/calendar` | `AcademicCalendarPage` |
-| `/school-info/*` (fallback) | `Navigate` → `/school-info` |
+| `/school-info/*` (invalid path) | `NotFoundPage` |
 
 ## 4. 기능별 수직 슬라이스 탐색
 
@@ -233,6 +235,7 @@ graph TD
 ## 10. 변경 시 동기화 규칙
 
 - 라우트 변경: 본 문서 + `frontend-architecture.md` 동시 갱신
+- 라우트 변경: 운영 Nginx SPA allowlist도 함께 갱신
 - API 변경: `frontend-api-reference.md` 동시 갱신
 - 트래킹 변경: `analytics-tracking.md` 동시 갱신
 - 역할 표시 로직(`src/utils/roleDisplay.js`) 변경: 본 문서 갱신
