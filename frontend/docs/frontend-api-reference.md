@@ -18,6 +18,7 @@
 - 스포츠리그 클라이언트: `src/api/sportsLeague.js`의 전용 `sportsApi` Axios 인스턴스
 - 인증 채널: `withCredentials=true` (cookie 기반)
 - CSRF 헤더: unsafe method에서 `X-CSRF-TOKEN` 자동 추가 (두 인스턴스 모두 동일)
+- 수학여행 추가 CSRF 헤더: `X-Field-Trip-CSRF` (`field_trip_csrf_token` 쿠키와 쌍으로 사용)
 - 날짜 문자열 정규화: timezone 없는 ISO 문자열에 `Z` 보정
 - mock fallback: `src/api/mockPolicy.js` (`DEV + VITE_ENABLE_API_MOCKS=1 + !error.response`)
 
@@ -250,11 +251,14 @@
 | `unlockClass(classId, password)` | `POST /api/community/field-trip/classes/:classId/unlock` | 예 | 성공 시 해당 반 unlock 상태를 `sessionStorage`에 저장 |
 | `listPosts(classId)` | `GET /api/community/field-trip/classes/:classId/posts` | 예 | 반별 게시글 목록 |
 | `getPost(classId, postId)` | `GET /api/community/field-trip/classes/:classId/posts/:postId` | 예 | 게시글 상세 |
-| `createPost(classId, payload)` | `POST /api/community/field-trip/classes/:classId/posts` | 예 | 닉네임/제목/본문/첨부 기반 plain-text 글 작성 |
-| `upload(file)` | `POST /api/community/field-trip/uploads` | 예 | 첨부 업로드, 전역 업로드 제한 재사용 |
+| `createPost(classId, payload)` | `POST /api/community/field-trip/classes/:classId/posts` | 예 | 잠금 해제된 반에서 anonymous/로그인 모두 작성 가능, rich HTML 본문 저장 |
+| `updatePost(classId, postId, payload)` | `PUT /api/community/field-trip/classes/:classId/posts/:postId` | 예 | 로그인 작성자 또는 운영진만 수정 가능 |
+| `deletePost(classId, postId)` | `DELETE /api/community/field-trip/classes/:classId/posts/:postId` | 예 | 로그인 작성자 또는 운영진만 삭제 가능 |
+| `upload(file)` | `POST /api/community/field-trip/uploads` | 예 | 첨부 업로드, 전역 업로드 제한 재사용, FastAPI base URL 보정 |
 | `getScoreboard()` | `GET /api/community/field-trip/scoreboard` | 예 | 10개 반 총점 배열 |
-| `adjustScore(classId, delta)` | `PATCH /api/community/field-trip/classes/:classId/score` | 예 | 학생회/관리자 전용 점수 `+/-1` 즉시 반영 |
-| `updateClassPassword(classId, password)` | `PUT /api/community/field-trip/classes/:classId/password` | 예 | 학생회/관리자 전용 게시판 비밀번호 변경 |
+| `adjustScore(classId, delta)` | `PATCH /api/community/field-trip/classes/:classId/score` | 예 | 학생회/관리자 전용 점수 `±5` 즉시 반영 |
+| `updateClassPassword(classId, password)` | `PUT /api/community/field-trip/classes/:classId/password` | 예 | `admin` 전용 게시판 비밀번호 변경 |
+| `updateBoardDescription(classId, boardDescription)` | `PUT /api/community/field-trip/classes/:classId/board-description` | 예 | `admin` 전용 게시판 설명 수정 |
 
 추가 export:
 
@@ -267,11 +271,20 @@
 - `FieldTripTab = 'mission' | 'scoreboard'`
 - `FieldTripClassId = '1' | ... | '10'`
 - `FieldTripAttachment = { id, name, size, url, mime, kind }`
-- `FieldTripMissionPost = { id, classId, nickname, title, body, attachments, createdAt }`
-- `FieldTripClassSummary = { classId, label, isUnlocked, postCount }`
+- `FieldTripMissionPost = { id, classId, authorUserId, authorRole, nickname, title, body, attachments, createdAt, updatedAt }`
+- `FieldTripClassSummary = { classId, label, isUnlocked, postCount, boardDescription }`
 - `FieldTripScoreRow = { classId, label, totalScore }` (`0` ~ `10000`)
-- `FieldTripScoreDeltaRequest = { delta: -1 | 1 }`
+- `FieldTripScoreDeltaRequest = { delta: -5 | 5 }`
 - `FieldTripPasswordUpdateRequest = { password: string }`
+- `FieldTripBoardDescriptionUpdateRequest = { boardDescription: string }`
+
+Field Trip 추가 계약 요약:
+
+- anonymous 글은 `authorRole='anonymous'`, `authorUserId=0`으로 정규화합니다.
+- 로그인 사용자가 `createPost()`에 `nickname`을 넣어도 UI는 계정 닉네임/역할 기준으로 표시합니다.
+- `body`는 plain text가 아니라 rich HTML이며, preview/빈 값 검사는 `toPlainText()` 기준으로 수행합니다.
+- `fastapiApi`의 기본 `X-CSRF-TOKEN` 외에 `fieldTripApi`는 `X-Field-Trip-CSRF`를 추가로 붙입니다.
+- 첨부와 본문 이미지 URL은 `normalizeUploadResponse(..., FASTAPI_BASE_URL)`와 `toAbsoluteApiUrl()`를 통해 FastAPI origin으로 절대경로화됩니다.
 
 mock 시드 요약:
 
@@ -285,7 +298,7 @@ mock 시드 요약:
 
 | 함수 | 역할 |
 |---|---|
-| `toAbsoluteApiUrl(url)` | 상대 URL을 `VITE_API_URL` 기준 절대 URL로 보정 |
+| `toAbsoluteApiUrl(url)` | 상대 URL을 기본적으로 `VITE_API_URL` 기준으로 보정하되, field-trip 업로드 경로는 `FASTAPI_BASE_URL`로 분기 |
 | `normalizePaginatedResponse(data, fallbackPageSize)` | 페이지네이션 응답 키 정규화 (`pageSize`/`page_size`) |
 | `normalizeUploadResponse(data)` | 업로드 응답 URL 필드 절대경로 보정 |
 

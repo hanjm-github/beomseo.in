@@ -10,6 +10,7 @@ from ..deps import (
     CurrentUser,
     DbSession,
     FieldTripUnlockedClasses,
+    OptionalCurrentUser,
     SettingsDep,
     encode_field_trip_unlock_token,
     generate_field_trip_csrf_token,
@@ -144,10 +145,13 @@ async def create_field_trip_post(
     request: Request,
     db: DbSession,
     settings: SettingsDep,
-    current_user: CurrentUser,
+    current_user: OptionalCurrentUser,
     unlocked_classes: set[str] = Depends(require_field_trip_class_unlocked),
     _: None = Depends(require_field_trip_write_csrf),
 ):
+    # Anonymous creation is allowed after the class board has been unlocked, so
+    # the service resolves the final author identity from either the JWT user or
+    # the nickname supplied in the request body.
     client_ip = get_client_ip(request, settings)
     user_agent = request.headers.get('user-agent', '')
     return await create_post(
@@ -272,8 +276,10 @@ async def put_field_trip_class_password(
     class_id: str,
     body: FieldTripPasswordUpdateRequest,
     db: DbSession,
-    _: object = Depends(require_role('student_council', 'admin')),
+    _: object = Depends(require_role('admin')),
 ):
+    # Board credentials are now restricted to admins so student-council users
+    # can manage scores without being able to rotate every class password.
     return await update_class_password(db, class_id, body.password)
 
 
@@ -282,6 +288,8 @@ async def put_field_trip_board_description(
     class_id: str,
     body: FieldTripBoardDescriptionUpdateRequest,
     db: DbSession,
-    _: object = Depends(require_role('student_council', 'admin')),
+    _: object = Depends(require_role('admin')),
 ):
+    # Description edits change the board-level contract shown to every visitor,
+    # so they follow the same admin-only policy as password rotation.
     return await update_board_description(db, class_id, body.boardDescription)

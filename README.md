@@ -61,7 +61,7 @@
 
 **beomseo.in**은 범서고등학교 17대 학생회 정보기술부에서 기획·개발한 **학생 커뮤니티 웹 플랫폼**입니다.
 
-학생들이 학교 생활에서 필요한 정보를 한곳에서 쉽게 찾고, 서로 소통할 수 있는 공간을 만들기 위해 시작되었습니다. 공지사항 확인부터 자유 게시판, 동아리 모집, 학생 청원, 설문조사, 실시간 투표, 분실물 게시판, 교내 중고거래, 그리고 학교 생활 정보 허브 안의 스포츠리그 문자중계·팀별 라인업·개인별 순위까지 — 범서고 학생이라면 누구나 참여할 수 있습니다.
+학생들이 학교 생활에서 필요한 정보를 한곳에서 쉽게 찾고, 서로 소통할 수 있는 공간을 만들기 위해 시작되었습니다. 공지사항 확인부터 자유 게시판, 동아리 모집, 학생 청원, 설문조사, 실시간 투표, 분실물 게시판, 교내 중고거래, 수학여행 반별 미션 게시판, 그리고 학교 생활 정보 허브 안의 스포츠리그 문자중계·팀별 라인업·개인별 순위까지 — 범서고 학생이라면 누구나 참여할 수 있습니다.
 
 > **개발 철학**
 > 1. 첫째도 **개발의 편리함**, 둘째도 **학생들의 편리함** 🛠️
@@ -96,6 +96,7 @@
 - **설문 교환** — 크레딧 기반 설문 시스템
 - **실시간 투표** — 즉석 투표 생성 & 참여
 - **동아리 모집** — 학년별 모집 공고 + 승인
+- **수학여행 미션 보드** — 반별 비밀번호 확인, 익명/로그인 글 작성, 점수판 운영
 
 </td>
   </tr>
@@ -130,7 +131,7 @@
 |:---:|---|---|
 | 언어 | **Python** | |
 | 프레임워크 | **Flask 3.1** | 앱 팩토리 패턴 (메인 API) |
-|  | **FastAPI** | 스포츠리그 전용 비동기 서버 |
+|  | **FastAPI** | 스포츠리그 + 수학여행 전용 비동기 서버 |
 | ASGI 서버 | **Uvicorn** | FastAPI 런타임 |
 | ORM | **Flask-SQLAlchemy** / **async SQLAlchemy** | Flask·FastAPI 공유 DB |
 | DB | **MariaDB** (PyMySQL / aiomysql) | |
@@ -178,7 +179,7 @@ flowchart TB
         Utils["Utils (보안/캐시/업로드)"]
     end
 
-    subgraph FastAPIServer["⚡ 스포츠리그 서버 (FastAPI)"]
+    subgraph FastAPIServer["⚡ 실시간/이벤트 서버 (FastAPI)"]
         FastApp["FastAPI App"]
         AsyncRoutes["비동기 라우트"]
         SSE["SSE 스트리밍"]
@@ -218,8 +219,8 @@ flowchart TB
     → SQLAlchemy ORM → MariaDB
     → JSON 응답 → React 렌더링
 
-[스포츠리그 요청]
-사용자 클릭 → React Component → sportsApi (withCredentials) → FastAPI 라우터
+[FastAPI 요청]
+사용자 클릭 → React Component → fastapiApi / sportsApi (withCredentials) → FastAPI 라우터
     → JWT 쿠키 검증 (PyJWT)
     → 비동기 핸들러
     → async SQLAlchemy → MariaDB
@@ -264,15 +265,18 @@ beomseo.in/
 │   │   ├── deps.py            #   JWT 쿠키 인증 + 역할 검사
 │   │   ├── utils.py           #   sanitize, SSE 포맷터
 │   │   ├── routes/            #   FastAPI 라우터
-│   │   │   └── sports_league.py  # 문자중계/라인업 CRUD + SSE 스트림 엔드포인트
+│   │   │   ├── sports_league.py  # 문자중계/라인업 CRUD + SSE 스트림 엔드포인트
+│   │   │   └── field_trip.py     # 수학여행 반 게시판/점수판/업로드 엔드포인트
 │   │   └── services/          #   비동기 도메인 로직
 │   │       ├── sports_league.py       # 스냅샷, 이벤트 CRUD
 │   │       ├── sports_league_players.py  # 선수 라인업/개인기록 CRUD
 │   │       ├── sports_league_realtime.py  # asyncio pub/sub
-│   │       └── sports_league_seed.py  # 시드 데이터
+│   │       ├── sports_league_seed.py  # 시드 데이터
+│   │       └── field_trip.py          # 수학여행 게시판/점수판/업로드 로직
 │   ├── models/                # SQLAlchemy 모델
 │   ├── services/              # 도메인 서비스/실시간 보조 로직
 │   ├── scripts/               # 운영용 부트스트랩 스크립트
+│   │   └── bootstrap_field_trip.py    # 수학여행 기본 반/비밀번호 시드
 │   ├── utils/                 # 보안·캐시·업로드 유틸
 │   ├── uploads/               # 파일 업로드 저장소
 │   └── docs/                  # 백엔드 문서
@@ -346,7 +350,7 @@ python app.py
 
 > 💡 기본 개발 서버: `http://127.0.0.1:5000`
 
-#### 스포츠리그 FastAPI 서버 (선택)
+#### FastAPI 서버 (선택)
 
 ```bash
 cd backend
@@ -355,6 +359,7 @@ python -m uvicorn fastapi_app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
 > 💡 FastAPI 서버: `http://127.0.0.1:8000` (Swagger: `/docs`)
+> 스포츠리그 문자중계와 수학여행 게시판 API를 함께 제공합니다.
 
 ### 3단계: 프론트엔드 설정
 
@@ -405,7 +410,7 @@ npm run preview  # 빌드된 결과물 미리보기
 | [backend/README.md](backend/README.md) | 백엔드 종합 가이드 |
 | [backend/docs/backend_api.md](backend/docs/backend_api.md) | API 레퍼런스 |
 | [backend/docs/backend_architecture.md](backend/docs/backend_architecture.md) | 아키텍처 문서 |
-| [backend/docs/fastapi_deployment.md](backend/docs/fastapi_deployment.md) | FastAPI 스포츠리그 서버 배포 가이드 |
+| [backend/docs/fastapi_deployment.md](backend/docs/fastapi_deployment.md) | FastAPI 스포츠리그/수학여행 서버 배포 가이드 |
 
 ### 프론트엔드 문서
 

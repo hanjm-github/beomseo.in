@@ -1,15 +1,16 @@
 # 백엔드 아키텍처 문서
 
 `backend` 코드를 소스 오브 트루스로 정리한 아키텍처 문서입니다.  
-대상 독자는 신규 백엔드 개발자/운영자이며, 실제 런타임 정책(`app.py`, `config.py`, `utils/*`)을 중심으로 설명합니다.
+대상 독자는 신규 백엔드 개발자/운영자이며, 실제 런타임 정책(`app.py`, `config.py`, `utils/*`, `fastapi_app/*`)을 중심으로 설명합니다.
 
 ## 1. 시스템 개요
 
-이 서비스는 **Flask 단일 API 애플리케이션**이며, 인증·인가·캐시·레이트리밋·업로드 검증, 그리고 요청 메타데이터(IP/User-Agent) 감사 수집을 공통 유틸 계층에서 제공한 뒤 기능별 블루프린트(`routes/*`)로 도메인 API를 분리합니다.
+이 서비스는 **Flask 메인 API + FastAPI 실시간/이벤트 API** 구조이며, 두 런타임이 같은 인증 쿠키와 MariaDB 스키마를 공유합니다. Flask는 일반 커뮤니티/인증 기능을, FastAPI는 스포츠리그와 수학여행 게시판을 담당합니다.
 
 ```mermaid
 flowchart LR
     Client[웹 프론트엔드<br/>React/Vite] -->|HTTPS + Cookie + CSRF| Flask[Flask App]
+    Client -->|HTTPS + Cookie + CSRF| FastAPI[FastAPI App]
     Flask --> Auth[JWT + Token State<br/>utils/security.py<br/>utils/security_tokens.py]
     Flask --> RL[Rate Limiter<br/>utils/rate_limit.py]
     Flask --> Cache[Response Cache<br/>utils/cache.py]
@@ -18,9 +19,14 @@ flowchart LR
     Flask --> Routes[Blueprint Routes<br/>routes/*.py]
     ReqMeta --> ORM
     Routes --> ORM[SQLAlchemy Models<br/>models/*.py]
+    FastAPI --> FastRoutes[Async Routers<br/>fastapi_app/routes/*.py]
+    FastRoutes --> FastServices[Async Services<br/>fastapi_app/services/*.py]
+    FastServices --> FastORM[SQLAlchemy Models<br/>fastapi_app/models.py]
     ORM --> DB[(MariaDB)]
+    FastORM --> DB
     Cache --> Redis[(Redis)]
     RL --> Redis
+    FastAPI --> Redis
 ```
 
 핵심 특징:
@@ -30,6 +36,7 @@ flowchart LR
 3. 운영 방어: 보안 설정 fail-fast + 레이트리밋 + 보안 헤더
 4. 쓰기 감사: `before_flush` 훅으로 신규 row의 `ip_address`/`user_agent` 자동 주입(best-effort)
 5. 데이터 일관성: 소프트 삭제(`deleted_at`) + 카운터 캐시 + 유니크 제약
+6. 사이드카 계약: FastAPI가 스포츠리그와 수학여행 기능을 별도 라우터로 제공
 
 ## 2. 앱 부팅 순서 (`app.py:create_app`)
 
@@ -425,6 +432,34 @@ sequenceDiagram
 3. `RATELIMIT_SPORTS_LEAGUE_STREAM_CONNECT`, `SPORTS_LEAGUE_MAX_STREAMS_PER_CLIENT`는 config/helper에 존재하지만 route-level enforcement는 아직 연결되지 않았습니다.
 4. 선수 라인업 탭은 `GET/POST/DELETE/PATCH /players` 엔드포인트를 사용하고, 실시간 중계와는 별도 상태 흐름으로 유지됩니다.
 
+### 9.3 수학여행 게시판 도메인
+
+수학여행 기능은 FastAPI 안에서 **잠금 해제 쿠키 → 익명/로그인 작성 → 리치 본문 + 업로드 → 점수판** 흐름으로 동작합니다.
+
+- 반 게시판은 `field_trip_unlock_token` 쿠키에 포함된 반 목록으로 접근을 제어합니다.
+- 쓰기 요청은 `X-Field-Trip-CSRF` 헤더를 추가로 요구해, 비로그인 작성도 반별 잠금 해제 상태와 묶어 보호합니다.
+- 게시글은 `author_role`을 별도 컬럼으로 저장해 anonymous 작성과 로그인 작성을 같은 응답 스키마로 직렬화합니다.
+- 프론트에는 anonymous 작성자를 `authorUserId=0`, `authorRole='anonymous'`로 노출합니다.
+- 본문은 plain text가 아니라 rich HTML이며, 저장 전에 field-trip 업로드 canonical URL로 정규화됩니다.
+- 파일 접근은 첨부 row뿐 아니라 게시글 본문에 포함된 canonical URL까지 검사해 연결 여부를 판정합니다.
+- 게시판 비밀번호 변경/게시판 설명 수정은 `admin` 전용이고, 점수 조정은 `student_council | admin`이 `±5` step으로만 수행합니다.
+
+```mermaid
+sequenceDiagram
+    participant Visitor as 잠금 해제된 사용자
+    participant Route as fastapi_app/routes/field_trip.py
+    participant Service as fastapi_app/services/field_trip.py
+    participant DB as MariaDB
+
+    Visitor->>Route: POST /classes/:id/posts
+    Route->>Route: unlock cookie + X-Field-Trip-CSRF 확인
+    Route->>Service: current_user(optional), payload 전달
+    Service->>Service: author_role / nickname 결정
+    Service->>Service: rich body canonical URL 정규화
+    Service->>DB: post + attachment 저장
+    Service-->>Visitor: authorRole + authorUserId 응답
+```
+
 ## 10. 보드 공통 승인(Moderation) 패턴
 
 다음 보드는 공통적으로 승인 워크플로우를 가집니다.
@@ -489,6 +524,7 @@ sequenceDiagram
 | `surveys` | `Survey`, `SurveyResponse`, `SurveyCredit` | `surveys` | 공통 write limit |
 | `votes` | `Vote`, `VoteOption`, `VoteResponse` | `votes` | 공통 write limit |
 | `sports_league` | `SportsLeagueCategory`, `SportsLeagueMatch`, `SportsLeaguePlayer`, `SportsLeagueEvent`, `SportsLeagueStandingOverride` | `sports_league` | 공통 write limit |
+| `field_trip` (FastAPI) | `FieldTripClass`, `FieldTripPost`, `FieldTripPostAttachment` | (별도 response cache 없음) | FastAPI route별 권한/CSRF |
 | `lost_found` | `LostFoundPost`, `LostFoundImage`, `LostFoundComment` | `lost_found` | 공통 write limit |
 | `gomsol_market` | `GomsolMarketPost`, `GomsolMarketImage` | `gomsol_market` | 공통 write limit |
 
@@ -508,6 +544,8 @@ sequenceDiagram
 12. `services/sports_league.py`
 13. `services/sports_league_players.py`
 14. `services/sports_league_realtime.py`
+15. `fastapi_app/routes/field_trip.py`
+16. `fastapi_app/services/field_trip.py`
 
 ## 14. 변경 시 아키텍처 체크리스트
 

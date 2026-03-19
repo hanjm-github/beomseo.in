@@ -4,6 +4,8 @@ Default seed data for the field-trip event feature.
 from __future__ import annotations
 
 FIELD_TRIP_DEFAULT_CLASSES = (
+    # Passwords intentionally follow a predictable bootstrap pattern; runtime
+    # admin tools are expected to rotate them before real event usage.
     {'classId': '1', 'label': '1반', 'password': 'trip-01', 'totalScore': 0},
     {'classId': '2', 'label': '2반', 'password': 'trip-02', 'totalScore': 0},
     {'classId': '3', 'label': '3반', 'password': 'trip-03', 'totalScore': 0},

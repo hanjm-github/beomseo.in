@@ -1,5 +1,5 @@
 """
-FastAPI application for sports league live text relay.
+FastAPI application for sports league live text relay and field-trip boards.
 
 Run with:
     cd backend
@@ -34,8 +34,8 @@ def create_app() -> FastAPI:
     settings = get_settings()
 
     app = FastAPI(
-        title='범서고등학교 스포츠리그 API',
-        description='Sports League Live Text Relay — Async FastAPI Server',
+        title='범서고등학교 실시간 기능 API',
+        description='Sports League Live Text Relay + Field Trip Boards — Async FastAPI Server',
         version='1.0.0',
         lifespan=lifespan,
         docs_url='/docs' if settings.ENV_NAME != 'production' else None,
@@ -96,7 +96,9 @@ def create_app() -> FastAPI:
     async def health():
         return {'status': 'healthy', 'message': '범서고등학교 스포츠리그 FastAPI 서버'}
 
-    # Mount router
+    # The FastAPI process owns both real-time sports-league traffic and the
+    # field-trip event board APIs, while sharing auth cookies and the database
+    # contract with the main Flask application.
     app.include_router(sports_league_router)
     app.include_router(field_trip_router)
 

@@ -78,17 +78,39 @@ function normalizePost(post) {
     return null;
   }
 
+  // Anonymous authors are serialized with authorUserId=0 so list/detail/edit
+  // code can reason about one sentinel value instead of null-or-missing cases.
+  const normalizedAuthorRole = String(
+    post.authorRole ||
+      (
+        post.authorUserId == null ||
+        post.authorUserId === '' ||
+        Number(post.authorUserId) === 0
+          ? 'anonymous'
+          : 'student'
+      )
+  ).trim() || 'student';
+  const isAnonymousAuthor = normalizedAuthorRole === 'anonymous';
+
   return {
     id: String(post.id || ''),
     classId: String(post.classId || ''),
-    authorUserId:
-      post.authorUserId == null || post.authorUserId === ''
+    authorUserId: isAnonymousAuthor
+      ? 0
+      : post.authorUserId == null || post.authorUserId === ''
         ? null
         : Number(post.authorUserId),
+    authorRole: normalizedAuthorRole,
     nickname: String(post.nickname || ''),
     title: String(post.title || ''),
     body: String(post.body || ''),
-    attachments: Array.isArray(post.attachments) ? post.attachments : [],
+    // Field-trip attachments are served by FastAPI, so every URL is normalized
+    // against the FastAPI base even when the main API base points elsewhere.
+    attachments: Array.isArray(post.attachments)
+      ? post.attachments
+          .map((attachment) => normalizeUploadResponse(attachment, FASTAPI_BASE_URL))
+          .filter(Boolean)
+      : [],
     createdAt: post.createdAt || '',
     updatedAt: post.updatedAt || post.createdAt || '',
   };
@@ -204,6 +226,8 @@ export const fieldTripApi = {
       const response = await fastapiApi.post(
         `/api/community/field-trip/classes/${classId}/posts`,
         payload,
+        // Anonymous writers rely on the field-trip scoped CSRF token issued at
+        // unlock time, so create/update/delete all share this config helper.
         buildFieldTripWriteConfig()
       );
       return normalizePost(response.data);

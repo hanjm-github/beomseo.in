@@ -435,6 +435,9 @@ class FieldTripPost(Base):
         nullable=True,
         index=True,
     )
+    # Anonymous posts keep author_user_id nullable, so the role column becomes
+    # the stable source of truth for badges and edit permissions.
+    author_role = Column(String(50), nullable=False, default='anonymous')
     nickname = Column(String(20), nullable=False)
     title = Column(String(80), nullable=False)
     body = Column(Text, nullable=False)
@@ -457,10 +460,14 @@ class FieldTripPost(Base):
     )
 
     def to_dict(self, attachment_url_builder):
+        author_role = self.author_role or ('anonymous' if self.author_user_id is None else 'student')
         return {
             'id': self.id,
             'classId': self.class_id,
-            'authorUserId': self.author_user_id,
+            # Frontend code uses 0 as the normalized anonymous sentinel so list
+            # and detail views do not have to branch on null vs. missing values.
+            'authorUserId': 0 if author_role == 'anonymous' else self.author_user_id,
+            'authorRole': author_role,
             'nickname': self.nickname,
             'title': self.title,
             'body': self.body,

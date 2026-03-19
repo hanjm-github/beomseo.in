@@ -10,7 +10,10 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { FIELD_TRIP_MAX_SCORE } from '../../features/fieldTrip/constants';
+import {
+  FIELD_TRIP_MAX_SCORE,
+  FIELD_TRIP_SCORE_STEP,
+} from '../../features/fieldTrip/constants';
 import styles from '../../pages/FieldTrip/FieldTripPage.module.css';
 import { getScoreboardSummary, sortScoreRowsByClassId } from '../../features/fieldTrip/utils';
 
@@ -31,6 +34,23 @@ export default function FieldTripScoreboard({
 }) {
   const orderedRows = useMemo(() => sortScoreRowsByClassId(rows), [rows]);
   const summary = useMemo(() => getScoreboardSummary(orderedRows), [orderedRows]);
+  const chartMaxScore = useMemo(() => {
+    const highestScore = orderedRows.reduce(
+      (maxScore, row) => Math.max(maxScore, Number(row.totalScore || 0)),
+      0
+    );
+
+    // Match the chart scale to the public +/-5 manager controls so visual ticks
+    // line up with the only valid score mutations.
+    return Math.max(
+      FIELD_TRIP_SCORE_STEP,
+      Math.ceil(highestScore / FIELD_TRIP_SCORE_STEP) * FIELD_TRIP_SCORE_STEP
+    );
+  }, [orderedRows]);
+  const chartTicks = useMemo(() => {
+    const tickCount = Math.floor(chartMaxScore / FIELD_TRIP_SCORE_STEP) + 1;
+    return Array.from({ length: tickCount }, (_, index) => index * FIELD_TRIP_SCORE_STEP);
+  }, [chartMaxScore]);
 
   if (loading && !rows.length) {
     return <section className={styles.inlineState}>점수판을 불러오는 중입니다.</section>;
@@ -85,18 +105,18 @@ export default function FieldTripScoreboard({
                           <button
                             type="button"
                             className={styles.scoreAdjustButton}
-                            onClick={() => onAdjustScore?.(row.classId, -1)}
-                            disabled={isPending || row.totalScore <= 0}
-                            aria-label={`${row.label} 점수 1점 감소`}
+                            onClick={() => onAdjustScore?.(row.classId, -FIELD_TRIP_SCORE_STEP)}
+                            disabled={isPending || row.totalScore < FIELD_TRIP_SCORE_STEP}
+                            aria-label={`${row.label} 점수 5점 감소`}
                           >
                             <Minus size={14} />
                           </button>
                           <button
                             type="button"
                             className={styles.scoreAdjustButton}
-                            onClick={() => onAdjustScore?.(row.classId, 1)}
+                            onClick={() => onAdjustScore?.(row.classId, FIELD_TRIP_SCORE_STEP)}
                             disabled={isPending || row.totalScore >= FIELD_TRIP_MAX_SCORE}
-                            aria-label={`${row.label} 점수 1점 증가`}
+                            aria-label={`${row.label} 점수 5점 증가`}
                           >
                             <Plus size={14} />
                           </button>
@@ -136,7 +156,9 @@ export default function FieldTripScoreboard({
                 tickLine={false}
               />
               <YAxis
-                domain={[0, FIELD_TRIP_MAX_SCORE]}
+                domain={[0, chartMaxScore]}
+                ticks={chartTicks}
+                allowDecimals={false}
                 tick={{ fill: 'var(--color-text-secondary)', fontSize: 12 }}
                 axisLine={false}
                 tickLine={false}

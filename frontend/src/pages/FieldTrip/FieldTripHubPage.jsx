@@ -113,9 +113,11 @@ export default function FieldTripHubPage() {
           <div className={styles.heroText}>
             <p className={styles.heroEyebrow}>수학여행 미션 아카이브</p>
             <h1 className={styles.heroTitle}>학급별 현장 기록 보드</h1>
+            {/* The hub now reflects the same in-app flow as the board: class entry,
+                compose, detail, and edit all stay inside the SPA. */}
             <p className={styles.heroDescription}>
-              반별 게시판으로 들어가 현장 기록을 확인하고, 각 반 전용 새 탭에서 글을 작성하거나
-              상세 기록을 열어볼 수 있습니다.
+              반별 게시판으로 들어가 현장 기록을 확인하고, 자유게시판처럼 현재 페이지에서
+              바로 글을 작성할 수 있습니다.
             </p>
           </div>
         </div>

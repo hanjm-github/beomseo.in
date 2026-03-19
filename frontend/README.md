@@ -2,7 +2,7 @@
 # beomseo.in Frontend
 
 범서고 커뮤니티 서비스 `beomseo.in`의 React/Vite 프론트엔드입니다.  
-공지, 커뮤니티(자유/동아리/청원/설문/투표/분실물/곰솔마켓), 학교 생활 정보(시간표/학사 캘린더/스포츠리그 문자중계/팀별 라인업/개인별 순위), 인증, 분석 트래킹을 단일 SPA로 제공합니다.
+공지, 커뮤니티(자유/동아리/청원/설문/투표/분실물/곰솔마켓/수학여행), 학교 생활 정보(시간표/학사 캘린더/스포츠리그 문자중계/팀별 라인업/개인별 순위), 인증, 분석 트래킹을 단일 SPA로 제공합니다.
 
 ## 프로젝트 개요
 
@@ -11,6 +11,7 @@
 - 데이터 통신: Axios 기반 API 모듈 (`src/api/*`)
 - 상태 관리: React Context (`AuthContext`, `ThemeContext`)
 - 실시간 동기화: 스포츠리그 화면에서 `EventSource + BroadcastChannel/localStorage + polling fallback`
+- 수학여행 게시판: 반 비밀번호 기반 잠금 해제, 익명/로그인 글쓰기, rich HTML 본문, 5점 단위 점수판
 - 보안 경계: URL/HTML/CSV sanitize 유틸리티 (`src/security/*`)
 - 분석: Cloudflare Zaraz + GA4 이벤트 래퍼 (`src/analytics/zaraz.js`)
 
@@ -107,7 +108,7 @@ npm run preview
 | `VITE_UPLOAD_MAX_IMAGES` | `5` | 이미지 최대 개수 |
 | `VITE_UPLOAD_MAX_FILE_SIZE_MB` | `10` | 업로드 파일 최대 용량(MB) |
 | `VITE_PETITION_THRESHOLD_DEFAULT` | `50` | 청원 기본 임계치 |
-| `VITE_SPORTS_LEAGUE_API_URL` | `VITE_API_URL` | 스포츠리그 FastAPI 서버 URL (미설정 시 Flask fallback) |
+| `VITE_SPORTS_LEAGUE_API_URL` | `VITE_API_URL` | 스포츠리그 + 수학여행 FastAPI 서버 URL (미설정 시 Flask fallback) |
 
 ## 라우팅 개요
 
@@ -156,6 +157,16 @@ graph TD
 - 다른 탭과의 동기화는 `BroadcastChannel`을 우선 사용하고, 지원되지 않는 브라우저에서는 `storage` 이벤트로 폴백합니다.
 - 개발 환경에서 `VITE_ENABLE_API_MOCKS=1`이고 네트워크 계열 실패가 나면 `src/api/mocks/sportsLeague.mock.js`가 동일한 snapshot 계약을 흉내 냅니다.
 - mock transport는 선수 라인업도 별도 `beomseo:sports-league:players:{categoryId}` localStorage 키 공간에 저장해 snapshot 캐시와 분리합니다.
+
+## 수학여행 게시판 흐름
+
+- 허브(`/community/field-trip`)와 반 게시판(`/community/field-trip/classes/:classId`)은 분리된 경로를 사용합니다.
+- 글 상세는 `/community/field-trip/classes/:classId/posts/:postId`, 수정은 `/edit` 전용 경로를 사용합니다.
+- 반 비밀번호를 확인하면 해당 브라우저 세션에서 게시판 읽기와 anonymous 작성이 가능해집니다.
+- 로그인 사용자가 글을 작성하면 계정 닉네임/역할이 자동 반영되고, anonymous 작성은 별도 닉네임 입력을 사용합니다.
+- 본문은 notices editor를 재사용한 rich HTML이며, 미션 카드 preview는 plain-text로만 표시합니다.
+- 수학여행 첨부/본문 이미지 URL은 Flask base가 아니라 FastAPI base를 기준으로 절대경로화됩니다.
+- 점수 조정은 `±5` 단위만 허용되고, 게시판 비밀번호/설명 수정은 `admin`만 가능합니다.
 
 ## 404 처리 및 Nginx 운영 메모
 

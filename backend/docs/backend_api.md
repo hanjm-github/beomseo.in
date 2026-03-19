@@ -1,12 +1,13 @@
 # 백엔드 API 레퍼런스 (코드 기준 / 한국어)
 
-이 문서는 `backend/routes`, `backend/models`, `backend/utils`, `backend/config.py`, `backend/app.py`를 기준으로 작성한 실행 계약 문서입니다.
+이 문서는 `backend/routes`, `backend/models`, `backend/utils`, `backend/config.py`, `backend/app.py`와 `backend/fastapi_app/*`를 기준으로 작성한 실행 계약 문서입니다.
 
 ## 1. 공통 규약
 
 ### 1.1 Base URL
 
-- 개발 기본값: `http://127.0.0.1:5000`
+- Flask 개발 기본값: `http://127.0.0.1:5000`
+- FastAPI 개발 기본값: `http://127.0.0.1:8000`
 - Health Check: `GET /api/health`
 
 ### 1.2 콘텐츠 타입
@@ -50,6 +51,13 @@
 
 1. `withCredentials: true`로 요청
 2. 비안전 메서드(`POST/PUT/PATCH/DELETE`)에 `X-CSRF-TOKEN` 포함
+
+FastAPI 수학여행 쓰기 추가 규약:
+
+- 대상: `/api/community/field-trip/*`의 쓰기 요청
+- 추가 CSRF Cookie: `field_trip_csrf_token`
+- 추가 CSRF Header: `X-Field-Trip-CSRF`
+- 설명: 로그인 사용자도 기본 `X-CSRF-TOKEN`을 유지하고, 수학여행 잠금 해제 후에는 `X-Field-Trip-CSRF`도 함께 보냄
 
 ### 1.5 권한 Role
 
@@ -148,6 +156,7 @@ flowchart TD
     API --> Survey["/api/surveys/*"]
     API --> Vote["/api/community/votes/*"]
     API --> SportsLeague["/api/sports-league/*"]
+    API --> FieldTrip["/api/community/field-trip/*"]
     API --> Lost["/api/community/lost-found/*"]
     API --> Market["/api/community/gomsol-market/*"]
 
@@ -159,6 +168,8 @@ flowchart TD
     Free --> F2["bookmark + comments"]
     Survey --> S1["CRUD + responses"]
     Survey --> S2["credits / summary"]
+    FieldTrip --> FT1["class unlock / posts / uploads"]
+    FieldTrip --> FT2["scoreboard / admin board settings"]
 ```
 
 - Health/Auth: `/api/health`, `/api/auth/*`
@@ -170,6 +181,7 @@ flowchart TD
 - Surveys: `/api/surveys/*`
 - Votes: `/api/community/votes/*`
 - Sports League: `/api/sports-league/*`
+- Field Trip: `/api/community/field-trip/*`
 - Lost & Found: `/api/community/lost-found/*`
 - Gomsol Market: `/api/community/gomsol-market/*`
 
@@ -1078,6 +1090,142 @@ flowchart TD
 
 ---
 
+## 12B. Field Trip API (`/api/community/field-trip`)
+
+- 반별 게시판 읽기는 잠금 해제된 반에 한해 허용됩니다.
+- 글 작성은 반 비밀번호 확인 후 anonymous도 가능하고, 로그인 사용자는 계정 닉네임/역할을 그대로 사용합니다.
+- 게시글 응답은 `authorRole`을 포함하며, anonymous 글은 `authorUserId=0`으로 직렬화됩니다.
+- 본문은 plain text가 아니라 rich HTML이며, 저장 전에 field-trip 업로드 canonical URL로 정규화됩니다.
+- 게시판 비밀번호 변경과 게시판 설명 수정은 `admin` 전용입니다.
+
+### 12B.1 `GET /api/community/field-trip/classes`
+
+- 권한: 없음
+- 반환: `items[]`
+  - `classId`, `label`, `postCount`, `isUnlocked`, `boardDescription`
+- 비고:
+  - `isUnlocked`는 잠금 해제 쿠키와 반별 상태를 합쳐 계산됩니다.
+
+### 12B.2 `POST /api/community/field-trip/classes/{class_id}/unlock`
+
+- 권한: 없음
+- Body:
+  - `password` required, `<=64`
+- 성공 시:
+  - HttpOnly unlock cookie 갱신
+  - `field_trip_csrf_token` 쿠키 발급
+- 성공 응답 예시:
+
+```json
+{
+  "classId": "3",
+  "isUnlocked": true
+}
+```
+
+### 12B.3 `GET /api/community/field-trip/classes/{class_id}/posts`
+
+- 권한: 해당 반 unlock 필요
+- 반환: `items[]`
+  - `id`, `classId`, `authorUserId`, `authorRole`, `nickname`, `title`, `body`, `attachments`, `createdAt`, `updatedAt`
+
+### 12B.4 `GET /api/community/field-trip/classes/{class_id}/posts/{post_id}`
+
+- 권한: 해당 반 unlock 필요
+- 반환: 단일 게시글 상세
+- 비고:
+  - 본문은 rich HTML 그대로 반환됩니다.
+  - 첨부 URL은 FastAPI 업로드 경로를 기준으로 절대경로화됩니다.
+
+### 12B.5 `POST /api/community/field-trip/classes/{class_id}/posts`
+
+- 권한: 해당 반 unlock 필요
+- CSRF: `X-Field-Trip-CSRF` 필수
+- 인증:
+  - 로그인 사용자: 선택
+  - 비로그인 사용자: 허용
+- Body:
+  - `nickname` optional, anonymous 작성 시 필요, `<=20`
+  - `title` required, `1~80`
+  - `body` required, rich HTML 포함 가능, `<=6000`
+  - `attachments[]` optional, 최대 5개
+- 작성자 규칙:
+  - 비로그인: `author_role='anonymous'`, `author_user_id IS NULL`, 응답은 `authorUserId=0`
+  - 로그인: 계정 닉네임/역할 사용, 요청 `nickname`은 무시
+
+### 12B.6 `PUT /api/community/field-trip/classes/{class_id}/posts/{post_id}`
+
+- 권한: 해당 반 unlock 필요 + 인증 필요
+- CSRF:
+  - `X-CSRF-TOKEN`
+  - `X-Field-Trip-CSRF`
+- 수정 가능 주체:
+  - `admin`, `student_council`
+  - 또는 로그인한 원작성자
+- 비고:
+  - anonymous 글은 원작성자 FK가 없으므로 운영진만 수정 가능
+  - anonymous 글 닉네임은 수정 시에도 기존 값을 유지
+
+### 12B.7 `DELETE /api/community/field-trip/classes/{class_id}/posts/{post_id}`
+
+- 권한: 해당 반 unlock 필요 + 인증 필요
+- CSRF:
+  - `X-CSRF-TOKEN`
+  - `X-Field-Trip-CSRF`
+- 삭제 가능 주체:
+  - `admin`, `student_council`
+  - 또는 로그인한 원작성자
+
+### 12B.8 `POST /api/community/field-trip/uploads`
+
+- 권한: 하나 이상의 반 unlock 필요
+- CSRF: `X-Field-Trip-CSRF` 필수
+- Content-Type: `multipart/form-data`
+- 필드: `file`
+- 성공 응답: 업로드 공통 계약
+- 비고:
+  - `canonicalUrl`은 본문 저장용 정규 URL
+  - 미연결 임시 업로드는 `preview_token`이 붙은 `url`로만 먼저 접근 가능
+
+### 12B.9 `GET /api/community/field-trip/uploads/{filename}`
+
+- 권한:
+  - 게시글/첨부에 연결된 파일: 해당 반 unlock 필요
+  - 아직 미연결 임시 파일: `preview_token` 필요
+- 비고:
+  - 첨부 row가 없어도 게시글 본문에 canonical URL이 삽입돼 있으면 연결 파일로 간주합니다.
+
+### 12B.10 `GET /api/community/field-trip/scoreboard`
+
+- 권한: 없음
+- 반환: `items[]`
+  - `classId`, `label`, `totalScore`
+
+### 12B.11 `PATCH /api/community/field-trip/classes/{class_id}/score`
+
+- 권한: `student_council | admin`
+- Body:
+  - `delta`: `-5 | 5`
+- 제약:
+  - 점수는 0 미만 불가
+  - 점수는 10000 초과 불가
+
+### 12B.12 `PUT /api/community/field-trip/classes/{class_id}/password`
+
+- 권한: `admin`
+- Body:
+  - `password` required, `4~64`
+- 비고:
+  - 학생회는 더 이상 이 엔드포인트를 사용할 수 없습니다.
+
+### 12B.13 `PUT /api/community/field-trip/classes/{class_id}/board-description`
+
+- 권한: `admin`
+- Body:
+  - `boardDescription` optional, `<=240`
+
+---
+
 ## 13. Gomsol Market API (`/api/community/gomsol-market`)
 
 ### 13.1 Enum/규약
@@ -1183,9 +1331,10 @@ flowchart TD
 
 ## 15. 검증 체크포인트
 
-1. 엔드포인트 커버리지: `rg -n "route\(" backend/routes`
-2. 인증 설정 정합성: `backend/config.py`의 JWT 쿠키/CSRF 설정
+1. 엔드포인트 커버리지: `rg -n "route\(" backend/routes` + `rg -n "@router" backend/fastapi_app/routes`
+2. 인증 설정 정합성: `backend/config.py`와 `backend/fastapi_app/config.py`의 JWT/field-trip CSRF 설정
 3. 페이지네이션 정합성: `backend/utils/pagination.py`
 4. 업로드 토큰 정합성: `backend/utils/files.py`
 5. 문서 계약은 Bearer 문구가 아닌 쿠키 JWT + CSRF 기준으로 유지
-6. 요청 메타데이터 정합성: `backend/utils/request_metadata.py`와 `backend/app.py`의 hook 등록 확인
+6. 수학여행 익명 작성/`authorRole` 직렬화 정합성: `backend/fastapi_app/services/field_trip.py`, `backend/models/field_trip.py`
+7. 요청 메타데이터 정합성: `backend/utils/request_metadata.py`와 `backend/app.py`의 hook 등록 확인

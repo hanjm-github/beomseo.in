@@ -1,9 +1,9 @@
-# FastAPI 스포츠리그 서버 배포 가이드
+# FastAPI 스포츠리그/수학여행 서버 배포 가이드
 
 ## 개요
 
-스포츠리그 문자중계 시스템은 Flask+uWSGI 대신 **FastAPI+Uvicorn** 비동기 서버로 운영됩니다.
-기존 Flask 서버와 별도 포트/도메인에서 실행되며, **같은 MySQL DB**를 공유합니다.
+FastAPI 서버는 Flask+uWSGI 메인 서버와 분리되어 **스포츠리그 문자중계**와 **수학여행 반 게시판/점수판**을 담당합니다.
+기존 Flask 서버와 별도 포트/도메인에서 실행되며, **같은 MySQL DB와 JWT 쿠키 계약**을 공유합니다.
 
 ## 필수 요구사항
 
@@ -30,6 +30,10 @@ pip install -r requirements_fastapi.txt
 | `CORS_ORIGINS` | 허용 Origin (쉼표 구분) | `http://localhost:5173` |
 | `REDIS_URL` | Redis 주소 | `redis://localhost:6379/0` |
 | `SPORTS_LEAGUE_SSE_HEARTBEAT_SECONDS` | SSE 하트비트 간격 | `15` |
+| `FIELD_TRIP_UNLOCK_COOKIE_NAME` | 수학여행 잠금 해제 쿠키 이름 | `field_trip_unlock_token` |
+| `FIELD_TRIP_CSRF_COOKIE_NAME` | 수학여행 쓰기용 CSRF 쿠키 이름 | `field_trip_csrf_token` |
+| `FIELD_TRIP_CSRF_HEADER_NAME` | 수학여행 쓰기용 CSRF 헤더 이름 | `X-Field-Trip-CSRF` |
+| `FIELD_TRIP_MAX_BODY_LENGTH` | 수학여행 리치 본문 최대 길이 | `6000` |
 
 ## 개발 실행
 
@@ -137,11 +141,14 @@ VITE_SPORTS_LEAGUE_API_URL=https://sports-api.beomseo.in
 # 헬스 체크
 curl http://127.0.0.1:8000/api/health
 
-# 카테고리 스냅샷 조회
+# 스포츠리그 카테고리 스냅샷 조회
 curl http://127.0.0.1:8000/api/sports-league/categories/2026-spring-grade3-boys-soccer
 
 # SSE 스트림 테스트 (Ctrl+C로 종료)
 curl -N http://127.0.0.1:8000/api/sports-league/categories/2026-spring-grade3-boys-soccer/stream
+
+# 수학여행 반 목록 조회
+curl http://127.0.0.1:8000/api/community/field-trip/classes
 ```
 
 ## 아키텍처
@@ -152,7 +159,7 @@ curl -N http://127.0.0.1:8000/api/sports-league/categories/2026-spring-grade3-bo
 │  Frontend    │     │  :5000           │
 │              │     └──────────────────┘
 │              │     ┌──────────────────┐
-│              │────▶│  FastAPI+Uvicorn  │  ← 신규 (스포츠리그 전용)
+│              │────▶│  FastAPI+Uvicorn  │  ← 신규 (스포츠리그 + 수학여행)
 └──────────────┘     │  :8000           │
                      └──────────────────┘
                              │

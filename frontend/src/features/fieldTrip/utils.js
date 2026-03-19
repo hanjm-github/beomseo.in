@@ -4,6 +4,7 @@ import {
   FIELD_TRIP_TABS,
   FIELD_TRIP_UNLOCK_STORAGE_KEY,
 } from './constants';
+import { toPlainText } from '../../security/htmlSanitizer';
 
 const CLASS_ID_SET = new Set(FIELD_TRIP_CLASS_IDS);
 const TAB_KEY_SET = new Set(FIELD_TRIP_TABS.map((tab) => tab.key));
@@ -75,6 +76,12 @@ export function isFieldTripManagerRole(role) {
 export function canEditFieldTripPost(post, user) {
   if (!post || !user) {
     return false;
+  }
+
+  // Anonymous posts never have an owning user record, so only manager roles
+  // can edit them after the initial write.
+  if (post.authorRole === 'anonymous') {
+    return isFieldTripManagerRole(user.role);
   }
 
   if (isFieldTripManagerRole(user.role)) {
@@ -159,7 +166,9 @@ export function formatFieldTripDate(createdAt) {
 }
 
 export function buildMissionPreview(body, maxLength = 110) {
-  const normalized = String(body || '')
+  // Mission cards show a text-only summary even though the stored body can
+  // contain rich HTML and embedded upload links.
+  const normalized = toPlainText(String(body || ''))
     .replace(/\s+/g, ' ')
     .trim();
 

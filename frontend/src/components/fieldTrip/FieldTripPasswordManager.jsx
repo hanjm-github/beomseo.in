@@ -23,7 +23,7 @@ export default function FieldTripPasswordManager({
           <p className={styles.sectionEyebrow}>운영진 관리</p>
           <h2 className={styles.sectionTitle}>{classSummary.label} 게시판 비밀번호 설정/변경</h2>
           <p className={styles.sectionDescription}>
-            학생회 이상 계정만 반 게시판 비밀번호를 변경할 수 있습니다.
+            관리자 계정만 반 게시판 비밀번호를 변경할 수 있습니다.
           </p>
         </div>
       </div>
@@ -36,13 +36,16 @@ export default function FieldTripPasswordManager({
             <input
               id={`field-trip-manager-password-${classSummary.classId}`}
               className={styles.textField}
-              type="password"
+              type="text"
               value={password}
+              // Admins often coordinate printed/offline board passwords during
+              // the event, so the manager field keeps the value visible on entry.
               onChange={(event) => setPassword(event.target.value)}
               placeholder="새 비밀번호를 입력해 주세요"
               autoComplete="new-password"
             />
           </div>
+          <p className={styles.formHint}>비밀번호는 대소문자를 구분합니다.</p>
         </label>
 
         <div className={styles.inlineActions}>

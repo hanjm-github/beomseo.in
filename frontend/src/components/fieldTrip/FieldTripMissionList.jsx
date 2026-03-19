@@ -1,5 +1,6 @@
-import { Clock3, ExternalLink, Paperclip, UserRound } from 'lucide-react';
+import { Clock3, Paperclip, UserRound } from 'lucide-react';
 import styles from '../../pages/FieldTrip/FieldTripPage.module.css';
+import RoleName from '../RoleName/RoleName';
 import {
   buildMissionPreview,
   formatFieldTripDate,
@@ -19,7 +20,7 @@ export default function FieldTripMissionList({
           <p className={styles.sectionEyebrow}>게시글 목록</p>
           <h2 className={styles.sectionTitle}>{classSummary.label} 게시글</h2>
           <p className={styles.sectionDescription}>
-            썸네일이 있는 글은 사진과 함께 보이고, 게시글을 누르면 새 탭에서 상세 내용을 엽니다.
+            썸네일이 있는 글은 사진과 함께 보이고, 게시글을 누르면 현재 페이지에서 상세 내용을 확인할 수 있습니다.
           </p>
         </div>
       </div>
@@ -59,17 +60,15 @@ export default function FieldTripMissionList({
                           {post.attachments.length}
                         </span>
                       ) : null}
-                      <span className={styles.postOpenBadge}>
-                        <ExternalLink size={13} />
-                        새 탭
-                      </span>
                     </div>
                   </div>
+                  {/* Card previews stay plain-text even when the stored body now
+                      contains rich HTML from the shared editor. */}
                   <p className={styles.postPreview}>{buildMissionPreview(post.body)}</p>
                   <div className={styles.postMetaRow}>
                     <span className={styles.postMetaItem}>
                       <UserRound size={13} />
-                      {post.nickname}
+                      <RoleName nickname={post.nickname} role={post.authorRole || 'student'} size="sm" />
                     </span>
                     <span className={styles.postMetaItem}>
                       <Clock3 size={13} />

@@ -12,6 +12,9 @@ export const FIELD_TRIP_UNLOCK_STORAGE_KEY = 'beomseo.fieldTripUnlockedClasses';
 export const FIELD_TRIP_MANAGER_ROLES = ['admin', 'student_council'];
 
 export const FIELD_TRIP_MAX_SCORE = 10000;
+// Score writes are intentionally step-based so UI controls and API validation
+// stay aligned on the same +/- increment.
+export const FIELD_TRIP_SCORE_STEP = 5;
 
 export const FIELD_TRIP_PASSWORDS = Object.fromEntries(
   FIELD_TRIP_CLASS_IDS.map((classId) => [classId, `trip-${classId.padStart(2, '0')}`])

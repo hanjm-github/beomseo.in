@@ -24,6 +24,8 @@ from utils.field_trip_seed import bootstrap_field_trip_defaults  # noqa: E402
 def main():
     app = create_app()
     with app.app_context():
+        # The seed helper is idempotent, so operators can rerun this bootstrap
+        # after migrations or environment restores without duplicating classes.
         result = bootstrap_field_trip_defaults()
         print(
             'Field-trip bootstrap complete: '

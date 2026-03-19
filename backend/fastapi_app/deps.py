@@ -184,6 +184,23 @@ async def get_current_user(
 CurrentUser = Annotated[User, Depends(get_current_user)]
 
 
+async def get_optional_current_user(
+    request: Request,
+    db: DbSession,
+    settings: SettingsDep,
+) -> User | None:
+    """Return authenticated user when present; otherwise treat request as anonymous."""
+    # Field-trip post creation accepts unlocked anonymous visitors, so the route
+    # needs a soft-auth dependency instead of failing hard on missing JWT cookies.
+    try:
+        return await get_current_user(request, db, settings)
+    except HTTPException:
+        return None
+
+
+OptionalCurrentUser = Annotated[User | None, Depends(get_optional_current_user)]
+
+
 # ---------------------------------------------------------------------------
 # Field trip cookies
 # ---------------------------------------------------------------------------
@@ -264,6 +281,8 @@ def require_field_trip_write_csrf(
 ) -> None:
     cookie_value = request.cookies.get(settings.FIELD_TRIP_CSRF_COOKIE_NAME)
     header_value = request.headers.get(settings.FIELD_TRIP_CSRF_HEADER_NAME, '')
+    # The unlock flow issues a field-trip scoped CSRF token so anonymous writers
+    # still get write protection without relying on the auth cookie CSRF pair.
     if not cookie_value or not header_value or cookie_value != header_value:
         raise HTTPException(
             status_code=401,

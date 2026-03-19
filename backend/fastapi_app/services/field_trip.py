@@ -9,14 +9,16 @@ import uuid
 from pathlib import Path
 
 from fastapi import UploadFile
-from sqlalchemy import Integer, cast, func, select
+from sqlalchemy import Integer, cast, func, inspect, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm.attributes import NO_VALUE
 from sqlalchemy.orm import selectinload
 
 from utils.files import (
     build_upload_preview_url,
     build_upload_url,
+    canonicalize_upload_urls_in_text,
     ensure_dir,
     extract_upload_filename_for_scope,
     is_valid_upload_preview_token,
@@ -32,6 +34,8 @@ from ..utils import sanitize_plain_text
 
 
 FIELD_TRIP_MANAGER_ROLES = {'student_council', 'admin'}
+FIELD_TRIP_SCORE_STEP = 5
+FIELD_TRIP_ANONYMOUS_ROLE = 'anonymous'
 
 
 class FieldTripError(Exception):
@@ -97,6 +101,68 @@ def _can_manage_field_trip_post(current_user: User) -> bool:
     return _get_user_role(current_user) in FIELD_TRIP_MANAGER_ROLES
 
 
+def _normalize_post_body(settings: Settings, raw_body: str | None) -> str:
+    # Stored HTML may reference freshly uploaded files using preview URLs; the
+    # body is canonicalized before persistence so later reads always resolve to
+    # stable field-trip upload paths.
+    body = canonicalize_upload_urls_in_text(
+        _field_trip_upload_config(settings),
+        'field_trip',
+        str(raw_body or ''),
+    )
+    body = body.replace('\r\n', '\n').replace('\r', '\n').strip()
+    if not body:
+        return ''
+    if len(body) > settings.FIELD_TRIP_MAX_BODY_LENGTH:
+        raise FieldTripError(
+            f'본문은 최대 {settings.FIELD_TRIP_MAX_BODY_LENGTH}자까지 입력할 수 있습니다.',
+            422,
+            'field_trip_body_too_long',
+        )
+    return body
+
+
+def _resolve_create_author(
+    settings: Settings,
+    current_user: User | None,
+    nickname: str,
+) -> tuple[int | None, str, str]:
+    if current_user is None:
+        if not nickname:
+            raise FieldTripError('닉네임을 입력해주세요.', 422, 'field_trip_nickname_required')
+        # Anonymous posts intentionally keep a null FK in storage and rely on
+        # author_role for downstream permission checks and frontend badges.
+        return None, FIELD_TRIP_ANONYMOUS_ROLE, nickname
+
+    resolved_nickname = sanitize_plain_text(
+        current_user.nickname,
+        max_length=settings.FIELD_TRIP_MAX_NICKNAME_LENGTH,
+    )
+    if not resolved_nickname:
+        raise FieldTripError('사용자 닉네임을 확인할 수 없습니다.', 422, 'field_trip_nickname_required')
+    return current_user.id, _get_user_role(current_user) or 'student', resolved_nickname
+
+
+def _resolve_updated_nickname(
+    settings: Settings,
+    post: FieldTripPost,
+    current_user: User,
+) -> str:
+    # Anonymous posts preserve the originally supplied nickname even when a
+    # manager edits the content later.
+    if post.author_role == FIELD_TRIP_ANONYMOUS_ROLE:
+        return post.nickname
+
+    if post.author_user_id and int(post.author_user_id) == int(current_user.id):
+        resolved_nickname = sanitize_plain_text(
+            current_user.nickname,
+            max_length=settings.FIELD_TRIP_MAX_NICKNAME_LENGTH,
+        )
+        return resolved_nickname or post.nickname
+
+    return post.nickname
+
+
 async def _require_class(session: AsyncSession, class_id: str) -> FieldTripClass:
     result = await session.execute(
         select(FieldTripClass).where(FieldTripClass.class_id == str(class_id))
@@ -150,14 +216,9 @@ def _normalize_post_payload(
         payload.get('title'),
         max_length=settings.FIELD_TRIP_MAX_TITLE_LENGTH,
     )
-    body = sanitize_plain_text(
-        payload.get('body'),
-        max_length=settings.FIELD_TRIP_MAX_BODY_LENGTH,
-    )
+    body = _normalize_post_body(settings, payload.get('body'))
     attachments_payload = list(payload.get('attachments') or [])
 
-    if not nickname:
-        raise FieldTripError('닉네임을 입력해주세요.', 422, 'field_trip_nickname_required')
     if not title:
         raise FieldTripError('제목을 입력해주세요.', 422, 'field_trip_title_required')
     if not body:
@@ -218,14 +279,33 @@ def _normalize_attachment_payload(
     }
 
 
+async def _get_existing_post_attachments(
+    session: AsyncSession,
+    post: FieldTripPost,
+) -> list[FieldTripPostAttachment]:
+    loaded_attachments = inspect(post).attrs.attachments.loaded_value
+    if loaded_attachments is not NO_VALUE:
+        # Reuse already loaded relationships so edit flows do not issue a second
+        # attachment query after _require_post() eagerly loaded the collection.
+        return list(loaded_attachments or [])
+
+    result = await session.execute(
+        select(FieldTripPostAttachment)
+        .where(FieldTripPostAttachment.post_id == post.id)
+        .order_by(FieldTripPostAttachment.display_order.asc())
+    )
+    return list(result.scalars())
+
+
 async def _sync_post_attachments(
     session: AsyncSession,
     settings: Settings,
     post: FieldTripPost,
     attachments_payload: list[dict],
 ) -> list[str]:
+    existing_attachments = await _get_existing_post_attachments(session, post)
     existing_by_filename = {
-        attachment.stored_filename: attachment for attachment in list(post.attachments or [])
+        attachment.stored_filename: attachment for attachment in existing_attachments
     }
     retained_filenames: set[str] = set()
 
@@ -267,7 +347,7 @@ async def _sync_post_attachments(
         )
 
     orphaned_filenames: list[str] = []
-    for attachment in list(post.attachments or []):
+    for attachment in existing_attachments:
         if attachment.stored_filename in retained_filenames:
             continue
         orphaned_filenames.append(attachment.stored_filename)
@@ -386,16 +466,22 @@ async def create_post(
     payload: dict,
     client_ip: str | None,
     user_agent: str | None,
-    current_user: User,
+    current_user: User | None,
 ) -> dict:
     await _require_class(session, class_id)
     nickname, title, body, attachments_payload = _normalize_post_payload(settings, payload)
+    author_user_id, author_role, resolved_nickname = _resolve_create_author(
+        settings,
+        current_user,
+        nickname,
+    )
 
     post = FieldTripPost(
         id=f'field-trip-{class_id}-{uuid.uuid4().hex}',
         class_id=str(class_id),
-        author_user_id=current_user.id,
-        nickname=nickname,
+        author_user_id=author_user_id,
+        author_role=author_role,
+        nickname=resolved_nickname,
         title=title,
         body=body,
         ip_address=sanitize_plain_text(client_ip, max_length=64) or None,
@@ -428,8 +514,8 @@ async def update_post(
     post = await _require_post(session, class_id, post_id)
     await _require_post_editor(post, current_user)
 
-    nickname, title, body, attachments_payload = _normalize_post_payload(settings, payload)
-    post.nickname = nickname
+    _, title, body, attachments_payload = _normalize_post_payload(settings, payload)
+    post.nickname = _resolve_updated_nickname(settings, post, current_user)
     post.title = title
     post.body = body
     post.ip_address = sanitize_plain_text(client_ip, max_length=64) or post.ip_address
@@ -516,8 +602,19 @@ async def get_upload_delivery(
         .where(FieldTripPostAttachment.stored_filename == filename)
     )
     attachment = result.scalar_one_or_none()
+    attachment_url = build_upload_url(config, 'field_trip', filename)
+    attachment_post = attachment.post if attachment else None
 
-    if not attachment:
+    if not attachment_post:
+        # Rich-text bodies can embed uploaded images without keeping a dedicated
+        # attachment row, so access checks also fall back to scanning the post
+        # body for the canonical upload URL.
+        post_result = await session.execute(
+            select(FieldTripPost).where(FieldTripPost.body.ilike(f'%{attachment_url}%'))
+        )
+        attachment_post = post_result.scalar_one_or_none()
+
+    if not attachment and not attachment_post:
         if not is_valid_upload_preview_token(config, 'field_trip', filename, preview_token or ''):
             raise FieldTripError(
                 '첨부 파일을 찾을 수 없습니다.',
@@ -532,7 +629,7 @@ async def get_upload_delivery(
             'mediaType': media_type,
         }
 
-    if not attachment.post or attachment.post.class_id not in unlocked_class_ids:
+    if not attachment_post or attachment_post.class_id not in unlocked_class_ids:
         raise FieldTripError(
             '이 첨부 파일을 보려면 반 비밀번호 확인이 필요합니다.',
             403,
@@ -541,9 +638,13 @@ async def get_upload_delivery(
 
     return {
         'path': file_path,
-        'downloadName': attachment.original_name or filename,
-        'contentDisposition': 'inline' if attachment.kind == 'image' else 'attachment',
-        'mediaType': attachment.mime or _guess_mime_from_path(file_path),
+        'downloadName': attachment.original_name if attachment else filename,
+        'contentDisposition': (
+            'inline'
+            if (attachment.kind == 'image' if attachment else _guess_mime_from_path(file_path).startswith('image/'))
+            else 'attachment'
+        ),
+        'mediaType': attachment.mime if attachment else _guess_mime_from_path(file_path),
     }
 
 
@@ -559,6 +660,15 @@ async def adjust_score(
     class_id: str,
     delta: int,
 ) -> dict:
+    # The public manager UI only exposes +/- buttons in 5-point increments, so
+    # the API enforces the same step to prevent silent drift from raw requests.
+    if int(delta) not in (-FIELD_TRIP_SCORE_STEP, FIELD_TRIP_SCORE_STEP):
+        raise FieldTripError(
+            f'점수는 한 번에 {FIELD_TRIP_SCORE_STEP}점씩만 조정할 수 있습니다.',
+            422,
+            'field_trip_score_invalid_step',
+        )
+
     class_row = await _require_class(session, class_id)
     current_score = int(class_row.total_score or 0)
     next_score = current_score + int(delta)

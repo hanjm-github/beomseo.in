@@ -4,6 +4,7 @@ import styles from '../../pages/FieldTrip/FieldTripPage.module.css';
 export default function FieldTripTabBar({ activeTab, onChange }) {
   return (
     <div className={styles.tabShell}>
+      {/* Tabs only swap the hub view; class/detail/edit flows use dedicated routes. */}
       <div className="tab-row" role="tablist" aria-label="수학여행 섹션">
         {FIELD_TRIP_TABS.map((tab) => (
           <button

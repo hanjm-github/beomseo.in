@@ -2,6 +2,8 @@ import axios from 'axios';
 
 const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000').replace(/\/$/, '');
 
+// Field-trip uploads and sports-league data can live on the FastAPI origin
+// even when the rest of the app still talks to the main Flask backend.
 export const FASTAPI_BASE_URL = (
   import.meta.env.VITE_SPORTS_LEAGUE_API_URL || API_BASE_URL
 ).replace(/\/$/, '');
@@ -24,6 +26,8 @@ export const fastapiApi = axios.create({
 
 fastapiApi.interceptors.request.use((config) => {
   if (!SAFE_METHODS.has((config.method || 'get').toLowerCase())) {
+    // FastAPI shares the auth-cookie CSRF contract with Flask, so authenticated
+    // writes can reuse the same access-token CSRF cookie automatically.
     const authCsrf = readCookie(AUTH_CSRF_COOKIE);
     if (authCsrf) {
       config.headers['X-CSRF-TOKEN'] = authCsrf;

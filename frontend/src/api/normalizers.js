@@ -12,7 +12,22 @@
  * - Acts as the data boundary between UI code and backend HTTP endpoints.
  */
 import { toSafeAssetUrl } from '../security/urlPolicy';
+import { FASTAPI_BASE_URL } from './fastapiClient';
 const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000').replace(/\/$/, '');
+// Some relative API paths are owned by FastAPI rather than Flask, so callers
+// can keep passing backend-relative URLs without hard-coding origins.
+const FASTAPI_ROUTE_PREFIXES = ['/api/community/field-trip/uploads'];
+
+function resolveBaseUrlForApiPath(pathname = '', defaultBaseUrl = API_BASE_URL) {
+  const normalizedPath = String(pathname || '').trim();
+  if (!normalizedPath) return defaultBaseUrl;
+
+  if (FASTAPI_ROUTE_PREFIXES.some((prefix) => normalizedPath.startsWith(prefix))) {
+    return FASTAPI_BASE_URL;
+  }
+
+  return defaultBaseUrl;
+}
 
 /**
  * toAbsoluteApiUrl module entry point.
@@ -30,8 +45,9 @@ export function toAbsoluteApiUrl(url, baseUrl = API_BASE_URL) {
   }
 
   const normalized = safeUrl.startsWith('api/') ? `/${safeUrl}` : safeUrl;
+  const resolvedBaseUrl = resolveBaseUrlForApiPath(normalized, baseUrl);
   const prefix = normalized.startsWith('/') ? '' : '/';
-  return `${baseUrl}${prefix}${normalized}`;
+  return `${resolvedBaseUrl}${prefix}${normalized}`;
 }
 
 /**

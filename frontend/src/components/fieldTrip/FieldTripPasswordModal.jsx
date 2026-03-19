@@ -17,6 +17,8 @@ export default function FieldTripPasswordModal({
       return undefined;
     }
 
+    // Defer focus until the dialog is mounted so keyboard users can unlock the
+    // board immediately without an extra click.
     const timer = window.setTimeout(() => {
       inputRef.current?.focus();
     }, 0);
@@ -59,6 +61,8 @@ export default function FieldTripPasswordModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="field-trip-password-title"
+        // Stop backdrop bubbling so interaction inside the dialog does not
+        // accidentally close the unlock flow.
         onClick={(event) => event.stopPropagation()}
       >
         <div className={styles.modalHeader}>

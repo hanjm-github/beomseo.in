@@ -83,9 +83,11 @@ class FieldTripAttachmentInput(BaseModel):
 
 
 class FieldTripCreatePostRequest(BaseModel):
-    nickname: str = Field(min_length=1, max_length=20)
+    # Nickname becomes optional because unlocked anonymous visitors can write
+    # with a supplied nickname while authenticated users inherit their profile nickname.
+    nickname: str | None = Field(default=None, max_length=20)
     title: str = Field(min_length=1, max_length=80)
-    body: str = Field(min_length=1, max_length=1200)
+    body: str = Field(min_length=1, max_length=6000)
     attachments: list[FieldTripAttachmentInput] = Field(default_factory=list, max_length=5)
 
 
@@ -103,7 +105,8 @@ class FieldTripScoreboardUpdateRequest(BaseModel):
 
 
 class FieldTripScoreDeltaRequest(BaseModel):
-    delta: Literal[-1, 1]
+    # The API only accepts the same +/-5 step exposed by the manager controls.
+    delta: Literal[-5, 5]
 
 
 class FieldTripPasswordUpdateRequest(BaseModel):

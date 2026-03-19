@@ -15,8 +15,7 @@
  */
 import DOMPurify from 'dompurify';
 import { toSafeAssetUrl, toSafeExternalHref } from './urlPolicy';
-
-const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000').replace(/\/$/, '');
+import { toAbsoluteApiUrl } from '../api/normalizers';
 
 const ALLOWED_TAGS = [
   'p',
@@ -41,16 +40,6 @@ const ALLOWED_TAGS = [
 
 const ALLOWED_ATTR = ['href', 'target', 'rel', 'src', 'alt', 'title'];
 
-function toAbsoluteApiUrlIfApiPath(value) {
-  if (typeof value !== 'string' || !value) return value;
-  if (value.startsWith('/api/') || value.startsWith('api/')) {
-    const normalized = value.startsWith('/') ? value : `/${value}`;
-    return `${API_BASE_URL}${normalized}`;
-  }
-  // Keep absolute URLs untouched to avoid accidental origin rewrites.
-  return value;
-}
-
 function sanitizeLinkElement(anchor) {
   const href = anchor.getAttribute('href');
   const safeHref = toSafeExternalHref(href);
@@ -61,7 +50,9 @@ function sanitizeLinkElement(anchor) {
     return;
   }
 
-  anchor.setAttribute('href', toAbsoluteApiUrlIfApiPath(safeHref));
+  // Re-resolve backend-relative links after sanitization so rich text can
+  // safely point at FastAPI-served field-trip uploads as well as Flask assets.
+  anchor.setAttribute('href', toAbsoluteApiUrl(safeHref));
   if (anchor.getAttribute('target') === '_blank') {
     anchor.setAttribute('rel', 'noopener noreferrer');
   }
@@ -74,7 +65,9 @@ function sanitizeImageElement(img) {
     img.remove();
     return;
   }
-  img.setAttribute('src', toAbsoluteApiUrlIfApiPath(safeSrc));
+  // Rich editors store relative upload paths; convert them back to the correct
+  // backend origin before the HTML reaches the DOM.
+  img.setAttribute('src', toAbsoluteApiUrl(safeSrc));
 }
 
 function sanitizeUriAttributes(cleanHtml) {

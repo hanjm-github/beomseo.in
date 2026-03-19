@@ -9,6 +9,8 @@ from utils.security import hash_password
 
 
 LEGACY_FIELD_TRIP_DEFAULT_SCORES = {
+    # Preserve the old seeded totals long enough to detect and reset one-time
+    # demo data when a deployment moves to the zero-based scoreboard contract.
     '1': 84,
     '2': 76,
     '3': 91,

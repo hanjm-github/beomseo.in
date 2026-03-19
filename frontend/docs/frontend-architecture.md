@@ -234,7 +234,28 @@ flowchart LR
 - 반 게시판: `/community/field-trip/classes/:classId`
 - 글쓰기: `/community/field-trip/classes/:classId/new`
 - 글 상세: `/community/field-trip/classes/:classId/posts/:postId`
+- 글 수정: `/community/field-trip/classes/:classId/posts/:postId/edit`
 - 허브에서는 `tab` 쿼리스트링만 사용하고, 반/글 상태는 path segment로 관리합니다.
+
+### 수학여행 게시판 흐름
+
+```mermaid
+flowchart TD
+    A["FieldTripHubPage"] --> B["FieldTripClassBoardPage"]
+    B --> C["unlockClass()"]
+    B --> D["createPost()/updatePost()"]
+    B --> E["FieldTripPostDetailPage"]
+    D --> F["sanitizeRichHtml()"]
+    D --> G["toPlainText()"]
+    D --> H["X-Field-Trip-CSRF"]
+    E --> I["sanitizeRichHtml() before render"]
+```
+
+- 반 비밀번호를 확인하면 `field_trip_unlock_token`과 `field_trip_csrf_token`이 발급되고, 이후 동일 세션에서 읽기와 anonymous 작성이 가능해집니다.
+- 작성 흐름은 익명과 로그인 사용자를 모두 지원하지만, 수정은 로그인한 작성자 또는 운영진만 가능합니다.
+- 본문은 notices editor를 재사용한 rich HTML이며, 미션 카드 preview/빈 값 검사는 `toPlainText()` 기준으로 수행합니다.
+- 게시글 상세는 별도 `FieldTripPostDetailPage`가 맡고, 게시판 페이지는 목록/잠금해제/작성/관리 설정에 집중합니다.
+- 게시판 비밀번호 변경과 게시판 설명 수정은 `admin`만 가능하고, 점수 조정만 `student_council | admin`이 수행합니다.
 
 ## 8. 운영 관점 체크 포인트
 
@@ -261,7 +282,7 @@ graph LR
 ```
 
 `survey` 보드만 `/:id/edit`과 `/:id/results` 추가 라우트가 존재합니다.  
-`field-trip`은 허브(`/community/field-trip`)와 반 게시판(`/community/field-trip/classes/:classId*`)으로 분리되며,
+`field-trip`은 허브(`/community/field-trip`), 반 게시판(`/community/field-trip/classes/:classId`), 상세(`/posts/:postId`), 수정(`/posts/:postId/edit`)으로 분리되며,
 허브에서는 `tab` 쿼리만 유지하고 게시글 상태는 개별 라우트로 표현합니다.  
 전체 경로 매핑은 [frontend-code-map.md §3.3](./frontend-code-map.md)을 참고합니다.
 

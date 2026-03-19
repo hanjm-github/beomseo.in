@@ -1,7 +1,7 @@
 # beomseo.in Backend
 
-범서고 커뮤니티 서비스 `beomseo.in`의 Flask 기반 백엔드 API입니다.  
-공지/커뮤니티/설문/투표/인증 기능을 단일 API 서버로 제공하며, 스포츠리그 문자중계와 선수 라인업/개인 순위 API도 함께 운영합니다. 인증·권한·레이트리밋·캐시·업로드 보안을 공통 정책으로 강제하고 쓰기 요청 메타데이터(IP/User-Agent)도 일관 수집합니다.
+범서고 커뮤니티 서비스 `beomseo.in`의 백엔드 API입니다.
+메인 커뮤니티 기능은 Flask 서버가 담당하고, FastAPI 서버는 스포츠리그 문자중계와 수학여행 반별 게시판/점수판을 담당합니다. 두 서버는 같은 인증 쿠키와 DB 스키마를 공유하며, 인증·권한·레이트리밋·캐시·업로드 보안을 공통 정책으로 강제하고 쓰기 요청 메타데이터(IP/User-Agent)도 일관 수집합니다.
 
 ## 시스템 개요
 
@@ -9,7 +9,7 @@
 flowchart LR
     Client["웹 프론트엔드<br/>(React / Vite)"]
     Flask["Flask API Server<br/>:5000"]
-    FastAPI["FastAPI Server<br/>:8000 (스포츠리그)"]
+    FastAPI["FastAPI Server<br/>:8000 (스포츠리그 + 수학여행)"]
     MariaDB[("MariaDB")]
     Redis[("Redis")]
 
@@ -26,7 +26,7 @@ flowchart LR
 | 구분 | 기술 |
 |---|---|
 | Language | Python |
-| Web Framework | Flask 3.1 (메인 API), **FastAPI** (스포츠리그 전용) |
+| Web Framework | Flask 3.1 (메인 API), **FastAPI** (스포츠리그 + 수학여행 전용) |
 | ASGI Server | **Uvicorn** (FastAPI 런타임) |
 | ORM | Flask-SQLAlchemy / **async SQLAlchemy** (aiomysql) |
 | Auth | Flask-JWT-Extended (Cookie + CSRF) / **PyJWT** (FastAPI) |
@@ -84,7 +84,13 @@ curl http://127.0.0.1:5000/api/health
 python scripts/bootstrap_sports_league.py
 ```
 
-### FastAPI 스포츠리그 서버 (선택)
+수학여행 기본 반/비밀번호 시드 반영:
+
+```bash
+python scripts/bootstrap_field_trip.py
+```
+
+### FastAPI 서버 (선택)
 
 Flask 서버와 별도로 실행합니다. 같은 `.env` 파일을 공유합니다.
 
@@ -95,6 +101,7 @@ python -m uvicorn fastapi_app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
 - Swagger UI: `http://127.0.0.1:8000/docs`
+- 제공 범위: `/api/sports-league/*`, `/api/community/field-trip/*`
 - 상세 배포 가이드: [docs/fastapi_deployment.md](./docs/fastapi_deployment.md)
 
 ## 앱 부팅 순서
@@ -124,9 +131,9 @@ sequenceDiagram
     A-->>R: Flask app 반환
 ```
 
-## 블루프린트 인덱스
+## Flask 블루프린트 + FastAPI 라우터 인덱스
 
-서버에 등록된 11개 블루프린트와 URL 접두사:
+Flask 메인 서버에 등록된 11개 블루프린트와 FastAPI 추가 라우터의 URL 접두사:
 
 | Blueprint | URL Prefix | 주요 기능 |
 |---|---|---|
@@ -141,8 +148,9 @@ sequenceDiagram
 | `lost_found` | `/api/community/lost-found` | 분실물 게시판 |
 | `gomsol_market` | `/api/community/gomsol-market` | 곰솔 중고마켓 |
 | `sports_league` | `/api/sports-league` | 스포츠리그 문자중계 + 선수 라인업/개인 순위 + SSE |
+| `field_trip` (FastAPI router) | `/api/community/field-trip` | 수학여행 반 게시판, 업로드, 점수판 |
 
-스포츠리그 공개 feed 보안 기본값:
+FastAPI 공개 기능 보안 기본값:
 
 - snapshot read는 익명 접근을 유지하되 `60 per minute`로 제한합니다.
 - SSE stream은 최초 snapshot, 이후 변경 snapshot, heartbeat comment를 전송합니다.
@@ -150,6 +158,9 @@ sequenceDiagram
 - public event `author` payload는 `{ nickname }`만 노출합니다.
 - active sports league events는 최신 `250`개까지만 유지합니다.
 - `RATELIMIT_SPORTS_LEAGUE_STREAM_CONNECT`, `SPORTS_LEAGUE_MAX_STREAMS_PER_CLIENT` 설정값은 현재 `config.py`에 정의되어 있으나 route에는 아직 연결되지 않았습니다.
+- 수학여행 게시판 쓰기는 반 비밀번호 확인 후 발급되는 `X-Field-Trip-CSRF` 헤더를 추가로 요구합니다.
+- 수학여행 익명 글은 `author_role='anonymous'`, `authorUserId=0` 직렬화 규약을 사용합니다.
+- 수학여행 게시판 비밀번호 변경과 게시판 설명 수정은 `admin` 전용입니다.
 
 ## 디렉터리 구조
 
@@ -172,7 +183,7 @@ backend/
 │  ├─ lost_found.py         #   분실물
 │  ├─ gomsol_market.py      #   곰솔 마켓
 │  └─ sports_league.py      #   스포츠리그 문자중계
-├─ fastapi_app/            # FastAPI 스포츠리그 전용 서버
+├─ fastapi_app/            # FastAPI 스포츠리그/수학여행 서버
 │  ├─ main.py              #   앱 팩토리, CORS, 보안 헤더, 라이프사이클
 │  ├─ config.py            #   Pydantic Settings (.env 공유)
 │  ├─ database.py          #   async SQLAlchemy 엔진/세션 (aiomysql)
@@ -181,12 +192,14 @@ backend/
 │  ├─ deps.py              #   JWT 쿠키 인증 + 역할 검사 의존성
 │  ├─ utils.py             #   sanitize, SSE 포맷
 │  ├─ routes/
-│  │  └─ sports_league.py  #   13개 엔드포인트 (문자중계/라인업 + SSE)
+│  │  ├─ sports_league.py  #   13개 엔드포인트 (문자중계/라인업 + SSE)
+│  │  └─ field_trip.py     #   수학여행 게시판/점수판/업로드 엔드포인트
 │  └─ services/
 │     ├─ sports_league.py          #   비동기 도메인 로직 (스냅샷 빌드)
 │     ├─ sports_league_players.py  #   선수 라인업/개인기록 CRUD
 │     ├─ sports_league_realtime.py #   asyncio + Redis pub/sub
-│     └─ sports_league_seed.py     #   시드 데이터 상수
+│     ├─ sports_league_seed.py     #   시드 데이터 상수
+│     └─ field_trip.py             #   수학여행 게시판/점수판/업로드 로직
 ├─ models/                 # SQLAlchemy 모델 및 enum
 │  ├─ user.py              #   User, UserRole, db
 │  ├─ auth_token.py        #   AuthToken, AuthTokenType
@@ -207,7 +220,8 @@ backend/
 │  ├─ sports_league_seed.py    #   1차 카테고리 seed 데이터
 │  └─ sports_league_realtime.py # Redis pub/sub + in-process fallback
 ├─ scripts/
-│  └─ bootstrap_sports_league.py # 스포츠리그 seed 반영 스크립트
+│  ├─ bootstrap_sports_league.py # 스포츠리그 seed 반영 스크립트
+│  └─ bootstrap_field_trip.py    # 수학여행 기본 반/비밀번호 시드
 ├─ utils/                  # 보안/토큰/캐시/레이트리밋/업로드 유틸
 │  ├─ security.py          #   비밀번호 해시, IP 검증, 권한 데코레이터
 │  ├─ security_tokens.py   #   토큰 발급/회전/폐기
@@ -345,6 +359,16 @@ CSRF 쿠키/헤더 이름:
 | `RATELIMIT_SPORTS_LEAGUE_STREAM_CONNECT` | `12 per minute` | 현재는 config에만 존재하며 stream route에 직접 연결되지는 않음 |
 | `SPORTS_LEAGUE_MAX_STREAMS_PER_CLIENT` | `2` | 현재는 helper 함수용 설정이며 route-level enforcement는 미연결 |
 
+### 수학여행 게시판
+
+| 변수 | 기본값 | 설명 |
+|---|---|---|
+| `FIELD_TRIP_UNLOCK_COOKIE_NAME` | `field_trip_unlock_token` | 잠금 해제된 반 목록을 담는 HttpOnly 쿠키 |
+| `FIELD_TRIP_CSRF_COOKIE_NAME` | `field_trip_csrf_token` | 익명/잠금해제 쓰기용 CSRF 쿠키 |
+| `FIELD_TRIP_CSRF_HEADER_NAME` | `X-Field-Trip-CSRF` | 수학여행 쓰기 요청 헤더 |
+| `FIELD_TRIP_MAX_BODY_LENGTH` | `6000` | 리치 HTML 본문 최대 길이 |
+| `FIELD_TRIP_MAX_NICKNAME_LENGTH` | `20` | 익명 작성 표시 닉네임 최대 길이 |
+
 ### 업로드
 
 | 변수 | 기본값 | 설명 |
@@ -386,7 +410,7 @@ CSRF 쿠키/헤더 이름:
 
 - [백엔드 API 레퍼런스](./docs/backend_api.md)
 - [백엔드 아키텍처](./docs/backend_architecture.md)
-- [FastAPI 스포츠리그 서버 배포 가이드](./docs/fastapi_deployment.md)
+- [FastAPI 스포츠리그/수학여행 서버 배포 가이드](./docs/fastapi_deployment.md)
 
 프론트 연계 문서:
 

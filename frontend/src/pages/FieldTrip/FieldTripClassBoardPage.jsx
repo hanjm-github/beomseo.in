@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
-  ExternalLink,
   KeyRound,
   Loader2,
   LockKeyhole,
@@ -24,7 +23,6 @@ import {
   getFieldTripPostPath,
   isClassUnlocked,
   isFieldTripClassId,
-  isFieldTripManagerRole,
   resolveFieldTripBoardDescription,
 } from '../../features/fieldTrip/utils';
 import '../page-shell.css';
@@ -38,7 +36,7 @@ function LoginRequiredCard({ classId, returnPath }) {
           <p className={styles.sectionEyebrow}>작성 권한</p>
           <h2 className={styles.sectionTitle}>로그인이 필요합니다.</h2>
           <p className={styles.sectionDescription}>
-            현장 기록 글 작성과 수정은 로그인한 사용자만 가능합니다.
+            게시글 수정은 로그인한 작성자 또는 학생회/관리자만 가능합니다.
           </p>
         </div>
       </div>
@@ -78,26 +76,19 @@ function PermissionDeniedCard({ classId, postId, errorMessage }) {
 }
 
 function ComposeLauncher({ classId }) {
-  const handleOpenCompose = () => {
-    if (typeof window !== 'undefined') {
-      window.open(getFieldTripComposePath(classId), '_blank', 'noopener,noreferrer');
-    }
-  };
-
   return (
     <section className={`${styles.sectionCard} ${styles.composeLauncherCard}`}>
       <div className={styles.composeLauncherCompact}>
         <div>
           <p className={styles.sectionEyebrow}>새 글 작성</p>
-          <h2 className={styles.sectionTitle}>새 탭에서 글 추가</h2>
+          <h2 className={styles.sectionTitle}>현재 페이지에서 글 작성</h2>
           <p className={styles.sectionDescription}>
-            글쓰기는 새 탭에서 열리고, 목록은 이 페이지에서 계속 확인할 수 있습니다.
+            자유게시판처럼 현재 페이지에서 바로 이동해 글을 작성할 수 있습니다.
           </p>
         </div>
-        <button type="button" className={styles.primaryButton} onClick={handleOpenCompose}>
-          <ExternalLink size={16} />
-          새 탭에서 글 추가
-        </button>
+        <Link className={styles.primaryButton} to={getFieldTripComposePath(classId)}>
+          글 작성하기
+        </Link>
       </div>
     </section>
   );
@@ -132,7 +123,8 @@ export default function FieldTripClassBoardPage() {
   const isCreateRoute = location.pathname.endsWith('/new');
   const isEditRoute = location.pathname.endsWith('/edit');
   const isComposerRoute = isCreateRoute || isEditRoute;
-  const canManage = isFieldTripManagerRole(user?.role);
+  // Board-level settings are stricter than score management and now stay admin-only.
+  const canManageBoardSettings = user?.role === 'admin';
 
   const selectedClass = useMemo(() => {
     const found = classRows.find((row) => row.classId === classId);
@@ -335,9 +327,9 @@ export default function FieldTripClassBoardPage() {
   };
 
   const handleOpenPost = (nextPostId) => {
-    if (typeof window !== 'undefined') {
-      window.open(getFieldTripPostPath(classId, nextPostId), '_blank', 'noopener,noreferrer');
-    }
+    // Detail pages now own the read view so the board screen can focus on list
+    // and compose flows without maintaining an embedded side-panel state.
+    navigate(getFieldTripPostPath(classId, nextPostId));
   };
 
   const handleCancelCompose = () => {
@@ -384,6 +376,10 @@ export default function FieldTripClassBoardPage() {
   };
 
   const handlePasswordUpdate = async (password) => {
+    if (!canManageBoardSettings) {
+      return;
+    }
+
     setPasswordSaving(true);
     setPasswordError('');
     setPasswordSuccessMessage('');
@@ -401,6 +397,10 @@ export default function FieldTripClassBoardPage() {
   };
 
   const handleDescriptionSave = async () => {
+    if (!canManageBoardSettings) {
+      return;
+    }
+
     setDescriptionSaving(true);
     setDescriptionError('');
     setDescriptionSuccessMessage('');
@@ -439,7 +439,9 @@ export default function FieldTripClassBoardPage() {
       );
     }
 
-    if (!isAuthenticated) {
+    // Create flow may stay anonymous after unlock, but edit flow still requires
+    // a logged-in owner or a manager role.
+    if (isEditRoute && !isAuthenticated) {
       return (
         <LoginRequiredCard
           classId={classId}
@@ -498,6 +500,11 @@ export default function FieldTripClassBoardPage() {
         uploadMaxAttachments={fieldTripApi.MAX_ATTACHMENTS}
         uploadMaxFileSizeBytes={fieldTripApi.MAX_FILE_SIZE}
         uploadMaxFileSizeMb={Math.round(fieldTripApi.MAX_FILE_SIZE / (1024 * 1024))}
+        isAuthenticated={isAuthenticated}
+        currentUser={user}
+        // Unlocking the class is enough to enable anonymous creation, but not
+        // enough to edit an existing anonymous post later.
+        allowAnonymousWrite={selectedClass.isUnlocked}
       />
     );
   };
@@ -557,7 +564,7 @@ export default function FieldTripClassBoardPage() {
           </div>
 
           <div className={styles.boardHeaderActions}>
-            {canManage && !descriptionEditing ? (
+            {canManageBoardSettings && !descriptionEditing ? (
               <button
                 type="button"
                 className={styles.secondaryButton}
@@ -623,13 +630,14 @@ export default function FieldTripClassBoardPage() {
                 <input
                   id={`field-trip-unlock-${classId}`}
                   className={styles.textField}
-                  type="password"
+                  type="text"
                   value={unlockPassword}
                   onChange={(event) => setUnlockPassword(event.target.value)}
                   placeholder={`${selectedClass.label} 비밀번호를 입력해 주세요`}
                   autoComplete="off"
                 />
               </div>
+              <p className={styles.formHint}>비밀번호는 대소문자를 구분합니다.</p>
             </label>
 
             <div className={styles.inlineActions}>
@@ -651,10 +659,10 @@ export default function FieldTripClassBoardPage() {
           {!isComposerRoute ? (
             <div
               className={`${styles.boardActionGrid} ${
-                canManage ? styles.boardActionGridDual : styles.boardActionGridSingle
+                canManageBoardSettings ? styles.boardActionGridDual : styles.boardActionGridSingle
               }`}
             >
-              {canManage ? (
+              {canManageBoardSettings ? (
                 <FieldTripPasswordManager
                   key={selectedClass.classId}
                   classSummary={selectedClass}

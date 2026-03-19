@@ -27,8 +27,8 @@ export default function FieldTripClassGrid({
           <p className={styles.sectionEyebrow}>미션 수행</p>
           <h2 className={styles.sectionTitle}>반별 미션 게시판 입장</h2>
           <p className={styles.sectionDescription}>
-            각 반 게시판에 들어가 사진이 포함된 현장 기록 목록과 새 탭 상세 페이지를 확인할 수
-            있습니다.
+            각 반 게시판에 들어가 사진이 포함된 현장 기록 목록과 상세 페이지를 현재 화면에서
+            바로 확인할 수 있습니다.
           </p>
         </div>
         <span className={styles.sectionPill}>
@@ -52,6 +52,8 @@ export default function FieldTripClassGrid({
                     isSelected ? styles.classCardSelected : ''
                   } ${isUnlocked ? styles.classCardUnlocked : styles.classCardLocked}`}
                   aria-pressed={isSelected}
+                  // Board detail and compose now stay in-app, so selecting a
+                  // class can route directly without opening a new browser tab.
                   onClick={() => onSelectClass?.(classItem.classId)}
                 >
                   <div className={styles.classCardTop}>

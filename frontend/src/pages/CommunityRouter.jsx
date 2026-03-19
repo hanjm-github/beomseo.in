@@ -85,6 +85,8 @@ export default function CommunityRouter() {
       <Route path="field-trip" element={lazyRoute(FieldTripPage)} />
       <Route path="field-trip/classes/:classId" element={lazyRoute(FieldTripClassBoardPage)} />
       <Route path="field-trip/classes/:classId/new" element={lazyRoute(FieldTripClassBoardPage)} />
+      {/* Field-trip detail and edit were split so the board route can stay focused
+          on list/compose state while the detail page owns read-only rendering. */}
       <Route
         path="field-trip/classes/:classId/posts/:postId/edit"
         element={lazyRoute(FieldTripClassBoardPage)}

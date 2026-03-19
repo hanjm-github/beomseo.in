@@ -1,13 +1,38 @@
 .page {
+  /* Keep field-trip visuals on the shared token system so the page can support
+     both light/dark themes without drifting from the main design language. */
   --field-trip-orange: var(--color-accent-500);
-  --field-trip-orange-soft: var(--color-accent-100);
-  --field-trip-forest: var(--color-primary-700);
-  --field-trip-sand: color-mix(in srgb, var(--color-accent-50) 40%, white 60%);
-  --field-trip-ink: var(--color-primary-900);
-  --field-trip-chart-base: color-mix(in srgb, var(--color-primary-700) 68%, var(--field-trip-orange) 32%);
-  --field-trip-chart-strong: var(--color-accent-400);
+  --field-trip-orange-soft: var(--color-status-accent-bg);
+  --field-trip-forest: var(--color-primary-500);
+  --field-trip-sand: color-mix(in srgb, var(--color-card-bg) 86%, var(--field-trip-orange-soft) 14%);
+  --field-trip-ink: var(--color-text-primary);
+  --field-trip-accent-text: var(--color-card-highlight-fg);
+  --field-trip-chart-base: color-mix(in srgb, var(--color-chart-1) 72%, var(--color-chart-2) 28%);
+  --field-trip-chart-strong: var(--color-chart-2);
+  --field-trip-chip-bg: color-mix(in srgb, var(--color-card-bg) 76%, var(--field-trip-orange-soft) 24%);
+  --field-trip-chip-border: color-mix(in srgb, var(--field-trip-orange) 18%, var(--color-card-border) 82%);
+  --field-trip-glass-bg: color-mix(in srgb, var(--color-card-bg) 82%, var(--color-page-overlay) 18%);
+  --field-trip-glass-border: color-mix(in srgb, var(--field-trip-forest) 16%, var(--color-card-border) 84%);
+  --field-trip-highlight-bg: color-mix(in srgb, var(--color-card-bg) 72%, var(--field-trip-orange-soft) 28%);
+  --field-trip-panel-bg: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--color-card-bg) 94%, var(--field-trip-sand) 6%),
+    var(--color-card-bg)
+  );
+  --field-trip-panel-bg-strong: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--color-card-bg) 92%, var(--field-trip-sand) 8%),
+    var(--color-card-bg)
+  );
   padding-top: var(--space-3) !important;
   gap: var(--space-5);
+}
+
+[data-theme="dark"] .page {
+  --field-trip-chip-bg: color-mix(in srgb, var(--color-card-bg) 70%, var(--field-trip-orange-soft) 30%);
+  --field-trip-glass-bg: color-mix(in srgb, var(--color-card-bg) 88%, var(--color-page-overlay) 12%);
+  --field-trip-glass-border: color-mix(in srgb, var(--field-trip-forest) 24%, var(--color-card-border) 76%);
+  --field-trip-highlight-bg: color-mix(in srgb, var(--color-card-bg) 64%, var(--field-trip-orange-soft) 36%);
 }
 
 .hero,
@@ -32,7 +57,7 @@
   background:
     radial-gradient(circle at top right, color-mix(in srgb, var(--field-trip-orange) 20%, transparent), transparent 30%),
     radial-gradient(circle at left center, color-mix(in srgb, var(--field-trip-forest) 18%, transparent), transparent 38%),
-    linear-gradient(140deg, #ffffff 0%, var(--field-trip-sand) 100%);
+    linear-gradient(140deg, var(--color-page-bg-elevated) 0%, var(--field-trip-sand) 100%);
 }
 
 .heroMinimal {
@@ -118,8 +143,8 @@
   min-height: 32px;
   padding: 0 var(--space-3);
   border-radius: var(--radius-full);
-  border: 1px solid color-mix(in srgb, var(--field-trip-orange) 24%, white 76%);
-  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid var(--field-trip-chip-border);
+  background: var(--field-trip-chip-bg);
   color: var(--field-trip-ink);
   font-size: var(--text-sm);
   font-weight: var(--font-medium);
@@ -130,8 +155,8 @@
   gap: var(--space-3);
   padding: var(--space-4);
   border-radius: var(--radius-2xl);
-  border: 1px solid color-mix(in srgb, var(--field-trip-forest) 10%, transparent);
-  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid var(--field-trip-glass-border);
+  background: var(--field-trip-glass-bg);
   backdrop-filter: blur(12px);
 }
 
@@ -149,8 +174,12 @@
   align-items: center;
   justify-content: center;
   border-radius: var(--radius-xl);
-  background: linear-gradient(135deg, var(--color-primary-100), var(--field-trip-orange-soft));
-  color: var(--field-trip-forest);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--color-card-highlight-bg) 72%, var(--field-trip-orange-soft) 28%),
+    color-mix(in srgb, var(--field-trip-orange-soft) 56%, var(--color-card-bg) 44%)
+  );
+  color: var(--field-trip-accent-text);
 }
 
 .heroStatValue {
@@ -200,8 +229,7 @@
 }
 
 .classGridSection {
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--color-card-bg) 94%, var(--field-trip-sand) 6%), var(--color-card-bg));
+  background: var(--field-trip-panel-bg);
 }
 
 .classGrid {
@@ -234,7 +262,7 @@
 }
 
 .classCardUnlocked {
-  border-color: color-mix(in srgb, var(--color-primary-300) 48%, white 52%);
+  border-color: color-mix(in srgb, var(--color-primary-400) 42%, var(--color-card-border) 58%);
 }
 
 .classCardLocked {
@@ -341,7 +369,7 @@
   width: 100%;
   padding: var(--space-4);
   border: 1px solid var(--color-card-border);
-  background: color-mix(in srgb, var(--color-card-bg) 92%, var(--field-trip-sand) 8%);
+  background: color-mix(in srgb, var(--color-card-bg) 90%, var(--field-trip-sand) 10%);
   text-align: left;
   cursor: pointer;
   transition:
@@ -354,7 +382,7 @@
   flex: 0 0 132px;
   overflow: hidden;
   border-radius: var(--radius-xl);
-  background: color-mix(in srgb, var(--field-trip-orange-soft) 44%, white 56%);
+  background: var(--field-trip-highlight-bg);
 }
 
 .postCardThumb {
@@ -374,7 +402,7 @@
 
 .postCard:hover {
   transform: translateY(-2px);
-  border-color: color-mix(in srgb, var(--field-trip-orange) 38%, white 62%);
+  border-color: color-mix(in srgb, var(--field-trip-orange) 30%, var(--color-card-border) 70%);
   box-shadow: var(--shadow-md);
 }
 
@@ -404,8 +432,8 @@
   min-height: 32px;
   padding: 0 var(--space-3);
   border-radius: var(--radius-full);
-  background: color-mix(in srgb, var(--field-trip-orange-soft) 34%, white 66%);
-  color: var(--field-trip-forest);
+  background: var(--field-trip-highlight-bg);
+  color: var(--field-trip-accent-text);
   font-size: var(--text-sm);
   font-weight: var(--font-medium);
 }
@@ -490,6 +518,32 @@
   color: var(--color-text-primary);
 }
 
+.detailBodyRich {
+  /* Rich post bodies come from the shared editor, so this block restores
+     readable spacing for sanitized HTML instead of treating the body as plain text. */
+  color: var(--color-text-primary);
+  line-height: var(--leading-relaxed);
+}
+
+.detailBodyRich :where(p, ul, ol, blockquote, pre) {
+  margin: 0 0 var(--space-3);
+}
+
+.detailBodyRich :where(p:last-child, ul:last-child, ol:last-child, blockquote:last-child, pre:last-child) {
+  margin-bottom: 0;
+}
+
+.detailBodyRich img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius-xl);
+}
+
+.detailBodyRich a {
+  color: var(--field-trip-accent-text);
+}
+
 .detailAttachments {
   margin-top: var(--space-4);
 }
@@ -546,18 +600,28 @@
 }
 
 .managerPanel {
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--color-card-bg) 92%, var(--field-trip-sand) 8%), var(--color-card-bg));
+  background: var(--field-trip-panel-bg-strong);
 }
 
 .composeLauncherCard {
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--color-card-bg) 94%, var(--field-trip-sand) 6%), var(--color-card-bg));
+  background: var(--field-trip-panel-bg);
 }
 
 .descriptionEditor {
   display: grid;
   gap: var(--space-3);
+}
+
+.authorDisplayBox {
+  /* Mirror read-only form fields so authenticated users can preview the
+     server-resolved nickname/role without editing it locally. */
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-form-border);
+  background: var(--color-form-bg-muted);
 }
 
 .descriptionEditorField {
@@ -677,7 +741,7 @@
 .dangerButton {
   border-color: color-mix(in srgb, var(--color-error) 20%, var(--color-card-border));
   color: var(--color-error);
-  background: color-mix(in srgb, var(--color-error-light) 44%, white 56%);
+  background: var(--color-alert-danger-bg);
 }
 
 .formActions {
@@ -726,14 +790,20 @@
 }
 
 .lockedStateCard {
-  border: 1px dashed color-mix(in srgb, var(--field-trip-orange) 42%, white 58%);
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--field-trip-sand) 78%, white 22%), rgba(255, 255, 255, 0.94));
+  border: 1px dashed color-mix(in srgb, var(--field-trip-orange) 32%, var(--color-card-border) 68%);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--field-trip-sand) 78%, var(--color-card-bg) 22%),
+    color-mix(in srgb, var(--color-card-bg) 96%, var(--field-trip-orange-soft) 4%)
+  );
 }
 
 .loginGateCard {
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--field-trip-sand) 72%, white 28%), white);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--field-trip-sand) 72%, var(--color-card-bg) 28%),
+    var(--color-card-bg)
+  );
 }
 
 .lockedStateTitle,
@@ -794,8 +864,7 @@
 }
 
 .summaryCard {
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--color-card-bg) 92%, var(--field-trip-sand) 8%), var(--color-card-bg));
+  background: var(--field-trip-panel-bg-strong);
 }
 
 .summaryValue {
@@ -844,7 +913,8 @@
   min-height: 26px;
   padding: 0 10px;
   border-radius: var(--radius-full);
-  background: color-mix(in srgb, var(--field-trip-orange) 18%, white 82%);
+  border: 1px solid var(--field-trip-chip-border);
+  background: var(--field-trip-highlight-bg);
   color: var(--field-trip-ink);
   font-size: var(--text-xs);
   font-weight: var(--font-semibold);
@@ -869,7 +939,7 @@
 
 .scoreAdjustButton:hover:not(:disabled) {
   transform: translateY(-1px);
-  border-color: color-mix(in srgb, var(--field-trip-orange) 32%, white 68%);
+  border-color: color-mix(in srgb, var(--field-trip-orange) 28%, var(--color-card-border) 72%);
 }
 
 .scoreAdjustButton:disabled {

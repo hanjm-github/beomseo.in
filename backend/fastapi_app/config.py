@@ -121,7 +121,9 @@ class Settings(BaseSettings):
     FIELD_TRIP_CSRF_COOKIE_PATH: str = '/'
     FIELD_TRIP_MAX_NICKNAME_LENGTH: int = 20
     FIELD_TRIP_MAX_TITLE_LENGTH: int = 80
-    FIELD_TRIP_MAX_BODY_LENGTH: int = 1200
+    # Rich-text mission posts now share the editor used by notices, so the body
+    # budget needs to cover embedded markup in addition to visible text.
+    FIELD_TRIP_MAX_BODY_LENGTH: int = 6000
 
     @property
     def upload_allowed_mime_types_set(self) -> set[str]:

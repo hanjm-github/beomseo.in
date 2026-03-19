@@ -77,6 +77,9 @@ class FieldTripPost(db.Model):
         nullable=True,
         index=True,
     )
+    # Keep the Flask model aligned with the FastAPI serializer contract so both
+    # runtimes describe anonymous field-trip authors the same way.
+    author_role = db.Column(db.String(50), nullable=False, default='anonymous')
     nickname = db.Column(db.String(20), nullable=False)
     title = db.Column(db.String(80), nullable=False)
     body = db.Column(db.Text, nullable=False)
@@ -103,10 +106,14 @@ class FieldTripPost(db.Model):
     )
 
     def to_dict(self, attachment_url_builder):
+        author_role = self.author_role or ('anonymous' if self.author_user_id is None else 'student')
         return {
             'id': self.id,
             'classId': self.class_id,
-            'authorUserId': self.author_user_id,
+            # Frontend normalization treats 0 as the anonymous sentinel even
+            # though the database stores anonymous authors with a null FK.
+            'authorUserId': 0 if author_role == 'anonymous' else self.author_user_id,
+            'authorRole': author_role,
             'nickname': self.nickname,
             'title': self.title,
             'body': self.body,

@@ -39,7 +39,8 @@ const initialPostsByClass = {
     {
       id: 'field-trip-1-1',
       classId: '1',
-      authorUserId: null,
+      authorUserId: 0,
+      authorRole: 'anonymous',
       nickname: '1반 운영진',
       title: '경주 미션 체크인 완료 사진',
       body: '대릉원 앞 단체 사진, 왕릉 퀴즈, 박물관 스탬프까지 모두 완료했습니다. 마지막 체크는 버스 탑승 직전에 성공했어요.',
@@ -59,7 +60,8 @@ const initialPostsByClass = {
     {
       id: 'field-trip-1-2',
       classId: '1',
-      authorUserId: null,
+      authorUserId: 0,
+      authorRole: 'anonymous',
       nickname: '민서',
       title: '야간 미션 인증 파일 업로드',
       body: '야간 체험 코스에서 받은 미션지를 스캔해서 올립니다. 1반지 모든 조가 같이 확인까지 완료했습니다.',
@@ -82,7 +84,8 @@ const initialPostsByClass = {
     {
       id: 'field-trip-3-1',
       classId: '3',
-      authorUserId: null,
+      authorUserId: 0,
+      authorRole: 'anonymous',
       nickname: '3반 기록팀',
       title: '조별 미션 답안 정리본',
       body: '오후 자유시간 구간에서 받은 퀴즈 답안과 사진 인증 순서를 정리해서 공유합니다. 빠진 조가 있으면 이 글 기준으로 다시 확인해 주세요.',
@@ -107,7 +110,8 @@ const initialPostsByClass = {
     {
       id: 'field-trip-7-1',
       classId: '7',
-      authorUserId: null,
+      authorUserId: 0,
+      authorRole: 'anonymous',
       nickname: '인솔조',
       title: '최종 단체 미션 인증',
       body: '7반 전체가 참여한 단체 미션 인증 사진입니다. 대형 구호 영상도 같이 첨부했어요.',
@@ -204,11 +208,14 @@ async function createPost(classId, payload) {
   await delay(120);
 
   const now = new Date().toISOString();
+  // Mirror the real API contract: payload.nickname only matters for anonymous
+  // creation, while authenticated mock writes synthesize a user-backed author.
   const createdPost = {
     id: `field-trip-${classId}-${Date.now()}`,
     classId,
-    authorUserId: 1,
-    nickname: payload.nickname,
+    authorUserId: payload.nickname ? 0 : 1,
+    authorRole: payload.nickname ? 'anonymous' : 'student',
+    nickname: payload.nickname || '로그인 사용자',
     title: payload.title,
     body: payload.body,
     attachments: cloneValue(payload.attachments || []),
@@ -236,7 +243,6 @@ async function updatePost(classId, postId, payload) {
 
   const nextPost = {
     ...existingPosts[targetIndex],
-    nickname: payload.nickname,
     title: payload.title,
     body: payload.body,
     attachments: cloneValue(payload.attachments || []),

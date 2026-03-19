@@ -27,6 +27,11 @@ const ROLE_MAP = {
     prefix: '[교사]',
     className: 'role-teacher',
   },
+  anonymous: {
+    // Field-trip posts can be written without login after board unlock.
+    prefix: '[비로그인]',
+    className: 'role-anonymous',
+  },
   student: {
     prefix: '',
     className: 'role-student',

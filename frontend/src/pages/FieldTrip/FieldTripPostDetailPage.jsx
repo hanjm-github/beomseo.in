@@ -116,9 +116,10 @@ export default function FieldTripPostDetailPage() {
           <div className={styles.boardHeaderContent}>
             <p className={styles.sectionEyebrow}>학급별 현장 기록 보드</p>
             <h1 className={styles.boardTitle}>{selectedClass.label} 상세 기록</h1>
+            {/* Detail and edit are separate routes so direct links can land on a
+                stable read view without coupling to the board's compose state. */}
             <p className={styles.sectionDescription}>
-              새 탭에서 게시글 내용을 확인하고, 권한이 있으면 바로 수정 화면으로 이동할 수
-              있습니다.
+              게시글 내용을 확인하고, 권한이 있으면 바로 수정 화면으로 이동할 수 있습니다.
             </p>
           </div>
           <div className={styles.boardHeaderActions}>

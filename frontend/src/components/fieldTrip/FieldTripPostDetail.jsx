@@ -1,4 +1,6 @@
 import Attachments from '../notices/Attachments';
+import RoleName from '../RoleName/RoleName';
+import { sanitizeRichHtml } from '../../security/htmlSanitizer';
 import styles from '../../pages/FieldTrip/FieldTripPage.module.css';
 import { formatFieldTripDate } from '../../features/fieldTrip/utils';
 
@@ -31,13 +33,18 @@ export default function FieldTripPostDetail({ classSummary, post, loading }) {
       </div>
 
       <div className={styles.detailMeta}>
-        <span>{post.nickname}</span>
+        <RoleName nickname={post.nickname} role={post.authorRole || 'student'} size="sm" />
         <span>•</span>
         <span>{formatFieldTripDate(post.createdAt)}</span>
       </div>
 
       <div className={styles.detailBody}>
-        <p className={styles.detailBodyText}>{post.body}</p>
+        {/* Stored field-trip bodies are rich HTML, so re-sanitize before rendering
+            even though the editor already sanitized the outbound payload. */}
+        <div
+          className={styles.detailBodyRich}
+          dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(post.body) }}
+        />
       </div>
 
       {post.attachments?.length ? (
