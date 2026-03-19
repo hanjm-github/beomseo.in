@@ -16,6 +16,8 @@
  */
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext';
+import { NetworkStatusProvider } from './context/NetworkStatusContext';
+import { PwaInstallProvider } from './context/PwaInstallContext';
 import { AuthProvider } from './context/AuthContext';
 import { Suspense, lazy, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
@@ -52,38 +54,42 @@ function RouteFallback() {
 function App() {
   return (
     <ThemeProvider>
-      <AuthProvider>
-        <Router>
-          <ScrollToTop />
-          <AppLayout>
-            <Suspense fallback={<RouteFallback />}>
-              <Routes>
-                <Route path="/" element={<MainPage />} />
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/signup" element={<SignUpPage />} />
-                <Route path="/notices/*" element={<NoticesPage />} />
-                <Route path="/community/*" element={<CommunityRouter />} />
-                <Route path="/school-info/*" element={<SchoolInfoPage />} />
-                <Route path="/gallery" element={<GalleryPage />} />
-                <Route path="/privacy" element={<PrivacyPolicyPage />} />
-                <Route path="/terms" element={<TermsOfServicePage />} />
-                <Route
-                  path="*"
-                  element={
-                    <NotFoundPage
-                      eyebrow="페이지 없음"
-                      title="찾을 수 없는 페이지입니다."
-                      description="입력한 주소가 잘못되었거나 페이지가 이동되었습니다. 홈이나 공지 메뉴에서 다시 시작해 주세요."
-                      primaryAction={{ label: '홈으로', to: '/' }}
-                      secondaryActions={[{ label: '공지 보기', to: '/notices/school' }]}
+      <NetworkStatusProvider>
+        <PwaInstallProvider>
+          <AuthProvider>
+            <Router>
+              <ScrollToTop />
+              <AppLayout>
+                <Suspense fallback={<RouteFallback />}>
+                  <Routes>
+                    <Route path="/" element={<MainPage />} />
+                    <Route path="/login" element={<LoginPage />} />
+                    <Route path="/signup" element={<SignUpPage />} />
+                    <Route path="/notices/*" element={<NoticesPage />} />
+                    <Route path="/community/*" element={<CommunityRouter />} />
+                    <Route path="/school-info/*" element={<SchoolInfoPage />} />
+                    <Route path="/gallery" element={<GalleryPage />} />
+                    <Route path="/privacy" element={<PrivacyPolicyPage />} />
+                    <Route path="/terms" element={<TermsOfServicePage />} />
+                    <Route
+                      path="*"
+                      element={
+                        <NotFoundPage
+                          eyebrow="페이지 없음"
+                          title="찾을 수 없는 페이지입니다."
+                          description="입력한 주소가 잘못되었거나 페이지가 이동되었습니다. 홈이나 공지 메뉴에서 다시 시작해 주세요."
+                          primaryAction={{ label: '홈으로', to: '/' }}
+                          secondaryActions={[{ label: '공지 보기', to: '/notices/school' }]}
+                        />
+                      }
                     />
-                  }
-                />
-              </Routes>
-            </Suspense>
-          </AppLayout>
-        </Router>
-      </AuthProvider>
+                  </Routes>
+                </Suspense>
+              </AppLayout>
+            </Router>
+          </AuthProvider>
+        </PwaInstallProvider>
+      </NetworkStatusProvider>
     </ThemeProvider>
   );
 }

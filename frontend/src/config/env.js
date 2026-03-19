@@ -23,6 +23,11 @@ function readPositiveIntEnv(key, fallback) {
   return value;
 }
 
+function readBaseUrlEnv(key, fallback) {
+  const value = readStringEnv(key, fallback);
+  return value.replace(/\/$/, '');
+}
+
 function readCsvEnv(key, fallback = []) {
   const value = readEnvValue(key);
   if (typeof value !== 'string') return [...fallback];
@@ -45,6 +50,8 @@ function readEnvValue(key) {
 }
 
 export const APP_NAME = readStringEnv('VITE_APP_NAME', 'beomseo.in');
+export const API_BASE_URL = readBaseUrlEnv('VITE_API_URL', 'http://localhost:5000');
+export const FASTAPI_BASE_URL = readBaseUrlEnv('VITE_SPORTS_LEAGUE_API_URL', API_BASE_URL);
 
 export const UPLOAD_MAX_ATTACHMENTS = readPositiveIntEnv('VITE_UPLOAD_MAX_ATTACHMENTS', 5);
 export const UPLOAD_MAX_IMAGES = readPositiveIntEnv('VITE_UPLOAD_MAX_IMAGES', 5);

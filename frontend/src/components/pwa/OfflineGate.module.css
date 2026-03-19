@@ -1,0 +1,16 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: grid;
+  place-items: center;
+  padding: clamp(16px, 3vw, 32px);
+  background:
+    linear-gradient(180deg, rgba(6, 19, 15, 0.42), rgba(6, 19, 15, 0.58)),
+    rgba(6, 19, 15, 0.28);
+  backdrop-filter: blur(14px);
+}
+
+.dialog {
+  width: min(100%, 640px);
+}

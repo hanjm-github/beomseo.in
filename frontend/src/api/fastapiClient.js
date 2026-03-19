@@ -1,13 +1,11 @@
 import axios from 'axios';
+import { API_BASE_URL, FASTAPI_BASE_URL } from '../config/env';
+import { emitNetworkRequestFailure } from '../pwa/events';
 
-const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000').replace(/\/$/, '');
+export { FASTAPI_BASE_URL };
 
 // Field-trip uploads and sports-league data can live on the FastAPI origin
 // even when the rest of the app still talks to the main Flask backend.
-export const FASTAPI_BASE_URL = (
-  import.meta.env.VITE_SPORTS_LEAGUE_API_URL || API_BASE_URL
-).replace(/\/$/, '');
-
 const SAFE_METHODS = new Set(['get', 'head', 'options']);
 const AUTH_CSRF_COOKIE = 'csrf_access_token';
 
@@ -35,3 +33,20 @@ fastapiApi.interceptors.request.use((config) => {
   }
   return config;
 });
+
+fastapiApi.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const originalRequest = error?.config || {};
+
+    if (!error?.response && error?.code !== 'ERR_CANCELED') {
+      emitNetworkRequestFailure({
+        client: 'fastapi',
+        method: originalRequest.method,
+        url: originalRequest.url,
+      });
+    }
+
+    return Promise.reject(error);
+  }
+);

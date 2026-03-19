@@ -1,0 +1,31 @@
+{
+  "name": "beomseo.in",
+  "short_name": "beomseo.in",
+  "lang": "ko",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0f2a20",
+  "theme_color": "#1B4D3E",
+  "description": "범서고 학생을 위한 학교 생활 정보와 커뮤니티를 빠르게 확인할 수 있는 beomseo.in",
+  "icons": [
+    {
+      "src": "/pwa-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-maskable-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

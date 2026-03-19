@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#1B4D3E" />
+  <title>beomseo.in | 오프라인</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg-top: #15352a;
+      --bg-bottom: #f2f6f4;
+      --panel-bg: rgba(255, 255, 255, 0.92);
+      --panel-border: rgba(17, 58, 44, 0.14);
+      --text-primary: #0f2a20;
+      --text-secondary: #456155;
+      --brand: #1b4d3e;
+      --brand-strong: #14392e;
+      --shadow: 0 28px 60px rgba(10, 32, 24, 0.18);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Pretendard Variable", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+      color: var(--text-primary);
+      background:
+        radial-gradient(circle at top left, rgba(255, 255, 255, 0.12), transparent 22%),
+        linear-gradient(180deg, var(--bg-top), var(--bg-bottom));
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    .shell {
+      width: min(100%, 640px);
+    }
+
+    .panel {
+      display: grid;
+      gap: 20px;
+      padding: clamp(24px, 4vw, 36px);
+      border-radius: 28px;
+      border: 1px solid var(--panel-border);
+      background: var(--panel-bg);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      width: fit-content;
+      min-height: 40px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: rgba(27, 77, 62, 0.08);
+      color: var(--brand);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2rem, 6vw, 3rem);
+      line-height: 1;
+      letter-spacing: -0.04em;
+    }
+
+    p {
+      margin: 0;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      font-size: 1rem;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .button,
+    .link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 48px;
+      padding: 0 18px;
+      border-radius: 16px;
+      font-size: 15px;
+      font-weight: 700;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+    }
+
+    .button {
+      background: var(--brand);
+      color: #fff;
+    }
+
+    .button:hover {
+      background: var(--brand-strong);
+    }
+
+    .link {
+      background: rgba(15, 42, 32, 0.06);
+      color: var(--text-primary);
+      border: 1px solid rgba(15, 42, 32, 0.1);
+    }
+
+    .footer-note {
+      font-size: 0.92rem;
+    }
+
+    @media (max-width: 640px) {
+      body {
+        padding: 16px;
+      }
+
+      .button,
+      .link {
+        flex: 1 1 180px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="panel" aria-labelledby="offline-title">
+      <div class="badge">오프라인</div>
+      <div>
+        <h1 id="offline-title">인터넷 연결을 확인해 주세요</h1>
+        <p>
+          범서인은 현재 네트워크에 연결되어 있지 않아 필요한 페이지를 불러오지 못하고 있습니다.
+          연결을 확인한 뒤 다시 시도해 주세요.
+        </p>
+      </div>
+      <div class="actions">
+        <button class="button" type="button" onclick="location.reload()">다시 시도</button>
+        <a class="link" href="/">홈으로</a>
+      </div>
+      <p class="footer-note">홈화면에 추가한 뒤에도 인터넷이 필요합니다.</p>
+    </section>
+  </main>
+</body>
+</html>

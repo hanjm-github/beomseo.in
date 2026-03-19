@@ -1,23 +1,9 @@
+import { API_BASE_URL, FASTAPI_BASE_URL } from '../../config/env';
 import { toSafeAssetUrl } from '../../security/urlPolicy.js';
 
 const IMG_TAG_SRC_RE =
   /<img\b[^>]*?\bsrc\s*=\s*(?:"([^"]+)"|'([^']+)'|([^\s"'=<>`]+))[^>]*>/gi;
 const FIELD_TRIP_UPLOAD_ROUTE_PREFIX = '/api/community/field-trip/uploads';
-
-function readEnvValue(key) {
-  if (typeof import.meta !== 'undefined' && import.meta?.env) {
-    return import.meta.env[key];
-  }
-
-  return globalThis?.process?.env?.[key];
-}
-
-function readBaseUrl(key, fallback) {
-  return String(readEnvValue(key) || fallback).replace(/\/$/, '');
-}
-
-const API_BASE_URL = readBaseUrl('VITE_API_URL', 'http://localhost:5000');
-const FASTAPI_BASE_URL = readBaseUrl('VITE_SPORTS_LEAGUE_API_URL', API_BASE_URL);
 
 function toAbsoluteFieldTripImageUrl(rawUrl) {
   const safeUrl = toSafeAssetUrl(rawUrl);

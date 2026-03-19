@@ -12,8 +12,7 @@
  * - Acts as the data boundary between UI code and backend HTTP endpoints.
  */
 import { toSafeAssetUrl } from '../security/urlPolicy';
-import { FASTAPI_BASE_URL } from './fastapiClient';
-const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000').replace(/\/$/, '');
+import { API_BASE_URL, FASTAPI_BASE_URL } from '../config/env';
 // Some relative API paths are owned by FastAPI rather than Flask, so callers
 // can keep passing backend-relative URLs without hard-coding origins.
 const FASTAPI_ROUTE_PREFIXES = ['/api/community/field-trip/uploads'];

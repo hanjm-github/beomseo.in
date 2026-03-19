@@ -14,6 +14,7 @@
  */
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import OfflineGate from '../components/pwa/OfflineGate';
 import '../styles/layout.css';
 
 /**
@@ -32,6 +33,7 @@ export default function AppLayout({ children }) {
         {children}
       </main>
       <Footer />
+      <OfflineGate />
     </div>
   );
 }

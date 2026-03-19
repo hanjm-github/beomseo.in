@@ -7,8 +7,9 @@
  * - Emits `auth:expired` when session recovery fails.
  */
 import axios from 'axios';
+import { API_BASE_URL } from '../config/env';
+import { emitNetworkRequestFailure } from '../pwa/events';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 const ISO_DATETIME_WITHOUT_TZ_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?$/;
 const SAFE_METHODS = new Set(['get', 'head', 'options']);
 const CSRF_ACCESS_COOKIE = 'csrf_access_token';
@@ -88,6 +89,10 @@ function isAnonymousSessionProbe(requestUrl = '', errorCode = '') {
   return requestUrl.includes('/api/auth/me') && errorCode === 'authorization_required';
 }
 
+function isNetworkFailure(error) {
+  return !error?.response && error?.code !== 'ERR_CANCELED';
+}
+
 api.interceptors.request.use(
   (config) => {
     const requestUrl = config?.url || '';
@@ -115,6 +120,16 @@ api.interceptors.response.use(
     const originalRequest = error?.config || {};
     const requestUrl = originalRequest.url || '';
     const isLogoutAttempt = isLogoutRequest(requestUrl);
+
+    if (isNetworkFailure(error)) {
+      emitNetworkRequestFailure({
+        client: 'auth',
+        method: originalRequest.method,
+        url: requestUrl,
+      });
+      return Promise.reject(error);
+    }
+
     const status = error?.response?.status;
     const errorCode = error?.response?.data?.error_code;
 
