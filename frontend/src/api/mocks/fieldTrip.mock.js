@@ -279,6 +279,10 @@ async function deletePost(classId, postId) {
 }
 
 async function upload(file) {
+  if (!file.type?.startsWith('image/')) {
+    throw new Error('이미지 파일만 업로드할 수 있습니다.');
+  }
+
   if (file.size > MAX_FILE_SIZE) {
     throw new Error(`첨부 용량은 ${UPLOAD_MAX_FILE_SIZE_MB}MB 이하만 가능합니다.`);
   }

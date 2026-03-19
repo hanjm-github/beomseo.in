@@ -81,11 +81,21 @@ export default function ClubRecruitComposePage() {
     if (file.size > MAX_IMAGE_UPLOAD_SIZE) {
       throw new Error(`이미지는 ${UPLOAD_MAX_FILE_SIZE_MB}MB 이하만 업로드할 수 있습니다.`);
     }
-    return clubRecruitApi.upload(file);
+    setUploading(true);
+    setError('');
+    try {
+      return await clubRecruitApi.upload(file);
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (uploading) {
+      setError('이미지 업로드가 끝난 뒤에 저장할 수 있습니다.');
+      return;
+    }
     if (!form.clubName || !form.field || !form.applyStart || !form.extraNote) {
       setError('동아리 이름, 분야, 모집 시작일, 기타 사항은 필수입니다.');
       return;
@@ -242,8 +252,8 @@ export default function ClubRecruitComposePage() {
           <button type="button" className="btn btn-secondary" onClick={() => navigate(-1)}>
             취소
           </button>
-          <button type="submit" className="btn btn-primary" disabled={submitting}>
-            {submitting ? '저장 중...' : '저장'}
+          <button type="submit" className="btn btn-primary" disabled={submitting || uploading}>
+            {uploading ? '이미지 업로드 중...' : submitting ? '저장 중...' : '저장'}
           </button>
         </div>
       </form>

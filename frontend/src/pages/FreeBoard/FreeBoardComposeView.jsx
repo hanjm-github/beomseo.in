@@ -104,6 +104,10 @@ export default function FreeBoardComposeView({ mode = 'create' }) {
     e.preventDefault();
     if (isEdit && !hasEditAccess) return;
     if (submitting) return;
+    if (uploading) {
+      setError('이미지 업로드가 끝난 뒤에 저장할 수 있습니다.');
+      return;
+    }
     setSubmitting(true);
     setError('');
     try {
@@ -249,9 +253,9 @@ export default function FreeBoardComposeView({ mode = 'create' }) {
               삭제
             </button>
           ) : null}
-          <button type="submit" className={styles.btnPrimary} disabled={submitting}>
-            {submitting ? <Loader2 size={16} className={styles.spinner} /> : null}
-            {isEdit ? '수정 완료' : '작성 완료'}
+          <button type="submit" className={styles.btnPrimary} disabled={submitting || uploading}>
+            {submitting || uploading ? <Loader2 size={16} className={styles.spinner} /> : null}
+            {uploading ? '이미지 업로드 중...' : isEdit ? '수정 완료' : '작성 완료'}
           </button>
         </div>
       </form>

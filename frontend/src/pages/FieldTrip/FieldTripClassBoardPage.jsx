@@ -497,9 +497,6 @@ export default function FieldTripClassBoardPage() {
         onDelete={isEditRoute ? handleDeletePost : undefined}
         onSubmit={isEditRoute ? handleUpdatePost : handleCreatePost}
         onUploadFile={(file) => fieldTripApi.upload(file)}
-        uploadMaxAttachments={fieldTripApi.MAX_ATTACHMENTS}
-        uploadMaxFileSizeBytes={fieldTripApi.MAX_FILE_SIZE}
-        uploadMaxFileSizeMb={Math.round(fieldTripApi.MAX_FILE_SIZE / (1024 * 1024))}
         isAuthenticated={isAuthenticated}
         currentUser={user}
         // Unlocking the class is enough to enable anonymous creation, but not

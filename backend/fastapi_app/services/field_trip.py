@@ -561,7 +561,7 @@ async def upload_file(
 ) -> dict:
     adapter = FastAPIUploadAdapter(upload_file)
     config = _field_trip_upload_config(settings)
-    result = validate_upload(adapter, config, require_image=False)
+    result = validate_upload(adapter, config, require_image=True)
     if not result.get('ok'):
         raise FieldTripError(
             result.get('error', '파일 검증에 실패했습니다.'),

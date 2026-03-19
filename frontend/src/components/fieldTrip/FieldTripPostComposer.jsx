@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Loader2, Paperclip, Send, Trash2 } from 'lucide-react';
-import Attachments from '../notices/Attachments';
+import { Loader2, Send, Trash2 } from 'lucide-react';
 import Editor from '../notices/Editor';
 import RoleName from '../RoleName/RoleName';
 import { sanitizeRichHtml, toPlainText } from '../../security/htmlSanitizer';
@@ -14,9 +13,6 @@ export default function FieldTripPostComposer({
   onSubmit,
   onDelete,
   onUploadFile,
-  uploadMaxAttachments,
-  uploadMaxFileSizeBytes,
-  uploadMaxFileSizeMb,
   isAuthenticated = false,
   currentUser = null,
   allowAnonymousWrite = false,
@@ -87,47 +83,17 @@ export default function FieldTripPostComposer({
     return null;
   }, [currentUser, initialPost, isAuthenticated, isEditMode, nickname]);
 
-  const handleFilesSelected = async (event) => {
-    const files = Array.from(event.target.files || []);
-    event.target.value = '';
-
-    if (!files.length) {
-      return;
-    }
-
-    setError('');
-
-    if (attachments.length + files.length > uploadMaxAttachments) {
-      setError(`첨부는 최대 ${uploadMaxAttachments}개까지 업로드할 수 있습니다.`);
-      return;
-    }
-
-    const oversized = files.find((file) => file.size > uploadMaxFileSizeBytes);
-    if (oversized) {
-      setError(`파일 최대 용량은 ${uploadMaxFileSizeMb}MB입니다.`);
-      return;
+  const handleUploadImage = async (file) => {
+    if (!onUploadFile) {
+      throw new Error('이미지 업로드를 사용할 수 없습니다.');
     }
 
     setUploading(true);
-
     try {
-      const uploadedFiles = [];
-
-      for (const file of files) {
-        const uploaded = await onUploadFile?.(file);
-        uploadedFiles.push(uploaded);
-      }
-
-      setAttachments((current) => [...current, ...uploadedFiles]);
-    } catch (uploadError) {
-      setError(uploadError?.message || '첨부 파일 업로드에 실패했습니다.');
+      return await onUploadFile(file);
     } finally {
       setUploading(false);
     }
-  };
-
-  const handleRemoveAttachment = (attachmentId) => {
-    setAttachments((current) => current.filter((file) => file.id !== attachmentId));
   };
 
   const handleSubmit = async (event) => {
@@ -135,6 +101,11 @@ export default function FieldTripPostComposer({
 
     if (!isAuthenticated && !allowAnonymousWrite) {
       setError('로그인 또는 반 비밀번호 확인 후 작성할 수 있습니다.');
+      return;
+    }
+
+    if (uploading) {
+      setError('이미지 업로드가 끝난 뒤에 글을 올릴 수 있습니다.');
       return;
     }
 
@@ -162,6 +133,8 @@ export default function FieldTripPostComposer({
       const payload = {
         title: trimmedTitle,
         body: safeBody,
+        // Preserve legacy attachments on edit, but new attachments are no longer
+        // managed from the field-trip composer UI.
         attachments: attachments || [],
       };
 
@@ -204,7 +177,7 @@ export default function FieldTripPostComposer({
             {isEditMode ? `${classSummary.label} 게시글 수정` : `${classSummary.label} 미션 글 올리기`}
           </h2>
           <p className={styles.sectionDescription}>
-            첨부파일은 선택 사항입니다. 본문은 공지사항 편집기처럼 이미지와 서식을 함께 사용할 수 있습니다.
+            본문은 공지사항 편집기처럼 이미지와 서식을 함께 사용할 수 있습니다.
           </p>
         </div>
       </div>
@@ -251,24 +224,9 @@ export default function FieldTripPostComposer({
             value={body}
             onChange={setBody}
             placeholder="미션 진행 상황이나 메모를 자유롭게 적어 주세요"
-            onUploadImage={onUploadFile}
+            onUploadImage={onUploadFile ? handleUploadImage : undefined}
             uploading={uploading}
           />
-        </div>
-
-        <div className={styles.formGroup}>
-          <span>사진/파일 추가 (선택)</span>
-          <div className={styles.attachmentToolbar}>
-            <label className={styles.uploadButton}>
-              <Paperclip size={14} />
-              첨부 추가
-              <input type="file" multiple onChange={handleFilesSelected} hidden />
-            </label>
-            <p className={styles.formHint}>
-              {attachments.length}/{uploadMaxAttachments}개, 파일당 최대 {uploadMaxFileSizeMb}MB
-            </p>
-          </div>
-          <Attachments items={attachments} onRemove={handleRemoveAttachment} />
         </div>
 
         {error ? <p className={styles.formError}>{error}</p> : null}

@@ -4,6 +4,7 @@ import {
   FIELD_TRIP_TABS,
   FIELD_TRIP_UNLOCK_STORAGE_KEY,
 } from './constants';
+import { getFirstBodyImageUrl } from './thumbnail';
 import { toPlainText } from '../../security/htmlSanitizer';
 
 const CLASS_ID_SET = new Set(FIELD_TRIP_CLASS_IDS);
@@ -184,6 +185,16 @@ export function buildMissionPreview(body, maxLength = 110) {
 }
 
 export function getFirstFieldTripImage(post) {
+  const bodyImageUrl = getFirstBodyImageUrl(post?.body);
+  if (bodyImageUrl) {
+    return {
+      id: `${post?.id || 'field-trip'}-body-image`,
+      url: bodyImageUrl,
+      kind: 'image',
+      name: 'body-image',
+    };
+  }
+
   return (post?.attachments || []).find((attachment) => attachment?.kind === 'image') || null;
 }
 

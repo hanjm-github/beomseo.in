@@ -236,6 +236,10 @@ export default function ComposeView({ mode = 'create' }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    if (uploadingImage) {
+      setError('이미지 업로드가 끝난 뒤에 저장할 수 있습니다.');
+      return;
+    }
     if (mode === 'edit' && !hasEditPermission) {
       setError('공지 수정 권한이 없습니다.');
       return;
@@ -459,8 +463,13 @@ export default function ComposeView({ mode = 'create' }) {
         >
           취소
         </button>
-        <button type="button" className={styles.btnPrimary} onClick={handleSubmit} disabled={submitting}>
-          {submitting ? '저장 중...' : mode === 'edit' ? '수정 완료' : '작성 완료'}
+        <button
+          type="button"
+          className={styles.btnPrimary}
+          onClick={handleSubmit}
+          disabled={submitting || uploadingImage}
+        >
+          {uploadingImage ? '이미지 업로드 중...' : submitting ? '저장 중...' : mode === 'edit' ? '수정 완료' : '작성 완료'}
         </button>
       </div>
     </div>
