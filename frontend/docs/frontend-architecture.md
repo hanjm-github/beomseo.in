@@ -227,6 +227,15 @@ flowchart LR
    - `frontend-api-reference.md`
    - `analytics-tracking.md`(이벤트 추가 시)
 
+참고:
+
+- 수학여행 이벤트는 허브와 반별 전용 페이지로 분리됩니다.
+- 허브: `/community/field-trip`
+- 반 게시판: `/community/field-trip/classes/:classId`
+- 글쓰기: `/community/field-trip/classes/:classId/new`
+- 글 상세: `/community/field-trip/classes/:classId/posts/:postId`
+- 허브에서는 `tab` 쿼리스트링만 사용하고, 반/글 상태는 path segment로 관리합니다.
+
 ## 8. 운영 관점 체크 포인트
 
 - 인증 만료 UX: `AUTH_EXPIRED_EVENT` 수신 시 로그인 유도 흐름 확인
@@ -236,7 +245,7 @@ flowchart LR
 
 ## 9. 커뮤니티 라우트 트리
 
-`CommunityRouter`는 8개 보드를 각각 List/Detail/Compose 패턴으로 위임합니다.
+`CommunityRouter`는 8개 일반 보드와 1개의 이벤트 페이지를 함께 위임합니다.
 
 ```mermaid
 graph LR
@@ -246,11 +255,14 @@ graph LR
     CR --> PET["petition/*\n(List/Detail/Compose)"]
     CR --> SUR["survey/*\n(List/Detail/Compose/Edit/Results)"]
     CR --> VOTE["vote/*\n(List/Detail/Compose)"]
+    CR --> FT["field-trip\n(Hub + class board routes)"]
     CR --> LF["lost-found/*\n(List/Detail/Compose)"]
     CR --> GM["gomsol-market/*\n(List/Detail/Compose)"]
 ```
 
 `survey` 보드만 `/:id/edit`과 `/:id/results` 추가 라우트가 존재합니다.  
+`field-trip`은 허브(`/community/field-trip`)와 반 게시판(`/community/field-trip/classes/:classId*`)으로 분리되며,
+허브에서는 `tab` 쿼리만 유지하고 게시글 상태는 개별 라우트로 표현합니다.  
 전체 경로 매핑은 [frontend-code-map.md §3.3](./frontend-code-map.md)을 참고합니다.
 
 ## 10. 스타일/디자인 토큰 계층

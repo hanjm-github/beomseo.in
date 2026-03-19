@@ -15,7 +15,9 @@ from fastapi.responses import JSONResponse
 
 from .config import get_settings
 from .database import shutdown_engine
+from .routes.field_trip import router as field_trip_router
 from .routes.sports_league import router as sports_league_router
+from .services.field_trip import FieldTripError
 from .services.sports_league import SportsLeagueError
 
 
@@ -45,7 +47,13 @@ def create_app() -> FastAPI:
         CORSMiddleware,
         allow_origins=settings.cors_origins_list,
         allow_credentials=True,
-        allow_headers=['Content-Type', 'Authorization', 'X-CSRF-TOKEN', 'X-CSRF-Token'],
+        allow_headers=[
+            'Content-Type',
+            'Authorization',
+            'X-CSRF-TOKEN',
+            'X-CSRF-Token',
+            'X-Field-Trip-CSRF',
+        ],
         allow_methods=['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     )
 
@@ -73,6 +81,16 @@ def create_app() -> FastAPI:
             content={'error': exc.message},
         )
 
+    @app.exception_handler(FieldTripError)
+    async def field_trip_error_handler(request: Request, exc: FieldTripError):
+        payload = {'error': exc.message}
+        if exc.error_code:
+            payload['error_code'] = exc.error_code
+        return JSONResponse(
+            status_code=exc.status_code,
+            content=payload,
+        )
+
     # Health check
     @app.get('/api/health')
     async def health():
@@ -80,6 +98,7 @@ def create_app() -> FastAPI:
 
     # Mount router
     app.include_router(sports_league_router)
+    app.include_router(field_trip_router)
 
     return app
 

@@ -69,6 +69,11 @@ from .sports_league import (
     SportsLeagueEvent,
     SportsLeagueStandingOverride,
 )
+from .field_trip import (
+    FieldTripClass,
+    FieldTripPost,
+    FieldTripPostAttachment,
+)
 
 __all__ = [
     'User',
@@ -124,5 +129,8 @@ __all__ = [
     'SportsLeaguePlayer',
     'SportsLeagueEvent',
     'SportsLeagueStandingOverride',
+    'FieldTripClass',
+    'FieldTripPost',
+    'FieldTripPostAttachment',
     'db',
 ]

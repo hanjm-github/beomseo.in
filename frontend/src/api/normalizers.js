@@ -17,7 +17,7 @@ const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000').r
 /**
  * toAbsoluteApiUrl module entry point.
  */
-export function toAbsoluteApiUrl(url) {
+export function toAbsoluteApiUrl(url, baseUrl = API_BASE_URL) {
   const safeUrl = toSafeAssetUrl(url);
   if (!safeUrl) return '';
   if (safeUrl.startsWith('blob:')) {
@@ -31,7 +31,7 @@ export function toAbsoluteApiUrl(url) {
 
   const normalized = safeUrl.startsWith('api/') ? `/${safeUrl}` : safeUrl;
   const prefix = normalized.startsWith('/') ? '' : '/';
-  return `${API_BASE_URL}${prefix}${normalized}`;
+  return `${baseUrl}${prefix}${normalized}`;
 }
 
 /**
@@ -59,11 +59,12 @@ export function normalizePaginatedResponse(data, fallbackPageSize = 0) {
 /**
  * normalizeUploadResponse module entry point.
  */
-export function normalizeUploadResponse(data) {
+export function normalizeUploadResponse(data, baseUrl = API_BASE_URL) {
   if (!data || typeof data !== 'object') return data;
   return {
     ...data,
-    url: toAbsoluteApiUrl(data.url),
+    url: toAbsoluteApiUrl(data.url, baseUrl),
+    canonicalUrl: toAbsoluteApiUrl(data.canonicalUrl, baseUrl) || data.canonicalUrl,
   };
 }
 

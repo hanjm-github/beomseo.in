@@ -53,6 +53,7 @@ const navigationItems = [
       { label: '학생 청원', path: '/community/petition' },
       { label: '설문 품앗이', path: '/community/survey' },
       { label: '실시간 투표', path: '/community/vote' },
+      { label: '수학여행', path: '/community/field-trip' },
       { label: '분실물 센터', path: '/community/lost-found' },
       { label: '곰솔마켓', path: '/community/gomsol-market' },
     ],

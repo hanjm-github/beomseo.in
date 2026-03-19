@@ -61,6 +61,9 @@ class Settings(BaseSettings):
     JWT_COOKIE_CSRF_PROTECT: bool = True
     JWT_ACCESS_CSRF_HEADER_NAME: str = 'X-CSRF-TOKEN'
     JWT_ACCESS_CSRF_COOKIE_NAME: str = 'csrf_access_token'
+    JWT_COOKIE_SECURE: bool = False
+    JWT_COOKIE_SAMESITE: str = 'Lax'
+    JWT_COOKIE_DOMAIN: str | None = None
 
     # CORS
     CORS_ORIGINS: str = 'http://localhost:5173'
@@ -91,6 +94,62 @@ class Settings(BaseSettings):
     RATELIMIT_SPORTS_LEAGUE_READ: str = '60 per minute'
     RATELIMIT_SPORTS_LEAGUE_STREAM_CONNECT: str = '12 per minute'
     RATELIMIT_WRITE_LIMIT: str = '120 per minute'
+
+    # Uploads
+    UPLOAD_ROOT: str = str(BACKEND_DIR / 'uploads')
+    UPLOAD_FIELD_TRIP_DIR: str = 'field_trip'
+    MAX_ATTACH_SIZE: int = 10 * 1024 * 1024
+    MAX_ATTACH_COUNT: int = 5
+    UPLOAD_ALLOWED_MIME_TYPES: str = (
+        'image/jpeg,image/png,image/gif,image/webp,'
+        'application/pdf,text/plain,application/zip,'
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document,'
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,'
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation,'
+        'application/msword,application/vnd.ms-excel,application/vnd.ms-powerpoint'
+    )
+    UPLOAD_ALLOWED_EXTENSIONS: str = 'jpg,jpeg,png,gif,webp,pdf,txt,zip,doc,docx,xls,xlsx,ppt,pptx'
+    UPLOAD_TEMP_PREVIEW_TTL_SECONDS: int = 86400
+    UPLOAD_TEMP_PREVIEW_SIGNING_KEY: str = ''
+
+    # Field trip
+    FIELD_TRIP_UNLOCK_COOKIE_NAME: str = 'field_trip_unlock_token'
+    FIELD_TRIP_CSRF_COOKIE_NAME: str = 'field_trip_csrf_token'
+    FIELD_TRIP_CSRF_HEADER_NAME: str = 'X-Field-Trip-CSRF'
+    FIELD_TRIP_COOKIE_PATH: str = '/api/community/field-trip'
+    # The SPA must read this cookie from /community/... routes to mirror it into the write header.
+    FIELD_TRIP_CSRF_COOKIE_PATH: str = '/'
+    FIELD_TRIP_MAX_NICKNAME_LENGTH: int = 20
+    FIELD_TRIP_MAX_TITLE_LENGTH: int = 80
+    FIELD_TRIP_MAX_BODY_LENGTH: int = 1200
+
+    @property
+    def upload_allowed_mime_types_set(self) -> set[str]:
+        return {value.lower() for value in _parse_csv(self.UPLOAD_ALLOWED_MIME_TYPES)}
+
+    @property
+    def upload_allowed_extensions_set(self) -> set[str]:
+        return {value.lower().lstrip('.') for value in _parse_csv(self.UPLOAD_ALLOWED_EXTENSIONS)}
+
+    @property
+    def field_trip_upload_config(self) -> dict:
+        return {
+            'UPLOAD_ROOT': self.UPLOAD_ROOT,
+            'UPLOAD_SCOPE_DIRS': {
+                'field_trip': self.UPLOAD_FIELD_TRIP_DIR,
+            },
+            'UPLOAD_ROUTE_PREFIXES': {
+                'field_trip': '/api/community/field-trip/uploads',
+            },
+            'MAX_ATTACH_SIZE': self.MAX_ATTACH_SIZE,
+            'MAX_ATTACH_COUNT': self.MAX_ATTACH_COUNT,
+            'UPLOAD_ALLOWED_MIME_TYPES': self.upload_allowed_mime_types_set,
+            'UPLOAD_ALLOWED_EXTENSIONS': self.upload_allowed_extensions_set,
+            'UPLOAD_TEMP_PREVIEW_TTL_SECONDS': self.UPLOAD_TEMP_PREVIEW_TTL_SECONDS,
+            'UPLOAD_TEMP_PREVIEW_SIGNING_KEY': (
+                self.UPLOAD_TEMP_PREVIEW_SIGNING_KEY or self.JWT_SECRET_KEY
+            ),
+        }
 
 
 @lru_cache()

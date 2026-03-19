@@ -379,3 +379,126 @@ class SportsLeagueStandingOverride(Base):
             'losses': int(self.losses or 0),
             'note': self.note or '',
         }
+
+
+class FieldTripClass(Base):
+    __tablename__ = 'field_trip_classes'
+
+    class_id = Column(String(2), primary_key=True)
+    label = Column(String(20), nullable=False, unique=True)
+    password_hash = Column(String(255), nullable=False)
+    board_description = Column(String(240), nullable=True)
+    total_score = Column(Integer, nullable=False, default=0)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    posts = relationship(
+        'FieldTripPost',
+        back_populates='field_trip_class',
+        cascade='all, delete-orphan',
+        lazy='selectin',
+        order_by='FieldTripPost.created_at.desc()',
+    )
+
+    def to_summary_dict(self, *, post_count=0, is_unlocked=False, board_description=None):
+        return {
+            'classId': self.class_id,
+            'label': self.label,
+            'postCount': int(post_count or 0),
+            'isUnlocked': bool(is_unlocked),
+            'boardDescription': board_description
+            if board_description is not None
+            else self.board_description,
+        }
+
+    def to_score_dict(self):
+        return {
+            'classId': self.class_id,
+            'label': self.label,
+            'totalScore': int(self.total_score or 0),
+        }
+
+
+class FieldTripPost(Base):
+    __tablename__ = 'field_trip_posts'
+
+    id = Column(String(80), primary_key=True)
+    class_id = Column(
+        String(2),
+        ForeignKey('field_trip_classes.class_id', ondelete='CASCADE'),
+        nullable=False,
+        index=True,
+    )
+    author_user_id = Column(
+        Integer,
+        ForeignKey('users.id', ondelete='SET NULL'),
+        nullable=True,
+        index=True,
+    )
+    nickname = Column(String(20), nullable=False)
+    title = Column(String(80), nullable=False)
+    body = Column(Text, nullable=False)
+    ip_address = Column(String(64), nullable=True)
+    user_agent = Column(String(255), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    __table_args__ = (
+        Index('ix_field_trip_posts_class_created_at', 'class_id', 'created_at'),
+    )
+
+    field_trip_class = relationship('FieldTripClass', back_populates='posts')
+    attachments = relationship(
+        'FieldTripPostAttachment',
+        back_populates='post',
+        cascade='all, delete-orphan',
+        lazy='selectin',
+        order_by='FieldTripPostAttachment.display_order.asc()',
+    )
+
+    def to_dict(self, attachment_url_builder):
+        return {
+            'id': self.id,
+            'classId': self.class_id,
+            'authorUserId': self.author_user_id,
+            'nickname': self.nickname,
+            'title': self.title,
+            'body': self.body,
+            'attachments': [
+                attachment.to_dict(attachment_url_builder(attachment.stored_filename))
+                for attachment in self.attachments
+            ],
+            'createdAt': _to_utc_iso(self.created_at),
+            'updatedAt': _to_utc_iso(self.updated_at),
+        }
+
+
+class FieldTripPostAttachment(Base):
+    __tablename__ = 'field_trip_post_attachments'
+
+    id = Column(String(120), primary_key=True)
+    post_id = Column(
+        String(80),
+        ForeignKey('field_trip_posts.id', ondelete='CASCADE'),
+        nullable=False,
+        index=True,
+    )
+    stored_filename = Column(String(120), nullable=False, unique=True)
+    original_name = Column(String(255), nullable=False)
+    mime = Column(String(120), nullable=False)
+    kind = Column(String(16), nullable=False)
+    size_bytes = Column(Integer, nullable=False, default=0)
+    display_order = Column(Integer, nullable=False, default=0)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    post = relationship('FieldTripPost', back_populates='attachments')
+
+    def to_dict(self, url):
+        return {
+            'id': self.id,
+            'name': self.original_name,
+            'size': int(self.size_bytes or 0),
+            'url': url,
+            'mime': self.mime,
+            'kind': self.kind,
+        }

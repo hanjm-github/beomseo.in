@@ -40,6 +40,9 @@ const SurveyResultsView = lazy(() => import('./SurveyExchange/SurveyResultsView'
 const VoteListView = lazy(() => import('./Vote/VoteListView'));
 const VoteDetailView = lazy(() => import('./Vote/VoteDetailView'));
 const VoteComposeView = lazy(() => import('./Vote/VoteComposeView'));
+const FieldTripPage = lazy(() => import('./FieldTrip/FieldTripPage'));
+const FieldTripClassBoardPage = lazy(() => import('./FieldTrip/FieldTripClassBoardPage'));
+const FieldTripPostDetailPage = lazy(() => import('./FieldTrip/FieldTripPostDetailPage'));
 
 const LostFoundListView = lazy(() => import('./LostFound/LostFoundListView'));
 const LostFoundDetailView = lazy(() => import('./LostFound/LostFoundDetailView'));
@@ -79,6 +82,17 @@ export default function CommunityRouter() {
 
       <Route path="vote" element={lazyRoute(VoteListView)} />
       <Route path="vote/new" element={lazyRoute(VoteComposeView)} />
+      <Route path="field-trip" element={lazyRoute(FieldTripPage)} />
+      <Route path="field-trip/classes/:classId" element={lazyRoute(FieldTripClassBoardPage)} />
+      <Route path="field-trip/classes/:classId/new" element={lazyRoute(FieldTripClassBoardPage)} />
+      <Route
+        path="field-trip/classes/:classId/posts/:postId/edit"
+        element={lazyRoute(FieldTripClassBoardPage)}
+      />
+      <Route
+        path="field-trip/classes/:classId/posts/:postId"
+        element={lazyRoute(FieldTripPostDetailPage)}
+      />
 
       <Route path="lost-found" element={lazyRoute(LostFoundListView)} />
       <Route path="lost-found/new" element={lazyRoute(LostFoundComposeView)} />

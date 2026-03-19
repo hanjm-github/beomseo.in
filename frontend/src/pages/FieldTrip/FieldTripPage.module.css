@@ -1,0 +1,993 @@
+.page {
+  --field-trip-orange: var(--color-accent-500);
+  --field-trip-orange-soft: var(--color-accent-100);
+  --field-trip-forest: var(--color-primary-700);
+  --field-trip-sand: color-mix(in srgb, var(--color-accent-50) 40%, white 60%);
+  --field-trip-ink: var(--color-primary-900);
+  --field-trip-chart-base: color-mix(in srgb, var(--color-primary-700) 68%, var(--field-trip-orange) 32%);
+  --field-trip-chart-strong: var(--color-accent-400);
+  padding-top: var(--space-3) !important;
+  gap: var(--space-5);
+}
+
+.hero,
+.sectionCard,
+.summaryCard,
+.classCard,
+.postCard {
+  border-radius: var(--radius-2xl);
+}
+
+.hero,
+.sectionCard,
+.summaryCard {
+  border: 1px solid var(--color-card-border);
+  box-shadow: var(--shadow-card);
+}
+
+.hero {
+  position: relative;
+  overflow: hidden;
+  padding: var(--space-6);
+  background:
+    radial-gradient(circle at top right, color-mix(in srgb, var(--field-trip-orange) 20%, transparent), transparent 30%),
+    radial-gradient(circle at left center, color-mix(in srgb, var(--field-trip-forest) 18%, transparent), transparent 38%),
+    linear-gradient(140deg, #ffffff 0%, var(--field-trip-sand) 100%);
+}
+
+.heroMinimal {
+  min-height: 0;
+}
+
+.heroContent {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: var(--space-5);
+}
+
+.heroText {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.heroEyebrow,
+.sectionEyebrow,
+.modalEyebrow,
+.summaryLabel,
+.heroStatLabel {
+  margin: 0;
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.heroTitle,
+.sectionTitle,
+.modalHeader h2 {
+  margin: var(--space-2) 0 0;
+  font-size: clamp(1.5rem, 4.8vw, 2.4rem);
+  line-height: var(--leading-tight);
+  color: var(--field-trip-ink);
+}
+
+.sectionTitle,
+.modalHeader h2 {
+  font-size: clamp(1.15rem, 3vw, 1.6rem);
+}
+
+.heroDescription,
+.sectionDescription,
+.summaryDescription,
+.modalDescription,
+.formHint,
+.inlineState,
+.emptyCard {
+  margin: var(--space-2) 0 0;
+  color: var(--color-text-secondary);
+  line-height: var(--leading-relaxed);
+}
+
+.heroMeta,
+.sectionHeading,
+.listHeaderActions,
+.postMetaRow,
+.attachmentToolbar,
+.detailMeta,
+.modalTitleBlock,
+.modalActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.heroMeta {
+  margin-top: var(--space-4);
+}
+
+.heroBadge,
+.sectionPill,
+.classStatus,
+.postAttachmentBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-full);
+  border: 1px solid color-mix(in srgb, var(--field-trip-orange) 24%, white 76%);
+  background: rgba(255, 255, 255, 0.8);
+  color: var(--field-trip-ink);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+}
+
+.heroStatsCard {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-radius: var(--radius-2xl);
+  border: 1px solid color-mix(in srgb, var(--field-trip-forest) 10%, transparent);
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(12px);
+}
+
+.heroStat {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.heroStatIcon,
+.modalIcon {
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-xl);
+  background: linear-gradient(135deg, var(--color-primary-100), var(--field-trip-orange-soft));
+  color: var(--field-trip-forest);
+}
+
+.heroStatValue {
+  display: block;
+  margin-top: 2px;
+  color: var(--color-text-primary);
+}
+
+.heroStamp {
+  position: absolute;
+  inset: auto -30px -24px auto;
+  width: 170px;
+  height: 170px;
+  border-radius: 50%;
+  border: 1px dashed color-mix(in srgb, var(--field-trip-orange) 35%, transparent);
+  opacity: 0.45;
+  transform: rotate(-14deg);
+}
+
+.tabShell {
+  position: sticky;
+  top: var(--space-2);
+  z-index: 15;
+  padding: 10px;
+  border-radius: var(--radius-2xl);
+  border: 1px solid var(--color-card-border);
+  background: var(--color-page-overlay);
+  backdrop-filter: blur(12px);
+  box-shadow: var(--shadow-lg);
+}
+
+.tabChip {
+  min-height: 44px;
+  font-weight: var(--font-semibold);
+  cursor: pointer;
+}
+
+.sectionCard,
+.summaryCard {
+  padding: var(--space-5);
+  background: var(--color-card-bg);
+}
+
+.sectionHeading {
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+}
+
+.classGridSection {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--color-card-bg) 94%, var(--field-trip-sand) 6%), var(--color-card-bg));
+}
+
+.classGrid {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.classCard {
+  border: 1px solid var(--color-card-border);
+  background: var(--color-card-bg);
+  padding: var(--space-4);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    border-color 180ms ease,
+    background-color 180ms ease;
+}
+
+.classCard:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-card-hover);
+}
+
+.classCardMuted {
+  cursor: default;
+  background: var(--color-form-bg-muted);
+}
+
+.classCardUnlocked {
+  border-color: color-mix(in srgb, var(--color-primary-300) 48%, white 52%);
+}
+
+.classCardLocked {
+  border-style: dashed;
+}
+
+.classCardSelected {
+  border-color: var(--field-trip-orange);
+  box-shadow: 0 12px 28px -20px color-mix(in srgb, var(--field-trip-orange) 70%, transparent);
+}
+
+.classCardTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.classArrow {
+  color: var(--color-text-muted);
+}
+
+.classTitle,
+.postTitle {
+  margin: 0;
+  color: var(--color-text-primary);
+  line-height: 1.35;
+}
+
+.classTitle {
+  font-size: var(--text-xl);
+}
+
+.classTitleRow {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-top: var(--space-3);
+}
+
+.classMetaInline {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  letter-spacing: 0.02em;
+}
+
+.classCaption,
+.postPreview {
+  margin: var(--space-2) 0 0;
+  color: var(--color-text-secondary);
+  line-height: var(--leading-relaxed);
+}
+
+.missionLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  gap: var(--space-4);
+}
+
+.boardStack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.listPanel,
+.sidePanel {
+  min-width: 0;
+}
+
+.listPanel {
+  border-color: color-mix(in srgb, var(--field-trip-forest) 20%, var(--color-card-border));
+  box-shadow: 0 24px 48px -40px color-mix(in srgb, var(--field-trip-forest) 40%, transparent);
+}
+
+.composeCard,
+.composeLauncherCard {
+  min-width: 0;
+}
+
+.listHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.listHeaderActions {
+  justify-content: flex-end;
+}
+
+.postList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.postCard {
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-4);
+  width: 100%;
+  padding: var(--space-4);
+  border: 1px solid var(--color-card-border);
+  background: color-mix(in srgb, var(--color-card-bg) 92%, var(--field-trip-sand) 8%);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.postCardMedia {
+  flex: 0 0 132px;
+  overflow: hidden;
+  border-radius: var(--radius-xl);
+  background: color-mix(in srgb, var(--field-trip-orange-soft) 44%, white 56%);
+}
+
+.postCardThumb {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  height: 100%;
+  object-fit: cover;
+}
+
+.postCardBody {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.postCard:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--field-trip-orange) 38%, white 62%);
+  box-shadow: var(--shadow-md);
+}
+
+.postCardSelected {
+  border-color: var(--field-trip-orange);
+  box-shadow: 0 10px 30px -22px color-mix(in srgb, var(--field-trip-orange) 72%, transparent);
+}
+
+.postCardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.postCardHeaderMeta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.postOpenBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--field-trip-orange-soft) 34%, white 66%);
+  color: var(--field-trip-forest);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+}
+
+.postTitle {
+  margin: 0;
+  font-size: var(--text-lg);
+}
+
+.postPreview {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.postMetaRow {
+  margin-top: var(--space-3);
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.postMetaItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.panelHeader {
+  margin-bottom: var(--space-4);
+}
+
+.boardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.boardHeaderContent {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.boardHeaderActions,
+.boardMeta,
+.inlineActions,
+.scoreControls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.boardTitle {
+  margin: var(--space-2) 0 0;
+  font-size: clamp(1.4rem, 3.8vw, 2rem);
+  line-height: var(--leading-tight);
+  color: var(--field-trip-ink);
+}
+
+.boardMeta {
+  margin-top: var(--space-4);
+}
+
+.detailMeta {
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+}
+
+.detailBody {
+  padding: var(--space-4);
+  border-radius: var(--radius-xl);
+  background: var(--color-form-bg-muted);
+  margin-top: var(--space-4);
+}
+
+.detailBodyText {
+  margin: 0;
+  white-space: pre-wrap;
+  line-height: var(--leading-relaxed);
+  color: var(--color-text-primary);
+}
+
+.detailAttachments {
+  margin-top: var(--space-4);
+}
+
+.detailSectionTitle {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-base);
+  color: var(--color-text-primary);
+}
+
+.composeForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.composeLauncher {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.composeLauncherCompact {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.boardActionGrid {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.boardActionGrid > * {
+  height: 100%;
+}
+
+.boardActionGridDual {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.boardActionGridSingle {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.inlineForm {
+  display: grid;
+  gap: var(--space-4);
+  align-items: end;
+}
+
+.managerPanel {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--color-card-bg) 92%, var(--field-trip-sand) 8%), var(--color-card-bg));
+}
+
+.composeLauncherCard {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--color-card-bg) 94%, var(--field-trip-sand) 6%), var(--color-card-bg));
+}
+
+.descriptionEditor {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.descriptionEditorField {
+  min-height: 112px;
+}
+
+.descriptionEditorActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  color: var(--color-text-primary);
+  font-weight: var(--font-medium);
+}
+
+.textField,
+.textArea,
+.passwordInputWrap {
+  width: 100%;
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-form-border);
+  background: var(--color-form-bg);
+  color: var(--color-form-text);
+  box-sizing: border-box;
+}
+
+.textField,
+.textArea {
+  padding: var(--space-3) var(--space-4);
+}
+
+.textArea {
+  resize: vertical;
+  min-height: 180px;
+}
+
+.passwordInputWrap {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-3);
+}
+
+.passwordInputWrap .textField {
+  border: none;
+  padding-inline: 0;
+  background: transparent;
+}
+
+.textField:focus,
+.textArea:focus,
+.passwordInputWrap:focus-within {
+  outline: none;
+  border-color: var(--field-trip-orange);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--field-trip-orange) 18%, transparent);
+}
+
+.attachmentToolbar {
+  justify-content: space-between;
+}
+
+.uploadButton,
+.primaryButton,
+.secondaryButton,
+.iconButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-xl);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    background-color 180ms ease,
+    border-color 180ms ease;
+}
+
+.primaryButton {
+  background: linear-gradient(135deg, var(--color-primary-700), var(--field-trip-orange));
+  color: #ffffff;
+  box-shadow: var(--shadow-md);
+}
+
+.secondaryButton,
+.uploadButton {
+  background: var(--color-form-bg-muted);
+  border-color: var(--color-card-border);
+  color: var(--color-text-primary);
+}
+
+.iconButton {
+  width: 40px;
+  min-height: 40px;
+  padding: 0;
+  background: transparent;
+  border-color: var(--color-card-border);
+  color: var(--color-text-secondary);
+}
+
+.primaryButton:hover,
+.secondaryButton:hover,
+.uploadButton:hover,
+.iconButton:hover {
+  transform: translateY(-1px);
+}
+
+.dangerButton {
+  border-color: color-mix(in srgb, var(--color-error) 20%, var(--color-card-border));
+  color: var(--color-error);
+  background: color-mix(in srgb, var(--color-error-light) 44%, white 56%);
+}
+
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.formError,
+.formSuccess,
+.alertTitle,
+.alertMessage,
+.lockedStateTitle,
+.emptySelectionTitle {
+  margin: 0;
+  line-height: var(--leading-normal);
+}
+
+.formError {
+  color: var(--color-error);
+}
+
+.formSuccess {
+  color: var(--color-alert-success-text);
+}
+
+.inlineState,
+.emptyCard,
+.alertCard,
+.lockedStateCard,
+.emptySelectionCard {
+  padding: var(--space-5);
+  border-radius: var(--radius-2xl);
+  background: var(--color-form-bg-muted);
+}
+
+.alertCard {
+  border: 1px solid var(--color-alert-danger-border);
+  background: var(--color-alert-danger-bg);
+}
+
+.alertTitle,
+.alertMessage {
+  color: var(--color-alert-danger-text);
+}
+
+.lockedStateCard {
+  border: 1px dashed color-mix(in srgb, var(--field-trip-orange) 42%, white 58%);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--field-trip-sand) 78%, white 22%), rgba(255, 255, 255, 0.94));
+}
+
+.loginGateCard {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--field-trip-sand) 72%, white 28%), white);
+}
+
+.lockedStateTitle,
+.emptySelectionTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  background: rgba(15, 23, 42, 0.48);
+  z-index: 40;
+}
+
+.modalCard {
+  width: min(100%, 460px);
+  padding: var(--space-5);
+  border-radius: var(--radius-2xl);
+  border: 1px solid var(--color-card-border);
+  background: var(--color-card-bg);
+  box-shadow: var(--shadow-2xl);
+}
+
+.modalHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.modalDescription {
+  max-width: 52ch;
+}
+
+.modalForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+}
+
+.scoreboardStack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+.summaryCard {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--color-card-bg) 92%, var(--field-trip-sand) 8%), var(--color-card-bg));
+}
+
+.summaryValue {
+  display: block;
+  margin-top: var(--space-2);
+  font-size: clamp(1.2rem, 3vw, 1.7rem);
+  line-height: var(--leading-tight);
+  color: var(--color-text-primary);
+}
+
+.scoreTableWrap {
+  overflow-x: auto;
+}
+
+.scoreTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.scoreTable th,
+.scoreTable td {
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--color-card-border);
+  text-align: left;
+}
+
+.scoreTable thead th {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.scoreTableLeader {
+  background: linear-gradient(90deg, color-mix(in srgb, var(--field-trip-orange) 12%, transparent), transparent);
+}
+
+.scoreRowLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.scoreLeaderBadge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 0 10px;
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--field-trip-orange) 18%, white 82%);
+  color: var(--field-trip-ink);
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+}
+
+.scoreAdjustButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-card-border);
+  background: var(--color-form-bg-muted);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  transition:
+    transform 180ms ease,
+    background-color 180ms ease,
+    border-color 180ms ease;
+}
+
+.scoreAdjustButton:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--field-trip-orange) 32%, white 68%);
+}
+
+.scoreAdjustButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.chartShell {
+  width: 100%;
+  min-height: 320px;
+}
+
+.spinner {
+  animation: spin 900ms linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (min-width: 768px) {
+  .heroContent {
+    grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr);
+    align-items: stretch;
+  }
+
+  .classGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .inlineForm {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+}
+
+@media (max-width: 1023px) {
+  .missionLayout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 767px) {
+  .page {
+    gap: var(--space-4);
+  }
+
+  .hero,
+  .sectionCard,
+  .summaryCard,
+  .modalCard {
+    padding: var(--space-4);
+  }
+
+  .sectionHeading,
+  .boardHeader,
+  .composeLauncher,
+  .composeLauncherCompact,
+  .listHeader,
+  .heroMeta,
+  .attachmentToolbar,
+  .detailMeta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .summaryGrid,
+  .classGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .boardActionGridDual,
+  .boardActionGridSingle {
+    grid-template-columns: 1fr;
+  }
+
+  .listHeaderActions,
+  .boardHeaderActions,
+  .inlineActions,
+  .formActions,
+  .modalActions,
+  .descriptionEditorActions {
+    width: 100%;
+  }
+
+  .listHeaderActions > *,
+  .boardHeaderActions > *,
+  .inlineActions > *,
+  .formActions > *,
+  .modalActions > *,
+  .descriptionEditorActions > * {
+    flex: 1 1 140px;
+  }
+
+  .postCard {
+    flex-direction: column;
+  }
+
+  .postCardMedia {
+    flex-basis: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .classCard,
+  .postCard,
+  .primaryButton,
+  .secondaryButton,
+  .uploadButton,
+  .iconButton,
+  .spinner {
+    transition: none;
+    animation: none;
+    transform: none;
+  }
+}

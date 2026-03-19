@@ -242,6 +242,43 @@
 | `players` | 정렬된 전체 선수 배열 |
 | `updatedAt` | 전체 선수 배열 기준 최신 갱신 시각 |
 
+### 2.12 `src/api/fieldTrip.js` (`fieldTripApi`)
+
+| 메서드 | HTTP/Endpoint | Mock fallback | 비고 |
+|---|---|---|---|
+| `listClasses()` | `GET /api/community/field-trip/classes` | 예 | 반 목록 조회, unlock 상태는 브라우저 세션과 병합 |
+| `unlockClass(classId, password)` | `POST /api/community/field-trip/classes/:classId/unlock` | 예 | 성공 시 해당 반 unlock 상태를 `sessionStorage`에 저장 |
+| `listPosts(classId)` | `GET /api/community/field-trip/classes/:classId/posts` | 예 | 반별 게시글 목록 |
+| `getPost(classId, postId)` | `GET /api/community/field-trip/classes/:classId/posts/:postId` | 예 | 게시글 상세 |
+| `createPost(classId, payload)` | `POST /api/community/field-trip/classes/:classId/posts` | 예 | 닉네임/제목/본문/첨부 기반 plain-text 글 작성 |
+| `upload(file)` | `POST /api/community/field-trip/uploads` | 예 | 첨부 업로드, 전역 업로드 제한 재사용 |
+| `getScoreboard()` | `GET /api/community/field-trip/scoreboard` | 예 | 10개 반 총점 배열 |
+| `adjustScore(classId, delta)` | `PATCH /api/community/field-trip/classes/:classId/score` | 예 | 학생회/관리자 전용 점수 `+/-1` 즉시 반영 |
+| `updateClassPassword(classId, password)` | `PUT /api/community/field-trip/classes/:classId/password` | 예 | 학생회/관리자 전용 게시판 비밀번호 변경 |
+
+추가 export:
+
+- `MAX_ATTACHMENTS`
+- `MAX_FILE_SIZE`
+- `getFieldTripErrorMessage(error, fallbackMessage)`
+
+프론트 계약 타입 요약:
+
+- `FieldTripTab = 'mission' | 'scoreboard'`
+- `FieldTripClassId = '1' | ... | '10'`
+- `FieldTripAttachment = { id, name, size, url, mime, kind }`
+- `FieldTripMissionPost = { id, classId, nickname, title, body, attachments, createdAt }`
+- `FieldTripClassSummary = { classId, label, isUnlocked, postCount }`
+- `FieldTripScoreRow = { classId, label, totalScore }` (`0` ~ `10000`)
+- `FieldTripScoreDeltaRequest = { delta: -1 | 1 }`
+- `FieldTripPasswordUpdateRequest = { password: string }`
+
+mock 시드 요약:
+
+- 더미 비밀번호: `trip-01` ~ `trip-10`
+- 시드 게시글: `1반 2개`, `3반 1개`, `7반 1개`
+- 점수판 초기 총점: 모든 반 `0점`
+
 ## 3. 공통 유틸리티 및 지원 모듈
 
 ### 3.1 `src/api/normalizers.js`

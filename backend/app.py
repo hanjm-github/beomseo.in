@@ -24,6 +24,7 @@ from models import countdown_event  # noqa: F401 ensure models are registered
 from models import gomsol_market  # noqa: F401 ensure models are registered
 from models import auth_token  # noqa: F401 ensure models are registered
 from models import sports_league  # noqa: F401 ensure models are registered
+from models import field_trip  # noqa: F401 ensure models are registered
 from utils.cache import init_cache
 from utils.rate_limit import (
     init_limiter,
@@ -32,6 +33,7 @@ from utils.rate_limit import (
 )
 from utils.security_tokens import is_token_blocked
 from utils.request_metadata import populate_new_row_request_metadata
+from utils.field_trip_seed import bootstrap_field_trip_defaults
 
 
 INSECURE_JWT_SECRETS = {
@@ -240,6 +242,7 @@ def create_app(config_name=None):
         # Dev convenience path only; production should use explicit migrations.
         with app.app_context():
             db.create_all()
+            bootstrap_field_trip_defaults()
 
     return app
 

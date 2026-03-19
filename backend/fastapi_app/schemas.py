@@ -66,3 +66,49 @@ class AdjustPlayerStatRequest(BaseModel):
     stat: Literal['goals', 'assists']
     # Delta is intentionally step-based so the UI can offer simple +/- controls without sending absolute totals.
     delta: Literal[-1, 1]
+
+
+class FieldTripUnlockRequest(BaseModel):
+    password: str = Field(min_length=1, max_length=64)
+
+
+class FieldTripAttachmentInput(BaseModel):
+    id: str = Field(min_length=1, max_length=120)
+    url: str = Field(min_length=1, max_length=1024)
+    canonicalUrl: str | None = Field(default=None, max_length=1024)
+    name: str = Field(min_length=1, max_length=255)
+    size: int = Field(default=0, ge=0)
+    mime: str = Field(min_length=1, max_length=120)
+    kind: Literal['image', 'file']
+
+
+class FieldTripCreatePostRequest(BaseModel):
+    nickname: str = Field(min_length=1, max_length=20)
+    title: str = Field(min_length=1, max_length=80)
+    body: str = Field(min_length=1, max_length=1200)
+    attachments: list[FieldTripAttachmentInput] = Field(default_factory=list, max_length=5)
+
+
+class FieldTripUpdatePostRequest(FieldTripCreatePostRequest):
+    pass
+
+
+class FieldTripScoreRowUpdate(BaseModel):
+    classId: str = Field(min_length=1, max_length=2)
+    totalScore: int = Field(ge=0, le=10000)
+
+
+class FieldTripScoreboardUpdateRequest(BaseModel):
+    rows: list[FieldTripScoreRowUpdate] = Field(min_length=1, max_length=10)
+
+
+class FieldTripScoreDeltaRequest(BaseModel):
+    delta: Literal[-1, 1]
+
+
+class FieldTripPasswordUpdateRequest(BaseModel):
+    password: str = Field(min_length=4, max_length=64)
+
+
+class FieldTripBoardDescriptionUpdateRequest(BaseModel):
+    boardDescription: str = Field(default='', max_length=240)

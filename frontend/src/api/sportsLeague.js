@@ -3,38 +3,11 @@
  * @description Exposes the sports league data boundary used by the live text frontend.
  */
 
-import axios from 'axios';
 import { ENABLE_API_MOCKS, shouldUseMockFallback } from './mockPolicy';
+import { fastapiApi, FASTAPI_BASE_URL } from './fastapiClient';
 import { SPORTS_LEAGUE_MANAGER_ROLES } from '../features/sportsLeague/data';
 import { sportsLeagueMockApi } from './mocks/sportsLeague.mock';
-
-const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000').replace(/\/$/, '');
-/**
- * Dedicated base URL for the FastAPI sports league server.
- * Falls back to the Flask backend URL when not set.
- */
-const SPORTS_LEAGUE_API_URL = (
-  import.meta.env.VITE_SPORTS_LEAGUE_API_URL || API_BASE_URL
-).replace(/\/$/, '');
-const sportsApi = axios.create({
-  baseURL: SPORTS_LEAGUE_API_URL,
-  withCredentials: true,
-  headers: { 'Content-Type': 'application/json' },
-});
-// Attach CSRF token for mutating requests (same double-submit pattern as auth.js).
-const SAFE_METHODS = new Set(['get', 'head', 'options']);
-function readCsrfCookie() {
-  if (typeof document === 'undefined') return '';
-  const match = document.cookie.match(/(?:^|; )csrf_access_token=([^;]*)/);
-  return match ? decodeURIComponent(match[1]) : '';
-}
-sportsApi.interceptors.request.use((config) => {
-  if (!SAFE_METHODS.has((config.method || 'get').toLowerCase())) {
-    const csrf = readCsrfCookie();
-    if (csrf) config.headers['X-CSRF-TOKEN'] = csrf;
-  }
-  return config;
-});
+const sportsApi = fastapiApi;
 const BROADCAST_CHANNEL_NAME = 'sports-league-live';
 const STORAGE_KEY_PREFIX = 'beomseo:sports-league:';
 const STREAM_RECONNECT_MS = 3000;
@@ -208,7 +181,7 @@ function startStream(categoryId) {
   if (!state.listeners.size || state.eventSource) return;
 
   try {
-    const streamUrl = `${SPORTS_LEAGUE_API_URL}/api/sports-league/categories/${categoryId}/stream`;
+    const streamUrl = `${FASTAPI_BASE_URL}/api/sports-league/categories/${categoryId}/stream`;
     const eventSource = new EventSource(streamUrl, { withCredentials: true });
     state.eventSource = eventSource;
 

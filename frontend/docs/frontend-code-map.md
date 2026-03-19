@@ -75,6 +75,7 @@ graph TD
     CR --> PET["petition/*"]
     CR --> SUR["survey/*"]
     CR --> VOT["vote/*"]
+    CR --> FT["field-trip"]
     CR --> LF["lost-found/*"]
     CR --> GM["gomsol-market/*"]
     CR -->|"*"| FALL["NotFoundPage"]
@@ -105,6 +106,8 @@ graph TD
     VOT --> VOT1["VoteListView"]
     VOT --> VOT2["VoteComposeView"]
     VOT --> VOT3["VoteDetailView"]
+
+    FT --> FT1["FieldTripPage"]
 
     LF --> LF1["LostFoundListView"]
     LF --> LF2["LostFoundComposeView"]
@@ -139,6 +142,10 @@ graph TD
 | `/community/vote` | `VoteListView` |
 | `/community/vote/new` | `VoteComposeView` |
 | `/community/vote/:id` | `VoteDetailView` (`id` 숫자 경로만 허용) |
+| `/community/field-trip` | `FieldTripPage` (`FieldTripHubPage` re-export) |
+| `/community/field-trip/classes/:classId` | `FieldTripClassBoardPage` |
+| `/community/field-trip/classes/:classId/new` | `FieldTripClassBoardPage` |
+| `/community/field-trip/classes/:classId/posts/:postId` | `FieldTripClassBoardPage` |
 | `/community/lost-found` | `LostFoundListView` |
 | `/community/lost-found/new` | `LostFoundComposeView` |
 | `/community/lost-found/:id` | `LostFoundDetailView` (`id` 숫자 경로만 허용) |
@@ -172,6 +179,7 @@ graph TD
 | 청원 | `src/pages/Petition/*` | `src/components/petition/*` | `src/api/petition.js` |
 | 설문 품앗이 | `src/pages/SurveyExchange/*` | `src/components/survey/*` | `src/api/survey.js` |
 | 투표 | `src/pages/Vote/*` | `src/components/vote/*` | `src/api/vote.js` |
+| 수학여행 이벤트 | `src/pages/FieldTrip/*` (`FieldTripHubPage`, `FieldTripClassBoardPage`) | `src/components/fieldTrip/*`, `src/features/fieldTrip/*` | `src/api/fieldTrip.js` |
 | 분실물 | `src/pages/LostFound/*` | `src/components/lostfound/*` | `src/api/lostFound.js` |
 | 곰솔마켓 | `src/pages/GomsolMarket/*` | `src/components/gomsolmarket/*` | `src/api/gomsolMarket.js` |
 | 학교 생활 정보(시간표) | `src/pages/SchoolInfo/*` | `src/components/timetable/*` | 없음 (`src/components/timetable/timetableTemplates.json` 정적 템플릿 사용) |

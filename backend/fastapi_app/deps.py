@@ -7,6 +7,7 @@ compatible with the Flask backend's JWT tokens.
 from __future__ import annotations
 
 import ipaddress
+import secrets
 from typing import Annotated
 
 import jwt
@@ -184,6 +185,93 @@ CurrentUser = Annotated[User, Depends(get_current_user)]
 
 
 # ---------------------------------------------------------------------------
+# Field trip cookies
+# ---------------------------------------------------------------------------
+
+def _field_trip_cookie_secret(settings: Settings) -> str:
+    return f'{settings.JWT_SECRET_KEY}:field_trip_unlock'
+
+
+def encode_field_trip_unlock_token(class_ids: set[str], settings: Settings) -> str:
+    payload = {
+        'kind': 'field_trip_unlock',
+        'classes': sorted({str(value) for value in class_ids if str(value).strip()}),
+    }
+    return jwt.encode(payload, _field_trip_cookie_secret(settings), algorithm='HS256')
+
+
+def generate_field_trip_csrf_token() -> str:
+    return secrets.token_urlsafe(32)
+
+
+def get_field_trip_unlocked_class_ids(
+    request: Request,
+    settings: SettingsDep,
+) -> set[str]:
+    cookie_name = settings.FIELD_TRIP_UNLOCK_COOKIE_NAME
+    token = request.cookies.get(cookie_name)
+    if not token:
+        return set()
+
+    try:
+        payload = jwt.decode(
+            token,
+            _field_trip_cookie_secret(settings),
+            algorithms=['HS256'],
+            options={'verify_exp': False},
+        )
+    except jwt.InvalidTokenError:
+        return set()
+
+    if payload.get('kind') != 'field_trip_unlock':
+        return set()
+
+    classes = payload.get('classes')
+    if not isinstance(classes, list):
+        return set()
+    return {str(value) for value in classes if str(value).strip()}
+
+
+FieldTripUnlockedClasses = Annotated[set[str], Depends(get_field_trip_unlocked_class_ids)]
+
+
+def require_any_field_trip_unlock(
+    unlocked_classes: FieldTripUnlockedClasses,
+) -> set[str]:
+    if unlocked_classes:
+        return unlocked_classes
+    raise HTTPException(
+        status_code=403,
+        detail={'error': '해당 기능을 사용하려면 먼저 반 비밀번호를 확인해야 합니다.'},
+    )
+
+
+def require_field_trip_class_unlocked(
+    class_id: str,
+    unlocked_classes: FieldTripUnlockedClasses,
+) -> set[str]:
+    if class_id in unlocked_classes:
+        return unlocked_classes
+    raise HTTPException(
+        status_code=403,
+        detail={'error': '이 반 게시판에 접근하려면 비밀번호 확인이 필요합니다.'},
+    )
+
+
+def require_field_trip_write_csrf(
+    request: Request,
+    settings: SettingsDep,
+) -> None:
+    cookie_value = request.cookies.get(settings.FIELD_TRIP_CSRF_COOKIE_NAME)
+    header_value = request.headers.get(settings.FIELD_TRIP_CSRF_HEADER_NAME, '')
+    if not cookie_value or not header_value or cookie_value != header_value:
+        raise HTTPException(
+            status_code=401,
+            detail={'error': '요청을 다시 확인해 주세요. 보안 토큰이 올바르지 않습니다.'},
+        )
+
+
+# ---------------------------------------------------------------------------
 # Role-based authorization
 # ---------------------------------------------------------------------------
 
@@ -197,6 +285,6 @@ def require_role(*roles: str):
         if user_role == 'admin':
             return current_user
         if user_role not in {str(r) for r in roles}:
-            raise HTTPException(status_code=403, detail={'error': 'Insufficient permissions'})
+            raise HTTPException(status_code=403, detail={'error': '이 기능을 사용할 권한이 없습니다.'})
         return current_user
     return _check_role
