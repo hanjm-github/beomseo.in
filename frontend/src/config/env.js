@@ -52,6 +52,30 @@ function readEnvValue(key) {
 export const APP_NAME = readStringEnv('VITE_APP_NAME', 'beomseo.in');
 export const API_BASE_URL = readBaseUrlEnv('VITE_API_URL', 'http://localhost:5000');
 export const FASTAPI_BASE_URL = readBaseUrlEnv('VITE_SPORTS_LEAGUE_API_URL', API_BASE_URL);
+export const FIREBASE_API_KEY = readStringEnv('VITE_FIREBASE_API_KEY', '');
+export const FIREBASE_AUTH_DOMAIN = readStringEnv('VITE_FIREBASE_AUTH_DOMAIN', '');
+export const FIREBASE_PROJECT_ID = readStringEnv('VITE_FIREBASE_PROJECT_ID', '');
+export const FIREBASE_STORAGE_BUCKET = readStringEnv('VITE_FIREBASE_STORAGE_BUCKET', '');
+export const FIREBASE_MESSAGING_SENDER_ID = readStringEnv('VITE_FIREBASE_MESSAGING_SENDER_ID', '');
+export const FIREBASE_APP_ID = readStringEnv('VITE_FIREBASE_APP_ID', '');
+export const FIREBASE_VAPID_KEY = readStringEnv('VITE_FIREBASE_VAPID_KEY', '');
+export const FIREBASE_CONFIG = Object.freeze({
+  apiKey: FIREBASE_API_KEY,
+  authDomain: FIREBASE_AUTH_DOMAIN,
+  projectId: FIREBASE_PROJECT_ID,
+  storageBucket: FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: FIREBASE_MESSAGING_SENDER_ID,
+  appId: FIREBASE_APP_ID,
+});
+export const FIREBASE_MESSAGING_ENABLED = Boolean(
+  FIREBASE_API_KEY &&
+    FIREBASE_AUTH_DOMAIN &&
+    FIREBASE_PROJECT_ID &&
+    FIREBASE_STORAGE_BUCKET &&
+    FIREBASE_MESSAGING_SENDER_ID &&
+    FIREBASE_APP_ID &&
+    FIREBASE_VAPID_KEY
+);
 
 export const UPLOAD_MAX_ATTACHMENTS = readPositiveIntEnv('VITE_UPLOAD_MAX_ATTACHMENTS', 5);
 export const UPLOAD_MAX_IMAGES = readPositiveIntEnv('VITE_UPLOAD_MAX_IMAGES', 5);

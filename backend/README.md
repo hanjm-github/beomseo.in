@@ -415,3 +415,24 @@ CSRF 쿠키/헤더 이름:
 프론트 연계 문서:
 
 - [Frontend README](../frontend/README.md)
+
+## School Meals FastAPI
+
+- Read endpoints:
+  - `GET /api/school-info/meals/today`
+  - `GET /api/school-info/meals?from=YYYY-MM-DD&to=YYYY-MM-DD`
+  - `POST /api/school-info/meals/{meal_date}/ratings`
+  - `GET /api/school-info/meals/notifications/subscription?installationId=...`
+  - `PUT /api/school-info/meals/notifications/subscription`
+  - `DELETE /api/school-info/meals/notifications/subscription?installationId=...`
+- Sync entrypoint: `python scripts/sync_school_meals.py --year current`
+- Reminder sender: `python scripts/send_school_meal_notifications.py`
+- Detail doc: [docs/school_meals.md](./docs/school_meals.md)
+- Source: official NEIS `mealServiceDietInfo`
+- Runtime rule: request path reads MySQL only, NEIS is called only by the sync script
+- Cron example:
+
+```cron
+10 */6 * * * cd /path/to/repo/backend && /path/to/venv/bin/python scripts/sync_school_meals.py --year $(date +\%Y)
+* * * * * cd /path/to/repo/backend && /path/to/venv/bin/python scripts/send_school_meal_notifications.py
+```

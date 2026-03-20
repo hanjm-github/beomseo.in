@@ -25,6 +25,9 @@ from models import gomsol_market  # noqa: F401 ensure models are registered
 from models import auth_token  # noqa: F401 ensure models are registered
 from models import sports_league  # noqa: F401 ensure models are registered
 from models import field_trip  # noqa: F401 ensure models are registered
+from models import school_meal  # noqa: F401 ensure models are registered
+from models import school_meal_rating  # noqa: F401 ensure models are registered
+from models import school_meal_notification_subscription  # noqa: F401 ensure models are registered
 from utils.cache import init_cache
 from utils.rate_limit import (
     init_limiter,

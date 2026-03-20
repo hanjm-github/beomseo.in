@@ -42,3 +42,4 @@ secrets.json
 *.pem
 
 backend/uploads/*
+backend/fbsdk.json

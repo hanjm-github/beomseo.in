@@ -292,6 +292,26 @@ mock 시드 요약:
 - 시드 게시글: `1반 2개`, `3반 1개`, `7반 1개`
 - 점수판 초기 총점: 모든 반 `0점`
 
+### 2.13 `src/api/meals.js` (`mealsApi`)
+
+| 메서드 | HTTP/Endpoint | Mock fallback | 비고 |
+|---|---|---|---|
+| `getToday()` | `GET /api/school-info/meals/today` | 예 | 오늘 급식 단건 조회 |
+| `listRange(fromDateKey, toDateKey)` | `GET /api/school-info/meals?from=...&to=...` | 예 | 범위 급식 조회, 주말/휴일 empty entry 포함 |
+| `submitRating(dateKey, category, score)` | `POST /api/school-info/meals/:date/ratings` | 아니오 | 급식 평점 1~5점 저장 |
+
+급식 계약 요약:
+
+- `MealEntry = { id, date, status, service, serviceLabel, menuItems, previewText, note, isNoMeal, calorieText, caloriesKcal, originItems, nutritionItems, ratings, syncedAt }`
+- `ratings = { taste: { averageScore, totalCount, myScore, distribution[] }, anticipation: { ...same } }`
+- `previewText`는 계속 내려오지만, 급식 페이지 UI는 `menuItems` 전체 노출을 우선 사용합니다.
+- `submitRating()` 정책:
+  - `taste`: 오늘(KST) 급식만 저장 가능
+  - `anticipation`: 오늘 또는 예정 급식만 저장 가능
+  - 지난 급식 날짜는 두 항목 모두 `422`
+- transport error이고 `VITE_ENABLE_API_MOCKS=1`이면 기존 `src/features/meals/data.js` 시드를 fallback으로 사용합니다.
+- 실제 FastAPI 응답은 `items[]` / `item` wrapper를 가지지만, `mealsApi`는 화면 코드에 바로 쓰도록 entry 배열/객체만 반환합니다.
+
 ## 3. 공통 유틸리티 및 지원 모듈
 
 ### 3.1 `src/api/normalizers.js`
@@ -351,6 +371,7 @@ mock 시드 요약:
 | `pages/Vote/*` | `voteApi` |
 | `pages/LostFound/*` | `lostFoundApi` |
 | `pages/GomsolMarket/*` | `gomsolMarketApi` |
+| `pages/SchoolInfo/MealPage.jsx` | `mealsApi` |
 | `pages/SchoolInfo/SportsLeagueCategoryPage.jsx` | `sportsLeagueApi` |
 | `context/AuthContext.jsx` | `authApi` |
 

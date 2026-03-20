@@ -197,7 +197,7 @@ export default function MainPage() {
                   to="/school-info/meal"
                   icon={Utensils}
                   title="오늘의 급식"
-                  description="오늘 메뉴와 영양정보 확인"
+                  description="오늘 메뉴와 이달 급식 달력 확인"
                   variant="success"
                 />
               </div>

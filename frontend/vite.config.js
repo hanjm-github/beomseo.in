@@ -12,6 +12,7 @@ const REACT_PACKAGES = new Set([
 
 const UI_PACKAGES = new Set([
   'lucide-react',
+  'firebase',
 ]);
 
 const CHART_PACKAGES = new Set([

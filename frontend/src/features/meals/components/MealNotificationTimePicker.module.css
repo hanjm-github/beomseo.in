@@ -1,0 +1,227 @@
+.pickerShell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.readoutCard,
+.selectorCard {
+  min-width: 0;
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-card-border-muted);
+  background: color-mix(in srgb, var(--color-surface) 92%, transparent);
+}
+
+.readoutCard {
+  padding: var(--space-4);
+  background:
+    radial-gradient(circle at top right, color-mix(in srgb, var(--color-primary-100) 68%, transparent) 0, transparent 52%),
+    color-mix(in srgb, var(--color-surface) 92%, transparent);
+}
+
+.readoutHeader,
+.selectorHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.readoutCopy {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.readoutEyebrow,
+.selectorLabel {
+  font-size: 0.78rem;
+  font-weight: var(--font-semibold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.readoutTimeRow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  color: var(--color-primary-700);
+}
+
+.readoutTime {
+  min-width: 0;
+  font-family: var(--font-accent);
+  font-size: clamp(2rem, 6vw, 3.2rem);
+  line-height: 0.92;
+  color: var(--color-text-primary);
+}
+
+.readoutBadge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--color-primary-100) 78%, white 22%);
+  color: var(--color-primary-700);
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  flex-shrink: 0;
+}
+
+.readoutDescription {
+  margin-top: var(--space-3);
+  color: var(--color-text-secondary);
+  line-height: var(--leading-relaxed);
+}
+
+.nudgeRow {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+  min-width: 0;
+}
+
+.nudgeButton,
+.hourChip,
+.minuteChip {
+  min-height: 48px;
+  min-width: 0;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-card-border-muted);
+  background: color-mix(in srgb, var(--color-surface) 94%, transparent);
+  color: var(--color-text-primary);
+  transition:
+    transform var(--transition-base),
+    border-color var(--transition-base),
+    box-shadow var(--transition-base),
+    background-color var(--transition-base),
+    color var(--transition-base);
+  cursor: pointer;
+}
+
+.nudgeButton:hover,
+.nudgeButton:focus-visible,
+.hourChip:hover,
+.hourChip:focus-visible,
+.minuteChip:hover,
+.minuteChip:focus-visible {
+  transform: translateY(-1px);
+  border-color: var(--color-primary-300);
+  box-shadow: var(--shadow-sm);
+}
+
+.nudgeButton:disabled,
+.hourChip:disabled,
+.minuteChip:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+  transform: none;
+  box-shadow: none;
+}
+
+.nudgeButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-3);
+  font-weight: var(--font-semibold);
+}
+
+.selectorCard {
+  padding: var(--space-4);
+}
+
+.selectorValue {
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+  text-align: right;
+}
+
+.selectorGrid {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.hourRail {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(54px, 1fr);
+  gap: var(--space-2);
+  min-width: 0;
+  overflow-x: auto;
+  margin-top: var(--space-3);
+  padding-bottom: 2px;
+  scrollbar-width: thin;
+  scroll-snap-type: x proximity;
+}
+
+.hourChip {
+  padding: 0;
+  font-family: var(--font-accent);
+  font-size: 1.08rem;
+  scroll-snap-align: start;
+}
+
+.minuteGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-2);
+  min-width: 0;
+  margin-top: var(--space-3);
+}
+
+.minuteChip {
+  padding: 0;
+  font-weight: var(--font-semibold);
+}
+
+.hourChipActive,
+.minuteChipActive {
+  border-color: var(--color-primary-500);
+  background: color-mix(in srgb, var(--color-primary-100) 72%, white 28%);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-primary-500) 22%, transparent);
+}
+
+@media (min-width: 900px) {
+  .selectorGrid {
+    grid-template-columns: minmax(0, 1.6fr) minmax(280px, 1fr);
+  }
+}
+
+@media (max-width: 767px) {
+  .readoutHeader,
+  .selectorHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .readoutBadge {
+    white-space: normal;
+    align-self: flex-start;
+  }
+
+  .nudgeRow {
+    grid-template-columns: 1fr;
+  }
+
+  .minuteGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nudgeButton,
+  .hourChip,
+  .minuteChip {
+    transition: none;
+  }
+}

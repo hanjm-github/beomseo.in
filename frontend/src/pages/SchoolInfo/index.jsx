@@ -4,6 +4,7 @@ import NotFoundPage from '../NotFoundPage';
 import { SPORTS_LEAGUE_CATEGORY_ID } from '../../features/sportsLeague/data';
 
 const AcademicCalendarPage = lazy(() => import('./AcademicCalendarPage'));
+const MealPage = lazy(() => import('./MealPage'));
 const SchoolInfoHub = lazy(() => import('./SchoolInfoHub'));
 const SchoolInfoPlaceholderPage = lazy(() => import('./SchoolInfoPlaceholderPage'));
 const SportsLeagueCategoryPage = lazy(() => import('./SportsLeagueCategoryPage'));
@@ -19,11 +20,6 @@ const placeholderPages = {
     eyebrow: '학교 생활 정보',
     title: '내신 계산기 준비 중',
     description: '반영 비율과 계산 규칙을 정리한 안정적인 버전으로 제공할 예정입니다.',
-  },
-  meal: {
-    eyebrow: '학교 생활 정보',
-    title: '오늘의 급식 준비 중',
-    description: '급식 정보와 알레르기 표시를 함께 검증한 화면으로 제공할 예정입니다.',
   },
 };
 
@@ -46,10 +42,7 @@ export default function SchoolInfoRouter() {
         path="calculator"
         element={lazyRoute(SchoolInfoPlaceholderPage, placeholderPages.calculator)}
       />
-      <Route
-        path="meal"
-        element={lazyRoute(SchoolInfoPlaceholderPage, placeholderPages.meal)}
-      />
+      <Route path="meal" element={lazyRoute(MealPage)} />
       <Route path="calendar" element={lazyRoute(AcademicCalendarPage)} />
       <Route
         path="sports-league"

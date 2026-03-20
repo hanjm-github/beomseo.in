@@ -10,11 +10,15 @@ import json
 from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import (
+    BigInteger,
+    CheckConstraint,
     Column,
+    Date,
     DateTime,
     ForeignKey,
     Index,
     Integer,
+    Numeric,
     String,
     Text,
     UniqueConstraint,
@@ -77,6 +81,9 @@ class User(Base):
     ip_address = Column(String(64), nullable=True)
     user_agent = Column(String(255), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+
+MEAL_ID_TYPE = BigInteger().with_variant(Integer, 'sqlite')
 
 
 # ---------------------------------------------------------------------------
@@ -509,3 +516,104 @@ class FieldTripPostAttachment(Base):
             'mime': self.mime,
             'kind': self.kind,
         }
+
+
+class SchoolMeal(Base):
+    __tablename__ = 'school_meals'
+
+    id = Column(MEAL_ID_TYPE, primary_key=True, autoincrement=True)
+    meal_date = Column(Date, nullable=False, index=True)
+    meal_type_code = Column(String(4), nullable=False, default='2')
+    meal_type_name = Column(String(32), nullable=False, default='중식')
+    office_code = Column(String(16), nullable=False)
+    office_name = Column(String(64), nullable=False)
+    school_code = Column(String(16), nullable=False)
+    school_name = Column(String(128), nullable=False)
+    dish_html = Column(Text, nullable=False)
+    menu_items_json = Column(Text, nullable=False, default='[]')
+    preview_text = Column(String(255), nullable=False)
+    note_text = Column(String(255), nullable=False)
+    calorie_text = Column(String(64), nullable=True)
+    calories_kcal = Column(Numeric(6, 1), nullable=True)
+    origin_items_json = Column(Text, nullable=False, default='[]')
+    nutrition_items_json = Column(Text, nullable=False, default='[]')
+    meal_service_figure_raw = Column(Numeric(8, 1), nullable=True)
+    source_from_ymd = Column(String(8), nullable=True)
+    source_to_ymd = Column(String(8), nullable=True)
+    source_load_ymd = Column(String(8), nullable=True)
+    synced_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    __table_args__ = (
+        UniqueConstraint('meal_date', 'meal_type_code', name='uq_school_meals_date_type'),
+        Index('ix_school_meals_type_date', 'meal_type_code', 'meal_date'),
+    )
+
+    def menu_items(self):
+        return _load_json_list(self.menu_items_json)
+
+    def origin_items(self):
+        return _load_json_list(self.origin_items_json)
+
+    def nutrition_items(self):
+        return _load_json_list(self.nutrition_items_json)
+
+
+class SchoolMealRating(Base):
+    __tablename__ = 'school_meal_ratings'
+
+    id = Column(MEAL_ID_TYPE, primary_key=True, autoincrement=True)
+    meal_date = Column(Date, nullable=False, index=True)
+    category = Column(String(32), nullable=False)
+    score = Column(Integer, nullable=False)
+    voter_key = Column(String(64), nullable=False)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=True, index=True)
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    __table_args__ = (
+        UniqueConstraint(
+            'meal_date',
+            'category',
+            'voter_key',
+            name='uq_school_meal_ratings_date_category_voter',
+        ),
+        Index('ix_school_meal_ratings_date_category', 'meal_date', 'category'),
+        CheckConstraint('score >= 1 AND score <= 5', name='ck_school_meal_ratings_score_range'),
+    )
+
+
+class SchoolMealNotificationSubscription(Base):
+    __tablename__ = 'school_meal_notification_subscriptions'
+
+    id = Column(MEAL_ID_TYPE, primary_key=True, autoincrement=True)
+    installation_id = Column(String(64), nullable=False, unique=True, index=True)
+    fcm_token = Column(String(512), nullable=True, unique=True)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=True, index=True)
+    timezone = Column(String(64), nullable=False, default='Asia/Seoul')
+    notification_minute_of_day = Column(Integer, nullable=False, default=450)
+    is_enabled = Column(Integer, nullable=False, default=1)
+    last_sent_meal_date = Column(Date, nullable=True, index=True)
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    __table_args__ = (
+        Index(
+            'ix_school_meal_notification_enabled_minute',
+            'is_enabled',
+            'notification_minute_of_day',
+        ),
+        CheckConstraint(
+            'notification_minute_of_day >= 0 AND notification_minute_of_day <= 1439',
+            name='ck_school_meal_notification_minute_range',
+        ),
+        CheckConstraint(
+            'notification_minute_of_day % 5 = 0',
+            name='ck_school_meal_notification_minute_step',
+        ),
+        CheckConstraint(
+            'is_enabled IN (0, 1)',
+            name='ck_school_meal_notification_is_enabled_bool',
+        ),
+    )

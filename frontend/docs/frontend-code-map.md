@@ -165,7 +165,7 @@ graph TD
 | `/school-info/timetable` | `TimetableDownloadPage` |
 | `/school-info/teachers` | `SchoolInfoPlaceholderPage(교무실 찾기)` |
 | `/school-info/calculator` | `SchoolInfoPlaceholderPage(점공 계산기)` |
-| `/school-info/meal` | `SchoolInfoPlaceholderPage(오늘의 급식)` |
+| `/school-info/meal` | `MealPage` |
 | `/school-info/calendar` | `AcademicCalendarPage` |
 | `/school-info/sports-league` | `Navigate` → `/school-info/sports-league/2026-spring-grade3-boys-soccer` |
 | `/school-info/sports-league/:categoryId` | `SportsLeagueCategoryPage` |
@@ -186,6 +186,7 @@ graph TD
 | 분실물 | `src/pages/LostFound/*` | `src/components/lostfound/*` | `src/api/lostFound.js` |
 | 곰솔마켓 | `src/pages/GomsolMarket/*` | `src/components/gomsolmarket/*` | `src/api/gomsolMarket.js` |
 | 학교 생활 정보(시간표) | `src/pages/SchoolInfo/*` | `src/components/timetable/*` | 없음 (`src/components/timetable/timetableTemplates.json` 정적 템플릿 사용) |
+| 학교 생활 정보(오늘의 급식) | `src/pages/SchoolInfo/MealPage.jsx` | `src/components/MealCard/*`, `src/features/meals/*` | `src/api/meals.js` |
 | 학교 생활 정보(학사 캘린더) | `src/pages/SchoolInfo/AcademicCalendarPage.jsx` | `src/components/AcademicUpcomingCard/*`, `src/features/academicCalendar/*` | 없음 (`src/features/academicCalendar/data.js` 정적 데이터 사용) |
 | 학교 생활 정보(스포츠리그 문자중계/라인업/개인 순위) | `src/pages/SchoolInfo/SportsLeagueCategoryPage.jsx` | `src/features/sportsLeague/*` (`useSportsLeagueLive`, `usePlayersStore`, `TeamLineupPanel`, `PlayerRankingPanel`) | `src/api/sportsLeague.js` |
 

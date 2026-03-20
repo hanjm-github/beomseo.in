@@ -3,9 +3,11 @@ Pydantic V2 request/response schemas for sports league endpoints.
 """
 from __future__ import annotations
 
+from datetime import date
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 class ScoreSnapshot(BaseModel):
@@ -66,6 +68,143 @@ class AdjustPlayerStatRequest(BaseModel):
     stat: Literal['goals', 'assists']
     # Delta is intentionally step-based so the UI can offer simple +/- controls without sending absolute totals.
     delta: Literal[-1, 1]
+
+
+class MealRatingBucketResponse(BaseModel):
+    score: Literal[1, 2, 3, 4, 5]
+    count: int = Field(default=0, ge=0)
+    ratio: int = Field(default=0, ge=0, le=100)
+
+
+class MealRatingSummaryResponse(BaseModel):
+    averageScore: float | None = None
+    totalCount: int = Field(default=0, ge=0)
+    myScore: int | None = Field(default=None, ge=1, le=5)
+    distribution: list[MealRatingBucketResponse] = Field(default_factory=list)
+
+
+class MealRatingsResponse(BaseModel):
+    taste: MealRatingSummaryResponse = Field(default_factory=MealRatingSummaryResponse)
+    anticipation: MealRatingSummaryResponse = Field(default_factory=MealRatingSummaryResponse)
+
+
+class MealEntryResponse(BaseModel):
+    id: str
+    date: str
+    status: Literal['today', 'past', 'upcoming', 'empty']
+    service: Literal['lunch'] = 'lunch'
+    serviceLabel: str = '중식'
+    menuItems: list[str]
+    previewText: str
+    note: str
+    isNoMeal: bool
+    calorieText: str | None = None
+    caloriesKcal: float | None = None
+    originItems: list[str]
+    nutritionItems: list[str]
+    ratings: MealRatingsResponse = Field(default_factory=MealRatingsResponse)
+    syncedAt: str | None = None
+
+
+class MealTodayMetaResponse(BaseModel):
+    date: str
+    generatedAt: str
+    timezone: str
+
+
+class MealRangeMetaResponse(BaseModel):
+    from_: str = Field(alias='from')
+    to: str
+    generatedAt: str
+    timezone: str
+    service: Literal['lunch'] = 'lunch'
+    maxRangeDays: int
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class MealTodayResponse(BaseModel):
+    item: MealEntryResponse
+    meta: MealTodayMetaResponse
+
+
+class MealRangeResponse(BaseModel):
+    items: list[MealEntryResponse]
+    meta: MealRangeMetaResponse
+
+
+class MealRangeQuery(BaseModel):
+    from_date: date = Field(alias='from')
+    to_date: date = Field(alias='to')
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class MealRatingSubmitRequest(BaseModel):
+    category: Literal['taste', 'anticipation']
+    score: int = Field(ge=1, le=5)
+
+
+class MealRatingSubmitResponse(BaseModel):
+    date: str
+    ratings: MealRatingsResponse
+
+
+TIMEZONE_FALLBACK_ALLOWLIST = {'Asia/Seoul', 'UTC'}
+MEAL_NOTIFICATION_INTERVAL_MINUTES = 5
+
+
+class MealNotificationSubscriptionItemResponse(BaseModel):
+    installationId: str
+    enabled: bool
+    notificationTime: str
+    timezone: str = 'Asia/Seoul'
+    hasToken: bool = False
+    lastSentMealDate: str | None = None
+    updatedAt: str | None = None
+
+
+class MealNotificationSubscriptionResponse(BaseModel):
+    item: MealNotificationSubscriptionItemResponse
+
+
+class MealNotificationSubscriptionUpsertRequest(BaseModel):
+    installationId: str = Field(min_length=1, max_length=64)
+    enabled: bool = False
+    notificationTime: str = Field(default='07:30', min_length=5, max_length=5)
+    timezone: str = Field(default='Asia/Seoul', min_length=1, max_length=64)
+    fcmToken: str | None = Field(default=None, min_length=1, max_length=512)
+
+    @field_validator('notificationTime')
+    @classmethod
+    def validate_notification_time(cls, value: str) -> str:
+        parts = value.split(':')
+        if len(parts) != 2 or any(not part.isdigit() for part in parts):
+            raise ValueError('notificationTime must be HH:MM')
+        hour, minute = (int(part) for part in parts)
+        if hour < 0 or hour > 23 or minute < 0 or minute > 59:
+            raise ValueError('notificationTime must be HH:MM')
+        if minute % MEAL_NOTIFICATION_INTERVAL_MINUTES != 0:
+            raise ValueError('notificationTime must use 5-minute increments')
+        return f'{hour:02d}:{minute:02d}'
+
+    @field_validator('timezone')
+    @classmethod
+    def validate_timezone(cls, value: str) -> str:
+        normalized = value.strip()
+        if normalized in TIMEZONE_FALLBACK_ALLOWLIST:
+            return normalized
+        try:
+            ZoneInfo(normalized)
+        except ZoneInfoNotFoundError as exc:
+            raise ValueError('timezone must be a valid IANA timezone') from exc
+        return normalized
+
+    @model_validator(mode='after')
+    def validate_enabled_token_contract(self) -> 'MealNotificationSubscriptionUpsertRequest':
+        if self.enabled and not self.fcmToken:
+            raise ValueError('fcmToken is required when enabled is true')
+        return self
 
 
 class FieldTripUnlockRequest(BaseModel):

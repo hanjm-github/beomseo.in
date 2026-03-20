@@ -83,6 +83,20 @@ class Settings(BaseSettings):
     # Redis
     REDIS_URL: str = 'redis://localhost:6379/0'
 
+    # NEIS school meals
+    NEIS_API: str = ''
+    ATPT_OFCDC_SC_CODE: str = ''
+    SD_SCHUL_CODE: str = ''
+    NEIS_MEAL_API_URL: str = 'https://open.neis.go.kr/hub/mealServiceDietInfo'
+    NEIS_REQUEST_TIMEOUT_SECONDS: float = 15.0
+    NEIS_MAX_RETRIES: int = 3
+    MEALS_MAX_RANGE_DAYS: int = 93
+    MEAL_RATING_COOKIE_NAME: str = 'meal_rating_anon_token'
+    MEAL_RATING_COOKIE_PATH: str = '/api/school-info/meals'
+    MEAL_RATING_COOKIE_MAX_AGE_SECONDS: int = 31536000
+    FIREBASE_SERVICE_ACCOUNT_PATH: str = ''
+    WEB_APP_ORIGIN: str = 'http://localhost:5173'
+
     # Sports league SSE
     SPORTS_LEAGUE_SSE_HEARTBEAT_SECONDS: int = 15
     SPORTS_LEAGUE_SSE_RETRY_MS: int = 3000

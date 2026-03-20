@@ -40,8 +40,9 @@ const schoolInfoCards = [
     key: 'meal',
     to: '/school-info/meal',
     title: '오늘의 급식',
-    description: '급식 정보와 알레르기 표시를 안정적으로 연결하고 있습니다.',
+    description: '오늘 전후의 점심 메뉴와 이달 급식 달력을 함께 볼 수 있어요.',
     icon: Soup,
+    active: true,
   },
   {
     key: 'calendar',

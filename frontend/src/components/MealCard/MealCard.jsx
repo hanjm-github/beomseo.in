@@ -1,35 +1,137 @@
-﻿/**
- * @file src/components/MealCard/MealCard.jsx
- * @description Defines reusable UI components and feature-specific interaction blocks.
- * Responsibilities:
- * - Render composable UI pieces with clear prop-driven behavior and minimal coupling.
- * Key dependencies:
- * - lucide-react
- * - ./MealCard.module.css
- * Side effects:
- * - No significant side effects beyond React state and rendering behavior.
- * Role in app flow:
- * - Implements reusable view logic consumed by route-level pages.
- */
-import { Utensils } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { CalendarDays, Soup } from 'lucide-react';
+import { Link } from 'react-router-dom';
+
+import { mealsApi } from '../../api/meals';
+import {
+  formatDateKey,
+  formatMonthKey,
+  formatRailDate,
+  formatWeekday,
+  getReferenceDate,
+} from '../../features/meals/utils';
 import styles from './MealCard.module.css';
 
-/**
- * MealCard module entry point.
- */
-export default function MealCard() {
-    return (
-        <div className={styles.card}>
-            <div className={styles.header}>
-                <div className={styles.titleRow}>
-                    <Utensils size={20} className={styles.icon} />
-                    <h3 className={styles.title}>오늘의 급식</h3>
-                </div>
-            </div>
-
-            <p className={styles.comingSoon}>현재 열심히 준비중</p>
-        </div>
-    );
+function buildPlaceholderMeal(referenceDate, overrides = {}) {
+  return {
+    id: `meal-${formatDateKey(referenceDate)}`,
+    date: formatDateKey(referenceDate),
+    status: 'empty',
+    service: 'lunch',
+    serviceLabel: '중식',
+    menuItems: [],
+    previewText: '급식 정보를 불러오는 중입니다.',
+    note: '잠시만 기다려 주세요.',
+    isNoMeal: true,
+    ratings: {
+      taste: {
+        averageScore: null,
+        totalCount: 0,
+        myScore: null,
+        distribution: [],
+      },
+      anticipation: {
+        averageScore: null,
+        totalCount: 0,
+        myScore: null,
+        distribution: [],
+      },
+    },
+    ...overrides,
+  };
 }
 
+export default function MealCard() {
+  const referenceDate = useMemo(() => getReferenceDate(), []);
+  const [todayMeal, setTodayMeal] = useState(() => buildPlaceholderMeal(referenceDate));
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
 
+  useEffect(() => {
+    let isActive = true;
+
+    async function loadTodayMeal() {
+      try {
+        const meal = await mealsApi.getToday();
+        if (!isActive) return;
+        setTodayMeal(meal);
+        setLoadError('');
+      } catch (error) {
+        if (!isActive) return;
+        setTodayMeal(
+          buildPlaceholderMeal(referenceDate, {
+            previewText: '오늘 급식 정보를 불러오지 못했어요.',
+            note: '잠시 후 다시 시도해 주세요.',
+          })
+        );
+        setLoadError(error instanceof Error ? error.message : '오늘 급식 정보를 불러오지 못했어요.');
+      } finally {
+        if (isActive) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    loadTodayMeal();
+
+    return () => {
+      isActive = false;
+    };
+  }, [referenceDate]);
+
+  const mealUrl = `/school-info/meal?tab=today&date=${
+    todayMeal?.date || formatDateKey(referenceDate)
+  }&month=${formatMonthKey(referenceDate)}`;
+  const previewText = isLoading ? '급식 정보를 불러오는 중입니다.' : todayMeal?.previewText;
+  const noteText = loadError || todayMeal?.note;
+  const emptyText = isLoading
+    ? '급식 정보를 불러오는 중입니다.'
+    : loadError || '주말에는 점심 급식을 운영하지 않아요.';
+
+  return (
+    <Link to={mealUrl} className={styles.card} aria-label="오늘의 급식 자세히 보기">
+      <div className={styles.header}>
+        <div className={styles.titleRow}>
+          <div className={styles.iconShell}>
+            <Soup size={18} className={styles.icon} />
+          </div>
+          <div>
+            <p className={styles.eyebrow}>오늘의 점심</p>
+            <h3 className={styles.title}>카페테리아 미리보기</h3>
+          </div>
+        </div>
+        <span className={`${styles.badge} ${todayMeal?.isNoMeal ? styles.badgeMuted : styles.badgeLive}`}>
+          {todayMeal?.isNoMeal ? '운영 없음' : '오늘 메뉴'}
+        </span>
+      </div>
+
+      <div className={styles.dateRow}>
+        <strong className={styles.dateNumber}>{formatRailDate(referenceDate)}</strong>
+        <span className={styles.dateText}>{formatWeekday(referenceDate)}요일 점심</span>
+      </div>
+
+      <p className={styles.preview}>{previewText}</p>
+
+      {todayMeal?.menuItems?.length ? (
+        <ul className={styles.menuList}>
+          {todayMeal.menuItems.slice(0, 4).map((item) => (
+            <li key={item} className={styles.menuItem}>
+              <span className={styles.menuBullet} />
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <div className={styles.emptyState}>{emptyText}</div>
+      )}
+
+      <div className={styles.footer}>
+        <span className={styles.note}>{noteText}</span>
+        <span className={styles.linkHint}>
+          <CalendarDays size={14} />
+          이달의 급식 보기
+        </span>
+      </div>
+    </Link>
+  );
+}

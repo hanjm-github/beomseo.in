@@ -74,6 +74,9 @@ from .field_trip import (
     FieldTripPost,
     FieldTripPostAttachment,
 )
+from .school_meal import SchoolMeal
+from .school_meal_rating import SchoolMealRating
+from .school_meal_notification_subscription import SchoolMealNotificationSubscription
 
 __all__ = [
     'User',
@@ -132,5 +135,8 @@ __all__ = [
     'FieldTripClass',
     'FieldTripPost',
     'FieldTripPostAttachment',
+    'SchoolMeal',
+    'SchoolMealRating',
+    'SchoolMealNotificationSubscription',
     'db',
 ]

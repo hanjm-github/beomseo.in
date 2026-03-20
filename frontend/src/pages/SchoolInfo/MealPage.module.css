@@ -1,0 +1,1022 @@
+.heroCard,
+.notificationCard,
+.tabSection,
+.detailCard,
+.reactionCard,
+.calendarCard {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--color-card-border);
+  border-radius: var(--radius-2xl);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--color-card-bg) 94%, white 6%), var(--color-card-bg)),
+    repeating-linear-gradient(
+      180deg,
+      transparent 0,
+      transparent 34px,
+      color-mix(in srgb, var(--color-card-border-muted) 42%, transparent) 35px
+    );
+  box-shadow: var(--shadow-card);
+}
+
+.pageNotice {
+  margin-bottom: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-card-border);
+  background: color-mix(in srgb, var(--color-accent-100) 55%, white 45%);
+  color: var(--color-text-primary);
+}
+
+.pageNoticeError {
+  background: color-mix(in srgb, var(--color-alert-warning-bg) 80%, white 20%);
+  color: var(--color-alert-warning-text);
+}
+
+.heroCard::before,
+.notificationCard::before,
+.tabSection::before,
+.detailCard::before,
+.reactionCard::before,
+.calendarCard::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at top right, color-mix(in srgb, var(--color-accent-100) 42%, transparent), transparent 44%),
+    radial-gradient(circle at bottom left, color-mix(in srgb, var(--color-primary-100) 40%, transparent), transparent 40%);
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.heroCard {
+  display: grid;
+  gap: var(--space-5);
+  padding: clamp(1.25rem, 2vw, 2rem);
+}
+
+.notificationCard,
+.tabSection,
+.detailCard,
+.reactionCard {
+  padding: var(--space-5);
+}
+
+.heroCopy,
+.notificationCard,
+.panel,
+.detailCard,
+.reactionCard {
+  position: relative;
+  z-index: 1;
+}
+
+.heroCopy {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.heroKicker,
+.sectionEyebrow,
+.metaLabel,
+.sideLabel {
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.heroTitleRow {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-4);
+  align-items: center;
+}
+
+.heroDayToken {
+  width: clamp(4.5rem, 12vw, 6rem);
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border-radius: 32px;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--color-primary-500) 16%, white),
+    color-mix(in srgb, var(--color-accent-100) 65%, white)
+  );
+  font-family: var(--font-accent);
+  font-size: clamp(2rem, 6vw, 3rem);
+  font-weight: var(--font-bold);
+  color: var(--color-text-primary);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-card-border) 80%, transparent);
+}
+
+.heroTitle {
+  font-size: clamp(1.35rem, 3vw, 2rem);
+  line-height: var(--leading-tight);
+}
+
+.heroDate,
+.sectionDescription,
+.reactionDescription,
+.sideNote {
+  color: var(--color-text-secondary);
+  line-height: var(--leading-relaxed);
+}
+
+.heroPreview {
+  font-size: clamp(1rem, 2vw, 1.125rem);
+  color: var(--color-text-primary);
+  line-height: var(--leading-relaxed);
+  max-width: 52ch;
+}
+
+.heroFallback {
+  color: var(--color-text-secondary);
+}
+
+.tabSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.notificationCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.notificationStateCard,
+.notificationHint {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-card-border-muted);
+  background: color-mix(in srgb, var(--color-surface) 90%, transparent);
+}
+
+.notificationStateCopy {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.notificationStateIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-primary-100) 72%, white 28%);
+  color: var(--color-primary-700);
+  flex-shrink: 0;
+}
+
+.notificationStateTitle,
+.notificationToggleTitle {
+  font-size: var(--text-lg);
+  color: var(--color-text-primary);
+  line-height: var(--leading-tight);
+}
+
+.notificationStateDescription,
+.notificationToggleDescription,
+.notificationMetaRow,
+.notificationHint {
+  color: var(--color-text-secondary);
+  line-height: var(--leading-relaxed);
+}
+
+.notificationControls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.notificationToggleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-card-border-muted);
+  background: color-mix(in srgb, var(--color-surface) 92%, transparent);
+}
+
+.notificationToggleCopy {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.notificationToggle {
+  width: 52px;
+  height: 28px;
+  accent-color: var(--color-primary-500);
+  flex-shrink: 0;
+}
+
+.notificationFieldLabel {
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  color: var(--color-text-primary);
+}
+
+.notificationSchedulePanel {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.notificationTimezoneCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: var(--space-4);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-card-border-muted);
+  background: color-mix(in srgb, var(--color-surface) 90%, transparent);
+}
+
+.notificationTimezoneValue {
+  font-family: var(--font-accent);
+  font-size: clamp(1.2rem, 2.2vw, 1.6rem);
+  color: var(--color-text-primary);
+}
+
+.notificationTimezoneHint {
+  color: var(--color-text-secondary);
+  line-height: var(--leading-relaxed);
+}
+
+.notificationMetaRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  font-size: var(--text-sm);
+}
+
+.notificationActionRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.tabBar {
+  display: inline-flex;
+  gap: var(--space-2);
+  width: max-content;
+  max-width: 100%;
+  padding: 6px;
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--color-form-bg-muted) 86%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-card-border) 80%, transparent);
+}
+
+.tabButton {
+  min-height: 44px;
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-full);
+  color: var(--color-text-secondary);
+  font-weight: var(--font-semibold);
+  transition:
+    transform var(--transition-base),
+    background-color var(--transition-base),
+    color var(--transition-base),
+    box-shadow var(--transition-base);
+}
+
+.tabButtonActive {
+  background: var(--gradient-primary);
+  color: var(--color-interactive-primary-text);
+  box-shadow: var(--shadow-md);
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.sectionHeader {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.sectionTitle,
+.reactionTitle,
+.sideTitle {
+  font-size: clamp(1.05rem, 2vw, 1.4rem);
+  color: var(--color-text-primary);
+  line-height: var(--leading-tight);
+}
+
+.railScroller {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(200px, 1fr);
+  gap: var(--space-3);
+  overflow-x: auto;
+  padding-bottom: var(--space-2);
+  scrollbar-width: thin;
+  scroll-snap-type: x proximity;
+}
+
+.railCard {
+  min-height: 212px;
+  padding: var(--space-4);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-card-border-muted);
+  background: color-mix(in srgb, var(--color-surface) 88%, transparent);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  text-align: left;
+  scroll-snap-align: start;
+  transition:
+    transform var(--transition-base),
+    border-color var(--transition-base),
+    box-shadow var(--transition-base);
+}
+
+.railCard:hover,
+.railCard:focus-visible {
+  transform: translateY(-2px);
+  border-color: var(--color-primary-300);
+  box-shadow: var(--shadow-md);
+}
+
+.railCardActive {
+  border-color: var(--color-primary-500);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-primary-500) 18%, transparent);
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  min-height: 30px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-full);
+  font-size: 0.72rem;
+  font-weight: var(--font-semibold);
+}
+
+.status-past {
+  background: var(--color-status-neutral-bg);
+  color: var(--color-status-neutral-text);
+}
+
+.status-today {
+  background: var(--color-status-success-bg);
+  color: var(--color-status-success-text);
+}
+
+.status-upcoming {
+  background: var(--color-status-accent-bg);
+  color: var(--color-status-accent-text);
+}
+
+.status-empty {
+  background: var(--color-alert-warning-bg);
+  color: var(--color-alert-warning-text);
+}
+
+.railHeader {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.railDate {
+  font-family: var(--font-accent);
+  font-size: clamp(1.35rem, 3vw, 1.8rem);
+  color: var(--color-text-primary);
+}
+
+.railWeekday,
+.railRelative,
+.reactionTotal {
+  color: var(--color-text-muted);
+}
+
+.railPreview {
+  display: none;
+}
+
+.railSelectionHint {
+  display: block;
+  margin-top: auto;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  line-height: var(--leading-relaxed);
+}
+
+.monthSwitcher {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.monthChip {
+  min-width: 140px;
+  min-height: 58px;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-card-border-muted);
+  background: color-mix(in srgb, var(--color-surface) 90%, transparent);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 2px;
+  transition:
+    border-color var(--transition-base),
+    transform var(--transition-base),
+    box-shadow var(--transition-base);
+}
+
+.monthChip small {
+  color: var(--color-text-muted);
+}
+
+.monthChipActive {
+  border-color: var(--color-primary-500);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-primary-500) 18%, transparent);
+}
+
+.calendarCard {
+  padding: var(--space-4);
+}
+
+.weekdayRow,
+.calendarGrid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.weekdayRow {
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.weekdayCell {
+  text-align: center;
+  font-size: 0.72rem;
+  font-weight: var(--font-semibold);
+  color: var(--color-text-muted);
+}
+
+.calendarGrid {
+  gap: var(--space-2);
+}
+
+.dayCell {
+  min-height: 176px;
+  padding: 10px;
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-card-border-muted);
+  background: color-mix(in srgb, var(--color-surface) 90%, transparent);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  text-align: left;
+  transition:
+    border-color var(--transition-base),
+    transform var(--transition-base),
+    box-shadow var(--transition-base);
+}
+
+.dayCell:not(:disabled):hover,
+.dayCell:not(:disabled):focus-visible {
+  transform: translateY(-1px);
+  border-color: var(--color-primary-300);
+}
+
+.dayCell:disabled {
+  cursor: default;
+  opacity: 0.48;
+}
+
+.dayCellMuted {
+  opacity: 0.56;
+}
+
+.dayCellToday {
+  border-color: var(--color-primary-500);
+}
+
+.dayCellSelected {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-primary-500) 18%, transparent);
+}
+
+.dayHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.dayNumber {
+  font-family: var(--font-accent);
+  font-size: var(--text-lg);
+  font-weight: var(--font-semibold);
+  color: var(--color-text-primary);
+}
+
+.weekend {
+  color: var(--color-text-secondary);
+}
+
+.todayMarker {
+  font-size: 0.62rem;
+  font-weight: var(--font-semibold);
+  letter-spacing: 0.14em;
+  color: var(--color-primary-600);
+}
+
+.dayContent {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.dayPreview {
+  color: var(--color-text-primary);
+  line-height: 1.45;
+  font-size: var(--text-sm);
+  overflow: visible;
+}
+
+.dayMenuListDesktop,
+.dayMenuListMobile {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.dayMenuListDesktop {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.dayMenuItem {
+  padding: 8px 10px;
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--color-primary-100) 60%, white 40%);
+  color: var(--color-text-primary);
+  font-size: 0.76rem;
+  line-height: 1.4;
+}
+
+.menuChip,
+.moreCount,
+.mobileMenuCount,
+.serviceChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: var(--radius-full);
+  background: var(--color-chip-bg);
+  color: var(--color-chip-text);
+  font-size: 0.72rem;
+}
+
+.moreCount {
+  color: var(--color-text-muted);
+}
+
+.dayMenuListMobile {
+  display: none;
+}
+
+.detailGrid {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.detailCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.detailMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.menuList {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.menuRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-card-border-muted);
+  background: color-mix(in srgb, var(--color-surface) 88%, transparent);
+  color: var(--color-text-primary);
+}
+
+.menuBullet {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--gradient-primary);
+  flex-shrink: 0;
+}
+
+.emptyMealState {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 120px;
+  padding: var(--space-5);
+  border-radius: var(--radius-xl);
+  background: color-mix(in srgb, var(--color-alert-warning-bg) 80%, white 20%);
+  color: var(--color-alert-warning-text);
+}
+
+.reactionSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.reactionGrid {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+.reactionCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.reactionCardHeader {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.ratingSummary {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  color: var(--color-text-muted);
+}
+
+.ratingSummary strong {
+  font-family: var(--font-accent);
+  font-size: clamp(1.2rem, 2vw, 1.5rem);
+  color: var(--color-text-primary);
+}
+
+.scoreButtonGroup,
+.scoreDistribution {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.scoreButtonGroup {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.scoreButton {
+  min-height: 46px;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-card-border-muted);
+  background: color-mix(in srgb, var(--color-surface) 92%, transparent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: var(--color-text-secondary);
+  font-weight: var(--font-semibold);
+  transition:
+    transform var(--transition-base),
+    border-color var(--transition-base),
+    background-color var(--transition-base),
+    color var(--transition-base),
+    box-shadow var(--transition-base);
+}
+
+.scoreButton:hover,
+.scoreButton:focus-visible {
+  transform: translateY(-1px);
+  border-color: var(--color-primary-300);
+}
+
+.scoreButton:disabled {
+  cursor: wait;
+  opacity: 0.68;
+}
+
+.scoreButtonActive {
+  border-color: var(--color-primary-500);
+  background: color-mix(in srgb, var(--color-primary-100) 78%, white 22%);
+  color: var(--color-primary-700);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-primary-500) 18%, transparent);
+}
+
+.scoreIcon {
+  color: currentColor;
+}
+
+.scoreRow {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.scoreRowLabel,
+.scoreRowMeta {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.scoreRowMeta {
+  white-space: nowrap;
+}
+
+.ratingFootnote {
+  color: var(--color-text-secondary);
+  line-height: var(--leading-relaxed);
+}
+
+.ratingLockedReason {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-xl);
+  background: color-mix(in srgb, var(--color-alert-warning-bg) 82%, white 18%);
+  color: var(--color-alert-warning-text);
+  line-height: var(--leading-relaxed);
+}
+
+.nutritionPanel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.nutritionHighlight {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: var(--space-4);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-card-border-muted);
+  background: color-mix(in srgb, var(--color-primary-100) 68%, white 32%);
+}
+
+.nutritionLabel {
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  color: var(--color-text-secondary);
+}
+
+.nutritionValue {
+  font-family: var(--font-accent);
+  font-size: clamp(1.4rem, 2.6vw, 2rem);
+  color: var(--color-text-primary);
+}
+
+.nutritionList,
+.allergyList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: var(--space-3);
+}
+
+.nutritionItem,
+.allergyItem {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-card-border-muted);
+  background: color-mix(in srgb, var(--color-surface) 88%, transparent);
+  color: var(--color-text-primary);
+  line-height: var(--leading-relaxed);
+}
+
+.allergySection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.supportSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.reactionBar {
+  width: 100%;
+  height: 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-form-bg-muted) 88%, transparent);
+  overflow: hidden;
+}
+
+.reactionFill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    var(--color-primary-500),
+    color-mix(in srgb, var(--color-accent-300) 58%, white)
+  );
+}
+
+.reactionOptions {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.reactionButton {
+  padding: var(--space-4);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-card-border-muted);
+  background: color-mix(in srgb, var(--color-surface) 92%, transparent);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  text-align: left;
+}
+
+.reactionButtonTop,
+.reactionMeta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.reactionLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: var(--font-semibold);
+  color: var(--color-text-primary);
+}
+
+.reactionMeta {
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+}
+
+.tone-positive .reactionFill {
+  background: linear-gradient(90deg, var(--color-success), color-mix(in srgb, var(--color-success) 40%, white));
+}
+
+.tone-negative .reactionFill {
+  background: linear-gradient(90deg, var(--color-error), color-mix(in srgb, var(--color-error) 42%, white));
+}
+
+.tone-accent .reactionFill {
+  background: linear-gradient(90deg, var(--color-accent-500), color-mix(in srgb, var(--color-accent-300) 60%, white));
+}
+
+.tone-warning .reactionFill {
+  background: linear-gradient(90deg, var(--color-warning), color-mix(in srgb, var(--color-warning) 42%, white));
+}
+
+@media (min-width: 768px) {
+  .sectionHeader,
+  .reactionCardHeader {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+
+  .menuList {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .detailGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+
+  .reactionGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .allergyList {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .notificationSchedulePanel {
+    grid-template-columns: minmax(0, 1.8fr) minmax(240px, 0.8fr);
+    align-items: start;
+  }
+
+  .notificationStateCard,
+  .notificationHint {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+}
+
+@media (max-width: 767px) {
+  .heroCard,
+  .notificationCard,
+  .tabSection,
+  .detailCard,
+  .reactionCard,
+  .calendarCard {
+    padding: var(--space-4);
+  }
+
+  .heroTitleRow {
+    grid-template-columns: 1fr;
+  }
+
+  .heroDayToken {
+    width: 4rem;
+  }
+
+  .railScroller {
+    grid-auto-columns: minmax(180px, 1fr);
+  }
+
+  .monthChip {
+    min-width: calc(50% - var(--space-2));
+  }
+
+  .notificationToggleRow,
+  .notificationActionRow {
+    grid-template-columns: 1fr;
+    flex-direction: column;
+  }
+
+  .scoreButtonGroup {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .dayCell {
+    min-height: 72px;
+    padding: 10px 8px;
+  }
+
+  .dayHeader {
+    justify-content: center;
+  }
+
+  .dayNumber {
+    font-size: var(--text-base);
+  }
+
+  .dayContent,
+  .dayMenuListDesktop,
+  .dayMenuListMobile,
+  .mobileMenuCount,
+  .todayMarker {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tabButton,
+  .railCard,
+  .monthChip,
+  .dayCell,
+  .reactionButton,
+  .scoreButton {
+    transition: none;
+  }
+}

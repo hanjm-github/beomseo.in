@@ -16,8 +16,10 @@ from fastapi.responses import JSONResponse
 from .config import get_settings
 from .database import shutdown_engine
 from .routes.field_trip import router as field_trip_router
+from .routes.meals import router as meals_router
 from .routes.sports_league import router as sports_league_router
 from .services.field_trip import FieldTripError
+from .services.meals import SchoolMealError
 from .services.sports_league import SportsLeagueError
 
 
@@ -91,6 +93,13 @@ def create_app() -> FastAPI:
             content=payload,
         )
 
+    @app.exception_handler(SchoolMealError)
+    async def school_meal_error_handler(request: Request, exc: SchoolMealError):
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={'error': exc.message},
+        )
+
     # Health check
     @app.get('/api/health')
     async def health():
@@ -101,6 +110,7 @@ def create_app() -> FastAPI:
     # contract with the main Flask application.
     app.include_router(sports_league_router)
     app.include_router(field_trip_router)
+    app.include_router(meals_router)
 
     return app
 

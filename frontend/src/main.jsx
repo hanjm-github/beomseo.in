@@ -15,6 +15,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App.jsx'
+import { startFirebaseForegroundMessageListener } from './pwa/firebaseMessaging'
 
 if (import.meta.env.PROD && 'serviceWorker' in navigator) {
   const registerServiceWorker = () => {
@@ -23,6 +24,8 @@ if (import.meta.env.PROD && 'serviceWorker' in navigator) {
 
   window.addEventListener('load', registerServiceWorker, { once: true });
 }
+
+startFirebaseForegroundMessageListener().catch(() => {});
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

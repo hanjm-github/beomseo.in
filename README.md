@@ -411,6 +411,7 @@ npm run preview  # 빌드된 결과물 미리보기
 | [backend/docs/backend_api.md](backend/docs/backend_api.md) | API 레퍼런스 |
 | [backend/docs/backend_architecture.md](backend/docs/backend_architecture.md) | 아키텍처 문서 |
 | [backend/docs/fastapi_deployment.md](backend/docs/fastapi_deployment.md) | FastAPI 스포츠리그/수학여행 서버 배포 가이드 |
+| [backend/docs/school_meals.md](backend/docs/school_meals.md) | 급식 조회 + PWA 급식 알림 문서 |
 
 ### 프론트엔드 문서
 
@@ -429,6 +430,21 @@ npm run preview  # 빌드된 결과물 미리보기
 |---|---|
 | [TODO.md](TODO.md) | 개발 로드맵 & 아이디어 |
 | [LICENSE](LICENSE) | GNU GPL-3.0 라이선스 |
+
+---
+
+## 오늘의 급식 알림
+
+- 설치된 PWA 기기별로 급식 알림 시간을 저장합니다.
+- 급식 알림 설정 UI는 `오늘의 급식` 페이지에서만 노출됩니다.
+- 실제 발송은 Firebase Web Push + FastAPI sender script 조합으로 동작합니다.
+- 운영 시에는 아래 cron을 추가하면 됩니다.
+
+```cron
+* * * * * cd /path/to/repo/backend && /path/to/venv/bin/python scripts/send_school_meal_notifications.py
+```
+
+세부 설정값과 API 계약은 [backend/docs/school_meals.md](backend/docs/school_meals.md)에 정리되어 있습니다.
 
 ---
 
