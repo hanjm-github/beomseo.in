@@ -63,8 +63,8 @@
 
 .tabBarShell {
   position: sticky;
-  top: var(--space-2);
-  z-index: 20;
+  top: calc(var(--header-height) + var(--space-2));
+  z-index: var(--z-dropdown);
   padding: 10px;
   border: 1px solid rgba(23, 21, 95, 0.08);
   border-radius: var(--radius-2xl);

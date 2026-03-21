@@ -1,4 +1,4 @@
-import { startTransition, useEffect, useMemo, useState } from 'react';
+import { startTransition, useEffect, useMemo, useRef, useState } from 'react';
 import {
   CalendarDays,
   CircleAlert,
@@ -118,7 +118,7 @@ function EventActions({ canManage, onEdit, onDelete }) {
   );
 }
 
-function MatchPickerButton({ match, teamsMap, now, selected, signal, onSelect }) {
+function MatchPickerButton({ match, teamsMap, now, selected, signal, onSelect, buttonRef }) {
   const teamA = teamsMap[match.teamAId];
   const teamB = teamsMap[match.teamBId];
   const resolvedStatus = getResolvedMatchStatus(match, now);
@@ -126,6 +126,7 @@ function MatchPickerButton({ match, teamsMap, now, selected, signal, onSelect })
 
   return (
     <button
+      ref={buttonRef}
       type="button"
       className={`${styles.matchPickerButton} ${selected ? styles.matchPickerButtonSelected : ''
         } ${signal ? styles.matchPickerButtonStrong : ''}`}
@@ -247,6 +248,8 @@ export default function SportsLeagueCategoryPage() {
   const [knockoutError, setKnockoutError] = useState('');
   const [isUpdatingKnockout, setIsUpdatingKnockout] = useState(false);
   const [now, setNow] = useState(() => new Date());
+  const matchPickerRailRef = useRef(null);
+  const matchPickerButtonRefs = useRef(new Map());
   const [draft, setDraft] = useState({
     matchId: '',
     eventType: 'note',
@@ -289,6 +292,7 @@ export default function SportsLeagueCategoryPage() {
   );
   const selectedMatch = selectedMatchId ? matchesById[selectedMatchId] : null;
   const heroMatch = currentMatch || nextMatch || selectedMatch;
+  const autoScrollMatchId = currentMatch?.id || nextMatch?.id || selectedMatchId || null;
   const heroStatus = heroMatch ? getResolvedMatchStatus(heroMatch, now) : 'upcoming';
   const latestHeroEvent = useMemo(
     () => (heroMatch ? getMatchEvents(snapshot, heroMatch.id, 'desc')[0] || null : null),
@@ -422,6 +426,30 @@ export default function SportsLeagueCategoryPage() {
       };
     });
   }, [knockoutDraft.matchId, knockoutMatches]);
+
+  useEffect(() => {
+    if (activeTab !== 'live' || !autoScrollMatchId) return undefined;
+
+    const frameId = window.requestAnimationFrame(() => {
+      const rail = matchPickerRailRef.current;
+      const target = matchPickerButtonRefs.current.get(autoScrollMatchId);
+
+      if (!rail || !target) return;
+
+      const targetCenter = target.offsetLeft + target.offsetWidth / 2;
+      const maxLeft = Math.max(0, rail.scrollWidth - rail.clientWidth);
+      const nextLeft = Math.min(Math.max(0, targetCenter - rail.clientWidth / 2), maxLeft);
+
+      rail.scrollTo({
+        left: nextLeft,
+        behavior: rail.scrollLeft > 0 ? 'smooth' : 'auto',
+      });
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+    };
+  }, [activeTab, autoScrollMatchId, orderedMatches.length]);
 
   const navigateLeague = ({ matchId = selectedMatchId, tabKey = activeTab, replace = false } = {}) => {
     const next = new URLSearchParams(searchParams);
@@ -816,7 +844,7 @@ export default function SportsLeagueCategoryPage() {
                   </div>
                 </div>
 
-                <div className={styles.matchPickerRail}>
+                <div ref={matchPickerRailRef} className={styles.matchPickerRail}>
                   {orderedMatches.map((match) => (
                     <MatchPickerButton
                       key={match.id}
@@ -831,6 +859,14 @@ export default function SportsLeagueCategoryPage() {
                             ? 'next'
                             : null
                       }
+                      buttonRef={(node) => {
+                        if (node) {
+                          matchPickerButtonRefs.current.set(match.id, node);
+                          return;
+                        }
+
+                        matchPickerButtonRefs.current.delete(match.id);
+                      }}
                       onSelect={(matchId) => handleViewerMatchSelect(matchId, 'live')}
                     />
                   ))}

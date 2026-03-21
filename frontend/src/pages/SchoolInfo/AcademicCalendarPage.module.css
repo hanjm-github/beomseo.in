@@ -143,7 +143,7 @@
 .weekdayRow,
 .calendarGrid {
   display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 
 .weekdayRow {
@@ -231,6 +231,89 @@
   font-size: 0.72rem;
   color: var(--color-text-muted);
   padding-inline: 2px;
+}
+
+.mobileCalendarList {
+  display: none;
+}
+
+.mobileDayCard {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--color-card-border-muted);
+  border-radius: var(--radius-xl);
+  background: var(--color-surface);
+}
+
+.mobileDayCardToday {
+  border-color: var(--color-primary-500);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-primary-500) 18%, transparent);
+}
+
+.mobileDayHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.mobileDayWeekday {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: var(--font-semibold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.mobileDayDate {
+  margin: 4px 0 0;
+  font-size: var(--text-xl);
+  line-height: 1.15;
+  color: var(--color-text-primary);
+}
+
+.mobileTodayBadge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-full);
+  background: var(--color-interactive-primary-bg);
+  color: var(--color-interactive-primary-text);
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+}
+
+.mobileDayEvents {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.mobileEventPill {
+  justify-content: flex-start;
+  min-height: 44px;
+  padding: 10px 12px;
+  white-space: normal;
+  text-align: left;
+  line-height: 1.35;
+  font-size: 0.82rem;
+}
+
+.mobileDayEmpty,
+.mobileAgendaEmpty {
+  margin: 0;
+  color: var(--color-text-secondary);
+  line-height: var(--leading-relaxed);
+}
+
+.mobileAgendaEmpty {
+  padding: var(--space-4);
+  border: 1px dashed var(--color-card-border);
+  border-radius: var(--radius-xl);
+  background: var(--color-form-bg-muted);
 }
 
 .listCard {
@@ -367,6 +450,16 @@
   .dayCell {
     min-height: 96px;
     padding: 6px;
+  }
+
+  .weekdayRow,
+  .calendarGrid {
+    display: none;
+  }
+
+  .mobileCalendarList {
+    display: grid;
+    gap: var(--space-3);
   }
 
   .eventPill,

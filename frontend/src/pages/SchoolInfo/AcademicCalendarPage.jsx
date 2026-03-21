@@ -21,11 +21,25 @@ import {
 import '../page-shell.css';
 import styles from './AcademicCalendarPage.module.css';
 
-const WEEKDAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
+const WEEKDAY_COLUMNS = [
+  { day: 1, label: '월' },
+  { day: 2, label: '화' },
+  { day: 3, label: '수' },
+  { day: 4, label: '목' },
+  { day: 5, label: '금' },
+];
+const WEEKDAY_LABEL_BY_DAY = Object.fromEntries(
+  WEEKDAY_COLUMNS.map(({ day, label }) => [day, label]),
+);
 const SEMESTER_OPTIONS = [
   ...ACADEMIC_YEAR_META.semesters,
   { id: 'all', label: '1,2학기 전체' },
 ];
+
+function isWeekdayCell(cell) {
+  const day = cell.date.getDay();
+  return day >= 1 && day <= 5;
+}
 
 function isSemester(value) {
   return value === 'spring' || value === 'fall' || value === 'all';
@@ -257,64 +271,106 @@ export default function AcademicCalendarPage() {
     });
   };
 
-  const renderCalendarGrid = (matrix) => (
-    <>
-      <div className={styles.weekdayRow}>
-        {WEEKDAY_LABELS.map((label, index) => (
-          <div
-            key={label}
-            className={`${styles.weekdayCell} ${index === 0 ? styles.weekend : ''} ${
-              index === 6 ? styles.weekend : ''
-            }`}
-          >
-            {label}
-          </div>
-        ))}
-      </div>
+  const renderCalendarGrid = (matrix) => {
+    const weekdayMatrix = matrix.map((week) => week.filter(isWeekdayCell));
+    const mobileAgendaCells = weekdayMatrix
+      .flat()
+      .filter((cell) => cell.isCurrentMonth && (cell.events.length > 0 || cell.isToday));
 
-      <div className={styles.calendarGrid}>
-        {matrix.flat().map((cell) => (
-          <div
-            key={cell.key}
-            className={`${styles.dayCell} ${
-              cell.isCurrentMonth ? '' : styles.dayCellMuted
-            } ${cell.isToday ? styles.dayCellToday : ''}`}
-          >
-            <div className={styles.dayHeader}>
-              <span
-                className={`${styles.dayNumber} ${
-                  cell.date.getDay() === 0 || cell.date.getDay() === 6
-                    ? styles.dayNumberWeekend
-                    : ''
+    return (
+      <>
+        <div className={styles.weekdayRow}>
+          {WEEKDAY_COLUMNS.map(({ label }) => (
+            <div key={label} className={styles.weekdayCell}>
+              {label}
+            </div>
+          ))}
+        </div>
+
+        <div className={styles.calendarGrid}>
+          {weekdayMatrix.flat().map((cell) => (
+            <div
+              key={cell.key}
+              className={`${styles.dayCell} ${
+                cell.isCurrentMonth ? '' : styles.dayCellMuted
+              } ${cell.isToday ? styles.dayCellToday : ''}`}
+            >
+              <div className={styles.dayHeader}>
+                <span className={styles.dayNumber}>{cell.day}</span>
+              </div>
+              <div className={styles.dayEvents}>
+                {cell.events.slice(0, 2).map((event) => {
+                  const tone = ACADEMIC_CATEGORY_META[event.category]?.tone || event.category;
+                  return (
+                    <button
+                      key={`${cell.key}-${event.id}`}
+                      type="button"
+                      className={`${styles.eventPill} ${styles[`tone-${tone}`]}`}
+                      onClick={() => handleEventFocus(event.id)}
+                      title={event.title}
+                    >
+                      {event.title}
+                    </button>
+                  );
+                })}
+                {cell.events.length > 2 ? (
+                  <span className={styles.moreEvents}>+{cell.events.length - 2}</span>
+                ) : null}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className={styles.mobileCalendarList}>
+          {mobileAgendaCells.length ? (
+            mobileAgendaCells.map((cell) => (
+              <article
+                key={`mobile-${cell.key}`}
+                className={`${styles.mobileDayCard} ${
+                  cell.isToday ? styles.mobileDayCardToday : ''
                 }`}
               >
-                {cell.day}
-              </span>
-            </div>
-            <div className={styles.dayEvents}>
-              {cell.events.slice(0, 2).map((event) => {
-                const tone = ACADEMIC_CATEGORY_META[event.category]?.tone || event.category;
-                return (
-                  <button
-                    key={`${cell.key}-${event.id}`}
-                    type="button"
-                    className={`${styles.eventPill} ${styles[`tone-${tone}`]}`}
-                    onClick={() => handleEventFocus(event.id)}
-                    title={event.title}
-                  >
-                    {event.title}
-                  </button>
-                );
-              })}
-              {cell.events.length > 2 ? (
-                <span className={styles.moreEvents}>+{cell.events.length - 2}</span>
-              ) : null}
-            </div>
-          </div>
-        ))}
-      </div>
-    </>
-  );
+                <div className={styles.mobileDayHeader}>
+                  <div>
+                    <p className={styles.mobileDayWeekday}>
+                      {WEEKDAY_LABEL_BY_DAY[cell.date.getDay()]}
+                    </p>
+                    <h3 className={styles.mobileDayDate}>{cell.day}일</h3>
+                  </div>
+                  {cell.isToday ? <span className={styles.mobileTodayBadge}>오늘</span> : null}
+                </div>
+
+                {cell.events.length ? (
+                  <div className={styles.mobileDayEvents}>
+                    {cell.events.map((event) => {
+                      const tone = ACADEMIC_CATEGORY_META[event.category]?.tone || event.category;
+                      return (
+                        <button
+                          key={`mobile-${cell.key}-${event.id}`}
+                          type="button"
+                          className={`${styles.eventPill} ${styles.mobileEventPill} ${
+                            styles[`tone-${tone}`]
+                          }`}
+                          onClick={() => handleEventFocus(event.id)}
+                          title={event.title}
+                        >
+                          {event.title}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className={styles.mobileDayEmpty}>등록된 일정이 없습니다.</p>
+                )}
+              </article>
+            ))
+          ) : (
+            <div className={styles.mobileAgendaEmpty}>이번 달에 표시할 평일 일정이 없습니다.</div>
+          )}
+        </div>
+      </>
+    );
+  };
 
   return (
     <div className="page-shell">
