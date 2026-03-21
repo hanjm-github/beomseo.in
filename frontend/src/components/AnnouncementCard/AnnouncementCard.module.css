@@ -5,6 +5,7 @@
     align-items: center;
     justify-content: space-between;
     gap: var(--space-4);
+    min-width: 0;
     padding: var(--space-4) 0;
     text-decoration: none;
     border-bottom: 1px solid var(--color-border-light);
@@ -34,7 +35,7 @@
 /* Content */
 .content {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: var(--space-2);
     flex: 1;
     min-width: 0;
@@ -60,6 +61,7 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    overflow-wrap: anywhere;
 }
 
 .card.pinned .title {
@@ -72,6 +74,9 @@
     align-items: center;
     gap: var(--space-3);
     flex-shrink: 0;
+    min-width: 0;
+    flex-wrap: wrap;
+    justify-content: flex-end;
 }
 
 .category {
@@ -94,6 +99,30 @@
     gap: var(--space-1);
     font-size: var(--text-xs);
     color: var(--color-text-muted);
+    white-space: nowrap;
+}
+
+@media (max-width: 639px) {
+    .card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-2);
+    }
+
+    .content,
+    .meta {
+        width: 100%;
+    }
+
+    .meta {
+        justify-content: space-between;
+    }
+
+    .title {
+        white-space: normal;
+        overflow: visible;
+        text-overflow: clip;
+    }
 }
 
 @media (min-width: 640px) {

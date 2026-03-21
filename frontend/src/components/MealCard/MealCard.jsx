@@ -82,7 +82,6 @@ export default function MealCard() {
   const mealUrl = `/school-info/meal?tab=today&date=${
     todayMeal?.date || formatDateKey(referenceDate)
   }&month=${formatMonthKey(referenceDate)}`;
-  const previewText = isLoading ? '급식 정보를 불러오는 중입니다.' : todayMeal?.previewText;
   const noteText = loadError || todayMeal?.note;
   const emptyText = isLoading
     ? '급식 정보를 불러오는 중입니다.'
@@ -95,29 +94,27 @@ export default function MealCard() {
           <div className={styles.iconShell}>
             <Soup size={18} className={styles.icon} />
           </div>
-          <div>
-            <p className={styles.eyebrow}>오늘의 점심</p>
-            <h3 className={styles.title}>카페테리아 미리보기</h3>
+          <div className={styles.titleCopy}>
+            <p className={styles.eyebrow}>학교 급식</p>
+            <h3 className={styles.title}>오늘의 점심</h3>
           </div>
         </div>
         <span className={`${styles.badge} ${todayMeal?.isNoMeal ? styles.badgeMuted : styles.badgeLive}`}>
-          {todayMeal?.isNoMeal ? '운영 없음' : '오늘 메뉴'}
+          {todayMeal?.isNoMeal ? '운영 없음' : '전체 메뉴'}
         </span>
       </div>
 
       <div className={styles.dateRow}>
         <strong className={styles.dateNumber}>{formatRailDate(referenceDate)}</strong>
-        <span className={styles.dateText}>{formatWeekday(referenceDate)}요일 점심</span>
+        <span className={styles.dateText}>{formatWeekday(referenceDate)}요일 메뉴</span>
       </div>
-
-      <p className={styles.preview}>{previewText}</p>
 
       {todayMeal?.menuItems?.length ? (
         <ul className={styles.menuList}>
-          {todayMeal.menuItems.slice(0, 4).map((item) => (
+          {todayMeal.menuItems.map((item) => (
             <li key={item} className={styles.menuItem}>
               <span className={styles.menuBullet} />
-              <span>{item}</span>
+              <span className={styles.menuItemText}>{item}</span>
             </li>
           ))}
         </ul>

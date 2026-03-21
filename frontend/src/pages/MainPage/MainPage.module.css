@@ -373,12 +373,30 @@
 .twoColumn {
     display: grid;
     grid-template-columns: 1fr;
+    grid-template-areas:
+        "meal"
+        "announcements";
     gap: var(--space-8);
+}
+
+.twoColumn > * {
+    min-width: 0;
+}
+
+.mealPanel {
+    grid-area: meal;
+    min-width: 0;
+}
+
+.announcementsPanel {
+    grid-area: announcements;
+    min-width: 0;
 }
 
 @media (min-width: 900px) {
     .twoColumn {
         grid-template-columns: 1.2fr 0.8fr;
+        grid-template-areas: "announcements meal";
     }
 }
 
@@ -389,6 +407,8 @@
     border-radius: var(--radius-2xl);
     padding: var(--space-6);
     box-shadow: var(--shadow-card);
+    width: 100%;
+    min-width: 0;
 }
 
 .announcementsHeader {
@@ -396,6 +416,7 @@
     flex-direction: column;
     gap: var(--space-4);
     margin-bottom: var(--space-5);
+    min-width: 0;
 }
 
 @media (min-width: 640px) {
@@ -403,6 +424,10 @@
         flex-direction: row;
         align-items: center;
         justify-content: space-between;
+    }
+
+    .tab {
+        flex: 0 0 auto;
     }
 }
 
@@ -418,12 +443,15 @@
 .tabs {
     display: flex;
     gap: var(--space-2);
+    flex-wrap: wrap;
     padding: var(--space-1);
     background-color: var(--color-bg-muted);
     border-radius: var(--radius-lg);
+    max-width: 100%;
 }
 
 .tab {
+    flex: 1 1 0;
     padding: var(--space-2) var(--space-4);
     font-size: var(--text-sm);
     font-weight: var(--font-medium);
@@ -433,6 +461,7 @@
     border-radius: var(--radius-md);
     cursor: pointer;
     transition: all var(--transition-fast);
+    text-align: center;
 }
 
 .tab:hover {
@@ -451,7 +480,8 @@
 }
 
 .announcementsList {
-    padding: 0 var(--space-4);
+    padding: 0;
+    min-width: 0;
 }
 
 .viewMore {
@@ -468,6 +498,12 @@
 
 .viewMore:hover {
     color: var(--color-primary-700);
+}
+
+@media (max-width: 639px) {
+    .announcementsCard {
+        padding: var(--space-5);
+    }
 }
 
 @media (prefers-reduced-motion: reduce) {

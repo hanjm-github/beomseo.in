@@ -237,7 +237,11 @@ export default function MainPage() {
         <section className={`${styles.section} ${styles.sectionAlt}`}>
           <div className={styles.container}>
             <div className={styles.twoColumn}>
-              <div className={`${styles.announcementsCard} ${styles.fadeUp}`}>
+              <div className={`${styles.mealPanel} ${styles.fadeUp} ${styles.delay2}`}>
+                <MealCard />
+              </div>
+
+              <div className={`${styles.announcementsPanel} ${styles.announcementsCard} ${styles.fadeUp}`}>
                 <div className={styles.announcementsHeader}>
                   <h3 className={styles.cardTitle}>최근 공지</h3>
 
@@ -287,9 +291,6 @@ export default function MainPage() {
                 </Link>
               </div>
 
-              <div className={`${styles.fadeUp} ${styles.delay2}`}>
-                <MealCard />
-              </div>
             </div>
           </div>
         </section>

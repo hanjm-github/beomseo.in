@@ -3,6 +3,8 @@
   flex-direction: column;
   gap: var(--space-4);
   height: 100%;
+  width: 100%;
+  min-width: 0;
   padding: var(--space-5);
   border-radius: var(--radius-2xl);
   border: 1px solid var(--color-card-border);
@@ -48,6 +50,11 @@
 
 .titleRow {
   gap: var(--space-3);
+  min-width: 0;
+}
+
+.titleCopy {
+  min-width: 0;
 }
 
 .iconShell {
@@ -75,6 +82,7 @@
   margin-top: 4px;
   font-size: var(--text-xl);
   color: var(--color-text-primary);
+  overflow-wrap: anywhere;
 }
 
 .badge {
@@ -97,6 +105,7 @@
 
 .dateRow {
   gap: var(--space-2);
+  flex-wrap: wrap;
 }
 
 .dateNumber {
@@ -109,21 +118,20 @@
 .note {
   color: var(--color-text-secondary);
   line-height: var(--leading-relaxed);
-}
-
-.preview {
-  color: var(--color-text-primary);
-  line-height: var(--leading-relaxed);
+  overflow-wrap: anywhere;
 }
 
 .menuList {
   display: grid;
   gap: var(--space-2);
+  min-width: 0;
 }
 
 .menuItem {
   gap: var(--space-2);
+  align-items: flex-start;
   color: var(--color-text-primary);
+  min-width: 0;
 }
 
 .menuBullet {
@@ -132,6 +140,11 @@
   border-radius: 999px;
   background: var(--gradient-primary);
   flex-shrink: 0;
+}
+
+.menuItemText {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .emptyState {
@@ -144,6 +157,7 @@
 .footer {
   margin-top: auto;
   align-items: flex-end;
+  min-width: 0;
 }
 
 .note {
@@ -152,10 +166,11 @@
 
 .linkHint {
   gap: 6px;
+  max-width: 100%;
+  flex-wrap: wrap;
   color: var(--color-primary-600);
   font-size: var(--text-sm);
   font-weight: var(--font-semibold);
-  white-space: nowrap;
 }
 
 @media (max-width: 767px) {
@@ -166,6 +181,10 @@
   .header,
   .footer {
     flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .dateRow {
     align-items: flex-start;
   }
 }
