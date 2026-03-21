@@ -28,11 +28,23 @@ import {
 } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
-import { APP_NAME } from '../../config/env';
+import { APP_NAME, CLUB_RECRUIT_BOARD_ENABLED } from '../../config/env';
 import { buildAuthRedirectState, resolveAuthRedirectTarget } from '../../utils/authRedirect';
 import { SPORTS_LEAGUE_CATEGORY_ID } from '../../features/sportsLeague/data';
 import styles from './Header.module.css';
 import RoleName from '../RoleName/RoleName';
+
+const communityNavigationItems = [
+  { label: '자유 게시판', path: '/community/free' },
+  CLUB_RECRUIT_BOARD_ENABLED ? { label: '동아리 모집', path: '/community/club-recruit' } : null,
+  { label: '선택과목 변경', path: '/community/subjects' },
+  { label: '학생 청원', path: '/community/petition' },
+  { label: '설문 품앗이', path: '/community/survey' },
+  { label: '실시간 투표', path: '/community/vote' },
+  { label: '수학여행', path: '/community/field-trip' },
+  { label: '분실물 센터', path: '/community/lost-found' },
+  { label: '곰솔마켓', path: '/community/gomsol-market' },
+].filter(Boolean);
 
 const navigationItems = [
   {
@@ -46,25 +58,13 @@ const navigationItems = [
   {
     label: '소통하는 범서고',
     path: '/community',
-    children: [
-      { label: '자유 게시판', path: '/community/free' },
-      { label: '동아리 모집', path: '/community/club-recruit' },
-      { label: '선택과목 변경', path: '/community/subjects' },
-      { label: '학생 청원', path: '/community/petition' },
-      { label: '설문 품앗이', path: '/community/survey' },
-      { label: '실시간 투표', path: '/community/vote' },
-      { label: '수학여행', path: '/community/field-trip' },
-      { label: '분실물 센터', path: '/community/lost-found' },
-      { label: '곰솔마켓', path: '/community/gomsol-market' },
-    ],
+    children: communityNavigationItems,
   },
   {
     label: '학교 생활 정보',
     path: '/school-info',
     children: [
       { label: '시간표 다운로드', path: '/school-info/timetable' },
-      { label: '교무실 찾기', path: '/school-info/teachers' },
-      { label: '점공 계산기', path: '/school-info/calculator' },
       { label: '오늘의 급식', path: '/school-info/meal' },
       { label: '학사 캘린더', path: '/school-info/calendar' },
       {
@@ -73,7 +73,6 @@ const navigationItems = [
       },
     ],
   },
-  { label: '범서고 갤러리', path: '/gallery' },
 ];
 
 /**

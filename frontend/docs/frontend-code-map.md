@@ -48,7 +48,6 @@
 | `/notices/*` | `NoticesPage` |
 | `/community/*` | `CommunityRouter` |
 | `/school-info/*` | `SchoolInfoRouter` (`src/pages/SchoolInfo/index.jsx`) |
-| `/gallery` | `GalleryPage` |
 | `/privacy` | `PrivacyPolicyPage` |
 | `/terms` | `TermsOfServicePage` |
 | `*` | `NotFoundPage` |
@@ -163,8 +162,6 @@ graph TD
 |---|---|
 | `/school-info` | `SchoolInfoHub` |
 | `/school-info/timetable` | `TimetableDownloadPage` |
-| `/school-info/teachers` | `SchoolInfoPlaceholderPage(교무실 찾기)` |
-| `/school-info/calculator` | `SchoolInfoPlaceholderPage(점공 계산기)` |
 | `/school-info/meal` | `MealPage` |
 | `/school-info/calendar` | `AcademicCalendarPage` |
 | `/school-info/sports-league` | `Navigate` → `/school-info/sports-league/2026-spring-grade3-boys-soccer` |

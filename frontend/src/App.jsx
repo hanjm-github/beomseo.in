@@ -29,7 +29,6 @@ const SignUpPage = lazy(() => import('./pages/SignUpPage'));
 const NoticesPage = lazy(() => import('./pages/NoticesPage'));
 const CommunityRouter = lazy(() => import('./pages/CommunityRouter'));
 const SchoolInfoPage = lazy(() => import('./pages/SchoolInfoPage'));
-const GalleryPage = lazy(() => import('./pages/GalleryPage'));
 const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage'));
 const TermsOfServicePage = lazy(() => import('./pages/TermsOfServicePage'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
@@ -68,7 +67,6 @@ function App() {
                     <Route path="/notices/*" element={<NoticesPage />} />
                     <Route path="/community/*" element={<CommunityRouter />} />
                     <Route path="/school-info/*" element={<SchoolInfoPage />} />
-                    <Route path="/gallery" element={<GalleryPage />} />
                     <Route path="/privacy" element={<PrivacyPolicyPage />} />
                     <Route path="/terms" element={<TermsOfServicePage />} />
                     <Route

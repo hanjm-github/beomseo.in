@@ -16,9 +16,10 @@
 import { createElement, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { MessageCircle, Users, Shuffle, Vote, PlugZap, ShieldCheck, Package, Store } from 'lucide-react';
+import { CLUB_RECRUIT_BOARD_ENABLED } from '../config/env';
 import './page-shell.css';
 
-const boards = [
+const allBoards = [
   {
     key: 'free',
     path: 'free',
@@ -76,6 +77,10 @@ const boards = [
     icon: Store,
   },
 ];
+
+const boards = CLUB_RECRUIT_BOARD_ENABLED
+  ? allBoards
+  : allBoards.filter((board) => board.key !== 'club-recruit');
 
 /**
  * CommunityPage module entry point.

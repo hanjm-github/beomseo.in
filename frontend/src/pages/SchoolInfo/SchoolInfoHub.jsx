@@ -1,11 +1,9 @@
 import {
   CalendarDays,
-  Calculator,
   Download,
   Hammer,
   Radio,
   Soup,
-  Waypoints,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -21,20 +19,6 @@ const schoolInfoCards = [
       '반별 시간표를 바로 확인하고, 2·3학년 선택과목을 반영한 개인 시간표 PNG를 저장할 수 있어요.',
     icon: Download,
     active: true,
-  },
-  {
-    key: 'teachers',
-    to: '/school-info/teachers',
-    title: '선생님 찾기',
-    description: '교무실 위치와 담당 과목 지도를 준비 중입니다.',
-    icon: Waypoints,
-  },
-  {
-    key: 'calculator',
-    to: '/school-info/calculator',
-    title: '내신 계산기',
-    description: '내신 계산 규칙과 입력 경험을 다듬고 있습니다.',
-    icon: Calculator,
   },
   {
     key: 'meal',
@@ -70,8 +54,8 @@ export default function SchoolInfoHub() {
           <p className="eyebrow">학교 생활 정보</p>
           <h1>학교 생활 허브</h1>
           <p className="lede">
-            학교 생활에 자주 필요한 기능을 한 곳에 모았습니다. 시간표 다운로드와 학사 캘린더를
-            먼저 공개하고, 스포츠리그 문자중계도 함께 제공합니다.
+            학교 생활에 자주 필요한 기능을 한 곳에 모았습니다. 시간표 다운로드, 급식, 학사
+            캘린더, 스포츠리그를 한 번에 확인할 수 있습니다.
           </p>
         </div>
         <div className="header-actions">

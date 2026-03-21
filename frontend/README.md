@@ -123,7 +123,6 @@ graph TD
     R --> N["/notices/*  NoticesPage"]
     R --> C["/community/*  CommunityRouter"]
     R --> SI["/school-info/*  SchoolInfoPage"]
-    R --> G["/gallery  GalleryPage"]
     R --> P["/privacy  PrivacyPolicyPage"]
     R --> T["/terms  TermsOfServicePage"]
     R --> X["/*  NotFoundPage"]
@@ -181,7 +180,7 @@ graph TD
 map $uri $spa_route_ok {
     default 0;
     ~^/$ 1;
-    ~^/(login|signup|privacy|terms|gallery)/?$ 1;
+    ~^/(login|signup|privacy|terms)/?$ 1;
     ~^/notices/?$ 1;
     ~^/notices/(school|council)/?$ 1;
     ~^/notices/(school|council)/new/?$ 1;
@@ -193,7 +192,7 @@ map $uri $spa_route_ok {
     ~^/community/(free|club-recruit|subjects|petition|survey|vote|lost-found|gomsol-market)/[0-9]+/?$ 1;
     ~^/community/survey/[0-9]+/(edit|results)/?$ 1;
     ~^/school-info/?$ 1;
-    ~^/school-info/(timetable|teachers|calculator|meal|calendar)/?$ 1;
+    ~^/school-info/(timetable|meal|calendar)/?$ 1;
     ~^/school-info/sports-league/?$ 1;
     ~^/school-info/sports-league/[A-Za-z0-9._-]+/?$ 1;
 }

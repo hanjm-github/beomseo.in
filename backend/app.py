@@ -213,11 +213,14 @@ def create_app(config_name=None):
     from routes.lost_found import lost_found_bp
     from routes.gomsol_market import gomsol_market_bp
 
+    club_recruit_board_enabled = bool(app.config.get('CLUB_RECRUIT_BOARD_ENABLED', True))
+
     # Apply shared write throttling before blueprint registration.
     write_limit = app.config.get('RATELIMIT_WRITE_LIMIT', '120 per minute')
     apply_blueprint_write_limit(notices_bp, write_limit)
     apply_blueprint_write_limit(free_bp, write_limit)
-    apply_blueprint_write_limit(club_recruit_bp, write_limit)
+    if club_recruit_board_enabled:
+        apply_blueprint_write_limit(club_recruit_bp, write_limit)
     apply_blueprint_write_limit(subject_changes_bp, write_limit)
     apply_blueprint_write_limit(petitions_bp, write_limit)
     apply_blueprint_write_limit(surveys_bp, write_limit)
@@ -228,7 +231,12 @@ def create_app(config_name=None):
     app.register_blueprint(auth_bp)
     app.register_blueprint(notices_bp)
     app.register_blueprint(free_bp)
-    app.register_blueprint(club_recruit_bp)
+    if club_recruit_board_enabled:
+        app.register_blueprint(club_recruit_bp)
+    else:
+        app.logger.info(
+            'Club recruit board is disabled; skipping /api/club-recruit blueprint registration.'
+        )
     app.register_blueprint(subject_changes_bp)
     app.register_blueprint(petitions_bp)
     app.register_blueprint(surveys_bp)

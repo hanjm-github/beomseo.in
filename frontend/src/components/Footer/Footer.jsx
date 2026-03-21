@@ -104,9 +104,9 @@ export default function Footer() {
                         <h4 className={styles.sectionTitle}>바로가기</h4>
                         <ul className={styles.linkList}>
                             <li><Link to="/notices/school">학교 공지사항</Link></li>
+                            <li><Link to="/school-info/timetable">시간표 다운로드</Link></li>
                             <li><Link to="/school-info/meal">오늘의 급식</Link></li>
                             <li><Link to="/school-info/calendar">학사 일정</Link></li>
-                            <li><Link to="/school-info/calculator">점공 계산기</Link></li>
                         </ul>
                     </div>
 

@@ -17,10 +17,10 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   Bell,
   MessageCircle,
-  Calculator,
+  Download,
   Utensils,
   Calendar,
-  ImageIcon,
+  Radio,
   Users,
   ChevronRight,
 } from 'lucide-react';
@@ -33,7 +33,7 @@ import AnnouncementCard from '../../components/AnnouncementCard';
 import MealCard from '../../components/MealCard';
 import { noticesApi } from '../../api/notices';
 import { useAuth } from '../../context/AuthContext';
-import { APP_NAME } from '../../config/env';
+import { APP_NAME, CLUB_RECRUIT_BOARD_ENABLED } from '../../config/env';
 import { getNextAcademicEvent } from '../../features/academicCalendar/utils';
 import { buildAuthRedirectState } from '../../utils/authRedirect';
 
@@ -176,24 +176,6 @@ export default function MainPage() {
               </div>
               <div className={`${styles.fadeUp} ${styles.delay1}`}>
                 <QuickLinkCard
-                  to="/community/free"
-                  icon={MessageCircle}
-                  title="자유게시판"
-                  description="범서고의 커뮤니티 공간"
-                  variant="accent"
-                />
-              </div>
-              <div className={`${styles.fadeUp} ${styles.delay2}`}>
-                <QuickLinkCard
-                  to="/school-info/calculator"
-                  icon={Calculator}
-                  title="내신 계산기"
-                  description="학기별 성적 계산"
-                  variant="info"
-                />
-              </div>
-              <div className={`${styles.fadeUp} ${styles.delay3}`}>
-                <QuickLinkCard
                   to="/school-info/meal"
                   icon={Utensils}
                   title="오늘의 급식"
@@ -201,7 +183,16 @@ export default function MainPage() {
                   variant="success"
                 />
               </div>
-              <div className={`${styles.fadeUp} ${styles.delay4}`}>
+              <div className={`${styles.fadeUp} ${styles.delay2}`}>
+                <QuickLinkCard
+                  to="/school-info/timetable"
+                  icon={Download}
+                  title="시간표 다운로드"
+                  description="반별·개인 시간표를 빠르게 저장"
+                  variant="info"
+                />
+              </div>
+              <div className={`${styles.fadeUp} ${styles.delay3}`}>
                 <QuickLinkCard
                   to="/school-info/calendar"
                   icon={Calendar}
@@ -210,24 +201,35 @@ export default function MainPage() {
                   variant="warning"
                 />
               </div>
-              <div className={`${styles.fadeUp} ${styles.delay5}`}>
+              <div className={`${styles.fadeUp} ${styles.delay4}`}>
                 <QuickLinkCard
-                  to="/gallery"
-                  icon={ImageIcon}
-                  title="갤러리"
-                  description="학교 활동 사진과 소식 보기"
-                  variant="default"
+                  to="/community/free"
+                  icon={MessageCircle}
+                  title="자유게시판"
+                  description="범서고의 커뮤니티 공간"
+                  variant="accent"
                 />
               </div>
               <div className={`${styles.fadeUp} ${styles.delay5}`}>
                 <QuickLinkCard
-                  to="/community/club-recruit"
-                  icon={Users}
-                  title="동아리"
-                  description="동아리 모집 정보와 활동 안내"
-                  variant="default"
+                  to="/school-info/sports-league/2026-spring-grade3-boys-soccer"
+                  icon={Radio}
+                  title="스포츠리그"
+                  description="실시간 문자중계와 경기 정보"
+                  variant="info"
                 />
               </div>
+              {CLUB_RECRUIT_BOARD_ENABLED ? (
+                <div className={`${styles.fadeUp} ${styles.delay5}`}>
+                  <QuickLinkCard
+                    to="/community/club-recruit"
+                    icon={Users}
+                    title="동아리"
+                    description="동아리 모집 정보와 활동 안내"
+                    variant="default"
+                  />
+                </div>
+              ) : null}
             </div>
           </div>
         </section>

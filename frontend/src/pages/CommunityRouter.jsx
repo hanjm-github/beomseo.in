@@ -13,6 +13,7 @@
  */
 import { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { CLUB_RECRUIT_BOARD_ENABLED } from '../config/env';
 import NotFoundPage from './NotFoundPage';
 import { NumericParamBoundary } from './RouteBoundaries';
 
@@ -58,6 +59,16 @@ const lazyRoute = (Component, props = {}) => (
   </Suspense>
 );
 
+const numericBoundarySecondaryActions = [
+  CLUB_RECRUIT_BOARD_ENABLED ? { label: '동아리 모집', to: '/community/club-recruit' } : null,
+  { label: '선택과목 변경', to: '/community/subjects' },
+].filter(Boolean);
+
+const notFoundSecondaryActions = [
+  CLUB_RECRUIT_BOARD_ENABLED ? { label: '동아리 모집', to: '/community/club-recruit' } : null,
+  { label: '설문 품앗이', to: '/community/survey' },
+].filter(Boolean);
+
 /**
  * CommunityRouter module entry point.
  */
@@ -68,8 +79,12 @@ export default function CommunityRouter() {
       <Route path="free" element={lazyRoute(FreeBoardListView)} />
       <Route path="free/new" element={lazyRoute(FreeBoardComposeView, { mode: 'create' })} />
 
-      <Route path="club-recruit" element={lazyRoute(ClubRecruitListPage)} />
-      <Route path="club-recruit/new" element={lazyRoute(ClubRecruitComposePage)} />
+      {CLUB_RECRUIT_BOARD_ENABLED ? (
+        <>
+          <Route path="club-recruit" element={lazyRoute(ClubRecruitListPage)} />
+          <Route path="club-recruit/new" element={lazyRoute(ClubRecruitComposePage)} />
+        </>
+      ) : null}
 
       <Route path="subjects" element={lazyRoute(SubjectsListPage)} />
       <Route path="subjects/new" element={lazyRoute(SubjectComposePage)} />
@@ -107,15 +122,17 @@ export default function CommunityRouter() {
           <NumericParamBoundary
             eyebrow="커뮤니티"
             title="존재하지 않는 커뮤니티 주소입니다."
-            description="게시판 주소 형식을 다시 확인하거나 다른 커뮤니티 메뉴로 이동해 주세요."
-            primaryAction={{ label: '자유게시판', to: '/community/free' }}
-            secondaryActions={[{ label: '동아리 모집', to: '/community/club-recruit' }]}
+            description="게시판 주소 형식을 다시 확인하거나 아래 메뉴에서 다른 커뮤니티로 이동해 주세요."
+            primaryAction={{ label: '자유 게시판', to: '/community/free' }}
+            secondaryActions={numericBoundarySecondaryActions}
           />
         }
       >
         <Route path="free/:id" element={lazyRoute(FreeBoardDetailView)} />
         <Route path="free/:id/edit" element={lazyRoute(FreeBoardComposeView, { mode: 'edit' })} />
-        <Route path="club-recruit/:id" element={lazyRoute(ClubRecruitDetailPage)} />
+        {CLUB_RECRUIT_BOARD_ENABLED ? (
+          <Route path="club-recruit/:id" element={lazyRoute(ClubRecruitDetailPage)} />
+        ) : null}
         <Route path="subjects/:id" element={lazyRoute(SubjectDetailPage)} />
         <Route path="petition/:id" element={lazyRoute(PetitionDetailView)} />
         <Route path="survey/:id" element={lazyRoute(SurveyExchangeDetailView)} />
@@ -132,12 +149,9 @@ export default function CommunityRouter() {
           <NotFoundPage
             eyebrow="커뮤니티"
             title="존재하지 않는 커뮤니티 주소입니다."
-            description="입력한 게시판 경로를 찾을 수 없습니다. 아래 메뉴에서 원하는 커뮤니티로 다시 이동해 주세요."
-            primaryAction={{ label: '자유게시판', to: '/community/free' }}
-            secondaryActions={[
-              { label: '동아리 모집', to: '/community/club-recruit' },
-              { label: '설문 품앗이', to: '/community/survey' },
-            ]}
+            description="입력한 게시판 경로를 찾을 수 없습니다. 아래 메뉴에서 다른 커뮤니티로 이동해 주세요."
+            primaryAction={{ label: '자유 게시판', to: '/community/free' }}
+            secondaryActions={notFoundSecondaryActions}
           />
         }
       />

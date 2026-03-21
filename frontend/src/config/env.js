@@ -38,6 +38,13 @@ function readCsvEnv(key, fallback = []) {
   return parsed.length ? parsed : [...fallback];
 }
 
+function readBooleanEnv(key, fallback) {
+  const value = readEnvValue(key);
+  if (value === undefined || value === null || value === '') return fallback;
+  if (typeof value === 'boolean') return value;
+  return ['1', 'true', 'yes', 'on'].includes(String(value).trim().toLowerCase());
+}
+
 function readEnvValue(key) {
   if (typeof import.meta !== 'undefined' && import.meta?.env) {
     return import.meta.env[key];
@@ -52,6 +59,10 @@ function readEnvValue(key) {
 export const APP_NAME = readStringEnv('VITE_APP_NAME', 'beomseo.in');
 export const API_BASE_URL = readBaseUrlEnv('VITE_API_URL', 'http://localhost:5000');
 export const FASTAPI_BASE_URL = readBaseUrlEnv('VITE_SPORTS_LEAGUE_API_URL', API_BASE_URL);
+export const CLUB_RECRUIT_BOARD_ENABLED = readBooleanEnv(
+  'VITE_CLUB_RECRUIT_BOARD_ENABLED',
+  true
+);
 export const FIREBASE_API_KEY = readStringEnv('VITE_FIREBASE_API_KEY', '');
 export const FIREBASE_AUTH_DOMAIN = readStringEnv('VITE_FIREBASE_AUTH_DOMAIN', '');
 export const FIREBASE_PROJECT_ID = readStringEnv('VITE_FIREBASE_PROJECT_ID', '');

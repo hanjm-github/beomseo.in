@@ -204,6 +204,12 @@ class Config:
     DEFAULT_PETITION_THRESHOLD = int(os.getenv('DEFAULT_PETITION_THRESHOLD', 50))
     MAX_PETITION_BODY = int(os.getenv('MAX_PETITION_BODY', 10_000))
 
+    # Community feature flags
+    CLUB_RECRUIT_BOARD_ENABLED = _parse_bool(
+        os.getenv('CLUB_RECRUIT_BOARD_ENABLED', 'true'),
+        default=True,
+    )
+
     # Survey exchange
     SURVEY_BASE_QUOTA = int(os.getenv('SURVEY_BASE_QUOTA', 0))
     SURVEY_APPROVAL_GRANT = int(os.getenv('SURVEY_APPROVAL_GRANT', 30))
