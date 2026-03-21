@@ -157,6 +157,7 @@ flowchart TD
     API --> Vote["/api/community/votes/*"]
     API --> SportsLeague["/api/sports-league/*"]
     API --> FieldTrip["/api/community/field-trip/*"]
+    API --> SchoolMeals["/api/school-info/meals*"]
     API --> Lost["/api/community/lost-found/*"]
     API --> Market["/api/community/gomsol-market/*"]
 
@@ -170,6 +171,8 @@ flowchart TD
     Survey --> S2["credits / summary"]
     FieldTrip --> FT1["class unlock / posts / uploads"]
     FieldTrip --> FT2["scoreboard / admin board settings"]
+    SchoolMeals --> SM1["today / range / ratings"]
+    SchoolMeals --> SM2["notification subscriptions"]
 ```
 
 - Health/Auth: `/api/health`, `/api/auth/*`
@@ -182,6 +185,7 @@ flowchart TD
 - Votes: `/api/community/votes/*`
 - Sports League: `/api/sports-league/*`
 - Field Trip: `/api/community/field-trip/*`
+- 급식: `/api/school-info/meals*`
 - Lost & Found: `/api/community/lost-found/*`
 - Gomsol Market: `/api/community/gomsol-market/*`
 
@@ -1223,6 +1227,111 @@ flowchart TD
 - 권한: `admin`
 - Body:
   - `boardDescription` optional, `<=240`
+
+---
+
+## 12C. 급식 API (`/api/school-info/meals`)
+
+- 읽기 엔드포인트는 공개 접근을 허용합니다.
+- 요청 경로는 MySQL에 저장된 급식 데이터만 읽고, NEIS 호출은 동기화 스크립트에서만 수행합니다.
+- 읽기/평점 요청은 `MEAL_RATING_COOKIE_NAME` 쿠키를 보장해 비로그인 브라우저도 날짜/카테고리별 1개의 평점을 유지합니다.
+- 알림 구독은 계정 단위가 아니라 `installationId` 기준의 기기 단위 레코드입니다.
+
+### 12C.1 `GET /api/school-info/meals/today`
+
+- 권한: 없음
+- 응답:
+  - `item`
+  - `meta.date`
+  - `meta.generatedAt`
+  - `meta.timezone`
+- 비고:
+  - 오늘 급식이 없으면 `isNoMeal=true` synthetic entry를 반환합니다.
+  - 응답 전에 익명 평점 쿠키가 없으면 새로 발급합니다.
+
+### 12C.2 `GET /api/school-info/meals?from=YYYY-MM-DD&to=YYYY-MM-DD`
+
+- 권한: 없음
+- Query:
+  - `from` required
+  - `to` required
+- 응답:
+  - `items[]`
+  - `meta.from`
+  - `meta.to`
+  - `meta.generatedAt`
+  - `meta.timezone`
+  - `meta.service`
+  - `meta.maxRangeDays`
+- 제약:
+  - 시작일은 종료일보다 늦을 수 없음
+  - 조회 가능 기간은 `MEALS_MAX_RANGE_DAYS` 이내
+- 비고:
+  - 저장된 급식이 없는 날짜도 `isNoMeal=true` 항목으로 채워져 주말/휴일 gap을 프론트가 그대로 렌더링할 수 있습니다.
+
+### 12C.3 `POST /api/school-info/meals/{meal_date}/ratings`
+
+- 권한: 없음
+- Body:
+  - `category`: `taste | anticipation`
+  - `score`: `1 ~ 5`
+- 제약:
+  - `taste`: 오늘(KST) 급식에만 허용
+  - `anticipation`: 오늘 또는 미래 급식에만 허용
+  - 과거 날짜는 `422`
+  - 실제 급식 row가 없는 날짜는 `404`
+- 비고:
+  - 동일 브라우저/사용자는 `meal_date + category` 조합마다 1개 행만 유지하며 재평가 시 overwrite됩니다.
+
+성공 예시:
+
+```json
+{
+  "date": "2026-03-22",
+  "ratings": {
+    "taste": {
+      "averageScore": 4.2,
+      "totalCount": 12,
+      "myScore": 5,
+      "distribution": []
+    },
+    "anticipation": {
+      "averageScore": null,
+      "totalCount": 0,
+      "myScore": null,
+      "distribution": []
+    }
+  }
+}
+```
+
+### 12C.4 `GET /api/school-info/meals/notifications/subscription?installationId=...`
+
+- 권한: 없음
+- Query:
+  - `installationId` required, `1~64`
+- 응답:
+  - `item` (`null` 가능)
+
+### 12C.5 `PUT /api/school-info/meals/notifications/subscription`
+
+- 권한: 없음
+- Body:
+  - `installationId` required
+  - `enabled` boolean required
+  - `notificationTime` required, `HH:MM`
+  - `timezone` required, IANA timezone
+  - `fcmToken` required when `enabled=true`
+- 비고:
+  - installationId 기준으로 upsert합니다.
+  - 로그인 사용자가 있으면 소유자 FK를 연결할 수 있지만, 기본 식별자는 기기입니다.
+
+### 12C.6 `DELETE /api/school-info/meals/notifications/subscription?installationId=...`
+
+- 권한: 없음
+- Query:
+  - `installationId` required, `1~64`
+- 성공: `204 No Content`
 
 ---
 

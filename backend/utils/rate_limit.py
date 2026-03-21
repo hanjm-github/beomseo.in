@@ -1,5 +1,8 @@
 """
 Rate limiter initialization and shared policies.
+
+Authenticated users are throttled by user id first, then anonymous traffic
+falls back to IP-based limits.
 """
 from flask import jsonify
 from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request

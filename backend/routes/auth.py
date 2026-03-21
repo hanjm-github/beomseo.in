@@ -1,5 +1,5 @@
 """
-Authentication routes for signup, login, and token management.
+Cookie-JWT authentication routes for signup, login, refresh rotation, and logout.
 """
 import re
 from flask import Blueprint, request, jsonify, current_app
@@ -39,11 +39,13 @@ TOKEN_ISSUING_ENDPOINTS = {'auth.register', 'auth.login', 'auth.refresh'}
 
 
 def _uses_cookie_transport() -> bool:
+    """Detect whether JWTs should be returned via HttpOnly cookies instead of JSON-only transport."""
     locations = [str(location).strip().lower() for location in current_app.config.get('JWT_TOKEN_LOCATION', [])]
     return 'cookies' in locations
 
 
 def _build_auth_response(message, user_dict, access_token, refresh_token, status_code):
+    """Build a JSON payload and attach auth cookies when cookie transport is enabled."""
     payload = {
         'message': message,
         'user': user_dict,
@@ -57,6 +59,7 @@ def _build_auth_response(message, user_dict, access_token, refresh_token, status
 
 
 def _build_refresh_response(access_token, refresh_token):
+    """Return a refresh response that replaces both access and refresh cookies."""
     response = jsonify({'message': '토큰이 갱신되었습니다.'})
     if _uses_cookie_transport():
         set_access_cookies(response, access_token)

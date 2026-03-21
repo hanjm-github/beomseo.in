@@ -179,7 +179,7 @@ flowchart TB
         Utils["Utils (보안/캐시/업로드)"]
     end
 
-    subgraph FastAPIServer["⚡ 실시간/이벤트 서버 (FastAPI)"]
+    subgraph FastAPIServer["⚡ 실시간/이벤트/급식 서버 (FastAPI)"]
         FastApp["FastAPI App"]
         AsyncRoutes["비동기 라우트"]
         SSE["SSE 스트리밍"]
@@ -208,6 +208,14 @@ flowchart TB
     SPA --> Security
     SPA --> Analytics
 ```
+
+### 런타임 메모
+
+- 프론트 앱은 `ThemeProvider → NetworkStatusProvider → PwaInstallProvider → AuthProvider` 순서로 전역 상태를 감쌉니다.
+- 인증/일반 API 요청에서 transport 계열 네트워크 실패가 발생하면 `app:network-request-failed` 이벤트를 통해 `OfflineGate` 전체 화면 오버레이가 열립니다.
+- PWA 설치 UI는 `beforeinstallprompt`가 지원되는 브라우저와 iOS Safari 수동 설치 경로를 분리해서 처리합니다.
+- FastAPI 서버는 스포츠리그와 수학여행 게시판뿐 아니라 급식 조회, 급식 평점, 급식 알림 구독 API도 함께 제공합니다.
+- 급식 조회 요청은 MySQL에 저장된 데이터만 읽고, 실제 NEIS 호출은 동기화 스크립트에서만 수행합니다.
 
 ### 요청 라이프사이클
 
@@ -244,7 +252,7 @@ beomseo.in/
 │   ├── requirements.txt
 │   ├── requirements_fastapi.txt  # FastAPI 전용 의존성
 │   ├── .env.example
-│   ├── routes/                # 10개 블루프린트 (기능별 API)
+│   ├── routes/                # 11개 블루프린트 (기능별 API)
 │   │   ├── auth.py            #   인증/회원
 │   │   ├── notices.py         #   공지
 │   │   ├── free.py            #   자유게시판
@@ -256,7 +264,7 @@ beomseo.in/
 │   │   ├── lost_found.py      #   분실물
 │   │   ├── gomsol_market.py   #   곰솔 마켓
 │   │   └── sports_league.py   #   스포츠리그 문자중계
-│   ├── fastapi_app/           # FastAPI 스포츠리그 전용 서버
+│   ├── fastapi_app/           # FastAPI 실시간/급식 전용 서버
 │   │   ├── main.py            #   앱 팩토리, CORS, 보안 헤더
 │   │   ├── config.py          #   Pydantic Settings (동일 .env 공유)
 │   │   ├── database.py        #   async SQLAlchemy (aiomysql)
@@ -266,13 +274,15 @@ beomseo.in/
 │   │   ├── utils.py           #   sanitize, SSE 포맷터
 │   │   ├── routes/            #   FastAPI 라우터
 │   │   │   ├── sports_league.py  # 문자중계/라인업 CRUD + SSE 스트림 엔드포인트
-│   │   │   └── field_trip.py     # 수학여행 반 게시판/점수판/업로드 엔드포인트
+│   │   │   ├── field_trip.py     # 수학여행 반 게시판/점수판/업로드 엔드포인트
+│   │   │   └── meals.py          # 급식 조회/평점/알림 구독 엔드포인트
 │   │   └── services/          #   비동기 도메인 로직
 │   │       ├── sports_league.py       # 스냅샷, 이벤트 CRUD
 │   │       ├── sports_league_players.py  # 선수 라인업/개인기록 CRUD
 │   │       ├── sports_league_realtime.py  # asyncio pub/sub
 │   │       ├── sports_league_seed.py  # 시드 데이터
-│   │       └── field_trip.py          # 수학여행 게시판/점수판/업로드 로직
+│   │       ├── field_trip.py          # 수학여행 게시판/점수판/업로드 로직
+│   │       └── meals.py               # 급식 동기화/조회/평점 로직
 │   ├── models/                # SQLAlchemy 모델
 │   ├── services/              # 도메인 서비스/실시간 보조 로직
 │   ├── scripts/               # 운영용 부트스트랩 스크립트
@@ -293,7 +303,7 @@ beomseo.in/
     │   ├── components/        # 재사용 컴포넌트 (70개)
     │   ├── features/          # 기능 단위 hook/data/utils 묶음
     │   ├── pages/             # 페이지 컴포넌트 (45개)
-    │   ├── context/           # AuthContext, ThemeContext
+    │   ├── context/           # Auth/Theme/NetworkStatus/PWA 컨텍스트
     │   ├── security/          # URL/HTML/CSV sanitize
     │   ├── analytics/         # Zaraz 이벤트 래퍼
     │   ├── layout/            # AppLayout

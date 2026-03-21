@@ -1,3 +1,17 @@
+/**
+ * @file src/components/pwa/OfflineGate.jsx
+ * @description Shows a modal-style offline page whenever the network context marks the app offline.
+ * Responsibilities:
+ * - Block the current screen with a retryable offline overlay.
+ * - Lock body scrolling while the overlay is visible.
+ * Key dependencies:
+ * - ../../context/NetworkStatusContext
+ * - ../../pages/OfflinePage
+ * Side effects:
+ * - Mutates document.body.style.overflow while offline.
+ * Role in app flow:
+ * - Global fallback rendered by AppLayout after route content.
+ */
 import { useEffect, useState } from 'react';
 import { useNetworkStatus } from '../../context/NetworkStatusContext';
 import OfflinePage from '../../pages/OfflinePage';
@@ -10,6 +24,7 @@ export default function OfflineGate() {
   useEffect(() => {
     if (!isOffline) return undefined;
 
+    // Keep the background page fixed while the offline dialog is active.
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
 

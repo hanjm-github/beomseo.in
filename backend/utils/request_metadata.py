@@ -1,5 +1,9 @@
 """
 Request metadata helpers for write-path auditing.
+
+These functions are called from the global SQLAlchemy before_flush hook so new
+rows can inherit the current request IP/User-Agent without every route doing it
+manually.
 """
 from flask import has_request_context, request
 

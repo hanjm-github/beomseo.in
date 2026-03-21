@@ -1,17 +1,18 @@
-﻿/**
+/**
  * @file src/pages/MainPage/MainPage.jsx
- * @description Implements route-level views and page orchestration logic.
+ * @description Implements the landing page that stitches together the main quick-entry widgets.
  * Responsibilities:
- * - Coordinate route state, fetch lifecycles, and permission-driven page behavior.
+ * - Load the latest school and council notice lists for the hero and notice card.
+ * - Compose static school-info shortcuts with notice-driven widgets.
  * Key dependencies:
  * - react
  * - lucide-react
  * - react-router-dom
  * - ../../components/CountdownWidget
  * Side effects:
- * - No significant side effects beyond React state and rendering behavior.
+ * - Fetches notice data on first mount.
  * Role in app flow:
- * - Owns route-level user flows and composes feature components.
+ * - Public homepage and primary entry point for the SPA.
  */
 import { useEffect, useMemo, useState } from 'react';
 import {
@@ -39,9 +40,6 @@ import { buildAuthRedirectState } from '../../utils/authRedirect';
 
 import styles from './MainPage.module.css';
 
-/**
- * MainPage module entry point.
- */
 export default function MainPage() {
   const location = useLocation();
   const [activeTab, setActiveTab] = useState('council');
@@ -61,6 +59,7 @@ export default function MainPage() {
       setCountdownLoadError(false);
 
       try {
+        // Fetch both notice feeds together; the school payload also carries the next countdown event.
         const [schoolRes, councilRes] = await Promise.all([
           noticesApi.list({ category: 'school', sort: 'recent', page: 1, pageSize: 5 }),
           noticesApi.list({ category: 'council', sort: 'recent', page: 1, pageSize: 5 }),
@@ -97,6 +96,7 @@ export default function MainPage() {
   }, []);
 
   const activeList = useMemo(() => announcements[activeTab] || [], [announcements, activeTab]);
+  // Academic calendar data is static in the frontend bundle, so it only needs to be resolved once.
   const nextAcademicEvent = useMemo(() => getNextAcademicEvent(new Date()), []);
   const upcomingAcademicHref = nextAcademicEvent
     ? `/school-info/calendar?month=${nextAcademicEvent.startDate.slice(0, 7)}&event=${nextAcademicEvent.id}`

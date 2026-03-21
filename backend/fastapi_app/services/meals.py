@@ -1,5 +1,8 @@
 """
-Async school meal sync and read logic backed by the NEIS meal API.
+Async school-meal sync, read, rating, and notification helper logic.
+
+The sync script is the only path that talks to NEIS directly; request handlers
+read from MySQL and enrich rows with rating state.
 """
 from __future__ import annotations
 
@@ -152,6 +155,7 @@ def _viewer_rating_key(
     current_user: User | None,
     anonymous_token: str | None,
 ) -> str:
+    """Derive a stable per-viewer hash so one signed-out browser still maps to one rating row."""
     if current_user is not None:
         seed = f'user:{int(current_user.id)}'
     else:
@@ -659,6 +663,7 @@ async def get_today_meal_payload(
     current_user: User | None,
     anonymous_token: str | None,
 ) -> dict:
+    # Today payloads always include rating state, even when the meal row itself is synthesized as empty.
     reference_date = _kst_today()
     viewer_key = _viewer_rating_key(
         settings,
@@ -754,6 +759,7 @@ async def submit_meal_rating(
     current_user: User | None,
     anonymous_token: str | None,
 ) -> dict:
+    # Rating rules intentionally differ by category: taste is same-day only, anticipation can be future-looking.
     if category not in MEAL_RATING_CATEGORIES:
         raise SchoolMealError('지원하지 않는 급식 평점 항목입니다.', 422)
 

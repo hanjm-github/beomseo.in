@@ -1,5 +1,5 @@
 """
-FastAPI router for school meal read APIs.
+FastAPI router for school-meal read, rating, and notification-subscription APIs.
 """
 from __future__ import annotations
 
@@ -38,6 +38,7 @@ def _ensure_meal_rating_cookie(
     response: Response,
     settings: SettingsDep,
 ) -> str:
+    """Ensure every browser has a stable anonymous rating token before meal reads or writes."""
     token = request.cookies.get(settings.MEAL_RATING_COOKIE_NAME) or secrets.token_urlsafe(24)
     response.set_cookie(
         settings.MEAL_RATING_COOKIE_NAME,
@@ -60,6 +61,7 @@ async def get_today_school_meal(
     settings: SettingsDep,
     current_user: OptionalCurrentUser,
 ):
+    # Reads and writes share the same anonymous token contract so signed-out users can still keep one rating per meal.
     anonymous_token = _ensure_meal_rating_cookie(request, response, settings)
     return await get_today_meal_payload(
         db,
@@ -79,6 +81,7 @@ async def get_school_meal_range(
     from_date: date = Query(alias='from'),
     to_date: date = Query(alias='to'),
 ):
+    # Range reads also mint the anonymous cookie because ratings are rendered together with the meal payload.
     anonymous_token = _ensure_meal_rating_cookie(request, response, settings)
     query = MealRangeQuery.model_validate({
         'from': from_date.isoformat(),
@@ -105,6 +108,7 @@ async def post_school_meal_rating(
     settings: SettingsDep,
     current_user: OptionalCurrentUser,
 ):
+    # Rating submission uses the same cookie-based anonymous identity as the read endpoints.
     anonymous_token = _ensure_meal_rating_cookie(request, response, settings)
     return await submit_meal_rating(
         db,
@@ -122,6 +126,7 @@ async def get_meal_notification_subscription(
     db: DbSession,
     installation_id: str = Query(alias='installationId', min_length=1, max_length=64),
 ):
+    # Subscriptions are device-scoped, so lookup is keyed by installationId instead of user session state.
     return {
         'item': await get_subscription(
             db,
@@ -136,6 +141,7 @@ async def put_meal_notification_subscription(
     db: DbSession,
     current_user: OptionalCurrentUser,
 ):
+    # Updating the subscription upserts one row per installed device/PWA instance.
     return {
         'item': await upsert_subscription(
             db,
@@ -154,6 +160,7 @@ async def delete_meal_notification_subscription(
     db: DbSession,
     installation_id: str = Query(alias='installationId', min_length=1, max_length=64),
 ):
+    # Deleting the row fully disables reminders for that installed device.
     await delete_subscription(
         db,
         installation_id=installation_id,

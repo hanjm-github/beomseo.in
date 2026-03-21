@@ -1,6 +1,9 @@
 """
 Redis-backed response caching helpers for Flask routes.
-Falls back to NullCache if Redis is disabled or unavailable.
+
+Cache keys include actor scope so personalized or moderation-sensitive GET
+responses do not leak across users. Falls back to NullCache if Redis is
+disabled or unavailable.
 """
 from __future__ import annotations
 

@@ -1,5 +1,8 @@
 """
 File utility helpers for uploads.
+
+Upload validation is centralized here so every board shares the same extension,
+MIME, signature, scope, and temporary preview-token rules.
 """
 import io
 import base64

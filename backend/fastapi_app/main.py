@@ -1,5 +1,8 @@
 """
-FastAPI application for sports league live text relay and field-trip boards.
+FastAPI application for sports league, field-trip, and school-meal sidecar APIs.
+
+This process shares auth cookies and database contracts with the main Flask app
+while hosting the async-heavy endpoints separately.
 
 Run with:
     cd backend
@@ -44,7 +47,7 @@ def create_app() -> FastAPI:
         redoc_url='/redoc' if settings.ENV_NAME != 'production' else None,
     )
 
-    # CORS
+    # Keep the CORS contract aligned with the Flask app because the frontend talks to both origins.
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins_list,
@@ -75,7 +78,7 @@ def create_app() -> FastAPI:
             )
         return response
 
-    # Global exception handler for domain errors
+    # Domain exceptions stay JSON-shaped so the frontend can reuse the same error extraction pattern.
     @app.exception_handler(SportsLeagueError)
     async def sports_league_error_handler(request: Request, exc: SportsLeagueError):
         return JSONResponse(
@@ -105,9 +108,7 @@ def create_app() -> FastAPI:
     async def health():
         return {'status': 'healthy', 'message': '범서고등학교 스포츠리그 FastAPI 서버'}
 
-    # The FastAPI process owns both real-time sports-league traffic and the
-    # field-trip event board APIs, while sharing auth cookies and the database
-    # contract with the main Flask application.
+    # The FastAPI process owns async-heavy feature areas while keeping the same auth/session model as Flask.
     app.include_router(sports_league_router)
     app.include_router(field_trip_router)
     app.include_router(meals_router)

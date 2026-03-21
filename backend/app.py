@@ -1,9 +1,9 @@
 """
-Flask application factory for the backend API.
+Flask application factory for the main backend API.
 
-This module wires cross-cutting concerns (security, caching, rate limiting,
-JWT, and CORS) before blueprint registration so all endpoints share the same
-runtime guarantees.
+This process owns the community/auth endpoints and wires cross-cutting concerns
+(security validation, request auditing, caching, rate limiting, JWT, and CORS)
+before blueprint registration so every Flask route shares the same guarantees.
 """
 import os
 from flask import Flask, jsonify, request
@@ -231,6 +231,7 @@ def create_app(config_name=None):
     app.register_blueprint(auth_bp)
     app.register_blueprint(notices_bp)
     app.register_blueprint(free_bp)
+    # The club recruit board can be disabled at config level without changing the rest of the app shell.
     if club_recruit_board_enabled:
         app.register_blueprint(club_recruit_bp)
     else:

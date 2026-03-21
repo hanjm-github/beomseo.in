@@ -1,3 +1,17 @@
+/**
+ * @file src/context/PwaInstallContext.jsx
+ * @description Centralizes install prompt state for the site's PWA install UI.
+ * Responsibilities:
+ * - Detect installed standalone mode.
+ * - Capture the browser install prompt when supported.
+ * - Expose the iOS Safari manual-install fallback state.
+ * Key dependencies:
+ * - react
+ * Side effects:
+ * - Subscribes to browser PWA lifecycle events and media-query changes.
+ * Role in app flow:
+ * - Provides install CTA state without coupling pages to browser-specific APIs.
+ */
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
@@ -94,6 +108,7 @@ export function PwaInstallProvider({ children }) {
     }
 
     if (isIosManualInstall) {
+      // iOS Safari does not expose beforeinstallprompt, so the UI must show manual instructions.
       setHelpOpen(true);
       return 'manual';
     }

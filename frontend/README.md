@@ -9,7 +9,7 @@
 - 앱 타입: React SPA (`react-router-dom`)
 - 빌드 도구: Vite
 - 데이터 통신: Axios 기반 API 모듈 (`src/api/*`)
-- 상태 관리: React Context (`AuthContext`, `ThemeContext`)
+- 상태 관리: React Context (`ThemeContext`, `NetworkStatusContext`, `PwaInstallContext`, `AuthContext`)
 - 실시간 동기화: 스포츠리그 화면에서 `EventSource + BroadcastChannel/localStorage + polling fallback`
 - 수학여행 게시판: 반 비밀번호 기반 잠금 해제, 익명/로그인 글쓰기, rich HTML 본문, 5점 단위 점수판
 - 보안 경계: URL/HTML/CSV sanitize 유틸리티 (`src/security/*`)
@@ -43,6 +43,14 @@ flowchart LR
     F --> I
     F --> J
 ```
+
+### 앱 셸 런타임 메모
+
+1. `src/App.jsx`는 `ThemeProvider → NetworkStatusProvider → PwaInstallProvider → AuthProvider` 순서로 전역 상태를 감쌉니다.
+2. `src/api/auth.js`에서 transport 계열 네트워크 실패가 발생하면 `app:network-request-failed` 커스텀 이벤트를 발행합니다.
+3. `NetworkStatusContext`는 브라우저 `online/offline` 이벤트와 위 커스텀 이벤트를 함께 받아 오프라인 상태를 판정합니다.
+4. `OfflineGate`는 오프라인일 때 전체 화면 오버레이를 띄우고, 배경 문서 스크롤을 잠급니다.
+5. PWA 설치 상태는 `PwaInstallContext`가 관리하며, `beforeinstallprompt` 지원 브라우저와 iOS Safari 수동 설치 경로를 분리해서 처리합니다.
 
 ## 기술 스택
 
@@ -147,6 +155,12 @@ graph TD
 
 세부 라우트/기능별 연결은 [frontend-code-map.md](docs/frontend-code-map.md)에서 확인할 수 있습니다.
 
+### 헤더와 정적 법적 페이지
+
+- `Header`의 커뮤니티 메뉴는 `CLUB_RECRUIT_BOARD_ENABLED` 환경변수에 따라 동아리 모집 링크를 조건부로 노출합니다.
+- 학교 생활 정보 메뉴의 스포츠리그 링크는 기본 카테고리 ID로 바로 연결됩니다.
+- `/privacy`, `/terms` 페이지는 정적 법적 문서이며, 페이지 내부 목차(anchor)와 `맨 위로` 스크롤 헬퍼를 직접 렌더링합니다.
+
 ## 스포츠리그 문자중계 동기화
 
 - 초기 진입은 `src/api/sportsLeague.js`가 메모리/`localStorage` 캐시를 먼저 읽고, 백엔드 snapshot을 백그라운드에서 다시 가져오는 **stale-while-revalidate** 방식으로 시작합니다.
@@ -156,6 +170,13 @@ graph TD
 - 다른 탭과의 동기화는 `BroadcastChannel`을 우선 사용하고, 지원되지 않는 브라우저에서는 `storage` 이벤트로 폴백합니다.
 - 개발 환경에서 `VITE_ENABLE_API_MOCKS=1`이고 네트워크 계열 실패가 나면 `src/api/mocks/sportsLeague.mock.js`가 동일한 snapshot 계약을 흉내 냅니다.
 - mock transport는 선수 라인업도 별도 `beomseo:sports-league:players:{categoryId}` localStorage 키 공간에 저장해 snapshot 캐시와 분리합니다.
+
+## 오프라인 및 PWA 설치 흐름
+
+- 오프라인 상태는 단순 `navigator.onLine`만 쓰지 않고, `/api/health` 재확인 결과까지 합쳐서 판단합니다.
+- 브라우저가 `online` 이벤트를 보내도 API origin이 실제로 죽어 있으면 `recheckConnection()`이 계속 오프라인 상태를 유지합니다.
+- 인증 클라이언트 외 다른 API 모듈도 필요하면 같은 `app:network-request-failed` 이벤트 패턴을 재사용할 수 있습니다.
+- iOS Safari는 설치 프롬프트 API가 없기 때문에 `promptInstall()` 호출 시 도움말 UI를 여는 `manual` 경로를 사용합니다.
 
 ## 수학여행 게시판 흐름
 

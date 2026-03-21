@@ -17,7 +17,9 @@ flowchart TD
     A["Browser Entry: src/main.jsx"] --> B["App Boundary: src/App.jsx"]
     B --> C["Global Providers"]
     C --> C1["ThemeProvider"]
-    C --> C2["AuthProvider"]
+    C --> C2["NetworkStatusProvider"]
+    C --> C3["PwaInstallProvider"]
+    C --> C4["AuthProvider"]
     B --> D["Router"]
     D --> E["AppLayout"]
     E --> E1["Header"]
@@ -36,6 +38,22 @@ flowchart TD
     F --> M["Analytics: src/analytics/zaraz.js"]
 ```
 
+### 앱 셸 Provider 스택
+
+`src/App.jsx`는 아래 순서로 전역 provider를 감쌉니다.
+
+1. `ThemeProvider`
+2. `NetworkStatusProvider`
+3. `PwaInstallProvider`
+4. `AuthProvider`
+5. `Router`
+
+이 순서는 의도적입니다.
+
+- 테마 상태가 가장 바깥에서 전체 UI 토큰을 제어합니다.
+- 네트워크/PWA 상태는 인증 여부와 무관하게 모든 화면에서 접근 가능해야 합니다.
+- 인증 상태는 이미 구성된 레이아웃/오프라인/PWA 환경 위에서 동작합니다.
+
 ## 2. 계층별 책임
 
 | 계층 | 핵심 파일 | 책임 | 비고 |
@@ -43,7 +61,7 @@ flowchart TD
 | Entry | `src/main.jsx` | React 앱 마운트 | StrictMode 적용 |
 | App Boundary | `src/App.jsx` | Provider/Route/Suspense 조합 | 라우트 lazy-load |
 | Layout | `src/layout/AppLayout.jsx` | 전역 UI 셸 | 접근성 skip-link 포함 |
-| Context | `src/context/AuthContext.jsx`, `src/context/ThemeContext.jsx` | 인증/테마 전역 상태 | 페이지 공통 상태 제공 |
+| Context | `src/context/AuthContext.jsx`, `src/context/ThemeContext.jsx`, `src/context/NetworkStatusContext.jsx`, `src/context/PwaInstallContext.jsx` | 인증/테마/연결성/PWA 전역 상태 | 페이지 공통 상태 제공 |
 | Page | `src/pages/*` | 화면 단위 흐름 제어 | URL 상태와 API 호출 orchestration |
 | Component | `src/components/*` | 표시 및 상호작용 UI | 기능별 재사용 컴포넌트 |
 | API | `src/api/*` | 엔드포인트 호출, 정규화, fallback | UI와 백엔드 계약 분리 |
@@ -107,7 +125,34 @@ flowchart TD
 - `VITE_ENABLE_API_MOCKS === '1'`
 - `!error.response` (transport/network 계열 실패)
 
-## 4.1 스포츠리그 실시간 동기화 흐름
+## 4.1 네트워크 실패와 오프라인 오버레이 흐름
+
+오프라인 처리는 `navigator.onLine`만 보지 않고, API client가 전파한 transport 실패와 `/api/health` 재확인 결과를 함께 사용합니다.
+
+```mermaid
+flowchart TD
+    A["authApi request"] --> B{"response 수신 전 transport 실패?"}
+    B -- 아니오 --> C["호출자에서 오류 처리"]
+    B -- 예 --> D["emitNetworkRequestFailure()"]
+    D --> E["window: app:network-request-failed"]
+    E --> F["NetworkStatusContext"]
+    F --> G["isOffline=true"]
+    G --> H["OfflineGate"]
+    H --> I["body scroll lock + OfflinePage overlay"]
+    I --> J["재시도 버튼"]
+    J --> K["GET /api/health recheck"]
+    K --> L{"response.ok?"}
+    L -- 예 --> M["isOffline=false"]
+    L -- 아니오 --> G
+```
+
+핵심 포인트:
+
+- `NetworkStatusContext`는 브라우저 `online/offline` 이벤트와 `app:network-request-failed` 이벤트를 함께 구독합니다.
+- `online` 이벤트가 와도 백엔드 origin이 실제로 살아 있는지 `/api/health`로 다시 확인합니다.
+- `OfflineGate`는 오프라인 동안 `document.body.style.overflow='hidden'`으로 배경 스크롤을 잠급니다.
+
+## 4.2 스포츠리그 실시간 동기화 흐름
 
 스포츠리그 화면은 단순 REST 조회가 아니라 `snapshot + SSE + 탭 간 동기화 + mock transport`를 함께 사용합니다.
 스포츠리그 API 호출은 `VITE_SPORTS_LEAGUE_API_URL`을 기준으로 하는 전용 `sportsApi` Axios 인스턴스를 사용합니다.
@@ -139,7 +184,7 @@ flowchart TD
 - mock 전환은 개발 환경 transport 오류에만 열리고, 한 번 전환된 category는 세션 동안 mock transport를 유지합니다.
 - `sportsApi` 인스턴스는 `auth.js`의 token refresh interceptor를 공유하지 않으며, CSRF 토큰만 자체 interceptor로 첨부합니다.
 
-### 4.2 스포츠리그 선수 라인업/개인 순위 흐름
+### 4.3 스포츠리그 선수 라인업/개인 순위 흐름
 
 라인업/개인 순위는 실시간 문자중계 snapshot과 분리된 별도 데이터 흐름입니다.
 
@@ -179,6 +224,19 @@ flowchart TD
 - 페이지 컴포넌트는 가능한 한 API 호출 orchestration에 집중
 - 표시 로직은 `src/components/*`로 분리
 - data-dense 기능은 `src/features/<feature>/*`에 hook/data/utils를 묶어 페이지와 공용 API 사이를 정리
+
+### 헤더/정적 페이지 규칙
+
+- `Header`는 공지, 커뮤니티, 학교 생활 정보를 전역 내비게이션으로 노출합니다.
+- 커뮤니티 드롭다운의 동아리 모집 링크는 `CLUB_RECRUIT_BOARD_ENABLED` 플래그가 켜진 경우에만 렌더링됩니다.
+- 학교 생활 정보 드롭다운의 스포츠리그 링크는 현재 기본 카테고리 ID로 직접 연결됩니다.
+- `/privacy`, `/terms`는 정적 법적 문서 페이지이며, 서버 데이터 fetch 없이 목차(anchor)와 `맨 위로` 스크롤 헬퍼만 제공합니다.
+
+### PWA 설치 상태 흐름
+
+- `PwaInstallContext`는 `beforeinstallprompt`, `appinstalled`, `display-mode: standalone` media query를 함께 사용합니다.
+- 설치 가능한 브라우저에서는 `deferredPrompt`를 저장했다가 CTA 클릭 시 `prompt()`를 호출합니다.
+- iOS Safari는 `beforeinstallprompt`를 지원하지 않으므로 `isIosManualInstall`이 `true`일 때 수동 설치 도움말을 엽니다.
 
 ## 6.1 정적 템플릿 기반 화면 패턴
 

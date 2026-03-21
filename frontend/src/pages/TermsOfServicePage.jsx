@@ -1,20 +1,18 @@
-﻿/**
+/**
  * @file src/pages/TermsOfServicePage.jsx
- * @description Implements route-level views and page orchestration logic.
+ * @description Renders the static terms-of-service document with anchor navigation.
  * Responsibilities:
- * - Coordinate route state, fetch lifecycles, and permission-driven page behavior.
+ * - Expose a table of contents for in-page section jumps.
+ * - Provide a manual scroll-to-top helper for long-form legal text.
  * Key dependencies:
  * - ./LegalPage.css
  * Side effects:
- * - Interacts with browser runtime APIs for local in-page navigation helpers.
+ * - Uses window scrolling APIs for in-page navigation.
  * Role in app flow:
- * - Owns route-level user flows and composes feature components.
+ * - Legal route rendered directly from the top-level router.
  */
 import './LegalPage.css';
 
-/**
- * TermsOfServicePage module entry point.
- */
 export default function TermsOfServicePage() {
     const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 

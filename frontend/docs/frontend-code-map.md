@@ -16,10 +16,11 @@
 | 파일 | 역할 |
 |---|---|
 | `src/main.jsx` | React 앱 엔트리포인트. `#root`에 `<App />` 마운트 |
-| `src/App.jsx` | 전역 Provider(`ThemeProvider`, `AuthProvider`) + 최상위 라우팅 구성 |
-| `src/layout/AppLayout.jsx` | 공통 레이아웃(접근성 skip-link, Header, main, Footer) |
-| `src/components/Header/Header.jsx` | 전역 내비게이션/테마 토글/인증 상태 UI |
+| `src/App.jsx` | 전역 Provider(`ThemeProvider`, `NetworkStatusProvider`, `PwaInstallProvider`, `AuthProvider`) + 최상위 라우팅 구성 |
+| `src/layout/AppLayout.jsx` | 공통 레이아웃(접근성 skip-link, Header, main, Footer, OfflineGate) |
+| `src/components/Header/Header.jsx` | 전역 내비게이션/테마 토글/인증 상태 UI. 동아리 모집 feature flag와 스포츠리그 직접 링크 포함 |
 | `src/components/Footer/Footer.jsx` | 외부 링크/법적 문서 링크/운영 정보 |
+| `src/components/pwa/OfflineGate.jsx` | 오프라인 시 전체 화면 오버레이와 재시도 흐름 제공 |
 | `src/pages/CommunityPage.jsx` | 커뮤니티 허브 페이지. 모든 보드 카드를 그리드로 나열하며, 현재 활성 보드를 하이라이트 |
 
 ## 2. 주요 디렉터리 맵
@@ -30,7 +31,8 @@
 | `src/components` | 재사용 UI 컴포넌트 |
 | `src/api` | 백엔드 연동 모듈 및 mock fallback |
 | `src/features` | 기능 단위 data/hook/utils 묶음 |
-| `src/context` | 전역 상태 컨텍스트(Auth/Theme) |
+| `src/context` | 전역 상태 컨텍스트(Theme/NetworkStatus/PWA/Auth) |
+| `src/pwa` | 오프라인/설치 상태에서 재사용하는 브라우저 이벤트 유틸 |
 | `src/security` | URL/HTML/CSV/설문 스키마 sanitize 정책 |
 | `src/analytics` | Zaraz 이벤트 전송 래퍼 |
 | `src/config` | 환경변수 파싱 및 상수 노출 |
@@ -51,6 +53,8 @@
 | `/privacy` | `PrivacyPolicyPage` |
 | `/terms` | `TermsOfServicePage` |
 | `*` | `NotFoundPage` |
+
+`/privacy`, `/terms`는 정적 법적 문서 페이지이며, 서버 데이터 fetch 없이 anchor 기반 목차와 `맨 위로` 스크롤 헬퍼를 렌더링합니다.
 
 ### 3.2 공지 라우트 (`src/pages/NoticesPage/index.jsx`)
 
@@ -213,11 +217,23 @@ graph TD
 - `localStorage` + 시스템 테마 감지
 - `document.documentElement[data-theme]` 동기화
 
+### `src/context/NetworkStatusContext.jsx`
+
+- 브라우저 `online/offline` 이벤트와 `app:network-request-failed` 커스텀 이벤트를 함께 구독
+- `/api/health` 재확인 결과로 실제 API 도달 가능 여부 판정
+- `OfflineGate`가 사용할 `isOffline`, `lastSource`, `recheckConnection()` 제공
+
+### `src/context/PwaInstallContext.jsx`
+
+- `beforeinstallprompt`, `appinstalled`, `display-mode: standalone` 상태를 통합 관리
+- iOS Safari 수동 설치 경로(`isIosManualInstall`)와 일반 설치 프롬프트 경로를 분리
+- 설치 CTA가 사용할 `canInstall`, `promptInstall()`, `helpOpen` 상태 제공
+
 ## 6. API 계층 구조
 
 | 구분 | 소스 오브 트루스 파일 | 설명 |
 |---|---|---|
-| 공통 HTTP 클라이언트 | `src/api/auth.js` | Axios 인스턴스, CSRF 헤더, 401 refresh 재시도 |
+| 공통 HTTP 클라이언트 | `src/api/auth.js` | Axios 인스턴스, CSRF 헤더, 401 refresh 재시도, transport 실패 시 오프라인 이벤트 발행 |
 | 기능 API | `src/api/*.js` | 기능별 endpoint 래핑 및 응답 정규화 |
 | 응답 정규화 | `src/api/normalizers.js` | 페이지네이션/업로드 URL 보정 |
 | mock 정책 | `src/api/mockPolicy.js` | `DEV + VITE_ENABLE_API_MOCKS=1 + transport error` 조건에서만 fallback |

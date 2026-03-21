@@ -20,6 +20,7 @@
 - CSRF 헤더: unsafe method에서 `X-CSRF-TOKEN` 자동 추가 (두 인스턴스 모두 동일)
 - 수학여행 추가 CSRF 헤더: `X-Field-Trip-CSRF` (`field_trip_csrf_token` 쿠키와 쌍으로 사용)
 - 날짜 문자열 정규화: timezone 없는 ISO 문자열에 `Z` 보정
+- 인증 클라이언트 transport 실패: `app:network-request-failed` 이벤트 발행 → `NetworkStatusContext` → `OfflineGate`
 - mock fallback: `src/api/mockPolicy.js` (`DEV + VITE_ENABLE_API_MOCKS=1 + !error.response`)
 
 ## 2. 모듈별 엔드포인트 요약
@@ -37,6 +38,7 @@
 
 - 401 `token_expired` 시 `POST /api/auth/refresh` 후 원 요청 1회 재시도
 - refresh 실패 시 `AUTH_EXPIRED_EVENT` 발생
+- response가 오기 전 transport 수준에서 실패하면 `emitNetworkRequestFailure()`를 호출해 전역 오프라인 오버레이가 열릴 수 있습니다.
 
 ### 2.2 `src/api/notices.js` (`noticesApi`)
 

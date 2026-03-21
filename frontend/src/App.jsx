@@ -1,18 +1,18 @@
-﻿/**
+/**
  * @file src/App.jsx
- * @description Declares global providers and top-level route boundaries for the SPA shell.
+ * @description Composes the SPA shell, provider stack, and top-level lazy routes.
  * Responsibilities:
- * - Compose providers, router setup, and lazy route loading at the app boundary.
+ * - Mount the global provider chain used by every route.
+ * - Define the top-level router entries and shared suspense fallback.
  * Key dependencies:
  * - react-router-dom
  * - ./context/ThemeContext
  * - ./context/AuthContext
  * - react
  * Side effects:
- * - Influences client-side routing and navigation state.
- * - Interacts with browser runtime APIs.
+ * - Resets scroll position after route changes.
  * Role in app flow:
- * - Primary orchestrator connecting providers, routing, and shared layout.
+ * - App boundary connecting layout, runtime providers, and route-level pages.
  */
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext';
@@ -39,7 +39,7 @@ function ScrollToTop() {
   const { pathname } = useLocation();
 
   useEffect(() => {
-    // Instant jump for better perceived performance
+    // The layout persists across navigations, so each pathname change must reset scroll explicitly.
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
   }, [pathname]);
 
@@ -52,6 +52,7 @@ function RouteFallback() {
 
 function App() {
   return (
+    // Provider order is intentional: UI state first, then connectivity/PWA helpers, then auth/session state.
     <ThemeProvider>
       <NetworkStatusProvider>
         <PwaInstallProvider>
@@ -93,5 +94,3 @@ function App() {
 }
 
 export default App;
-
-

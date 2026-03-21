@@ -1,21 +1,19 @@
-﻿/**
+/**
  * @file src/context/AuthContext.jsx
- * @description Defines React context state and helper hooks shared across the app.
+ * @description Stores the authenticated user and exposes session actions to the entire SPA.
  * Responsibilities:
- * - Own shared cross-route state and lifecycle hooks consumed by descendant components.
+ * - Bootstrap the current session from auth cookies.
+ * - Expose login, registration, logout, and auth-expired recovery helpers.
  * Key dependencies:
  * - react
  * - ../api/auth
  * - ../analytics/zaraz
  * Side effects:
- * - Interacts with browser runtime APIs.
+ * - Listens for global auth-expired events emitted by the Axios auth client.
  * Role in app flow:
- * - Supplies cross-cutting state to page and component layers during runtime.
+ * - Single source of truth for session-aware UI.
  */
 /* eslint-disable react-refresh/only-export-components */
-/**
- * Authentication Context for managing user state and auth operations.
- */
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { AUTH_EXPIRED_EVENT, authApi } from '../api/auth';
 import { trackAuthFailure, trackAuthSuccess } from '../analytics/zaraz';
@@ -23,15 +21,15 @@ import { trackAuthFailure, trackAuthSuccess } from '../analytics/zaraz';
 const AuthContext = createContext(null);
 
 /**
- * AuthProvider module entry point.
+ * Authentication context for session state and auth mutations.
  */
 export function AuthProvider({ children }) {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // Check if user is authenticated on mount
     useEffect(() => {
+        // Bootstrap the session once from the cookie-backed /me endpoint.
         const initAuth = async () => {
             try {
                 const data = await authApi.getMe();
@@ -46,6 +44,7 @@ export function AuthProvider({ children }) {
     }, []);
 
     useEffect(() => {
+        // auth.js dispatches this event after refresh recovery fails.
         const handleAuthExpired = () => {
             setUser(null);
             setError('세션이 만료되었습니다. 다시 로그인해주세요.');
@@ -57,9 +56,6 @@ export function AuthProvider({ children }) {
         };
     }, []);
 
-    /**
-     * Login with nickname and password
-     */
     const login = useCallback(async (nickname, password) => {
         setError(null);
         try {
@@ -81,9 +77,6 @@ export function AuthProvider({ children }) {
         }
     }, []);
 
-    /**
-     * Register new user
-     */
     const register = useCallback(async (nickname, password) => {
         setError(null);
         try {
@@ -105,23 +98,17 @@ export function AuthProvider({ children }) {
         }
     }, []);
 
-    /**
-     * Logout current user
-     */
     const logout = useCallback(async () => {
         try {
             await authApi.logout();
         } catch {
-            // Ignore logout errors
+            // Local session state should still be cleared even if the server logout request fails.
         } finally {
             setUser(null);
             setError(null);
         }
     }, []);
 
-    /**
-     * Clear error state
-     */
     const clearError = useCallback(() => {
         setError(null);
     }, []);
@@ -144,9 +131,6 @@ export function AuthProvider({ children }) {
     );
 }
 
-/**
- * Hook to access auth context
- */
 export function useAuth() {
     const context = useContext(AuthContext);
     if (!context) {
@@ -154,6 +138,3 @@ export function useAuth() {
     }
     return context;
 }
-
-
-

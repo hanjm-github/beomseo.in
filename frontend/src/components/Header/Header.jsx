@@ -1,19 +1,18 @@
-﻿/**
+/**
  * @file src/components/Header/Header.jsx
- * @description Defines reusable UI components and feature-specific interaction blocks.
+ * @description Renders the persistent site header, primary navigation, and auth actions.
  * Responsibilities:
- * - Render composable UI pieces with clear prop-driven behavior and minimal coupling.
+ * - Expose desktop/mobile navigation for notices, community boards, and school-info pages.
+ * - Reflect auth state, theme state, and route-derived redirect targets.
  * Key dependencies:
  * - react
  * - react-router-dom
  * - lucide-react
  * - ../../context/ThemeContext
  * Side effects:
- * - Influences client-side routing and navigation state.
- * - Interacts with browser runtime APIs.
- * - Schedules deferred work using timer-based execution.
+ * - Listens to window scroll position to switch header styling.
  * Role in app flow:
- * - Implements reusable view logic consumed by route-level pages.
+ * - Entry point for cross-section navigation and session controls.
  */
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
@@ -34,6 +33,7 @@ import { SPORTS_LEAGUE_CATEGORY_ID } from '../../features/sportsLeague/data';
 import styles from './Header.module.css';
 import RoleName from '../RoleName/RoleName';
 
+// Feature-flagged board links are built once so both desktop and mobile menus stay in sync.
 const communityNavigationItems = [
   { label: '자유 게시판', path: '/community/free' },
   CLUB_RECRUIT_BOARD_ENABLED ? { label: '동아리 모집', path: '/community/club-recruit' } : null,
@@ -75,9 +75,6 @@ const navigationItems = [
   },
 ];
 
-/**
- * Header module entry point.
- */
 export default function Header() {
   const { isDark, toggleTheme } = useTheme();
   const { user, isAuthenticated, logout, loading } = useAuth();
@@ -99,6 +96,7 @@ export default function Header() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
+      // Defer the close until the route commit finishes so Link navigation is not interrupted.
       setIsMobileMenuOpen(false);
       setActiveDropdown(null);
     }, 0);
@@ -310,5 +308,3 @@ export default function Header() {
     </header>
   );
 }
-
-

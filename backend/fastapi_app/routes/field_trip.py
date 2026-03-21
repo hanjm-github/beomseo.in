@@ -1,5 +1,8 @@
 """
-FastAPI router for the field-trip event feature.
+FastAPI router for the field-trip board feature.
+
+The board uses a two-step write gate: class unlock cookie first, then a
+field-trip-specific CSRF header for forms and mutations.
 """
 from __future__ import annotations
 
@@ -55,6 +58,7 @@ def _set_field_trip_csrf_cookie(
     settings: SettingsDep,
     csrf_token: str,
 ) -> None:
+    """Refresh the field-trip CSRF cookie used by unlocked board forms."""
     response.set_cookie(
         settings.FIELD_TRIP_CSRF_COOKIE_NAME,
         csrf_token,
@@ -112,6 +116,7 @@ async def get_field_trip_posts(
     settings: SettingsDep,
     unlocked_classes: set[str] = Depends(require_field_trip_class_unlocked),
 ):
+    # Read responses re-issue the field-trip CSRF cookie so unlocked visitors can submit forms without a reload.
     _set_field_trip_csrf_cookie(
         response,
         settings,
@@ -130,6 +135,7 @@ async def get_field_trip_post_detail(
     settings: SettingsDep,
     unlocked_classes: set[str] = Depends(require_field_trip_class_unlocked),
 ):
+    # Detail reads use the same CSRF refresh path as list reads because the compose/edit UI can open from here too.
     _set_field_trip_csrf_cookie(
         response,
         settings,
@@ -149,9 +155,8 @@ async def create_field_trip_post(
     unlocked_classes: set[str] = Depends(require_field_trip_class_unlocked),
     _: None = Depends(require_field_trip_write_csrf),
 ):
-    # Anonymous creation is allowed after the class board has been unlocked, so
-    # the service resolves the final author identity from either the JWT user or
-    # the nickname supplied in the request body.
+    # Anonymous creation is allowed after the class board has been unlocked, so the service resolves the
+    # final author identity from either the JWT user or the nickname supplied in the request body.
     client_ip = get_client_ip(request, settings)
     user_agent = request.headers.get('user-agent', '')
     return await create_post(
@@ -278,8 +283,8 @@ async def put_field_trip_class_password(
     db: DbSession,
     _: object = Depends(require_role('admin')),
 ):
-    # Board credentials are now restricted to admins so student-council users
-    # can manage scores without being able to rotate every class password.
+    # Board credentials are restricted to admins so student-council users can manage scores
+    # without being able to rotate every class password.
     return await update_class_password(db, class_id, body.password)
 
 
@@ -290,6 +295,6 @@ async def put_field_trip_board_description(
     db: DbSession,
     _: object = Depends(require_role('admin')),
 ):
-    # Description edits change the board-level contract shown to every visitor,
-    # so they follow the same admin-only policy as password rotation.
+    # Description edits change the board-level contract shown to every visitor, so they follow
+    # the same admin-only policy as password rotation.
     return await update_board_description(db, class_id, body.boardDescription)

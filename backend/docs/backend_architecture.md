@@ -5,7 +5,7 @@
 
 ## 1. 시스템 개요
 
-이 서비스는 **Flask 메인 API + FastAPI 실시간/이벤트 API** 구조이며, 두 런타임이 같은 인증 쿠키와 MariaDB 스키마를 공유합니다. Flask는 일반 커뮤니티/인증 기능을, FastAPI는 스포츠리그와 수학여행 게시판을 담당합니다.
+이 서비스는 **Flask 메인 API + FastAPI 실시간/이벤트 API** 구조이며, 두 런타임이 같은 인증 쿠키와 MariaDB 스키마를 공유합니다. Flask는 일반 커뮤니티/인증 기능을, FastAPI는 스포츠리그, 수학여행 게시판, 급식 조회/평점/알림 기능을 담당합니다.
 
 ```mermaid
 flowchart LR
@@ -36,7 +36,7 @@ flowchart LR
 3. 운영 방어: 보안 설정 fail-fast + 레이트리밋 + 보안 헤더
 4. 쓰기 감사: `before_flush` 훅으로 신규 row의 `ip_address`/`user_agent` 자동 주입(best-effort)
 5. 데이터 일관성: 소프트 삭제(`deleted_at`) + 카운터 캐시 + 유니크 제약
-6. 사이드카 계약: FastAPI가 스포츠리그와 수학여행 기능을 별도 라우터로 제공
+6. 사이드카 계약: FastAPI가 스포츠리그, 수학여행, 급식 기능을 별도 라우터로 제공
 
 ## 2. 앱 부팅 순서 (`app.py:create_app`)
 
@@ -460,6 +460,41 @@ sequenceDiagram
     Service-->>Visitor: authorRole + authorUserId 응답
 ```
 
+### 9.4 급식/알림 도메인
+
+급식 기능은 FastAPI 안에서 **동기화 스크립트가 적재한 급식 데이터 조회 → 브라우저 단위 평점 → 설치 기기 단위 알림 구독** 흐름으로 동작합니다.
+
+- 요청 경로는 NEIS를 직접 호출하지 않고 `school_meals` 테이블만 읽습니다.
+- `scripts/sync_school_meals.py`만 NEIS `mealServiceDietInfo`를 호출해 MySQL 데이터를 갱신합니다.
+- 읽기/평점 엔드포인트는 `MEAL_RATING_COOKIE_NAME` 쿠키를 발급해 비로그인 브라우저도 날짜/카테고리별 1개 평점을 유지합니다.
+- 평점 viewer key는 `JWT_SECRET_KEY`와 사용자/익명 토큰을 해시한 값으로 저장되어, 브라우저 원문 식별자를 DB에 직접 남기지 않습니다.
+- 알림 구독은 사용자 계정이 아니라 `installationId` 기준의 PWA 기기 단위 레코드입니다.
+- `taste` 평점은 당일(KST)만, `anticipation` 평점은 당일 또는 미래 급식만 허용합니다.
+
+```mermaid
+sequenceDiagram
+    participant Browser as 브라우저/PWA
+    participant Route as fastapi_app/routes/meals.py
+    participant Service as fastapi_app/services/meals.py
+    participant DB as MariaDB
+    participant Sync as sync_school_meals.py
+    participant NEIS as NEIS API
+
+    Sync->>NEIS: mealServiceDietInfo 조회
+    NEIS-->>Sync: 급식 row
+    Sync->>DB: school_meals upsert
+
+    Browser->>Route: GET /api/school-info/meals/today
+    Route->>Route: 익명 평점 쿠키 보장
+    Route->>Service: 오늘 급식 + ratings payload 조회
+    Service->>DB: school_meals + school_meal_ratings 조회
+    Service-->>Browser: item + ratings
+
+    Browser->>Route: PUT /notifications/subscription
+    Route->>Service: installationId 기준 upsert
+    Service->>DB: subscription 저장
+```
+
 ## 10. 보드 공통 승인(Moderation) 패턴
 
 다음 보드는 공통적으로 승인 워크플로우를 가집니다.
@@ -525,6 +560,7 @@ sequenceDiagram
 | `votes` | `Vote`, `VoteOption`, `VoteResponse` | `votes` | 공통 write limit |
 | `sports_league` | `SportsLeagueCategory`, `SportsLeagueMatch`, `SportsLeaguePlayer`, `SportsLeagueEvent`, `SportsLeagueStandingOverride` | `sports_league` | 공통 write limit |
 | `field_trip` (FastAPI) | `FieldTripClass`, `FieldTripPost`, `FieldTripPostAttachment` | (별도 response cache 없음) | FastAPI route별 권한/CSRF |
+| `school_meals` (FastAPI) | `SchoolMeal`, `SchoolMealRating`, `SchoolMealNotificationSubscription` | (별도 response cache 없음) | 익명 평점 쿠키 + installationId 구독 |
 | `lost_found` | `LostFoundPost`, `LostFoundImage`, `LostFoundComment` | `lost_found` | 공통 write limit |
 | `gomsol_market` | `GomsolMarketPost`, `GomsolMarketImage` | `gomsol_market` | 공통 write limit |
 
@@ -546,6 +582,8 @@ sequenceDiagram
 14. `services/sports_league_realtime.py`
 15. `fastapi_app/routes/field_trip.py`
 16. `fastapi_app/services/field_trip.py`
+17. `fastapi_app/routes/meals.py`
+18. `fastapi_app/services/meals.py`
 
 ## 14. 변경 시 아키텍처 체크리스트
 

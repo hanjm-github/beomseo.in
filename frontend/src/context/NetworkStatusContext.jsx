@@ -1,3 +1,17 @@
+/**
+ * @file src/context/NetworkStatusContext.jsx
+ * @description Tracks whether the app should show the full-screen offline overlay.
+ * Responsibilities:
+ * - Merge browser online/offline signals with API-level network failure signals.
+ * - Recheck backend reachability through the health endpoint before clearing offline state.
+ * Key dependencies:
+ * - ../config/env
+ * - ../pwa/events
+ * Side effects:
+ * - Subscribes to browser online/offline events.
+ * Role in app flow:
+ * - Drives OfflineGate so route components do not duplicate connectivity handling.
+ */
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { API_BASE_URL } from '../config/env';
@@ -35,6 +49,8 @@ export function NetworkStatusProvider({ children }) {
     const timeoutId = window.setTimeout(() => controller.abort(), HEALTH_CHECK_TIMEOUT_MS);
 
     try {
+      // Use the backend health endpoint instead of navigator.onLine because the browser can be online
+      // while the API origin is still unreachable.
       const response = await fetch(buildHealthCheckUrl(), {
         method: 'GET',
         cache: 'no-store',
@@ -67,6 +83,7 @@ export function NetworkStatusProvider({ children }) {
     };
 
     const handleRequestFailure = () => {
+      // API clients dispatch this when a transport-level request fails before receiving a response.
       markOffline('request-failure');
     };
 

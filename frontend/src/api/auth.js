@@ -1,10 +1,11 @@
-﻿/**
+/**
  * @file src/api/auth.js
  * @description Shared API client for cookie-based auth.
  * - Sends credentials (HttpOnly cookies) on every request.
  * - Adds CSRF header for state-changing requests.
  * - Retries once after token expiry via /api/auth/refresh.
  * - Emits `auth:expired` when session recovery fails.
+ * - Emits `app:network-request-failed` so the offline overlay can react to transport errors.
  */
 import axios from 'axios';
 import { API_BASE_URL } from '../config/env';
@@ -122,6 +123,7 @@ api.interceptors.response.use(
     const isLogoutAttempt = isLogoutRequest(requestUrl);
 
     if (isNetworkFailure(error)) {
+      // NetworkStatusContext listens for this event and decides whether the global offline overlay should open.
       emitNetworkRequestFailure({
         client: 'auth',
         method: originalRequest.method,
