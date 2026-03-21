@@ -8,6 +8,7 @@
     "prebuild": "node scripts/generateFirebaseMessagingSw.mjs production",
     "dev": "vite",
     "build": "vite build",
+    "postbuild": "node scripts/cleanupFirebaseMessagingSw.mjs",
     "lint": "eslint .",
     "preview": "vite preview"
   },

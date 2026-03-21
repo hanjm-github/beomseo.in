@@ -16,13 +16,39 @@ function buildUnsupportedError(message = 'unsupported') {
 }
 
 
+function parseMenuItemsJson(rawValue) {
+  if (!rawValue) return [];
+
+  try {
+    const parsed = JSON.parse(rawValue);
+    if (!Array.isArray(parsed)) return [];
+
+    return parsed
+      .map((item) => String(item ?? '').trim())
+      .filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
+
+function buildNotificationBody(payload) {
+  const menuItems = parseMenuItemsJson(payload?.data?.menuItemsJson);
+  if (menuItems.length > 0) {
+    return menuItems.join('\n');
+  }
+
+  return payload?.notification?.body || payload?.data?.body || '?ㅻ뒛 湲됱떇???뺤씤??蹂댁꽭??';
+}
+
+
 function extractNotificationPayload(payload) {
   const title = payload?.notification?.title || payload?.data?.title || '오늘의 급식';
   const body = payload?.notification?.body || payload?.data?.body || '오늘 급식을 확인해 보세요.';
   const link = payload?.fcmOptions?.link || payload?.data?.link || '/school-info/meal';
   const icon = payload?.notification?.icon || payload?.data?.icon || '/pwa-192x192.png';
 
-  return { title, body, link, icon };
+  return { title, body: buildNotificationBody(payload) || body, link, icon };
 }
 
 

@@ -4,6 +4,30 @@ const FIREBASE_ENABLED = __FIREBASE_ENABLED__;
 const FIREBASE_VERSION = '__FIREBASE_VERSION__';
 const FIREBASE_CONFIG = __FIREBASE_CONFIG__;
 
+function parseMenuItemsJson(rawValue) {
+  if (!rawValue) return [];
+
+  try {
+    const parsed = JSON.parse(rawValue);
+    if (!Array.isArray(parsed)) return [];
+
+    return parsed
+      .map((item) => String(item ?? '').trim())
+      .filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
+function buildNotificationBody(payload) {
+  const menuItems = parseMenuItemsJson(payload?.data?.menuItemsJson);
+  if (menuItems.length > 0) {
+    return menuItems.join('\n');
+  }
+
+  return payload?.notification?.body || payload?.data?.body || '오늘의 급식을 확인해 보세요.';
+}
+
 if (!FIREBASE_ENABLED) {
   self.addEventListener('install', () => {
     self.skipWaiting();
@@ -25,7 +49,7 @@ if (!FIREBASE_ENABLED) {
     const icon = payload?.notification?.icon || payload?.data?.icon || `${self.location.origin}/pwa-192x192.png`;
 
     self.registration.showNotification(title, {
-      body,
+      body: buildNotificationBody(payload) || body,
       icon,
       badge: icon,
       data: { link },

@@ -4,6 +4,7 @@ Meal reminder subscriptions and Firebase web push delivery.
 from __future__ import annotations
 
 import asyncio
+import json
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
@@ -136,6 +137,19 @@ def _get_current_local_date_and_minute(timezone_name: str, now: datetime | None 
         base_now = base_now.replace(tzinfo=timezone.utc)
     local_now = base_now.astimezone(_resolve_timezone(timezone_name))
     return local_now.date(), (local_now.hour * 60) + local_now.minute
+
+
+def _normalize_notification_menu_items(menu_items: list[str]) -> list[str]:
+    normalized_items: list[str] = []
+    for item in menu_items:
+        normalized = str(item or '').strip()
+        if normalized:
+            normalized_items.append(normalized)
+    return normalized_items
+
+
+def _build_menu_items_notification_body(menu_items: list[str]) -> str:
+    return '\n'.join(_normalize_notification_menu_items(menu_items))
 
 
 def _get_firebase_app(settings: Settings):
@@ -377,6 +391,39 @@ async def build_meal_notification_payload(
     }
 
 
+async def build_multiline_meal_notification_payload(
+    session: AsyncSession,
+    *,
+    settings: Settings,
+    target_date: date,
+) -> dict[str, str] | None:
+    payload = await build_meal_notification_payload(
+        session,
+        settings=settings,
+        target_date=target_date,
+    )
+    if payload is None:
+        return None
+
+    try:
+        result = await session.execute(
+            select(SchoolMeal).where(
+                SchoolMeal.meal_date == target_date,
+                SchoolMeal.meal_type_code == '2',
+            )
+        )
+    except SQLAlchemyError as exc:
+        raise SchoolMealError('Meal notification payload could not load meal data.', 500) from exc
+    meal = result.scalar_one_or_none()
+    if meal is None:
+        return None
+
+    menu_items = _normalize_notification_menu_items(meal.menu_items())
+    payload['body'] = _build_menu_items_notification_body(menu_items) or payload['body']
+    payload['menuItemsJson'] = json.dumps(menu_items, ensure_ascii=False)
+    return payload
+
+
 async def _send_multicast_message(settings: Settings, *, tokens: list[str], payload: dict[str, str], dry_run: bool):
     messaging, app = _get_firebase_messaging_module(settings)
     multicast_message = messaging.MulticastMessage(
@@ -388,6 +435,7 @@ async def _send_multicast_message(settings: Settings, *, tokens: list[str], payl
         data={
             'link': payload['link'],
             'mealDate': payload['mealDate'],
+            'menuItemsJson': payload.get('menuItemsJson', '[]'),
             'title': payload['title'],
             'body': payload['body'],
         },
@@ -441,7 +489,7 @@ async def send_due_notifications(
     skipped_no_meal_count = 0
 
     for target_date, items in grouped_rows.items():
-        payload = await build_meal_notification_payload(
+        payload = await build_multiline_meal_notification_payload(
             session,
             settings=settings,
             target_date=target_date,
