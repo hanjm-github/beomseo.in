@@ -3,8 +3,8 @@ Idempotent seed helpers for field-trip classes.
 """
 from __future__ import annotations
 
-from field_trip_seed import FIELD_TRIP_DEFAULT_CLASSES
-from models import FieldTripClass, db
+from field_trip_seed import FIELD_TRIP_DEFAULT_ACCESS_MODE, FIELD_TRIP_DEFAULT_CLASSES
+from models import FieldTripClass, FieldTripSettings, db
 from utils.security import hash_password
 
 
@@ -77,6 +77,14 @@ def bootstrap_field_trip_defaults(session=None) -> dict:
             row_changed = True
         if row_changed:
             backfilled += 1
+
+    settings_row = active_session.query(FieldTripSettings).filter_by(id=1).one_or_none()
+    if settings_row is None:
+        active_session.add(FieldTripSettings(id=1, access_mode=FIELD_TRIP_DEFAULT_ACCESS_MODE))
+        backfilled += 1
+    elif not settings_row.access_mode:
+        settings_row.access_mode = FIELD_TRIP_DEFAULT_ACCESS_MODE
+        backfilled += 1
 
     active_session.commit()
     return {

@@ -21,8 +21,10 @@ import {
   getFieldTripComposePath,
   getFieldTripHubPath,
   getFieldTripPostPath,
+  isFieldTripPublicAccessMode,
   isClassUnlocked,
   isFieldTripClassId,
+  normalizeFieldTripAccessMode,
   resolveFieldTripBoardDescription,
 } from '../../features/fieldTrip/utils';
 import '../page-shell.css';
@@ -100,6 +102,7 @@ export default function FieldTripClassBoardPage() {
   const navigate = useNavigate();
   const { user, isAuthenticated, loading: authLoading } = useAuth();
   const [classRows, setClassRows] = useState([]);
+  const [fieldTripAccessMode, setFieldTripAccessMode] = useState('password');
   const [posts, setPosts] = useState([]);
   const [overviewLoading, setOverviewLoading] = useState(true);
   const [overviewError, setOverviewError] = useState('');
@@ -136,12 +139,20 @@ export default function FieldTripClassBoardPage() {
       classId,
       label: getFieldTripClassLabel(classId),
       postCount: 0,
-      isUnlocked: isClassUnlocked(classId),
+      accessMode: fieldTripAccessMode,
+      isUnlocked: isFieldTripPublicAccessMode(fieldTripAccessMode) || isClassUnlocked(classId),
       boardDescription: '',
     };
-  }, [classId, classRows]);
+  }, [classId, classRows, fieldTripAccessMode]);
 
-  const resolvedBoardDescription = resolveFieldTripBoardDescription(selectedClass);
+  const resolvedBoardDescription = resolveFieldTripBoardDescription(
+    selectedClass,
+    fieldTripAccessMode
+  );
+  const canRevealBoardDescription = selectedClass.isUnlocked || canManageBoardSettings;
+  const visibleBoardDescription = canRevealBoardDescription
+    ? resolvedBoardDescription
+    : '비밀번호를 입력하면 게시판 설명을 확인할 수 있습니다.';
   const editingListPost = useMemo(
     () => posts.find((post) => post.id === postId) || null,
     [postId, posts]
@@ -179,7 +190,8 @@ export default function FieldTripClassBoardPage() {
         if (cancelled) {
           return;
         }
-        setClassRows(classes);
+        setClassRows(classes.items);
+        setFieldTripAccessMode(normalizeFieldTripAccessMode(classes.accessMode));
       } catch (error) {
         if (!cancelled) {
           setOverviewError(
@@ -310,12 +322,33 @@ export default function FieldTripClassBoardPage() {
     setUnlockError('');
 
     try {
-      await fieldTripApi.unlockClass(classId, unlockPassword);
-      setClassRows((current) =>
-        current.map((row) =>
-          row.classId === classId ? { ...row, isUnlocked: true } : row
-        )
-      );
+      const unlockedClass = await fieldTripApi.unlockClass(classId, unlockPassword);
+      setClassRows((current) => {
+        const nextRows = current.map((row) =>
+          row.classId === classId
+            ? {
+                ...row,
+                isUnlocked: true,
+                boardDescription: unlockedClass.boardDescription || row.boardDescription,
+              }
+            : row
+        );
+
+        if (nextRows.some((row) => row.classId === classId)) {
+          return nextRows;
+        }
+
+        return [
+          ...nextRows,
+          {
+            classId,
+            label: selectedClass.label,
+            postCount: selectedClass.postCount || 0,
+            isUnlocked: true,
+            boardDescription: unlockedClass.boardDescription || '',
+          },
+        ];
+      });
       setUnlockPassword('');
     } catch (error) {
       setUnlockError(
@@ -514,7 +547,7 @@ export default function FieldTripClassBoardPage() {
             <p className={styles.sectionEyebrow}>학급별 현장 기록 보드</p>
             <h1 className={styles.boardTitle}>{selectedClass.label} 게시판</h1>
             {!descriptionEditing ? (
-              <p className={styles.sectionDescription}>{resolvedBoardDescription}</p>
+              <p className={styles.sectionDescription}>{visibleBoardDescription}</p>
             ) : (
               <div className={styles.descriptionEditor}>
                 <textarea

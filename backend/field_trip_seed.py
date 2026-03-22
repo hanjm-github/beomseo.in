@@ -17,3 +17,5 @@ FIELD_TRIP_DEFAULT_CLASSES = (
     {'classId': '9', 'label': '9반', 'password': 'trip-09', 'totalScore': 0},
     {'classId': '10', 'label': '10반', 'password': 'trip-10', 'totalScore': 0},
 )
+
+FIELD_TRIP_DEFAULT_ACCESS_MODE = 'password'

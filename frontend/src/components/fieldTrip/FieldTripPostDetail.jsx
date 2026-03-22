@@ -4,6 +4,23 @@ import { sanitizeRichHtml } from '../../security/htmlSanitizer';
 import styles from '../../pages/FieldTrip/FieldTripPage.module.css';
 import { formatFieldTripDate } from '../../features/fieldTrip/utils';
 
+function formatFileSize(bytes) {
+  const size = Number(bytes || 0);
+  if (!Number.isFinite(size) || size <= 0) {
+    return '0MB';
+  }
+
+  if (size >= 1024 * 1024 * 1024) {
+    return `${(size / (1024 * 1024 * 1024)).toFixed(1)}GB`;
+  }
+
+  if (size >= 1024 * 1024) {
+    return `${(size / (1024 * 1024)).toFixed(1)}MB`;
+  }
+
+  return `${Math.max(1, Math.round(size / 1024))}KB`;
+}
+
 export default function FieldTripPostDetail({ classSummary, post, loading }) {
   if (loading) {
     return (
@@ -34,18 +51,36 @@ export default function FieldTripPostDetail({ classSummary, post, loading }) {
 
       <div className={styles.detailMeta}>
         <RoleName nickname={post.nickname} role={post.authorRole || 'student'} size="sm" />
-        <span>•</span>
+        <span>·</span>
         <span>{formatFieldTripDate(post.createdAt)}</span>
       </div>
 
       <div className={styles.detailBody}>
-        {/* Stored field-trip bodies are rich HTML, so re-sanitize before rendering
-            even though the editor already sanitized the outbound payload. */}
         <div
           className={styles.detailBodyRich}
           dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(post.body) }}
         />
       </div>
+
+      {post.videoAttachment ? (
+        <div className={styles.detailVideoSection}>
+          <h3 className={styles.detailSectionTitle}>첨부 영상</h3>
+          <div className={styles.detailVideoCard}>
+            <video
+              className={styles.detailVideoPlayer}
+              controls
+              preload="metadata"
+              src={post.videoAttachment.url}
+            />
+            <div className={styles.detailVideoMeta}>
+              <span>{post.videoAttachment.name}</span>
+              <span>
+                {formatFileSize(post.videoAttachment.size)} · {post.videoAttachment.mime}
+              </span>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {post.attachments?.length ? (
         <div className={styles.detailAttachments}>

@@ -18,6 +18,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from .config import Settings, get_settings
 from .database import get_db
 from .models import User
+from .services.field_trip import (
+    FIELD_TRIP_ACCESS_MODE_PUBLIC,
+    get_field_trip_access_mode,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -252,10 +256,20 @@ def get_field_trip_unlocked_class_ids(
 FieldTripUnlockedClasses = Annotated[set[str], Depends(get_field_trip_unlocked_class_ids)]
 
 
+async def get_current_field_trip_access_mode(
+    db: DbSession,
+) -> str:
+    return await get_field_trip_access_mode(db)
+
+
+FieldTripAccessMode = Annotated[str, Depends(get_current_field_trip_access_mode)]
+
+
 def require_any_field_trip_unlock(
     unlocked_classes: FieldTripUnlockedClasses,
+    access_mode: FieldTripAccessMode,
 ) -> set[str]:
-    if unlocked_classes:
+    if access_mode == FIELD_TRIP_ACCESS_MODE_PUBLIC or unlocked_classes:
         return unlocked_classes
     raise HTTPException(
         status_code=403,
@@ -266,8 +280,9 @@ def require_any_field_trip_unlock(
 def require_field_trip_class_unlocked(
     class_id: str,
     unlocked_classes: FieldTripUnlockedClasses,
+    access_mode: FieldTripAccessMode,
 ) -> set[str]:
-    if class_id in unlocked_classes:
+    if access_mode == FIELD_TRIP_ACCESS_MODE_PUBLIC or class_id in unlocked_classes:
         return unlocked_classes
     raise HTTPException(
         status_code=403,
@@ -307,3 +322,37 @@ def require_role(*roles: str):
             raise HTTPException(status_code=403, detail={'error': '이 기능을 사용할 권한이 없습니다.'})
         return current_user
     return _check_role
+
+
+async def get_current_field_trip_access_mode_legacy(
+    db: DbSession,
+) -> str:
+    return await get_field_trip_access_mode(db)
+
+
+FieldTripAccessModeLegacy = Annotated[str, Depends(get_current_field_trip_access_mode_legacy)]
+
+
+def require_any_field_trip_unlock_public_mode_impl(
+    unlocked_classes: FieldTripUnlockedClasses,
+    access_mode: FieldTripAccessMode,
+) -> set[str]:
+    if access_mode == FIELD_TRIP_ACCESS_MODE_PUBLIC or unlocked_classes:
+        return unlocked_classes
+    raise HTTPException(
+        status_code=403,
+        detail={'error': '이 기능을 사용하려면 먼저 반 비밀번호를 확인해야 합니다.'},
+    )
+
+
+def require_field_trip_class_unlocked_public_mode_impl(
+    class_id: str,
+    unlocked_classes: FieldTripUnlockedClasses,
+    access_mode: FieldTripAccessMode,
+) -> set[str]:
+    if access_mode == FIELD_TRIP_ACCESS_MODE_PUBLIC or class_id in unlocked_classes:
+        return unlocked_classes
+    raise HTTPException(
+        status_code=403,
+        detail={'error': '이 반 게시판에 접근하려면 비밀번호 확인이 필요합니다.'},
+    )

@@ -1,9 +1,12 @@
 import {
+  FIELD_TRIP_VIDEO_MAX_SIZE_BYTES,
+  FIELD_TRIP_VIDEO_MAX_SIZE_MB,
   UPLOAD_MAX_ATTACHMENTS,
   UPLOAD_MAX_FILE_SIZE_BYTES,
   UPLOAD_MAX_FILE_SIZE_MB,
 } from '../../config/env';
 import {
+  FIELD_TRIP_ACCESS_MODE_PASSWORD,
   FIELD_TRIP_CLASS_IDS,
   FIELD_TRIP_MAX_SCORE,
   FIELD_TRIP_PASSWORDS,
@@ -16,6 +19,17 @@ import {
 
 const MAX_ATTACHMENTS = UPLOAD_MAX_ATTACHMENTS;
 const MAX_FILE_SIZE = UPLOAD_MAX_FILE_SIZE_BYTES;
+const MAX_VIDEO_FILE_SIZE = FIELD_TRIP_VIDEO_MAX_SIZE_BYTES;
+const VIDEO_EXTENSIONS = /\.(mp4|webm|mov)$/i;
+const IMAGE_EXTENSIONS = /\.(png|jpe?g|gif|webp)$/i;
+
+function isVideoLikeFile(file) {
+  return Boolean(file?.type?.startsWith('video/') || VIDEO_EXTENSIONS.test(file?.name || ''));
+}
+
+function isImageLikeFile(file) {
+  return Boolean(file?.type?.startsWith('image/') || IMAGE_EXTENSIONS.test(file?.name || ''));
+}
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -30,7 +44,7 @@ const cloneValue = (value) => {
 const initialBoardDescriptions = Object.fromEntries(
   FIELD_TRIP_CLASS_IDS.map((classId) => {
     const label = getFieldTripClassLabel(classId);
-    return [classId, getDefaultFieldTripBoardDescription(label)];
+    return [classId, getDefaultFieldTripBoardDescription(label, FIELD_TRIP_ACCESS_MODE_PASSWORD)];
   })
 );
 
@@ -138,6 +152,7 @@ let mockPostsByClass = cloneValue(initialPostsByClass);
 let mockPasswords = { ...FIELD_TRIP_PASSWORDS };
 let mockScoreRows = cloneValue(FIELD_TRIP_SCORE_ROWS);
 let mockBoardDescriptions = { ...initialBoardDescriptions };
+let mockAccessMode = FIELD_TRIP_ACCESS_MODE_PASSWORD;
 
 function getClassPosts(classId) {
   return [...(mockPostsByClass[classId] || [])].sort(
@@ -149,12 +164,14 @@ function buildClassRows() {
   return FIELD_TRIP_CLASS_IDS.map((classId) => {
     const label = getFieldTripClassLabel(classId);
     return {
+      accessMode: mockAccessMode,
       classId,
       label,
       postCount: mockPostsByClass[classId]?.length || 0,
+      isUnlocked: mockAccessMode !== FIELD_TRIP_ACCESS_MODE_PASSWORD,
       boardDescription:
         String(mockBoardDescriptions[classId] || '').trim() ||
-        getDefaultFieldTripBoardDescription(label),
+        getDefaultFieldTripBoardDescription(label, mockAccessMode),
     };
   });
 }
@@ -170,13 +187,19 @@ function getScoreRowOrThrow(classId) {
 
 async function listClasses() {
   await delay(120);
-  return buildClassRows();
+  return {
+    accessMode: mockAccessMode,
+    items: buildClassRows(),
+  };
 }
 
 async function unlockClass(classId, password) {
   await delay(80);
 
-  if (mockPasswords[classId] !== password) {
+  if (
+    mockAccessMode === FIELD_TRIP_ACCESS_MODE_PASSWORD &&
+    mockPasswords[classId] !== password
+  ) {
     const error = new Error('비밀번호가 올바르지 않습니다. 다시 확인해 주세요.');
     error.code = 'INVALID_PASSWORD';
     throw error;
@@ -185,6 +208,9 @@ async function unlockClass(classId, password) {
   return {
     classId,
     isUnlocked: true,
+    boardDescription:
+      String(mockBoardDescriptions[classId] || '').trim() ||
+      getDefaultFieldTripBoardDescription(getFieldTripClassLabel(classId), mockAccessMode),
   };
 }
 
@@ -279,11 +305,28 @@ async function deletePost(classId, postId) {
 }
 
 async function upload(file) {
-  if (!file.type?.startsWith('image/')) {
+  const isVideo = isVideoLikeFile(file);
+  const isImage = isImageLikeFile(file);
+  const sizeLimit = isVideo ? MAX_VIDEO_FILE_SIZE : MAX_FILE_SIZE;
+  const sizeLimitMb = isVideo ? FIELD_TRIP_VIDEO_MAX_SIZE_MB : UPLOAD_MAX_FILE_SIZE_MB;
+
+  if (!isImage && !isVideo) {
+    throw new Error('이미지 또는 영상 파일만 업로드할 수 있습니다.');
+  }
+
+  if (false && !isImage && !isVideo) {
     throw new Error('이미지 파일만 업로드할 수 있습니다.');
   }
 
-  if (file.size > MAX_FILE_SIZE) {
+  if (file.size > sizeLimit) {
+    throw new Error(
+      isVideo
+        ? `영상은 ${sizeLimitMb}MB 이하만 업로드할 수 있습니다.`
+        : `첨부 용량은 ${sizeLimitMb}MB 이하만 가능합니다.`
+    );
+  }
+
+  if (false && file.size > sizeLimit) {
     throw new Error(`첨부 용량은 ${UPLOAD_MAX_FILE_SIZE_MB}MB 이하만 가능합니다.`);
   }
 
@@ -295,13 +338,16 @@ async function upload(file) {
     size: file.size,
     url: URL.createObjectURL(file),
     mime: file.type || 'application/octet-stream',
-    kind: file.type?.startsWith('image/') ? 'image' : 'file',
+    kind: isVideo ? 'video' : 'image',
   };
 }
 
 async function getScoreboard() {
   await delay(100);
-  return cloneValue(mockScoreRows);
+  return {
+    accessMode: mockAccessMode,
+    items: cloneValue(mockScoreRows),
+  };
 }
 
 async function adjustScore(classId, delta) {
@@ -362,13 +408,29 @@ async function updateBoardDescription(classId, boardDescription) {
   mockBoardDescriptions = {
     ...mockBoardDescriptions,
     [classId]:
-      normalizedDescription || getDefaultFieldTripBoardDescription(getFieldTripClassLabel(classId)),
+      normalizedDescription ||
+      getDefaultFieldTripBoardDescription(getFieldTripClassLabel(classId), mockAccessMode),
   };
 
   return {
     classId,
     label: getFieldTripClassLabel(classId),
     boardDescription: mockBoardDescriptions[classId],
+  };
+}
+
+async function updateAccessMode(accessMode) {
+  await delay(90);
+
+  const normalizedAccessMode = String(accessMode || '').trim();
+  if (!['password', 'public'].includes(normalizedAccessMode)) {
+    throw new Error('공개 모드 값이 올바르지 않습니다.');
+  }
+
+  mockAccessMode = normalizedAccessMode;
+
+  return {
+    accessMode: mockAccessMode,
   };
 }
 
@@ -383,6 +445,7 @@ export const fieldTripMockApi = {
   upload,
   getScoreboard,
   adjustScore,
+  updateAccessMode,
   updateClassPassword,
   updateBoardDescription,
   MAX_ATTACHMENTS,

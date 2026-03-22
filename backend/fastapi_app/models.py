@@ -426,6 +426,28 @@ class FieldTripClass(Base):
         }
 
 
+class FieldTripSettings(Base):
+    __tablename__ = 'field_trip_settings'
+
+    id = Column(Integer, primary_key=True, default=1)
+    access_mode = Column(String(16), nullable=False, default='password')
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    __table_args__ = (
+        CheckConstraint('id = 1', name='ck_field_trip_settings_singleton_id'),
+        CheckConstraint(
+            "access_mode IN ('password', 'public')",
+            name='ck_field_trip_settings_access_mode',
+        ),
+    )
+
+    def to_dict(self):
+        return {
+            'accessMode': self.access_mode or 'password',
+        }
+
+
 class FieldTripPost(Base):
     __tablename__ = 'field_trip_posts'
 

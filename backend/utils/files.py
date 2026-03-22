@@ -22,6 +22,9 @@ MIME_EXTENSION_MAP = {
     'image/png': {'.png'},
     'image/gif': {'.gif'},
     'image/webp': {'.webp'},
+    'video/mp4': {'.mp4'},
+    'video/webm': {'.webm'},
+    'video/quicktime': {'.mov'},
     'application/pdf': {'.pdf'},
     'text/plain': {'.txt'},
     'application/zip': {'.zip'},
@@ -314,6 +317,13 @@ def _sniff_signature_mime(head: bytes):
         return 'image/gif'
     if len(head) >= 12 and head[:4] == b'RIFF' and head[8:12] == b'WEBP':
         return 'image/webp'
+    if len(head) >= 12 and head[4:8] == b'ftyp':
+        brand = head[8:12]
+        if brand == b'qt  ':
+            return 'video/quicktime'
+        return 'video/mp4'
+    if head.startswith(b'\x1a\x45\xdf\xa3'):
+        return 'video/webm'
     if head.startswith(b'%PDF-'):
         return 'application/pdf'
     if head.startswith((b'PK\x03\x04', b'PK\x05\x06', b'PK\x07\x08')):
@@ -334,6 +344,37 @@ def _sniff_signature_mime(head: bytes):
 def _extension_allowed_for_mime(extension: str, mime: str):
     allowed = MIME_EXTENSION_MAP.get(mime, set())
     return extension in allowed
+
+
+def _resolve_upload_kind(mime: str):
+    if mime.startswith('image/'):
+        return 'image'
+    if mime.startswith('video/'):
+        return 'video'
+    return 'file'
+
+
+def _resolve_effective_max_size(default_size: int, valid_mime: str, kind: str, overrides=None):
+    if not overrides:
+        return int(default_size)
+
+    if valid_mime in overrides:
+        return int(overrides[valid_mime])
+    if kind in overrides:
+        return int(overrides[kind])
+
+    for prefix, limit in overrides.items():
+        if str(prefix).endswith('/') and valid_mime.startswith(str(prefix)):
+            return int(limit)
+
+    return int(overrides.get('default', default_size))
+
+
+def _format_upload_limit_mb(limit_bytes: int) -> str:
+    limit_mb = limit_bytes / (1024 * 1024)
+    if float(limit_mb).is_integer():
+        return str(int(limit_mb))
+    return f'{limit_mb:.1f}'.rstrip('0').rstrip('.')
 
 
 def _normalize_mime(file_storage):
@@ -359,7 +400,13 @@ def _safe_file_size(file_storage):
         return 0
 
 
-def validate_upload(file_storage, config: dict, require_image: bool = False):
+def validate_upload(
+    file_storage,
+    config: dict,
+    require_image: bool = False,
+    allowed_kinds=None,
+    max_size_overrides=None,
+):
     """
     Strict upload validation with allowlist and content signature checks.
     """
@@ -371,10 +418,7 @@ def validate_upload(file_storage, config: dict, require_image: bool = False):
     if not extension:
         return {'ok': False, 'error': '파일 확장자가 필요합니다.'}
 
-    max_size = int(config.get('MAX_ATTACH_SIZE', 10 * 1024 * 1024))
     size = _safe_file_size(file_storage)
-    if size > max_size:
-        return {'ok': False, 'error': '첨부파일 용량은 10MB 이하만 가능합니다.'}
 
     allowed_exts = {f".{ext.lower().lstrip('.')}" for ext in (config.get('UPLOAD_ALLOWED_EXTENSIONS') or set())}
     allowed_mimes = {str(m).lower() for m in (config.get('UPLOAD_ALLOWED_MIME_TYPES') or set())}
@@ -418,14 +462,31 @@ def validate_upload(file_storage, config: dict, require_image: bool = False):
     if not valid_mime:
         return {'ok': False, 'error': '파일 형식을 확인할 수 없거나 허용되지 않은 형식입니다.'}
 
-    if require_image and not valid_mime.startswith('image/'):
+    kind = _resolve_upload_kind(valid_mime)
+
+    if allowed_kinds and kind not in set(allowed_kinds):
+        if set(allowed_kinds) == {'image'}:
+            return {'ok': False, 'error': '이미지 파일만 업로드할 수 있습니다.'}
+        return {'ok': False, 'error': '허용되지 않은 첨부 파일 종류입니다.'}
+
+    effective_max_size = _resolve_effective_max_size(
+        int(config.get('MAX_ATTACH_SIZE', 10 * 1024 * 1024)),
+        valid_mime,
+        kind,
+        max_size_overrides,
+    )
+    if size > effective_max_size:
+        limit_mb = _format_upload_limit_mb(effective_max_size)
+        return {'ok': False, 'error': f'첨부파일 용량은 {limit_mb}MB 이하만 가능합니다.'}
+
+    if require_image and kind != 'image':
         return {'ok': False, 'error': '이미지 파일만 업로드할 수 있습니다.'}
 
     return {
         'ok': True,
         'size': size,
         'mime': valid_mime,
-        'kind': 'image' if valid_mime.startswith('image/') else 'file',
+        'kind': kind,
         'name': filename,
         'extension': extension,
     }

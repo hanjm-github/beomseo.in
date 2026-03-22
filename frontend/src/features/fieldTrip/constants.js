@@ -8,6 +8,12 @@ export const FIELD_TRIP_CLASS_IDS = Array.from({ length: 10 }, (_, index) =>
 );
 
 export const FIELD_TRIP_UNLOCK_STORAGE_KEY = 'beomseo.fieldTripUnlockedClasses';
+export const FIELD_TRIP_ACCESS_MODE_PASSWORD = 'password';
+export const FIELD_TRIP_ACCESS_MODE_PUBLIC = 'public';
+export const FIELD_TRIP_ACCESS_MODES = [
+  FIELD_TRIP_ACCESS_MODE_PASSWORD,
+  FIELD_TRIP_ACCESS_MODE_PUBLIC,
+];
 
 export const FIELD_TRIP_MANAGER_ROLES = ['admin', 'student_council'];
 

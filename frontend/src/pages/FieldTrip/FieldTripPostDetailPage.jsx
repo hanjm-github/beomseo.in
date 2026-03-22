@@ -10,8 +10,10 @@ import {
   getFieldTripClassPath,
   getFieldTripHubPath,
   getFieldTripPostEditPath,
+  isFieldTripPublicAccessMode,
   isClassUnlocked,
   isFieldTripClassId,
+  normalizeFieldTripAccessMode,
 } from '../../features/fieldTrip/utils';
 import '../page-shell.css';
 import styles from './FieldTripPage.module.css';
@@ -21,6 +23,7 @@ export default function FieldTripPostDetailPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [classRows, setClassRows] = useState([]);
+  const [fieldTripAccessMode, setFieldTripAccessMode] = useState('password');
   const [post, setPost] = useState(null);
   const [overviewError, setOverviewError] = useState('');
   const [postError, setPostError] = useState('');
@@ -35,9 +38,9 @@ export default function FieldTripPostDetailPage() {
     return {
       classId,
       label: getFieldTripClassLabel(classId),
-      isUnlocked: isClassUnlocked(classId),
+      isUnlocked: isFieldTripPublicAccessMode(fieldTripAccessMode) || isClassUnlocked(classId),
     };
-  }, [classId, classRows]);
+  }, [classId, classRows, fieldTripAccessMode]);
 
   useEffect(() => {
     if (!isFieldTripClassId(classId)) {
@@ -62,7 +65,8 @@ export default function FieldTripPostDetailPage() {
         }
 
         if (classesResult.status === 'fulfilled') {
-          setClassRows(classesResult.value);
+          setClassRows(classesResult.value.items);
+          setFieldTripAccessMode(normalizeFieldTripAccessMode(classesResult.value.accessMode));
         } else {
           setOverviewError(
             getFieldTripErrorMessage(

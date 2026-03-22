@@ -71,6 +71,7 @@ from .sports_league import (
 )
 from .field_trip import (
     FieldTripClass,
+    FieldTripSettings,
     FieldTripPost,
     FieldTripPostAttachment,
 )
@@ -133,6 +134,7 @@ __all__ = [
     'SportsLeagueEvent',
     'SportsLeagueStandingOverride',
     'FieldTripClass',
+    'FieldTripSettings',
     'FieldTripPost',
     'FieldTripPostAttachment',
     'SchoolMeal',

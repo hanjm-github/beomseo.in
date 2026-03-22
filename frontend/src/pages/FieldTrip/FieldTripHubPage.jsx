@@ -19,33 +19,45 @@ export default function FieldTripHubPage() {
   const { user } = useAuth();
   const [classRows, setClassRows] = useState([]);
   const [scoreRows, setScoreRows] = useState([]);
+  const [fieldTripAccessMode, setFieldTripAccessMode] = useState('password');
   const [overviewLoading, setOverviewLoading] = useState(true);
   const [overviewError, setOverviewError] = useState('');
   const [scoreActionError, setScoreActionError] = useState('');
+  const [accessModeError, setAccessModeError] = useState('');
+  const [accessModeSaving, setAccessModeSaving] = useState(false);
   const [pendingClassId, setPendingClassId] = useState('');
 
   const activeTab = normalizeFieldTripTab(searchParams.get('tab'));
-  const canManage = isFieldTripManagerRole(user?.role);
+  const canManageScores = isFieldTripManagerRole(user?.role);
+  const canManageAccessMode = user?.role === 'admin';
+
+  const fetchOverview = async () => {
+    const [classes, scoreboard] = await Promise.all([
+      fieldTripApi.listClasses(),
+      fieldTripApi.getScoreboard(),
+    ]);
+    return {
+      classes,
+      scoreboard,
+    };
+  };
 
   useEffect(() => {
     let cancelled = false;
 
-    const fetchOverview = async () => {
+    const loadOverview = async () => {
       setOverviewLoading(true);
       setOverviewError('');
 
       try {
-        const [classes, scoreboard] = await Promise.all([
-          fieldTripApi.listClasses(),
-          fieldTripApi.getScoreboard(),
-        ]);
-
+        const { classes, scoreboard } = await fetchOverview();
         if (cancelled) {
           return;
         }
 
-        setClassRows(classes);
-        setScoreRows(scoreboard);
+        setClassRows(classes.items);
+        setScoreRows(scoreboard.items);
+        setFieldTripAccessMode(scoreboard.accessMode || classes.accessMode || 'password');
       } catch (error) {
         if (!cancelled) {
           setOverviewError(
@@ -62,7 +74,7 @@ export default function FieldTripHubPage() {
       }
     };
 
-    fetchOverview();
+    loadOverview();
 
     return () => {
       cancelled = true;
@@ -106,6 +118,26 @@ export default function FieldTripHubPage() {
     }
   };
 
+  const handleToggleAccessMode = async () => {
+    const nextAccessMode = fieldTripAccessMode === 'public' ? 'password' : 'public';
+    setAccessModeSaving(true);
+    setAccessModeError('');
+
+    try {
+      await fieldTripApi.updateAccessMode(nextAccessMode);
+      const { classes, scoreboard } = await fetchOverview();
+      setClassRows(classes.items);
+      setScoreRows(scoreboard.items);
+      setFieldTripAccessMode(scoreboard.accessMode || classes.accessMode || nextAccessMode);
+    } catch (error) {
+      setAccessModeError(
+        getFieldTripErrorMessage(error, '공개 모드를 변경하지 못했습니다. 다시 시도해 주세요.')
+      );
+    } finally {
+      setAccessModeSaving(false);
+    }
+  };
+
   return (
     <div className={`page-shell ${styles.page}`}>
       <section className={`${styles.hero} ${styles.heroMinimal}`}>
@@ -136,6 +168,7 @@ export default function FieldTripHubPage() {
       {activeTab === 'mission' ? (
         <FieldTripClassGrid
           classes={classRows}
+          accessMode={fieldTripAccessMode}
           selectedClassId=""
           loading={overviewLoading}
           onSelectClass={handleOpenClass}
@@ -143,11 +176,16 @@ export default function FieldTripHubPage() {
       ) : (
         <FieldTripScoreboard
           rows={scoreRows}
+          accessMode={fieldTripAccessMode}
           loading={overviewLoading}
-          canManage={canManage}
+          canManage={canManageScores}
+          canManageAccessMode={canManageAccessMode}
+          accessModeSaving={accessModeSaving}
+          accessModeError={accessModeError}
           pendingClassId={pendingClassId}
           actionError={scoreActionError}
           onAdjustScore={handleAdjustScore}
+          onToggleAccessMode={handleToggleAccessMode}
         />
       )}
     </div>

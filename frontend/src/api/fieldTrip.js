@@ -2,6 +2,8 @@ import { fastapiApi, FASTAPI_BASE_URL, readCookie } from './fastapiClient';
 import { normalizeUploadResponse } from './normalizers';
 import { ENABLE_API_MOCKS, shouldUseMockFallback } from './mockPolicy';
 import {
+  FIELD_TRIP_VIDEO_MAX_SIZE_BYTES,
+  FIELD_TRIP_VIDEO_MAX_SIZE_MB,
   UPLOAD_MAX_ATTACHMENTS,
   UPLOAD_MAX_FILE_SIZE_BYTES,
   UPLOAD_MAX_FILE_SIZE_MB,
@@ -10,12 +12,24 @@ import {
   getDefaultFieldTripBoardDescription,
   getFieldTripClassLabel,
   hydrateClassesWithUnlockState,
+  normalizeFieldTripAccessMode,
   persistUnlockedClass,
 } from '../features/fieldTrip/utils';
 
 const MAX_ATTACHMENTS = UPLOAD_MAX_ATTACHMENTS;
 const MAX_FILE_SIZE = UPLOAD_MAX_FILE_SIZE_BYTES;
+const MAX_VIDEO_FILE_SIZE = FIELD_TRIP_VIDEO_MAX_SIZE_BYTES;
 const FIELD_TRIP_CSRF_COOKIE = 'field_trip_csrf_token';
+const FIELD_TRIP_VIDEO_EXTENSIONS = /\.(mp4|webm|mov)$/i;
+const FIELD_TRIP_IMAGE_EXTENSIONS = /\.(png|jpe?g|gif|webp)$/i;
+
+function isVideoLikeFile(file) {
+  return Boolean(file?.type?.startsWith('video/') || FIELD_TRIP_VIDEO_EXTENSIONS.test(file?.name || ''));
+}
+
+function isImageLikeFile(file) {
+  return Boolean(file?.type?.startsWith('image/') || FIELD_TRIP_IMAGE_EXTENSIONS.test(file?.name || ''));
+}
 
 function buildFieldTripWriteConfig() {
   const csrf = readCookie(FIELD_TRIP_CSRF_COOKIE);
@@ -56,27 +70,52 @@ function unwrapCollection(data) {
   return [];
 }
 
+function normalizeAccessMode(data) {
+  return normalizeFieldTripAccessMode(data?.accessMode);
+}
+
 function normalizeClassRows(data) {
+  const accessMode = normalizeAccessMode(data);
   const rows = unwrapCollection(data).map((row) => {
     const classId = String(row.classId || '');
     const label = row.label || getFieldTripClassLabel(classId);
     return {
+      accessMode,
       classId,
       label,
       postCount: Number(row.postCount || 0),
       isUnlocked: Boolean(row.isUnlocked),
-      boardDescription:
-        String(row.boardDescription || '').trim() || getDefaultFieldTripBoardDescription(label),
+      boardDescription: String(row.boardDescription || '').trim(),
     };
   });
 
-  return hydrateClassesWithUnlockState(rows);
+  return hydrateClassesWithUnlockState(rows).map((row) => ({
+    ...row,
+    boardDescription:
+      row.boardDescription ||
+      (row.isUnlocked ? getDefaultFieldTripBoardDescription(row.label, accessMode) : ''),
+  }));
+}
+
+function normalizeClassCollection(data) {
+  return {
+    accessMode: normalizeAccessMode(data),
+    items: normalizeClassRows(data),
+  };
 }
 
 function normalizePost(post) {
   if (!post || typeof post !== 'object') {
     return null;
   }
+
+  const normalizedAttachments = Array.isArray(post.attachments)
+    ? post.attachments
+        .map((attachment) => normalizeUploadResponse(attachment, FASTAPI_BASE_URL))
+        .filter(Boolean)
+    : [];
+  const videoAttachment =
+    normalizedAttachments.find((attachment) => attachment?.kind === 'video') || null;
 
   // Anonymous authors are serialized with authorUserId=0 so list/detail/edit
   // code can reason about one sentinel value instead of null-or-missing cases.
@@ -106,11 +145,8 @@ function normalizePost(post) {
     body: String(post.body || ''),
     // Field-trip attachments are served by FastAPI, so every URL is normalized
     // against the FastAPI base even when the main API base points elsewhere.
-    attachments: Array.isArray(post.attachments)
-      ? post.attachments
-          .map((attachment) => normalizeUploadResponse(attachment, FASTAPI_BASE_URL))
-          .filter(Boolean)
-      : [],
+    attachments: normalizedAttachments.filter((attachment) => attachment?.kind !== 'video'),
+    videoAttachment,
     createdAt: post.createdAt || '',
     updatedAt: post.updatedAt || post.createdAt || '',
   };
@@ -136,6 +172,13 @@ function normalizeScoreRows(data) {
   return unwrapCollection(data).map(normalizeScoreRow).filter(Boolean);
 }
 
+function normalizeScoreboard(data) {
+  return {
+    accessMode: normalizeAccessMode(data),
+    items: normalizeScoreRows(data),
+  };
+}
+
 export function getFieldTripErrorMessage(error, fallbackMessage) {
   const serverMessage = error?.response?.data?.error;
   if (typeof serverMessage === 'string' && serverMessage.trim()) {
@@ -158,14 +201,14 @@ export const fieldTripApi = {
   async listClasses() {
     try {
       const response = await fastapiApi.get('/api/community/field-trip/classes');
-      return normalizeClassRows(response.data);
+      return normalizeClassCollection(response.data);
     } catch (error) {
       if (!shouldUseMockFallback(error)) {
         throwFieldTripError(error, '반 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.');
       }
 
       const mockApi = await loadFieldTripMockApi();
-      return normalizeClassRows(await mockApi.listClasses());
+      return normalizeClassCollection(await mockApi.listClasses());
     }
   },
 
@@ -178,6 +221,9 @@ export const fieldTripApi = {
       return {
         classId: String(response.data?.classId || classId),
         isUnlocked: true,
+        boardDescription:
+          String(response.data?.boardDescription || '').trim() ||
+          getDefaultFieldTripBoardDescription(getFieldTripClassLabel(classId)),
       };
     } catch (error) {
       if (!shouldUseMockFallback(error)) {
@@ -280,11 +326,40 @@ export const fieldTripApi = {
   },
 
   async upload(file) {
-    if (!file.type?.startsWith('image/')) {
+    const isVideo = isVideoLikeFile(file);
+    const isImage = isImageLikeFile(file);
+    const sizeLimit = isVideo ? MAX_VIDEO_FILE_SIZE : MAX_FILE_SIZE;
+    const sizeLimitMb = isVideo ? FIELD_TRIP_VIDEO_MAX_SIZE_MB : UPLOAD_MAX_FILE_SIZE_MB;
+
+    if (!isImage && !isVideo) {
+      throw new Error('이미지 또는 영상 파일만 업로드할 수 있습니다.');
+    }
+
+    if (false && !isImage && !isVideo) {
+      throw new Error('이미지 또는 영상 파일만 업로드할 수 있습니다.');
+    }
+
+    if (file.size > sizeLimit) {
+      throw new Error(
+        isVideo
+          ? `영상은 ${sizeLimitMb}MB 이하만 업로드할 수 있습니다.`
+          : `첨부 용량은 ${sizeLimitMb}MB 이하만 가능합니다.`
+      );
+    }
+
+    if (false && file.size > sizeLimit) {
+      throw new Error(
+        isVideo
+          ? `영상은 ${sizeLimitMb}MB 이하만 업로드할 수 있습니다.`
+          : `첨부 용량은 ${sizeLimitMb}MB 이하만 가능합니다.`
+      );
+    }
+
+    if (!isImage && !isVideo) {
       throw new Error('이미지 파일만 업로드할 수 있습니다.');
     }
 
-    if (file.size > MAX_FILE_SIZE) {
+    if (file.size > sizeLimit) {
       throw new Error(`첨부 용량은 ${UPLOAD_MAX_FILE_SIZE_MB}MB 이하만 가능합니다.`);
     }
 
@@ -315,14 +390,14 @@ export const fieldTripApi = {
   async getScoreboard() {
     try {
       const response = await fastapiApi.get('/api/community/field-trip/scoreboard');
-      return normalizeScoreRows(response.data);
+      return normalizeScoreboard(response.data);
     } catch (error) {
       if (!shouldUseMockFallback(error)) {
         throwFieldTripError(error, '점수판을 불러오지 못했습니다.');
       }
 
       const mockApi = await loadFieldTripMockApi();
-      return normalizeScoreRows(await mockApi.getScoreboard());
+      return normalizeScoreboard(await mockApi.getScoreboard());
     }
   },
 
@@ -339,6 +414,27 @@ export const fieldTripApi = {
 
       const mockApi = await loadFieldTripMockApi();
       return normalizeScoreRow(await mockApi.adjustScore(classId, delta));
+    }
+  },
+
+  async updateAccessMode(accessMode) {
+    try {
+      const response = await fastapiApi.put('/api/community/field-trip/settings/access-mode', {
+        accessMode,
+      });
+      return {
+        accessMode: normalizeAccessMode(response.data),
+      };
+    } catch (error) {
+      if (!shouldUseMockFallback(error)) {
+        throwFieldTripError(error, '공개 모드를 변경하지 못했습니다.');
+      }
+
+      const mockApi = await loadFieldTripMockApi();
+      const result = await mockApi.updateAccessMode(accessMode);
+      return {
+        accessMode: normalizeAccessMode(result),
+      };
     }
   },
 

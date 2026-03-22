@@ -1,4 +1,7 @@
 import {
+  FIELD_TRIP_ACCESS_MODE_PASSWORD,
+  FIELD_TRIP_ACCESS_MODE_PUBLIC,
+  FIELD_TRIP_ACCESS_MODES,
   FIELD_TRIP_CLASS_IDS,
   FIELD_TRIP_MANAGER_ROLES,
   FIELD_TRIP_TABS,
@@ -56,18 +59,39 @@ export function isFieldTripClassId(value) {
   return typeof value === 'string' && CLASS_ID_SET.has(value);
 }
 
+export function normalizeFieldTripAccessMode(value) {
+  const normalized = String(value || '').trim();
+  return FIELD_TRIP_ACCESS_MODES.includes(normalized)
+    ? normalized
+    : FIELD_TRIP_ACCESS_MODE_PASSWORD;
+}
+
+export function isFieldTripPublicAccessMode(accessMode) {
+  return normalizeFieldTripAccessMode(accessMode) === FIELD_TRIP_ACCESS_MODE_PUBLIC;
+}
+
 export function getFieldTripClassLabel(classId) {
   return `${classId}반`;
 }
 
-export function getDefaultFieldTripBoardDescription(classLabel) {
+export function getDefaultFieldTripBoardDescription(
+  classLabel,
+  accessMode = FIELD_TRIP_ACCESS_MODE_PASSWORD
+) {
+  if (isFieldTripPublicAccessMode(accessMode)) {
+    return `${classLabel} 게시판이 완전 공개 모드입니다. 누구나 현장 기록 글을 확인하고 작성할 수 있습니다.`;
+  }
+
   return `비밀번호를 확인하면 ${classLabel} 학생들만 현장 기록 글을 확인하고 작성할 수 있습니다.`;
 }
 
-export function resolveFieldTripBoardDescription(classSummary) {
+export function resolveFieldTripBoardDescription(
+  classSummary,
+  accessMode = FIELD_TRIP_ACCESS_MODE_PASSWORD
+) {
   const label = classSummary?.label || getFieldTripClassLabel(classSummary?.classId || '');
   const stored = String(classSummary?.boardDescription || '').trim();
-  return stored || getDefaultFieldTripBoardDescription(label);
+  return stored || getDefaultFieldTripBoardDescription(label, accessMode);
 }
 
 export function isFieldTripManagerRole(role) {
@@ -79,8 +103,6 @@ export function canEditFieldTripPost(post, user) {
     return false;
   }
 
-  // Anonymous posts never have an owning user record, so only manager roles
-  // can edit them after the initial write.
   if (post.authorRole === 'anonymous') {
     return isFieldTripManagerRole(user.role);
   }
@@ -147,10 +169,16 @@ export function persistUnlockedClass(classId) {
 }
 
 export function hydrateClassesWithUnlockState(classRows = []) {
-  return classRows.map((row) => ({
-    ...row,
-    isUnlocked: Boolean(row.isUnlocked) || isClassUnlocked(row.classId),
-  }));
+  return classRows.map((row) => {
+    const accessMode = normalizeFieldTripAccessMode(row.accessMode);
+    return {
+      ...row,
+      accessMode,
+      isUnlocked: isFieldTripPublicAccessMode(accessMode)
+        ? true
+        : Boolean(row.isUnlocked) || isClassUnlocked(row.classId),
+    };
+  });
 }
 
 export function formatFieldTripDate(createdAt) {
@@ -167,8 +195,6 @@ export function formatFieldTripDate(createdAt) {
 }
 
 export function buildMissionPreview(body, maxLength = 110) {
-  // Mission cards show a text-only summary even though the stored body can
-  // contain rich HTML and embedded upload links.
   const normalized = toPlainText(String(body || ''))
     .replace(/\s+/g, ' ')
     .trim();

@@ -218,7 +218,7 @@ class FieldTripAttachmentInput(BaseModel):
     name: str = Field(min_length=1, max_length=255)
     size: int = Field(default=0, ge=0)
     mime: str = Field(min_length=1, max_length=120)
-    kind: Literal['image', 'file']
+    kind: Literal['image', 'file', 'video']
 
 
 class FieldTripCreatePostRequest(BaseModel):
@@ -254,3 +254,7 @@ class FieldTripPasswordUpdateRequest(BaseModel):
 
 class FieldTripBoardDescriptionUpdateRequest(BaseModel):
     boardDescription: str = Field(default='', max_length=240)
+
+
+class FieldTripAccessModeUpdateRequest(BaseModel):
+    accessMode: Literal['password', 'public']

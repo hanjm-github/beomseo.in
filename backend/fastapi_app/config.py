@@ -138,6 +138,9 @@ class Settings(BaseSettings):
     # Rich-text mission posts now share the editor used by notices, so the body
     # budget needs to cover embedded markup in addition to visible text.
     FIELD_TRIP_MAX_BODY_LENGTH: int = 6000
+    FIELD_TRIP_VIDEO_MAX_SIZE_MB: int = 500
+    FIELD_TRIP_VIDEO_ALLOWED_MIME_TYPES: str = 'video/mp4,video/webm,video/quicktime'
+    FIELD_TRIP_VIDEO_ALLOWED_EXTENSIONS: str = 'mp4,webm,mov'
 
     @property
     def upload_allowed_mime_types_set(self) -> set[str]:
@@ -146,6 +149,21 @@ class Settings(BaseSettings):
     @property
     def upload_allowed_extensions_set(self) -> set[str]:
         return {value.lower().lstrip('.') for value in _parse_csv(self.UPLOAD_ALLOWED_EXTENSIONS)}
+
+    @property
+    def field_trip_video_max_size_bytes(self) -> int:
+        return int(self.FIELD_TRIP_VIDEO_MAX_SIZE_MB) * 1024 * 1024
+
+    @property
+    def field_trip_video_allowed_mime_types_set(self) -> set[str]:
+        return {value.lower() for value in _parse_csv(self.FIELD_TRIP_VIDEO_ALLOWED_MIME_TYPES)}
+
+    @property
+    def field_trip_video_allowed_extensions_set(self) -> set[str]:
+        return {
+            value.lower().lstrip('.')
+            for value in _parse_csv(self.FIELD_TRIP_VIDEO_ALLOWED_EXTENSIONS)
+        }
 
     @property
     def field_trip_upload_config(self) -> dict:
@@ -159,8 +177,12 @@ class Settings(BaseSettings):
             },
             'MAX_ATTACH_SIZE': self.MAX_ATTACH_SIZE,
             'MAX_ATTACH_COUNT': self.MAX_ATTACH_COUNT,
-            'UPLOAD_ALLOWED_MIME_TYPES': self.upload_allowed_mime_types_set,
-            'UPLOAD_ALLOWED_EXTENSIONS': self.upload_allowed_extensions_set,
+            'UPLOAD_ALLOWED_MIME_TYPES': (
+                self.upload_allowed_mime_types_set | self.field_trip_video_allowed_mime_types_set
+            ),
+            'UPLOAD_ALLOWED_EXTENSIONS': (
+                self.upload_allowed_extensions_set | self.field_trip_video_allowed_extensions_set
+            ),
             'UPLOAD_TEMP_PREVIEW_TTL_SECONDS': self.UPLOAD_TEMP_PREVIEW_TTL_SECONDS,
             'UPLOAD_TEMP_PREVIEW_SIGNING_KEY': (
                 self.UPLOAD_TEMP_PREVIEW_SIGNING_KEY or self.JWT_SECRET_KEY

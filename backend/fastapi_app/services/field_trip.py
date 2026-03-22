@@ -29,13 +29,31 @@ from utils.files import (
 from utils.security import hash_password, verify_password
 
 from ..config import Settings
-from ..models import FieldTripClass, FieldTripPost, FieldTripPostAttachment, User
+from ..models import (
+    FieldTripClass,
+    FieldTripPost,
+    FieldTripPostAttachment,
+    FieldTripSettings,
+    User,
+)
 from ..utils import sanitize_plain_text
 
 
 FIELD_TRIP_MANAGER_ROLES = {'student_council', 'admin'}
 FIELD_TRIP_SCORE_STEP = 5
 FIELD_TRIP_ANONYMOUS_ROLE = 'anonymous'
+FIELD_TRIP_VIDEO_KIND = 'video'
+FIELD_TRIP_INLINE_MEDIA_KINDS = {'image', FIELD_TRIP_VIDEO_KIND}
+FIELD_TRIP_ALLOWED_ATTACHMENT_KINDS = {'image', 'file', FIELD_TRIP_VIDEO_KIND}
+FIELD_TRIP_MAX_VIDEO_ATTACHMENTS = 1
+FIELD_TRIP_ACCESS_MODE_PASSWORD = 'password'
+FIELD_TRIP_ACCESS_MODE_PUBLIC = 'public'
+FIELD_TRIP_ACCESS_MODES = {
+    FIELD_TRIP_ACCESS_MODE_PASSWORD,
+    FIELD_TRIP_ACCESS_MODE_PUBLIC,
+}
+FIELD_TRIP_SETTINGS_SINGLETON_ID = 1
+_field_trip_settings_table_ready = False
 
 
 class FieldTripError(Exception):
@@ -72,6 +90,35 @@ def _build_upload_url(settings: Settings, filename: str) -> str:
     return build_upload_url(_field_trip_upload_config(settings), 'field_trip', filename)
 
 
+def _normalize_access_mode(value: str | None) -> str:
+    normalized = sanitize_plain_text(value, max_length=16).lower()
+    if normalized in FIELD_TRIP_ACCESS_MODES:
+        return normalized
+    return FIELD_TRIP_ACCESS_MODE_PASSWORD
+
+
+async def get_field_trip_access_mode(session: AsyncSession) -> str:
+    await _ensure_field_trip_settings_table(session)
+    settings_row = await session.get(FieldTripSettings, FIELD_TRIP_SETTINGS_SINGLETON_ID)
+    if not settings_row:
+        return FIELD_TRIP_ACCESS_MODE_PASSWORD
+    return _normalize_access_mode(settings_row.access_mode)
+
+
+async def _ensure_field_trip_settings_table(session: AsyncSession) -> None:
+    global _field_trip_settings_table_ready
+    if _field_trip_settings_table_ready:
+        return
+
+    await session.run_sync(
+        lambda sync_session: FieldTripSettings.__table__.create(
+            bind=sync_session.get_bind(),
+            checkfirst=True,
+        )
+    )
+    _field_trip_settings_table_ready = True
+
+
 def _guess_mime_from_path(file_path: Path) -> str:
     guessed, _ = mimetypes.guess_type(str(file_path))
     return guessed or 'application/octet-stream'
@@ -81,16 +128,66 @@ def _attachment_public_dict(attachment: FieldTripPostAttachment, settings: Setti
     return attachment.to_dict(_build_upload_url(settings, attachment.stored_filename))
 
 
-def _get_default_board_description(class_label: str) -> str:
+def _is_inline_media_mime(mime: str) -> bool:
+    return str(mime or '').startswith(('image/', 'video/'))
+
+
+def _get_default_board_description_legacy(class_label: str) -> str:
     return (
         f'비밀번호를 확인하면 {class_label} 학생들만 현장 기록 글을 확인하고 '
         '작성할 수 있습니다.'
     )
 
 
-def _resolve_board_description(class_row: FieldTripClass) -> str:
+def _resolve_board_description_legacy(class_row: FieldTripClass) -> str:
     stored = sanitize_plain_text(class_row.board_description, max_length=240)
     return stored or _get_default_board_description(class_row.label)
+
+
+def _get_default_board_description(
+    class_label: str,
+    access_mode: str = FIELD_TRIP_ACCESS_MODE_PASSWORD,
+) -> str:
+    if access_mode == FIELD_TRIP_ACCESS_MODE_PUBLIC:
+        return (
+            f'{class_label} 寃뚯떆?먭? ?꾩쟾 怨듦컻 紐⑤뱶?낅땲?? '
+            '?⑤뒓援ш굹 ?꾩옣 湲곕줉 湲???뺤씤?섍퀬 ?묒꽦?????덉뒿?덈떎.'
+        )
+    return (
+        f'鍮꾨?踰덊샇瑜??뺤씤?섎㈃ {class_label} ?숈깮?ㅻ쭔 ?꾩옣 湲곕줉 湲???뺤씤?섍퀬 '
+        '?묒꽦?????덉뒿?덈떎.'
+    )
+
+
+def _resolve_board_description(
+    class_row: FieldTripClass,
+    access_mode: str = FIELD_TRIP_ACCESS_MODE_PASSWORD,
+) -> str:
+    stored = sanitize_plain_text(class_row.board_description, max_length=240)
+    return stored or _get_default_board_description(class_row.label, access_mode)
+
+
+def _get_default_board_description(
+    class_label: str,
+    access_mode: str = FIELD_TRIP_ACCESS_MODE_PASSWORD,
+) -> str:
+    if access_mode == FIELD_TRIP_ACCESS_MODE_PUBLIC:
+        return (
+            f'{class_label} 게시판이 완전 공개 모드입니다. '
+            '누구나 현장 기록 글을 확인하고 작성할 수 있습니다.'
+        )
+    return (
+        f'비밀번호를 확인하면 {class_label} 학생들만 현장 기록 글을 확인하고 '
+        '작성할 수 있습니다.'
+    )
+
+
+def _resolve_board_description(
+    class_row: FieldTripClass,
+    access_mode: str = FIELD_TRIP_ACCESS_MODE_PASSWORD,
+) -> str:
+    stored = sanitize_plain_text(class_row.board_description, max_length=240)
+    return stored or _get_default_board_description(class_row.label, access_mode)
 
 
 def _get_user_role(current_user: User) -> str:
@@ -265,7 +362,7 @@ def _normalize_attachment_payload(
     seen_filenames.add(filename)
 
     kind = sanitize_plain_text(attachment.get('kind'), max_length=16)
-    if kind not in {'image', 'file'}:
+    if kind not in FIELD_TRIP_ALLOWED_ATTACHMENT_KINDS:
         raise FieldTripError('첨부 파일 종류가 올바르지 않습니다.', 422, 'field_trip_attachment_kind')
 
     return {
@@ -308,9 +405,18 @@ async def _sync_post_attachments(
         attachment.stored_filename: attachment for attachment in existing_attachments
     }
     retained_filenames: set[str] = set()
+    video_count = 0
 
     for index, attachment in enumerate(attachments_payload):
         normalized = _normalize_attachment_payload(settings, attachment, retained_filenames)
+        if normalized['kind'] == FIELD_TRIP_VIDEO_KIND:
+            video_count += 1
+            if video_count > FIELD_TRIP_MAX_VIDEO_ATTACHMENTS:
+                raise FieldTripError(
+                    '영상은 게시글마다 1개만 첨부할 수 있습니다.',
+                    422,
+                    'field_trip_video_attachment_count',
+                )
         existing_attachment = existing_by_filename.get(normalized['stored_filename'])
 
         if existing_attachment:
@@ -389,10 +495,12 @@ async def _remove_orphaned_uploads(
                 continue
 
 
-async def list_classes(
+async def list_classes_legacy(
     session: AsyncSession,
     unlocked_class_ids: set[str],
+    current_user: User | None = None,
 ) -> dict:
+    can_view_locked_descriptions = bool(current_user and _get_user_role(current_user) == 'admin')
     result = await session.execute(
         select(FieldTripClass, func.count(FieldTripPost.id))
         .outerjoin(FieldTripPost, FieldTripPost.class_id == FieldTripClass.class_id)
@@ -403,19 +511,23 @@ async def list_classes(
         class_row.to_summary_dict(
             post_count=post_count,
             is_unlocked=class_row.class_id in unlocked_class_ids,
-            board_description=_resolve_board_description(class_row),
+            board_description=(
+                _resolve_board_description(class_row)
+                if class_row.class_id in unlocked_class_ids or can_view_locked_descriptions
+                else None
+            ),
         )
         for class_row, post_count in result.all()
     ]
     return {'items': items}
 
 
-async def unlock_class(
+async def unlock_class_legacy(
     session: AsyncSession,
     class_id: str,
     password: str,
     unlocked_class_ids: set[str],
-) -> set[str]:
+) -> dict:
     class_row = await _require_class(session, class_id)
     normalized_password = sanitize_plain_text(password, max_length=64)
     if not normalized_password or not verify_password(normalized_password, class_row.password_hash):
@@ -427,7 +539,72 @@ async def unlock_class(
 
     next_unlocked = set(unlocked_class_ids)
     next_unlocked.add(class_row.class_id)
-    return next_unlocked
+    return {
+        'classId': class_row.class_id,
+        'isUnlocked': True,
+        'boardDescription': _resolve_board_description(class_row),
+        'unlockedClassIds': next_unlocked,
+    }
+
+
+async def list_classes(
+    session: AsyncSession,
+    unlocked_class_ids: set[str],
+    current_user: User | None = None,
+) -> dict:
+    access_mode = await get_field_trip_access_mode(session)
+    is_public_mode = access_mode == FIELD_TRIP_ACCESS_MODE_PUBLIC
+    can_view_locked_descriptions = bool(
+        is_public_mode or (current_user and _get_user_role(current_user) == 'admin')
+    )
+    result = await session.execute(
+        select(FieldTripClass, func.count(FieldTripPost.id))
+        .outerjoin(FieldTripPost, FieldTripPost.class_id == FieldTripClass.class_id)
+        .group_by(FieldTripClass.class_id)
+        .order_by(cast(FieldTripClass.class_id, Integer))
+    )
+    items = [
+        class_row.to_summary_dict(
+            post_count=post_count,
+            is_unlocked=is_public_mode or class_row.class_id in unlocked_class_ids,
+            board_description=(
+                _resolve_board_description(class_row, access_mode)
+                if is_public_mode
+                or class_row.class_id in unlocked_class_ids
+                or can_view_locked_descriptions
+                else None
+            ),
+        )
+        for class_row, post_count in result.all()
+    ]
+    return {'items': items, 'accessMode': access_mode}
+
+
+async def unlock_class(
+    session: AsyncSession,
+    class_id: str,
+    password: str,
+    unlocked_class_ids: set[str],
+) -> dict:
+    class_row = await _require_class(session, class_id)
+    access_mode = await get_field_trip_access_mode(session)
+    if access_mode != FIELD_TRIP_ACCESS_MODE_PUBLIC:
+        normalized_password = sanitize_plain_text(password, max_length=64)
+        if not normalized_password or not verify_password(normalized_password, class_row.password_hash):
+            raise FieldTripError(
+                '鍮꾨?踰덊샇媛 ?щ컮瑜댁? ?딆뒿?덈떎. ?ㅼ떆 ?뺤씤??二쇱꽭??',
+                401,
+                'field_trip_invalid_password',
+            )
+
+    next_unlocked = set(unlocked_class_ids)
+    next_unlocked.add(class_row.class_id)
+    return {
+        'classId': class_row.class_id,
+        'isUnlocked': True,
+        'boardDescription': _resolve_board_description(class_row, access_mode),
+        'unlockedClassIds': next_unlocked,
+    }
 
 
 async def list_posts(
@@ -561,7 +738,15 @@ async def upload_file(
 ) -> dict:
     adapter = FastAPIUploadAdapter(upload_file)
     config = _field_trip_upload_config(settings)
-    result = validate_upload(adapter, config, require_image=True)
+    result = validate_upload(
+        adapter,
+        config,
+        allowed_kinds=FIELD_TRIP_INLINE_MEDIA_KINDS,
+        max_size_overrides={
+            'default': settings.MAX_ATTACH_SIZE,
+            'video/': settings.field_trip_video_max_size_bytes,
+        },
+    )
     if not result.get('ok'):
         raise FieldTripError(
             result.get('error', '파일 검증에 실패했습니다.'),
@@ -604,6 +789,7 @@ async def get_upload_delivery(
     attachment = result.scalar_one_or_none()
     attachment_url = build_upload_url(config, 'field_trip', filename)
     attachment_post = attachment.post if attachment else None
+    access_mode = await get_field_trip_access_mode(session)
 
     if not attachment_post:
         # Rich-text bodies can embed uploaded images without keeping a dedicated
@@ -625,11 +811,14 @@ async def get_upload_delivery(
         return {
             'path': file_path,
             'downloadName': filename,
-            'contentDisposition': 'inline' if media_type.startswith('image/') else 'attachment',
+            'contentDisposition': 'inline' if _is_inline_media_mime(media_type) else 'attachment',
             'mediaType': media_type,
         }
 
-    if not attachment_post or attachment_post.class_id not in unlocked_class_ids:
+    if (
+        access_mode != FIELD_TRIP_ACCESS_MODE_PUBLIC
+        and (not attachment_post or attachment_post.class_id not in unlocked_class_ids)
+    ):
         raise FieldTripError(
             '이 첨부 파일을 보려면 반 비밀번호 확인이 필요합니다.',
             403,
@@ -641,7 +830,11 @@ async def get_upload_delivery(
         'downloadName': attachment.original_name if attachment else filename,
         'contentDisposition': (
             'inline'
-            if (attachment.kind == 'image' if attachment else _guess_mime_from_path(file_path).startswith('image/'))
+            if (
+                attachment.kind in FIELD_TRIP_INLINE_MEDIA_KINDS
+                if attachment
+                else _is_inline_media_mime(_guess_mime_from_path(file_path))
+            )
             else 'attachment'
         ),
         'mediaType': attachment.mime if attachment else _guess_mime_from_path(file_path),
@@ -649,10 +842,14 @@ async def get_upload_delivery(
 
 
 async def get_scoreboard(session: AsyncSession) -> dict:
+    access_mode = await get_field_trip_access_mode(session)
     result = await session.execute(
         select(FieldTripClass).order_by(cast(FieldTripClass.class_id, Integer))
     )
-    return {'items': [row.to_score_dict() for row in result.scalars()]}
+    return {
+        'items': [row.to_score_dict() for row in result.scalars()],
+        'accessMode': access_mode,
+    }
 
 
 async def adjust_score(
@@ -702,6 +899,42 @@ async def adjust_score(
     return class_row.to_score_dict()
 
 
+async def update_access_mode(
+    session: AsyncSession,
+    access_mode: str,
+) -> dict:
+    await _ensure_field_trip_settings_table(session)
+    normalized_mode = sanitize_plain_text(access_mode, max_length=16).lower()
+    if normalized_mode not in FIELD_TRIP_ACCESS_MODES:
+        raise FieldTripError(
+            '?묒냽 紐⑤뱶媛 ?щ컮瑜댁? ?딆뒿?덈떎.',
+            422,
+            'field_trip_access_mode_invalid',
+        )
+
+    settings_row = await session.get(FieldTripSettings, FIELD_TRIP_SETTINGS_SINGLETON_ID)
+    if settings_row is None:
+        settings_row = FieldTripSettings(
+            id=FIELD_TRIP_SETTINGS_SINGLETON_ID,
+            access_mode=normalized_mode,
+        )
+        session.add(settings_row)
+    else:
+        settings_row.access_mode = normalized_mode
+
+    try:
+        await session.commit()
+    except SQLAlchemyError as exc:
+        await session.rollback()
+        raise FieldTripError(
+            '?묒냽 紐⑤뱶瑜???ν븯吏 紐삵뻽?듬땲??',
+            500,
+            'field_trip_access_mode_update_failed',
+        ) from exc
+
+    return settings_row.to_dict()
+
+
 async def update_class_password(
     session: AsyncSession,
     class_id: str,
@@ -749,6 +982,7 @@ async def update_board_description(
     board_description: str,
 ) -> dict:
     class_row = await _require_class(session, class_id)
+    access_mode = await get_field_trip_access_mode(session)
     normalized_description = sanitize_plain_text(board_description, max_length=240) or None
     class_row.board_description = normalized_description
 
@@ -765,7 +999,7 @@ async def update_board_description(
     return {
         'classId': class_row.class_id,
         'label': class_row.label,
-        'boardDescription': _resolve_board_description(class_row),
+        'boardDescription': _resolve_board_description(class_row, access_mode),
     }
 
 

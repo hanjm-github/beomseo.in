@@ -24,6 +24,7 @@ from ..deps import (
     require_role,
 )
 from ..schemas import (
+    FieldTripAccessModeUpdateRequest,
     FieldTripBoardDescriptionUpdateRequest,
     FieldTripCreatePostRequest,
     FieldTripPasswordUpdateRequest,
@@ -42,6 +43,7 @@ from ..services.field_trip import (
     list_classes,
     list_posts,
     unlock_class,
+    update_access_mode,
     update_board_description,
     update_class_password,
     update_post,
@@ -74,8 +76,9 @@ def _set_field_trip_csrf_cookie(
 async def get_field_trip_classes(
     db: DbSession,
     unlocked_class_ids: FieldTripUnlockedClasses,
+    current_user: OptionalCurrentUser,
 ):
-    return await list_classes(db, unlocked_class_ids)
+    return await list_classes(db, unlocked_class_ids, current_user)
 
 
 @router.post('/classes/{class_id}/unlock')
@@ -87,7 +90,7 @@ async def unlock_field_trip_class(
     settings: SettingsDep,
     unlocked_class_ids: FieldTripUnlockedClasses,
 ):
-    next_unlocked = await unlock_class(db, class_id, body.password, unlocked_class_ids)
+    unlock_result = await unlock_class(db, class_id, body.password, unlocked_class_ids)
     csrf_token = generate_field_trip_csrf_token()
 
     unlock_cookie_kwargs = {
@@ -99,12 +102,16 @@ async def unlock_field_trip_class(
 
     response.set_cookie(
         settings.FIELD_TRIP_UNLOCK_COOKIE_NAME,
-        encode_field_trip_unlock_token(next_unlocked, settings),
+        encode_field_trip_unlock_token(unlock_result['unlockedClassIds'], settings),
         httponly=True,
         **unlock_cookie_kwargs,
     )
     _set_field_trip_csrf_cookie(response, settings, csrf_token)
-    return {'classId': str(class_id), 'isUnlocked': True}
+    return {
+        'classId': str(unlock_result['classId']),
+        'isUnlocked': True,
+        'boardDescription': unlock_result['boardDescription'],
+    }
 
 
 @router.get('/classes/{class_id}/posts')
@@ -252,6 +259,15 @@ async def get_field_trip_scoreboard(
     db: DbSession,
 ):
     return await get_scoreboard(db)
+
+
+@router.put('/settings/access-mode')
+async def put_field_trip_access_mode(
+    body: FieldTripAccessModeUpdateRequest,
+    db: DbSession,
+    _: object = Depends(require_role('admin')),
+):
+    return await update_access_mode(db, body.accessMode)
 
 
 @router.put('/scoreboard')

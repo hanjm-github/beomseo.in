@@ -1,4 +1,4 @@
-import { Minus, Plus } from 'lucide-react';
+import { Loader2, Minus, Plus } from 'lucide-react';
 import { useMemo } from 'react';
 import {
   Bar,
@@ -15,7 +15,11 @@ import {
   FIELD_TRIP_SCORE_STEP,
 } from '../../features/fieldTrip/constants';
 import styles from '../../pages/FieldTrip/FieldTripPage.module.css';
-import { getScoreboardSummary, sortScoreRowsByClassId } from '../../features/fieldTrip/utils';
+import {
+  getScoreboardSummary,
+  isFieldTripPublicAccessMode,
+  sortScoreRowsByClassId,
+} from '../../features/fieldTrip/utils';
 
 const tooltipContentStyle = {
   backgroundColor: 'var(--color-card-bg)',
@@ -26,14 +30,20 @@ const tooltipContentStyle = {
 
 export default function FieldTripScoreboard({
   rows,
+  accessMode,
   loading,
   canManage = false,
+  canManageAccessMode = false,
+  accessModeSaving = false,
+  accessModeError = '',
   pendingClassId = '',
   actionError = '',
   onAdjustScore,
+  onToggleAccessMode,
 }) {
   const orderedRows = useMemo(() => sortScoreRowsByClassId(rows), [rows]);
   const summary = useMemo(() => getScoreboardSummary(orderedRows), [orderedRows]);
+  const isPublicMode = isFieldTripPublicAccessMode(accessMode);
   const chartMaxScore = useMemo(() => {
     const highestScore = orderedRows.reduce(
       (maxScore, row) => Math.max(maxScore, Number(row.totalScore || 0)),
@@ -185,6 +195,39 @@ export default function FieldTripScoreboard({
           </ResponsiveContainer>
         </div>
       </section>
+
+      {canManageAccessMode ? (
+        <section className={`${styles.sectionCard} ${styles.accessModeCard}`}>
+          <div className={styles.sectionHeading}>
+            <div>
+              <p className={styles.sectionEyebrow}>공개 모드</p>
+              <h2 className={styles.sectionTitle}>수학여행 게시판 접근 방식</h2>
+              <p className={styles.sectionDescription}>
+                {isPublicMode
+                  ? '완전 공개 모드에서는 비밀번호 없이 게시판 열람, 글 작성, 첨부 업로드가 가능합니다.'
+                  : '비밀번호 모드에서는 지금처럼 각 반 게시판 비밀번호를 입력해야 대부분의 작업이 가능합니다.'}
+              </p>
+            </div>
+            <span className={styles.sectionPill}>
+              {isPublicMode ? '현재: 완전 공개' : '현재: 비밀번호'}
+            </span>
+          </div>
+
+          <div className={styles.accessModeActions}>
+            <button
+              type="button"
+              className={isPublicMode ? styles.secondaryButton : styles.primaryButton}
+              onClick={onToggleAccessMode}
+              disabled={accessModeSaving}
+            >
+              {accessModeSaving ? <Loader2 size={16} className={styles.spinner} /> : null}
+              {isPublicMode ? '비밀번호 모드로 전환' : '완전 공개 모드로 전환'}
+            </button>
+          </div>
+
+          {accessModeError ? <p className={styles.formError}>{accessModeError}</p> : null}
+        </section>
+      ) : null}
     </div>
   );
 }

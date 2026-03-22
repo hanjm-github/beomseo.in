@@ -61,6 +61,33 @@ class FieldTripClass(db.Model):
         }
 
 
+class FieldTripSettings(db.Model):
+    __tablename__ = 'field_trip_settings'
+
+    id = db.Column(db.Integer, primary_key=True, default=1)
+    access_mode = db.Column(db.String(16), nullable=False, default='password')
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
+        nullable=False,
+    )
+
+    __table_args__ = (
+        db.CheckConstraint('id = 1', name='ck_field_trip_settings_singleton_id'),
+        db.CheckConstraint(
+            "access_mode IN ('password', 'public')",
+            name='ck_field_trip_settings_access_mode',
+        ),
+    )
+
+    def to_dict(self):
+        return {
+            'accessMode': self.access_mode or 'password',
+        }
+
+
 class FieldTripPost(db.Model):
     __tablename__ = 'field_trip_posts'
 

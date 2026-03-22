@@ -1,5 +1,6 @@
 import { ChevronRight, LayoutGrid, LockKeyhole, LockOpen } from 'lucide-react';
 import styles from '../../pages/FieldTrip/FieldTripPage.module.css';
+import { isFieldTripPublicAccessMode } from '../../features/fieldTrip/utils';
 
 function LoadingCard({ index }) {
   return (
@@ -15,11 +16,13 @@ function LoadingCard({ index }) {
 }
 
 export default function FieldTripClassGrid({
+  accessMode,
   classes,
   selectedClassId,
   loading,
   onSelectClass,
 }) {
+  const isPublicMode = isFieldTripPublicAccessMode(accessMode);
   return (
     <section className={`${styles.sectionCard} ${styles.classGridSection}`}>
       <div className={styles.sectionHeading}>
