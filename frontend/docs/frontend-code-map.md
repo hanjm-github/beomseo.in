@@ -29,7 +29,7 @@
 |---|---|
 | `src/pages` | 라우트 단위 화면 컴포넌트 |
 | `src/components` | 재사용 UI 컴포넌트 |
-| `src/api` | 백엔드 연동 모듈 및 mock fallback |
+| `src/api` | 백엔드 연동 모듈 |
 | `src/features` | 기능 단위 data/hook/utils 묶음 |
 | `src/context` | 전역 상태 컨텍스트(Theme/NetworkStatus/PWA/Auth) |
 | `src/pwa` | 오프라인/설치 상태에서 재사용하는 브라우저 이벤트 유틸 |
@@ -277,8 +277,6 @@ graph TD
 | 공통 HTTP 클라이언트 | `src/api/auth.js` | Axios 인스턴스, CSRF 헤더, 401 refresh 재시도, transport 실패 시 오프라인 이벤트 발행 |
 | 기능 API | `src/api/*.js` | 기능별 endpoint 래핑 및 응답 정규화 |
 | 응답 정규화 | `src/api/normalizers.js` | 페이지네이션/업로드 URL 보정 |
-| mock 정책 | `src/api/mockPolicy.js` | `DEV + VITE_ENABLE_API_MOCKS=1 + transport error` 조건에서만 fallback |
-| mock 구현 | `src/api/mocks/*.mock.js` | 실제 응답 형태를 모사한 개발용 데이터 |
 
 상세 메서드/엔드포인트는 [frontend-api-reference.md](./frontend-api-reference.md)를 참고합니다.
 

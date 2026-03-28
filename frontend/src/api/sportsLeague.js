@@ -3,17 +3,15 @@
  * @description Exposes the sports league data boundary used by the live text frontend.
  */
 
-import { ENABLE_API_MOCKS, shouldUseMockFallback } from './mockPolicy';
 import { fastapiApi, FASTAPI_BASE_URL } from './fastapiClient';
 import { SPORTS_LEAGUE_MANAGER_ROLES } from '../features/sportsLeague/data';
-import { sportsLeagueMockApi } from './mocks/sportsLeague.mock';
+
 const sportsApi = fastapiApi;
 const BROADCAST_CHANNEL_NAME = 'sports-league-live';
 const STORAGE_KEY_PREFIX = 'beomseo:sports-league:';
 const STREAM_RECONNECT_MS = 3000;
 const POLL_INTERVAL_MS = 5000;
 
-const fallbackCategoryIds = new Set();
 const memorySnapshots = new Map();
 const subscriptionState = new Map();
 
@@ -47,7 +45,6 @@ function writeStorage(key, value) {
 }
 
 function getCategoryState(categoryId) {
-  // Each category shares one transport state so multiple listeners do not duplicate EventSource work.
   const current =
     subscriptionState.get(categoryId) || {
       listeners: new Set(),
@@ -55,7 +52,6 @@ function getCategoryState(categoryId) {
       reconnectTimer: null,
       pollTimer: null,
       isStreamHealthy: false,
-      mockUnsubscribe: null,
     };
   subscriptionState.set(categoryId, current);
   return current;
@@ -90,6 +86,7 @@ function hydrateSnapshot(categoryId) {
 
   const raw = readStorage(getStorageKey(categoryId));
   if (!raw) return null;
+
   try {
     const parsed = JSON.parse(raw);
     memorySnapshots.set(categoryId, parsed);
@@ -134,18 +131,13 @@ function stopStream(categoryId) {
   }
   state.isStreamHealthy = false;
   clearTimers(state);
-  if (state.mockUnsubscribe) {
-    state.mockUnsubscribe();
-    state.mockUnsubscribe = null;
-  }
 }
 
 function startPolling(categoryId) {
   if (!canUseWindow()) return;
   const state = getCategoryState(categoryId);
-  if (state.pollTimer || shouldUseFallbackForCategory(categoryId)) return;
+  if (state.pollTimer) return;
 
-  // Polling only runs while SSE is unhealthy and stops as soon as the stream recovers.
   state.pollTimer = window.setInterval(async () => {
     try {
       const snapshot = await fetchCategorySnapshot(categoryId);
@@ -159,7 +151,7 @@ function startPolling(categoryId) {
 function scheduleReconnect(categoryId) {
   if (!canUseWindow()) return;
   const state = getCategoryState(categoryId);
-  if (state.reconnectTimer || shouldUseFallbackForCategory(categoryId)) return;
+  if (state.reconnectTimer) return;
 
   state.reconnectTimer = window.setTimeout(async () => {
     state.reconnectTimer = null;
@@ -175,7 +167,6 @@ function scheduleReconnect(categoryId) {
 
 function startStream(categoryId) {
   if (!canUseWindow()) return;
-  if (shouldUseFallbackForCategory(categoryId)) return;
 
   const state = getCategoryState(categoryId);
   if (!state.listeners.size || state.eventSource) return;
@@ -224,7 +215,6 @@ function initializeSync() {
       const nextCategoryId = event?.data?.categoryId;
       const snapshot = event?.data?.snapshot;
       if (!nextCategoryId || !snapshot) return;
-      // Skip rebroadcast/storage writes to avoid infinite cross-tab echo loops.
       pushSnapshot(nextCategoryId, snapshot, {
         skipBroadcast: true,
         skipStorage: true,
@@ -250,58 +240,27 @@ function initializeSync() {
   });
 }
 
-function shouldUseFallbackForCategory(categoryId) {
-  return ENABLE_API_MOCKS && fallbackCategoryIds.has(categoryId);
-}
-
-async function withBackendFallback(categoryId, backendCall, mockCall) {
-  if (shouldUseFallbackForCategory(categoryId)) {
-    return mockCall();
-  }
-
-  try {
-    return await backendCall();
-  } catch (error) {
-    if (!shouldUseMockFallback(error)) throw error;
-    // Once transport-level failure happens in dev, keep the category on mock transport for stability.
-    fallbackCategoryIds.add(categoryId);
-    stopStream(categoryId);
-    return mockCall();
-  }
-}
-
 export const sportsLeagueApi = {
   managerRoles: SPORTS_LEAGUE_MANAGER_ROLES,
 
   async getCategory(categoryId) {
     initializeSync();
     const cached = hydrateSnapshot(categoryId);
-    if (cached && !shouldUseFallbackForCategory(categoryId)) {
-      // Render cached data first, then refresh in the background for stale-while-revalidate UX.
+    if (cached) {
       fetchCategorySnapshot(categoryId)
         .then((snapshot) => pushSnapshot(categoryId, snapshot))
-        .catch(() => { });
+        .catch(() => {});
       return cached;
     }
 
-    const snapshot = await withBackendFallback(
-      categoryId,
-      () => fetchCategorySnapshot(categoryId),
-      () => sportsLeagueMockApi.getCategory(categoryId)
-    );
+    const snapshot = await fetchCategorySnapshot(categoryId);
     pushSnapshot(categoryId, snapshot);
     return snapshot;
   },
 
   async createEvent(categoryId, payload) {
-    const result = await withBackendFallback(
-      categoryId,
-      async () => {
-        const response = await sportsApi.post(`/api/sports-league/categories/${categoryId}/events`, payload);
-        return response.data;
-      },
-      () => sportsLeagueMockApi.createEvent(categoryId, payload)
-    );
+    const response = await sportsApi.post(`/api/sports-league/categories/${categoryId}/events`, payload);
+    const result = response.data;
     if (result?.snapshot) {
       pushSnapshot(categoryId, result.snapshot);
     }
@@ -309,71 +268,39 @@ export const sportsLeagueApi = {
   },
 
   async getPlayers(categoryId) {
-    // Roster data uses dedicated endpoints so snapshot/SSE traffic stays focused on match state only.
-    return withBackendFallback(
-      categoryId,
-      async () => {
-        const response = await sportsApi.get(`/api/sports-league/categories/${categoryId}/players`);
-        return response.data;
-      },
-      () => sportsLeagueMockApi.getPlayers(categoryId)
-    );
+    const response = await sportsApi.get(`/api/sports-league/categories/${categoryId}/players`);
+    return response.data;
   },
 
   async createPlayer(categoryId, teamId, payload) {
-    return withBackendFallback(
-      categoryId,
-      async () => {
-        const response = await sportsApi.post(
-          `/api/sports-league/categories/${categoryId}/teams/${teamId}/players`,
-          payload
-        );
-        return response.data;
-      },
-      () => sportsLeagueMockApi.createPlayer(categoryId, teamId, payload)
+    const response = await sportsApi.post(
+      `/api/sports-league/categories/${categoryId}/teams/${teamId}/players`,
+      payload
     );
+    return response.data;
   },
 
   async deletePlayer(categoryId, playerId) {
-    return withBackendFallback(
-      categoryId,
-      async () => {
-        const response = await sportsApi.delete(
-          `/api/sports-league/categories/${categoryId}/players/${playerId}`
-        );
-        return response.data;
-      },
-      () => sportsLeagueMockApi.deletePlayer(categoryId, playerId)
+    const response = await sportsApi.delete(
+      `/api/sports-league/categories/${categoryId}/players/${playerId}`
     );
+    return response.data;
   },
 
   async adjustPlayerStat(categoryId, playerId, payload) {
-    return withBackendFallback(
-      categoryId,
-      async () => {
-        // The backend accepts step deltas instead of absolute totals to match the inline +/- UI.
-        const response = await sportsApi.patch(
-          `/api/sports-league/categories/${categoryId}/players/${playerId}/stats`,
-          payload
-        );
-        return response.data;
-      },
-      () => sportsLeagueMockApi.adjustPlayerStat(categoryId, playerId, payload)
+    const response = await sportsApi.patch(
+      `/api/sports-league/categories/${categoryId}/players/${playerId}/stats`,
+      payload
     );
+    return response.data;
   },
 
   async updateEvent(categoryId, eventId, payload) {
-    const result = await withBackendFallback(
-      categoryId,
-      async () => {
-        const response = await sportsApi.patch(
-          `/api/sports-league/categories/${categoryId}/events/${eventId}`,
-          payload
-        );
-        return response.data;
-      },
-      () => sportsLeagueMockApi.updateEvent(categoryId, eventId, payload)
+    const response = await sportsApi.patch(
+      `/api/sports-league/categories/${categoryId}/events/${eventId}`,
+      payload
     );
+    const result = response.data;
     if (result?.snapshot) {
       pushSnapshot(categoryId, result.snapshot);
     }
@@ -381,16 +308,10 @@ export const sportsLeagueApi = {
   },
 
   async deleteEvent(categoryId, eventId) {
-    const result = await withBackendFallback(
-      categoryId,
-      async () => {
-        const response = await sportsApi.delete(
-          `/api/sports-league/categories/${categoryId}/events/${eventId}`
-        );
-        return response.data;
-      },
-      () => sportsLeagueMockApi.deleteEvent(categoryId, eventId)
+    const response = await sportsApi.delete(
+      `/api/sports-league/categories/${categoryId}/events/${eventId}`
     );
+    const result = response.data;
     if (result?.snapshot) {
       pushSnapshot(categoryId, result.snapshot);
     }
@@ -398,17 +319,11 @@ export const sportsLeagueApi = {
   },
 
   async updateMatchParticipants(categoryId, matchId, payload) {
-    const result = await withBackendFallback(
-      categoryId,
-      async () => {
-        const response = await sportsApi.patch(
-          `/api/sports-league/categories/${categoryId}/matches/${matchId}/participants`,
-          payload
-        );
-        return response.data;
-      },
-      () => sportsLeagueMockApi.updateMatchParticipants(categoryId, matchId, payload)
+    const response = await sportsApi.patch(
+      `/api/sports-league/categories/${categoryId}/matches/${matchId}/participants`,
+      payload
     );
+    const result = response.data;
     if (result?.snapshot) {
       pushSnapshot(categoryId, result.snapshot);
     }
@@ -425,22 +340,6 @@ export const sportsLeagueApi = {
       listener(cached);
     }
 
-    if (shouldUseFallbackForCategory(categoryId)) {
-      if (!state.mockUnsubscribe) {
-        state.mockUnsubscribe = sportsLeagueMockApi.subscribe(categoryId, (snapshot) => {
-          pushSnapshot(categoryId, snapshot, { skipBroadcast: true });
-        });
-      }
-      return () => {
-        state.listeners.delete(listener);
-        if (!state.listeners.size) {
-          stopStream(categoryId);
-          subscriptionState.delete(categoryId);
-        }
-      };
-    }
-
-    // A single shared EventSource keeps the browser connection count predictable per category.
     startStream(categoryId);
 
     return () => {

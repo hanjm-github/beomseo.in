@@ -1,6 +1,5 @@
 import { fastapiApi, FASTAPI_BASE_URL, readCookie } from './fastapiClient';
 import { normalizeUploadResponse } from './normalizers';
-import { ENABLE_API_MOCKS, shouldUseMockFallback } from './mockPolicy';
 import {
   FIELD_TRIP_VIDEO_MAX_SIZE_BYTES,
   FIELD_TRIP_VIDEO_MAX_SIZE_MB,
@@ -41,22 +40,6 @@ function buildFieldTripWriteConfig() {
       }
     : {};
 }
-
-const loadFieldTripMockApi = ENABLE_API_MOCKS
-  ? (() => {
-      let fieldTripMockApiPromise;
-
-      return () => {
-        if (!fieldTripMockApiPromise) {
-          fieldTripMockApiPromise = import('./mocks/fieldTrip.mock').then(
-            (module) => module.fieldTripMockApi
-          );
-        }
-
-        return fieldTripMockApiPromise;
-      };
-    })()
-  : null;
 
 function unwrapCollection(data) {
   if (Array.isArray(data)) {
@@ -117,8 +100,6 @@ function normalizePost(post) {
   const videoAttachment =
     normalizedAttachments.find((attachment) => attachment?.kind === 'video') || null;
 
-  // Anonymous authors are serialized with authorUserId=0 so list/detail/edit
-  // code can reason about one sentinel value instead of null-or-missing cases.
   const normalizedAuthorRole = String(
     post.authorRole ||
       (
@@ -143,8 +124,6 @@ function normalizePost(post) {
     nickname: String(post.nickname || ''),
     title: String(post.title || ''),
     body: String(post.body || ''),
-    // Field-trip attachments are served by FastAPI, so every URL is normalized
-    // against the FastAPI base even when the main API base points elsewhere.
     attachments: normalizedAttachments.filter((attachment) => attachment?.kind !== 'video'),
     videoAttachment,
     createdAt: post.createdAt || '',
@@ -203,12 +182,7 @@ export const fieldTripApi = {
       const response = await fastapiApi.get('/api/community/field-trip/classes');
       return normalizeClassCollection(response.data);
     } catch (error) {
-      if (!shouldUseMockFallback(error)) {
-        throwFieldTripError(error, '반 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.');
-      }
-
-      const mockApi = await loadFieldTripMockApi();
-      return normalizeClassCollection(await mockApi.listClasses());
+      throwFieldTripError(error, '반 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.');
     }
   },
 
@@ -226,14 +200,7 @@ export const fieldTripApi = {
           getDefaultFieldTripBoardDescription(getFieldTripClassLabel(classId)),
       };
     } catch (error) {
-      if (!shouldUseMockFallback(error)) {
-        throwFieldTripError(error, '비밀번호를 확인하지 못했습니다. 다시 시도해 주세요.');
-      }
-
-      const mockApi = await loadFieldTripMockApi();
-      const result = await mockApi.unlockClass(classId, password);
-      persistUnlockedClass(classId);
-      return result;
+      throwFieldTripError(error, '비밀번호를 확인하지 못했습니다. 다시 시도해 주세요.');
     }
   },
 
@@ -242,12 +209,7 @@ export const fieldTripApi = {
       const response = await fastapiApi.get(`/api/community/field-trip/classes/${classId}/posts`);
       return normalizePosts(response.data);
     } catch (error) {
-      if (!shouldUseMockFallback(error)) {
-        throwFieldTripError(error, '게시글 목록을 불러오지 못했습니다.');
-      }
-
-      const mockApi = await loadFieldTripMockApi();
-      return normalizePosts(await mockApi.listPosts(classId));
+      throwFieldTripError(error, '게시글 목록을 불러오지 못했습니다.');
     }
   },
 
@@ -258,12 +220,7 @@ export const fieldTripApi = {
       );
       return normalizePost(response.data);
     } catch (error) {
-      if (!shouldUseMockFallback(error)) {
-        throwFieldTripError(error, '게시글 상세를 불러오지 못했습니다.');
-      }
-
-      const mockApi = await loadFieldTripMockApi();
-      return normalizePost(await mockApi.getPost(classId, postId));
+      throwFieldTripError(error, '게시글 상세를 불러오지 못했습니다.');
     }
   },
 
@@ -272,18 +229,11 @@ export const fieldTripApi = {
       const response = await fastapiApi.post(
         `/api/community/field-trip/classes/${classId}/posts`,
         payload,
-        // Anonymous writers rely on the field-trip scoped CSRF token issued at
-        // unlock time, so create/update/delete all share this config helper.
         buildFieldTripWriteConfig()
       );
       return normalizePost(response.data);
     } catch (error) {
-      if (!shouldUseMockFallback(error)) {
-        throwFieldTripError(error, '게시글을 저장하지 못했습니다.');
-      }
-
-      const mockApi = await loadFieldTripMockApi();
-      return normalizePost(await mockApi.createPost(classId, payload));
+      throwFieldTripError(error, '게시글을 저장하지 못했습니다.');
     }
   },
 
@@ -296,12 +246,7 @@ export const fieldTripApi = {
       );
       return normalizePost(response.data);
     } catch (error) {
-      if (!shouldUseMockFallback(error)) {
-        throwFieldTripError(error, '게시글을 저장하지 못했습니다.');
-      }
-
-      const mockApi = await loadFieldTripMockApi();
-      return normalizePost(await mockApi.updatePost(classId, postId, payload));
+      throwFieldTripError(error, '게시글을 수정하지 못했습니다.');
     }
   },
 
@@ -316,12 +261,7 @@ export const fieldTripApi = {
         deleted: Boolean(response.data?.deleted),
       };
     } catch (error) {
-      if (!shouldUseMockFallback(error)) {
-        throwFieldTripError(error, '게시글을 삭제하지 못했습니다.');
-      }
-
-      const mockApi = await loadFieldTripMockApi();
-      return mockApi.deletePost(classId, postId);
+      throwFieldTripError(error, '게시글을 삭제하지 못했습니다.');
     }
   },
 
@@ -332,35 +272,15 @@ export const fieldTripApi = {
     const sizeLimitMb = isVideo ? FIELD_TRIP_VIDEO_MAX_SIZE_MB : UPLOAD_MAX_FILE_SIZE_MB;
 
     if (!isImage && !isVideo) {
-      throw new Error('이미지 또는 영상 파일만 업로드할 수 있습니다.');
-    }
-
-    if (false && !isImage && !isVideo) {
-      throw new Error('이미지 또는 영상 파일만 업로드할 수 있습니다.');
+      throw new Error('이미지 또는 동영상 파일만 업로드할 수 있습니다.');
     }
 
     if (file.size > sizeLimit) {
       throw new Error(
         isVideo
-          ? `영상은 ${sizeLimitMb}MB 이하만 업로드할 수 있습니다.`
+          ? `동영상은 ${sizeLimitMb}MB 이하만 업로드할 수 있습니다.`
           : `첨부 용량은 ${sizeLimitMb}MB 이하만 가능합니다.`
       );
-    }
-
-    if (false && file.size > sizeLimit) {
-      throw new Error(
-        isVideo
-          ? `영상은 ${sizeLimitMb}MB 이하만 업로드할 수 있습니다.`
-          : `첨부 용량은 ${sizeLimitMb}MB 이하만 가능합니다.`
-      );
-    }
-
-    if (!isImage && !isVideo) {
-      throw new Error('이미지 파일만 업로드할 수 있습니다.');
-    }
-
-    if (file.size > sizeLimit) {
-      throw new Error(`첨부 용량은 ${UPLOAD_MAX_FILE_SIZE_MB}MB 이하만 가능합니다.`);
     }
 
     try {
@@ -378,12 +298,7 @@ export const fieldTripApi = {
 
       return normalizeUploadResponse(response.data, FASTAPI_BASE_URL);
     } catch (error) {
-      if (!shouldUseMockFallback(error)) {
-        throwFieldTripError(error, '첨부 파일을 업로드하지 못했습니다.');
-      }
-
-      const mockApi = await loadFieldTripMockApi();
-      return normalizeUploadResponse(await mockApi.upload(file), FASTAPI_BASE_URL);
+      throwFieldTripError(error, '첨부 파일을 업로드하지 못했습니다.');
     }
   },
 
@@ -392,12 +307,7 @@ export const fieldTripApi = {
       const response = await fastapiApi.get('/api/community/field-trip/scoreboard');
       return normalizeScoreboard(response.data);
     } catch (error) {
-      if (!shouldUseMockFallback(error)) {
-        throwFieldTripError(error, '점수판을 불러오지 못했습니다.');
-      }
-
-      const mockApi = await loadFieldTripMockApi();
-      return normalizeScoreboard(await mockApi.getScoreboard());
+      throwFieldTripError(error, '점수판을 불러오지 못했습니다.');
     }
   },
 
@@ -408,12 +318,7 @@ export const fieldTripApi = {
       });
       return normalizeScoreRow(response.data);
     } catch (error) {
-      if (!shouldUseMockFallback(error)) {
-        throwFieldTripError(error, '점수를 저장하지 못했습니다.');
-      }
-
-      const mockApi = await loadFieldTripMockApi();
-      return normalizeScoreRow(await mockApi.adjustScore(classId, delta));
+      throwFieldTripError(error, '점수를 변경하지 못했습니다.');
     }
   },
 
@@ -426,15 +331,7 @@ export const fieldTripApi = {
         accessMode: normalizeAccessMode(response.data),
       };
     } catch (error) {
-      if (!shouldUseMockFallback(error)) {
-        throwFieldTripError(error, '공개 모드를 변경하지 못했습니다.');
-      }
-
-      const mockApi = await loadFieldTripMockApi();
-      const result = await mockApi.updateAccessMode(accessMode);
-      return {
-        accessMode: normalizeAccessMode(result),
-      };
+      throwFieldTripError(error, '공개 모드를 변경하지 못했습니다.');
     }
   },
 
@@ -451,12 +348,7 @@ export const fieldTripApi = {
         passwordUpdated: Boolean(response.data?.passwordUpdated),
       };
     } catch (error) {
-      if (!shouldUseMockFallback(error)) {
-        throwFieldTripError(error, '비밀번호를 저장하지 못했습니다.');
-      }
-
-      const mockApi = await loadFieldTripMockApi();
-      return mockApi.updateClassPassword(classId, password);
+      throwFieldTripError(error, '비밀번호를 변경하지 못했습니다.');
     }
   },
 
@@ -476,12 +368,7 @@ export const fieldTripApi = {
           getDefaultFieldTripBoardDescription(getFieldTripClassLabel(classId)),
       };
     } catch (error) {
-      if (!shouldUseMockFallback(error)) {
-        throwFieldTripError(error, '게시판 설명을 저장하지 못했습니다.');
-      }
-
-      const mockApi = await loadFieldTripMockApi();
-      return mockApi.updateBoardDescription(classId, boardDescription);
+      throwFieldTripError(error, '게시판 설명을 수정하지 못했습니다.');
     }
   },
 

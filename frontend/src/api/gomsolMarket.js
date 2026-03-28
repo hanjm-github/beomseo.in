@@ -6,7 +6,6 @@
  * Key dependencies:
  * - ./auth
  * - ./normalizers
- * - ./mockPolicy
  * - ../analytics/zaraz
  * Side effects:
  * - Performs HTTP requests to backend endpoints via shared API clients.
@@ -19,7 +18,6 @@ import {
   normalizeUploadResponse,
   toAbsoluteApiUrl,
 } from './normalizers';
-import { ENABLE_API_MOCKS, shouldUseMockFallback } from './mockPolicy';
 import { trackPostCreated, trackPostCreateFailed } from '../analytics/zaraz';
 import {
   UPLOAD_MAX_FILE_SIZE_BYTES,
@@ -103,20 +101,6 @@ const normalizePost = (post = {}) => {
   };
 };
 
-const loadGomsolMarketMockApi = ENABLE_API_MOCKS
-  ? (() => {
-      let gomsolMarketMockApiPromise;
-      return () => {
-        if (!gomsolMarketMockApiPromise) {
-          gomsolMarketMockApiPromise = import('./mocks/gomsolMarket.mock').then(
-            (module) => module.gomsolMarketMockApi
-          );
-        }
-        return gomsolMarketMockApiPromise;
-      };
-    })()
-  : null;
-
 export const gomsolMarketApi = {
   MAX_IMAGES,
   MAX_FILE_SIZE,
@@ -139,40 +123,27 @@ export const gomsolMarketApi = {
   },
 
   async list(params = {}) {
-    try {
-      const serverParams = {
-        status: params.status,
-        category: params.category,
-        approval: params.approval,
-        sort: params.sort,
-        q: params.q,
-        page: params.page,
-        pageSize: params.pageSize,
-        view: 'list',
-      };
-      const res = await api.get('/api/community/gomsol-market', { params: serverParams });
-      const normalized = normalizePaginatedResponse(res.data, PAGE_SIZE_DEFAULT);
-      return {
-        ...normalized,
-        items: (normalized.items || []).map(normalizePost),
-      };
-    } catch (err) {
-      if (!shouldUseMockFallback(err)) throw err;
-      const mockApi = await loadGomsolMarketMockApi();
-      const mock = await mockApi.list(params);
-      return normalizePaginatedResponse(mock, PAGE_SIZE_DEFAULT);
-    }
+    const serverParams = {
+      status: params.status,
+      category: params.category,
+      approval: params.approval,
+      sort: params.sort,
+      q: params.q,
+      page: params.page,
+      pageSize: params.pageSize,
+      view: 'list',
+    };
+    const res = await api.get('/api/community/gomsol-market', { params: serverParams });
+    const normalized = normalizePaginatedResponse(res.data, PAGE_SIZE_DEFAULT);
+    return {
+      ...normalized,
+      items: (normalized.items || []).map(normalizePost),
+    };
   },
 
   async detail(id, params = {}) {
-    try {
-      const res = await api.get(`/api/community/gomsol-market/${id}`, { params });
-      return normalizePost(res.data);
-    } catch (err) {
-      if (!shouldUseMockFallback(err)) throw err;
-      const mockApi = await loadGomsolMarketMockApi();
-      return mockApi.detail(id);
-    }
+    const res = await api.get(`/api/community/gomsol-market/${id}`, { params });
+    return normalizePost(res.data);
   },
 
   async create(payload = {}) {
@@ -186,70 +157,41 @@ export const gomsolMarketApi = {
       });
       return created;
     } catch (err) {
-      const useMockFallback = shouldUseMockFallback(err);
-      if (!useMockFallback) {
-        trackPostCreateFailed({
-          boardType: 'gomsol_market',
-          userRole: payload?.author?.role,
-          errorType: err,
-        });
-        throw err;
-      }
-      const mockApi = await loadGomsolMarketMockApi();
-      return mockApi.create(payload);
+      trackPostCreateFailed({
+        boardType: 'gomsol_market',
+        userRole: payload?.author?.role,
+        errorType: err,
+      });
+      throw err;
     }
   },
 
   async approve(id) {
-    try {
-      const res = await api.post(`/api/community/gomsol-market/${id}/approve`);
-      return normalizePost(res.data);
-    } catch (err) {
-      if (!shouldUseMockFallback(err)) throw err;
-      const mockApi = await loadGomsolMarketMockApi();
-      return mockApi.approve(id);
-    }
+    const res = await api.post(`/api/community/gomsol-market/${id}/approve`);
+    return normalizePost(res.data);
   },
 
   async unapprove(id) {
-    try {
-      const res = await api.post(`/api/community/gomsol-market/${id}/unapprove`);
-      return normalizePost(res.data);
-    } catch (err) {
-      if (!shouldUseMockFallback(err)) throw err;
-      const mockApi = await loadGomsolMarketMockApi();
-      return mockApi.unapprove(id);
-    }
+    const res = await api.post(`/api/community/gomsol-market/${id}/unapprove`);
+    return normalizePost(res.data);
   },
 
   async updateStatus(id, status) {
-    try {
-      const res = await api.post(`/api/community/gomsol-market/${id}/status`, { status });
-      return normalizePost(res.data);
-    } catch (err) {
-      if (!shouldUseMockFallback(err)) throw err;
-      const mockApi = await loadGomsolMarketMockApi();
-      return mockApi.updateStatus(id, status);
-    }
+    const res = await api.post(`/api/community/gomsol-market/${id}/status`, { status });
+    return normalizePost(res.data);
   },
 
   async upload(file) {
-    try {
-      if (!file) throw new Error('파일이 없습니다.');
-      if (file.size > MAX_FILE_SIZE) {
-        throw new Error(`이미지는 ${UPLOAD_MAX_FILE_SIZE_MB}MB 이하만 업로드할 수 있습니다.`);
-      }
-      const formData = new FormData();
-      formData.append('file', file);
-      const res = await api.post('/api/community/gomsol-market/uploads', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      return normalizeUploadResponse(res.data);
-    } catch (err) {
-      if (!shouldUseMockFallback(err)) throw err;
-      const mockApi = await loadGomsolMarketMockApi();
-      return mockApi.upload(file);
+    if (!file) throw new Error('파일이 없습니다.');
+    if (file.size > MAX_FILE_SIZE) {
+      throw new Error(`이미지는 ${UPLOAD_MAX_FILE_SIZE_MB}MB 이하만 업로드할 수 있습니다.`);
     }
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await api.post('/api/community/gomsol-market/uploads', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return normalizeUploadResponse(res.data);
   },
 };
 

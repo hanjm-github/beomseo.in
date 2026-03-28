@@ -74,7 +74,6 @@ export default function MainPage() {
           council: councilRes.items || [],
         });
         setCountdownEvent(schoolRes.countdownEvent || null);
-        setCountdownLoadError(Boolean(schoolRes.fromMock));
       } catch {
         if (!cancelled) {
           setError('공지 불러오기에 실패했습니다.');

@@ -20,7 +20,6 @@ PR 전에 아래 항목을 체크해 문서/코드 정합성을 유지합니다.
 
 - [ ] `src/api/*.js` 메서드/엔드포인트를 변경했다면 `docs/frontend-api-reference.md`를 갱신했다.
 - [ ] 백엔드 응답 형태 변경이 있는 경우 `src/api/normalizers.js` 영향 범위를 확인했다.
-- [ ] mock fallback 로직(`src/api/mockPolicy.js`) 조건을 의도대로 유지했다.
 
 ## 4. Analytics/PII 점검
 

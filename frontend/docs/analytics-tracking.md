@@ -86,7 +86,7 @@ flowchart LR
 | `post_created` | 각 `src/api/*.js`의 `create()` 성공 | `board_type`, `user_role`, `approval_status`, `page_path` |
 | `post_create_failed` | 각 `src/api/*.js`의 `create()` 실패(실제 API 실패) | `board_type`, `user_role`, `error_type`, `page_path` |
 
-`post_create_failed`는 mock fallback으로 처리되는 개발용 네트워크 실패를 제외하고 기록됩니다.
+`post_create_failed`는 게시글 생성 요청이 실제로 실패했을 때 기록됩니다.
 
 ## 5. 파라미터 정의
 

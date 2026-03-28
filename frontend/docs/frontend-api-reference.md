@@ -21,13 +21,12 @@
 - 수학여행 추가 CSRF 헤더: `X-Field-Trip-CSRF` (`field_trip_csrf_token` 쿠키와 쌍으로 사용)
 - 날짜 문자열 정규화: timezone 없는 ISO 문자열에 `Z` 보정
 - 인증 클라이언트 transport 실패: `app:network-request-failed` 이벤트 발행 → `NetworkStatusContext` → `OfflineGate`
-- mock fallback: `src/api/mockPolicy.js` (`DEV + VITE_ENABLE_API_MOCKS=1 + !error.response`)
 
 ## 2. 모듈별 엔드포인트 요약
 
 ### 2.1 `src/api/auth.js` (`authApi`)
 
-| 메서드 | HTTP/Endpoint | 입력 | 반환 | Mock fallback | 사용 화면 |
+| 메서드 | HTTP/Endpoint | 입력 | 반환 | 오류 처리 | 사용 화면 |
 |---|---|---|---|---|---|
 | `register(nickname, password)` | `POST /api/auth/register` | 닉네임/비밀번호 | 사용자/세션 정보 | 아니오 | `SignUpPage`, `AuthContext` |
 | `login(nickname, password)` | `POST /api/auth/login` | 닉네임/비밀번호 | 사용자/세션 정보 | 아니오 | `LoginPage`, `AuthContext` |
@@ -42,7 +41,7 @@
 
 ### 2.2 `src/api/notices.js` (`noticesApi`)
 
-| 메서드 | HTTP/Endpoint | 핵심 입력 | Mock fallback | 비고 |
+| 메서드 | HTTP/Endpoint | 핵심 입력 | 오류 처리 | 비고 |
 |---|---|---|---|---|
 | `getBudgetSettings()` | `GET /api/notices/budget/settings` | 없음 | 예 | 활성 회계연도 범위 + 기본 진입 월 |
 | `list(params)` | `GET /api/notices` | `category`, `query`, `sort`, `page`, `pageSize`, `view=list`, `budgetYear?`, `budgetMonth?` | 예 | 페이지네이션 정규화 |
@@ -65,12 +64,12 @@
 - 예산 공개 글은 공지 API를 재사용하지만, 백엔드가 `pinned`, `important`, `examRelated`, `tags`를 비활성화해 응답합니다.
 - 예산 공개 글 수정/삭제 권한은 `admin` 또는 원작성 `student_council` 기준으로 동작합니다.
 - 댓글, 반응, 첨부 업로드는 기존 공지사항 계약을 그대로 재사용합니다.
-- mock fallback도 `category='budget'`, `budgetYear`, `budgetMonth` 필터를 지원합니다.
-- mock fallback의 settings 응답도 실제 `/budget/settings`와 같은 키 구조를 유지합니다.
+- 오류 처리도 `category='budget'`, `budgetYear`, `budgetMonth` 필터를 지원합니다.
+- 오류 처리의 settings 응답도 실제 `/budget/settings`와 같은 키 구조를 유지합니다.
 
 ### 2.3 `src/api/community.js` (`communityApi`, 자유게시판)
 
-| 메서드 | HTTP/Endpoint | Mock fallback | 권한/역할 포인트 |
+| 메서드 | HTTP/Endpoint | 오류 처리 | 권한/역할 포인트 |
 |---|---|---|---|
 | `list` | `GET /api/community/free` | 예 | 목록 조회 |
 | `get` | `GET /api/community/free/:id` | 예 | 상세 조회 |
@@ -88,7 +87,7 @@
 
 ### 2.4 `src/api/clubRecruit.js` (`clubRecruitApi`)
 
-| 메서드 | HTTP/Endpoint | Mock fallback | 비고 |
+| 메서드 | HTTP/Endpoint | 오류 처리 | 비고 |
 |---|---|---|---|
 | `list` | `GET /api/club-recruit` | 예 | 포스터 URL 절대경로 보정 |
 | `get` | `GET /api/club-recruit/:id` | 예 | 상세 조회 |
@@ -99,7 +98,7 @@
 
 ### 2.5 `src/api/subjectChanges.js` (`subjectChangesApi`)
 
-| 메서드 | HTTP/Endpoint | Mock fallback | 비고 |
+| 메서드 | HTTP/Endpoint | 오류 처리 | 비고 |
 |---|---|---|---|
 | `list` | `GET /api/subject-changes` | 예 | 목록 |
 | `get` | `GET /api/subject-changes/:id` | 예 | 상세 |
@@ -113,7 +112,7 @@
 
 ### 2.6 `src/api/petition.js` (`petitionApi`)
 
-| 메서드 | HTTP/Endpoint | Mock fallback | 비고 |
+| 메서드 | HTTP/Endpoint | 오류 처리 | 비고 |
 |---|---|---|---|
 | `list` | `GET /api/community/petitions` | 예 | 목록 |
 | `detail` | `GET /api/community/petitions/:id` | 예 | 상세 |
@@ -131,7 +130,7 @@
 
 ### 2.7 `src/api/survey.js` (`surveyApi`)
 
-| 메서드 | HTTP/Endpoint | Mock fallback | 비고 |
+| 메서드 | HTTP/Endpoint | 오류 처리 | 비고 |
 |---|---|---|---|
 | `list` | `GET /api/surveys` | 예 | `mine/hide/view=list` 지원 |
 | `detail` | `GET /api/surveys/:id` | 예 | 상세 |
@@ -152,7 +151,7 @@
 
 ### 2.8 `src/api/vote.js` (`voteApi`)
 
-| 메서드 | HTTP/Endpoint | Mock fallback | 비고 |
+| 메서드 | HTTP/Endpoint | 오류 처리 | 비고 |
 |---|---|---|---|
 | `list` | `GET /api/community/votes` | 예 | 옵션/득표율 정규화 |
 | `detail` | `GET /api/community/votes/:id` | 예 | 상세 |
@@ -166,7 +165,7 @@
 
 ### 2.9 `src/api/lostFound.js` (`lostFoundApi`)
 
-| 메서드 | HTTP/Endpoint | Mock fallback | 비고 |
+| 메서드 | HTTP/Endpoint | 오류 처리 | 비고 |
 |---|---|---|---|
 | `list` | `GET /api/community/lost-found` | 예 | 목록 |
 | `detail` | `GET /api/community/lost-found/:id` | 예 | 상세 |
@@ -186,7 +185,7 @@
 
 ### 2.10 `src/api/gomsolMarket.js` (`gomsolMarketApi`)
 
-| 메서드 | HTTP/Endpoint | Mock fallback | 비고 |
+| 메서드 | HTTP/Endpoint | 오류 처리 | 비고 |
 |---|---|---|---|
 | `list` | `GET /api/community/gomsol-market` | 예 | 목록 |
 | `detail` | `GET /api/community/gomsol-market/:id` | 예 | 상세 |
@@ -206,7 +205,7 @@
 
 ### 2.11 `src/api/sportsLeague.js` (`sportsLeagueApi`)
 
-| 메서드 | HTTP/Endpoint | Mock fallback | 비고 |
+| 메서드 | HTTP/Endpoint | 오류 처리 | 비고 |
 |---|---|---|---|
 | `getCategory(categoryId)` | `GET /api/sports-league/categories/:categoryId` | 예 | 캐시된 snapshot이 있으면 즉시 반환 후 백그라운드 refresh |
 | `getPlayers(categoryId)` | `GET /api/sports-league/categories/:categoryId/players` | 예 | 선수 라인업/개인 순위용 별도 읽기 계약 |
@@ -229,7 +228,6 @@
   - `createPlayer()/deletePlayer()/adjustPlayerStat()`는 응답에 포함된 `players` 배열 전체로 로컬 store를 교체
   - `subscribe()`는 `BroadcastChannel` 우선, 미지원 브라우저에서는 `storage` 이벤트로 탭 간 동기화
   - SSE 오류 시 5초 polling + 3초 재연결을 시도
-  - 개발 환경에서 transport 오류가 나고 `VITE_ENABLE_API_MOCKS=1`이면 category 단위로 mock transport로 전환
 - 백엔드 계약 요약:
   - snapshot/SSE는 익명 조회 가능
   - 이벤트 `author` payload는 `{ nickname }`만 노출
@@ -260,7 +258,7 @@
 
 ### 2.12 `src/api/fieldTrip.js` (`fieldTripApi`)
 
-| 메서드 | HTTP/Endpoint | Mock fallback | 비고 |
+| 메서드 | HTTP/Endpoint | 오류 처리 | 비고 |
 |---|---|---|---|
 | `listClasses()` | `GET /api/community/field-trip/classes` | 예 | 반 목록 조회, unlock 상태는 브라우저 세션과 병합 |
 | `unlockClass(classId, password)` | `POST /api/community/field-trip/classes/:classId/unlock` | 예 | 성공 시 해당 반 unlock 상태를 `sessionStorage`에 저장 |
@@ -301,15 +299,9 @@ Field Trip 추가 계약 요약:
 - `fastapiApi`의 기본 `X-CSRF-TOKEN` 외에 `fieldTripApi`는 `X-Field-Trip-CSRF`를 추가로 붙입니다.
 - 첨부와 본문 이미지 URL은 `normalizeUploadResponse(..., FASTAPI_BASE_URL)`와 `toAbsoluteApiUrl()`를 통해 FastAPI origin으로 절대경로화됩니다.
 
-mock 시드 요약:
-
-- 더미 비밀번호: `trip-01` ~ `trip-10`
-- 시드 게시글: `1반 2개`, `3반 1개`, `7반 1개`
-- 점수판 초기 총점: 모든 반 `0점`
-
 ### 2.13 `src/api/meals.js` (`mealsApi`)
 
-| 메서드 | HTTP/Endpoint | Mock fallback | 비고 |
+| 메서드 | HTTP/Endpoint | 오류 처리 | 비고 |
 |---|---|---|---|
 | `getToday()` | `GET /api/school-info/meals/today` | 예 | 오늘 급식 단건 조회 |
 | `listRange(fromDateKey, toDateKey)` | `GET /api/school-info/meals?from=...&to=...` | 예 | 범위 급식 조회, 주말/휴일 empty entry 포함 |
@@ -324,7 +316,6 @@ mock 시드 요약:
   - `taste`: 오늘(KST) 급식만 저장 가능
   - `anticipation`: 오늘 또는 예정 급식만 저장 가능
   - 지난 급식 날짜는 두 항목 모두 `422`
-- transport error이고 `VITE_ENABLE_API_MOCKS=1`이면 기존 `src/features/meals/data.js` 시드를 fallback으로 사용합니다.
 - 실제 FastAPI 응답은 `items[]` / `item` wrapper를 가지지만, `mealsApi`는 화면 코드에 바로 쓰도록 entry 배열/객체만 반환합니다.
 
 ## 3. 공통 유틸리티 및 지원 모듈
@@ -336,42 +327,6 @@ mock 시드 요약:
 | `toAbsoluteApiUrl(url)` | 상대 URL을 기본적으로 `VITE_API_URL` 기준으로 보정하되, field-trip 업로드 경로는 `FASTAPI_BASE_URL`로 분기 |
 | `normalizePaginatedResponse(data, fallbackPageSize)` | 페이지네이션 응답 키 정규화 (`pageSize`/`page_size`) |
 | `normalizeUploadResponse(data)` | 업로드 응답 URL 필드 절대경로 보정 |
-
-### 3.2 `src/api/mockPolicy.js`
-
-| 항목 | 역할 |
-|---|---|
-| `ENABLE_API_MOCKS` | mock fallback 활성 조건 상수 |
-| `shouldUseMockFallback(error)` | fallback 적용 여부 판별 |
-
-### 3.3 `src/api/mockSurveyCreditStore.js`
-
-설문 mock fallback에서 사용되는 인메모리 크레딧 저장소입니다.
-
-| 항목 | 역할 |
-|---|---|
-| `getCreditBalance()` | 현재 mock 크레딧 잔액 조회 |
-| `deductCredit()` | 응답 제출 시 크레딧 차감 |
-| `grantCredit()` | 승인/보상 시 크레딧 추가 |
-
-> 프로덕션 환경에서는 사용되지 않으며, `survey.mock.js`에서만 참조됩니다.
-
-### 3.4 Mock 모듈 인벤토리
-
-`src/api/mocks/` 디렉터리의 mock 파일과 대응 API 모듈:
-
-| Mock 파일 | 대응 API 모듈 |
-|---|---|
-| `notices.mock.js` | `src/api/notices.js` |
-| `community.mock.js` | `src/api/community.js` |
-| `clubRecruit.mock.js` | `src/api/clubRecruit.js` |
-| `subjectChanges.mock.js` | `src/api/subjectChanges.js` |
-| `petition.mock.js` | `src/api/petition.js` |
-| `survey.mock.js` | `src/api/survey.js` |
-| `vote.mock.js` | `src/api/vote.js` |
-| `lostFound.mock.js` | `src/api/lostFound.js` |
-| `gomsolMarket.mock.js` | `src/api/gomsolMarket.js` |
-| `sportsLeague.mock.js` | `src/api/sportsLeague.js` (`snapshot`과 `players` localStorage 키를 분리 보관) |
 
 ## 4. 화면-API 연결 빠른 찾기
 
@@ -395,3 +350,5 @@ mock 시드 요약:
 - `src/api/*.js` 메서드/endpoint 변경 시 본 문서를 즉시 갱신합니다.
 - 이벤트 연동 변경 시 [analytics-tracking.md](./analytics-tracking.md)도 함께 갱신합니다.
 - 라우트 구조 변경 시 [frontend-code-map.md](./frontend-code-map.md)와 함께 확인합니다.
+
+

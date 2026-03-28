@@ -6,7 +6,6 @@
  * Key dependencies:
  * - ./auth
  * - ./normalizers
- * - ./mockPolicy
  * - ../analytics/zaraz
  * Side effects:
  * - Performs HTTP requests to backend endpoints via shared API clients.
@@ -15,48 +14,20 @@
  */
 import api from './auth';
 import { normalizePaginatedResponse } from './normalizers';
-import { ENABLE_API_MOCKS, shouldUseMockFallback } from './mockPolicy';
 import { trackPostCreated, trackPostCreateFailed } from '../analytics/zaraz';
 
 const PAGE_SIZE_DEFAULT = 12;
 
-const loadSubjectChangesMockApi = ENABLE_API_MOCKS
-  ? (() => {
-      let subjectChangesMockApiPromise;
-      return () => {
-        if (!subjectChangesMockApiPromise) {
-          subjectChangesMockApiPromise = import('./mocks/subjectChanges.mock').then(
-            (module) => module.subjectChangesMockApi
-          );
-        }
-        return subjectChangesMockApiPromise;
-      };
-    })()
-  : null;
-
 export const subjectChangesApi = {
   async list(params = {}) {
     const serverParams = { ...params, view: 'list' };
-    try {
-      const res = await api.get('/api/subject-changes', { params: serverParams });
-      return normalizePaginatedResponse(res.data, PAGE_SIZE_DEFAULT);
-    } catch (err) {
-      if (!shouldUseMockFallback(err)) throw err;
-      const mockApi = await loadSubjectChangesMockApi();
-      const mock = await mockApi.list(params);
-      return normalizePaginatedResponse(mock, PAGE_SIZE_DEFAULT);
-    }
+    const res = await api.get('/api/subject-changes', { params: serverParams });
+    return normalizePaginatedResponse(res.data, PAGE_SIZE_DEFAULT);
   },
 
   async get(id) {
-    try {
-      const res = await api.get(`/api/subject-changes/${id}`);
-      return res.data;
-    } catch (err) {
-      if (!shouldUseMockFallback(err)) throw err;
-      const mockApi = await loadSubjectChangesMockApi();
-      return mockApi.get(id);
-    }
+    const res = await api.get(`/api/subject-changes/${id}`);
+    return res.data;
   },
 
   async create(payload) {
@@ -70,16 +41,12 @@ export const subjectChangesApi = {
       });
       return created;
     } catch (err) {
-      if (!shouldUseMockFallback(err)) {
-        trackPostCreateFailed({
-          boardType: 'subject_change',
-          userRole: payload?.author?.role,
-          errorType: err,
-        });
-        throw err;
-      }
-      const mockApi = await loadSubjectChangesMockApi();
-      return mockApi.create(payload);
+      trackPostCreateFailed({
+        boardType: 'subject_change',
+        userRole: payload?.author?.role,
+        errorType: err,
+      });
+      throw err;
     }
   },
 

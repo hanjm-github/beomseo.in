@@ -1,7 +1,4 @@
 import { fastapiApi } from './fastapiClient';
-import { ENABLE_API_MOCKS, shouldUseMockFallback } from './mockPolicy';
-import { getMealEntriesByDate, getMealEntryForDate } from '../features/meals/data';
-import { addDays, formatDateKey, getReferenceDate, parseDateKey } from '../features/meals/utils';
 
 const MEAL_RATING_SCORES = [1, 2, 3, 4, 5];
 
@@ -67,7 +64,9 @@ function normalizeRatingSummary(summary) {
     distribution: distribution.map((bucket) => ({
       ...bucket,
       ratio: totalCount > 0
-        ? (Number.isFinite(bucket.ratio) && bucket.ratio > 0 ? bucket.ratio : Math.round((bucket.count / totalCount) * 100))
+        ? (Number.isFinite(bucket.ratio) && bucket.ratio > 0
+            ? bucket.ratio
+            : Math.round((bucket.count / totalCount) * 100))
         : 0,
     })),
   };
@@ -91,8 +90,12 @@ function normalizeMealEntry(entry, fallbackDateKey = '') {
     service: entry?.service || 'lunch',
     serviceLabel: entry?.serviceLabel || '중식',
     menuItems: Array.isArray(entry?.menuItems) ? entry.menuItems.filter(Boolean).map(String) : [],
-    previewText: String(entry?.previewText || (isNoMeal ? '급식 정보가 없습니다.' : '급식 정보를 불러오는 중입니다.')),
-    note: String(entry?.note || (isNoMeal ? '주말, 휴일 또는 미제공일입니다.' : '잠시만 기다려 주세요.')),
+    previewText: String(
+      entry?.previewText || (isNoMeal ? '급식 정보가 없습니다.' : '급식 정보를 불러오는 중입니다.')
+    ),
+    note: String(
+      entry?.note || (isNoMeal ? '주말 또는 미급식일입니다.' : '잠시만 기다려 주세요.')
+    ),
     isNoMeal,
     calorieText: entry?.calorieText || null,
     caloriesKcal:
@@ -122,44 +125,13 @@ function getMealErrorMessage(error, fallbackMessage) {
   return fallbackMessage;
 }
 
-function buildFallbackRangeItems(fromDateKey, toDateKey) {
-  const fromDate = parseDateKey(fromDateKey);
-  const toDate = parseDateKey(toDateKey);
-  const referenceDate = getReferenceDate();
-  const midpoint = fromDate && toDate
-    ? new Date(Math.round((fromDate.getTime() + toDate.getTime()) / 2))
-    : referenceDate;
-  const entriesByDate = getMealEntriesByDate(midpoint);
-  const items = [];
-
-  if (!fromDate || !toDate) {
-    return items;
-  }
-
-  for (
-    let cursor = getReferenceDate(fromDate);
-    cursor.getTime() <= toDate.getTime();
-    cursor = addDays(cursor, 1)
-  ) {
-    const dateKey = formatDateKey(cursor);
-    items.push(normalizeMealEntry(entriesByDate[dateKey], dateKey));
-  }
-
-  return items;
-}
-
 export const mealsApi = {
   async getToday() {
     try {
       const response = await fastapiApi.get('/api/school-info/meals/today');
       return normalizeMealEntry(response.data?.item, response.data?.meta?.date);
     } catch (error) {
-      if (!shouldUseMockFallback(error)) {
-        throw new Error(getMealErrorMessage(error, '오늘 급식 정보를 불러오지 못했어요.'));
-      }
-
-      const referenceDate = getReferenceDate();
-      return normalizeMealEntry(getMealEntryForDate(formatDateKey(referenceDate), referenceDate));
+      throw new Error(getMealErrorMessage(error, '오늘 급식 정보를 불러오지 못했어요.'));
     }
   },
 
@@ -175,11 +147,7 @@ export const mealsApi = {
       const items = Array.isArray(response.data?.items) ? response.data.items : [];
       return items.map((item) => normalizeMealEntry(item, item?.date));
     } catch (error) {
-      if (!shouldUseMockFallback(error)) {
-        throw new Error(getMealErrorMessage(error, '급식 정보를 불러오지 못했어요.'));
-      }
-
-      return buildFallbackRangeItems(fromDateKey, toDateKey);
+      throw new Error(getMealErrorMessage(error, '급식 정보를 불러오지 못했어요.'));
     }
   },
 
@@ -195,5 +163,3 @@ export const mealsApi = {
     }
   },
 };
-
-export const mealsMockFallbackEnabled = ENABLE_API_MOCKS;

@@ -6,7 +6,6 @@
  * Key dependencies:
  * - ./auth
  * - ./normalizers
- * - ./mockPolicy
  * - ../analytics/zaraz
  * Side effects:
  * - Performs HTTP requests to backend endpoints via shared API clients.
@@ -15,7 +14,6 @@
  */
 import api from './auth';
 import { normalizePaginatedResponse } from './normalizers';
-import { ENABLE_API_MOCKS, shouldUseMockFallback } from './mockPolicy';
 import { trackPostCreated, trackPostCreateFailed } from '../analytics/zaraz';
 
 const PAGE_SIZE_DEFAULT = 12;
@@ -88,18 +86,6 @@ function normalizeVotePost(post = {}) {
   return normalized;
 }
 
-const loadVoteMockApi = ENABLE_API_MOCKS
-  ? (() => {
-      let voteMockApiPromise;
-      return () => {
-        if (!voteMockApiPromise) {
-          voteMockApiPromise = import('./mocks/vote.mock').then((module) => module.voteMockApi);
-        }
-        return voteMockApiPromise;
-      };
-    })()
-  : null;
-
 export const voteApi = {
   writerRoles: WRITER_ROLES,
 
@@ -116,30 +102,17 @@ export const voteApi = {
       pageSize: params.pageSize,
       view: 'list',
     };
-    try {
-      const res = await api.get('/api/community/votes', { params: normalizedParams });
-      const normalized = normalizePaginatedResponse(res.data, PAGE_SIZE_DEFAULT);
-      return {
-        ...normalized,
-        items: (normalized.items || []).map(normalizeVotePost),
-      };
-    } catch (err) {
-      if (!shouldUseMockFallback(err)) throw err;
-      const mockApi = await loadVoteMockApi();
-      const mock = await mockApi.list(params);
-      return normalizePaginatedResponse(mock, PAGE_SIZE_DEFAULT);
-    }
+    const res = await api.get('/api/community/votes', { params: normalizedParams });
+    const normalized = normalizePaginatedResponse(res.data, PAGE_SIZE_DEFAULT);
+    return {
+      ...normalized,
+      items: (normalized.items || []).map(normalizeVotePost),
+    };
   },
 
   async detail(id) {
-    try {
-      const res = await api.get(`/api/community/votes/${id}`);
-      return normalizeVotePost(res.data);
-    } catch (err) {
-      if (!shouldUseMockFallback(err)) throw err;
-      const mockApi = await loadVoteMockApi();
-      return mockApi.detail(id);
-    }
+    const res = await api.get(`/api/community/votes/${id}`);
+    return normalizeVotePost(res.data);
   },
 
   async create(payload) {
@@ -162,34 +135,24 @@ export const voteApi = {
       });
       return created;
     } catch (err) {
-      if (!shouldUseMockFallback(err)) {
-        trackPostCreateFailed({
-          boardType: 'vote',
-          userRole: payload?.author?.role,
-          errorType: err,
-        });
-        throw err;
-      }
-      const mockApi = await loadVoteMockApi();
-      return mockApi.create(normalizedPayload);
+      trackPostCreateFailed({
+        boardType: 'vote',
+        userRole: payload?.author?.role,
+        errorType: err,
+      });
+      throw err;
     }
   },
 
   async vote(id, optionId) {
-    try {
-      const res = await api.post(`/api/community/votes/${id}/vote`, { optionId });
-      return {
-        voteId: res.data?.voteId ?? res.data?.vote_id,
-        selectedOptionId: res.data?.selectedOptionId ?? res.data?.selected_option_id ?? optionId,
-        creditsEarned: toSafeNumber(res.data?.creditsEarned ?? res.data?.credits_earned ?? 0),
-        creditsAvailable: toSafeNumber(res.data?.creditsAvailable ?? res.data?.credits_available ?? 0),
-        poll: normalizeVotePost(res.data?.poll || {}),
-      };
-    } catch (err) {
-      if (!shouldUseMockFallback(err)) throw err;
-      const mockApi = await loadVoteMockApi();
-      return mockApi.vote(id, optionId);
-    }
+    const res = await api.post(`/api/community/votes/${id}/vote`, { optionId });
+    return {
+      voteId: res.data?.voteId ?? res.data?.vote_id,
+      selectedOptionId: res.data?.selectedOptionId ?? res.data?.selected_option_id ?? optionId,
+      creditsEarned: toSafeNumber(res.data?.creditsEarned ?? res.data?.credits_earned ?? 0),
+      creditsAvailable: toSafeNumber(res.data?.creditsAvailable ?? res.data?.credits_available ?? 0),
+      poll: normalizeVotePost(res.data?.poll || {}),
+    };
   },
 };
 

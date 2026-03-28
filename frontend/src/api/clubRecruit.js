@@ -6,7 +6,6 @@
  * Key dependencies:
  * - ./auth
  * - ./normalizers
- * - ./mockPolicy
  * - ../analytics/zaraz
  * Side effects:
  * - Performs HTTP requests to backend endpoints via shared API clients.
@@ -15,7 +14,6 @@
  */
 import api from './auth';
 import { normalizePaginatedResponse, normalizeUploadResponse, toAbsoluteApiUrl } from './normalizers';
-import { ENABLE_API_MOCKS, shouldUseMockFallback } from './mockPolicy';
 import { trackPostCreated, trackPostCreateFailed } from '../analytics/zaraz';
 
 const PAGE_SIZE_DEFAULT = 12;
@@ -28,47 +26,20 @@ function normalizeRecruitItem(item) {
   };
 }
 
-const loadClubRecruitMockApi = ENABLE_API_MOCKS
-  ? (() => {
-      let clubRecruitMockApiPromise;
-      return () => {
-        if (!clubRecruitMockApiPromise) {
-          clubRecruitMockApiPromise = import('./mocks/clubRecruit.mock').then(
-            (module) => module.clubRecruitMockApi
-          );
-        }
-        return clubRecruitMockApiPromise;
-      };
-    })()
-  : null;
-
 export const clubRecruitApi = {
   async list(params = {}) {
     const serverParams = { ...params, view: 'list' };
-    try {
-      const res = await api.get('/api/club-recruit', { params: serverParams });
-      const normalized = normalizePaginatedResponse(res.data, PAGE_SIZE_DEFAULT);
-      return {
-        ...normalized,
-        items: (normalized.items || []).map(normalizeRecruitItem),
-      };
-    } catch (err) {
-      if (!shouldUseMockFallback(err)) throw err;
-      const mockApi = await loadClubRecruitMockApi();
-      const mock = await mockApi.list(params);
-      return normalizePaginatedResponse(mock, PAGE_SIZE_DEFAULT);
-    }
+    const res = await api.get('/api/club-recruit', { params: serverParams });
+    const normalized = normalizePaginatedResponse(res.data, PAGE_SIZE_DEFAULT);
+    return {
+      ...normalized,
+      items: (normalized.items || []).map(normalizeRecruitItem),
+    };
   },
 
   async get(id) {
-    try {
-      const res = await api.get(`/api/club-recruit/${id}`);
-      return normalizeRecruitItem(res.data);
-    } catch (err) {
-      if (!shouldUseMockFallback(err)) throw err;
-      const mockApi = await loadClubRecruitMockApi();
-      return mockApi.get(id);
-    }
+    const res = await api.get(`/api/club-recruit/${id}`);
+    return normalizeRecruitItem(res.data);
   },
 
   async create(payload) {
@@ -82,33 +53,22 @@ export const clubRecruitApi = {
       });
       return created;
     } catch (err) {
-      const useMockFallback = shouldUseMockFallback(err);
-      if (!useMockFallback) {
-        trackPostCreateFailed({
-          boardType: 'club_recruit',
-          userRole: payload?.author?.role,
-          errorType: err,
-        });
-        throw err;
-      }
-      const mockApi = await loadClubRecruitMockApi();
-      return mockApi.create(payload);
+      trackPostCreateFailed({
+        boardType: 'club_recruit',
+        userRole: payload?.author?.role,
+        errorType: err,
+      });
+      throw err;
     }
   },
 
   async upload(file) {
-    try {
-      const form = new FormData();
-      form.append('file', file);
-      const res = await api.post('/api/club-recruit/uploads', form, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      return normalizeUploadResponse(res.data);
-    } catch (err) {
-      if (!shouldUseMockFallback(err)) throw err;
-      const mockApi = await loadClubRecruitMockApi();
-      return mockApi.upload(file);
-    }
+    const form = new FormData();
+    form.append('file', file);
+    const res = await api.post('/api/club-recruit/uploads', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return normalizeUploadResponse(res.data);
   },
 
   async approve(id) {

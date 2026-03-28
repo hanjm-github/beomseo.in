@@ -6,19 +6,14 @@
  * Key dependencies:
  * - ./auth
  * - ./normalizers
- * - ./mockPolicy
  * - ../analytics/zaraz
  * Side effects:
  * - Performs HTTP requests to backend endpoints via shared API clients.
  * Role in app flow:
  * - Acts as the data boundary between UI code and backend HTTP endpoints.
  */
-/**
- * Community (free/anonymous) board API with optional dev-only mock fallback.
- */
 import api from './auth';
 import { normalizePaginatedResponse, normalizeUploadResponse } from './normalizers';
-import { ENABLE_API_MOCKS, shouldUseMockFallback } from './mockPolicy';
 import { trackPostCreated, trackPostCreateFailed } from '../analytics/zaraz';
 import {
   UPLOAD_MAX_ATTACHMENTS,
@@ -39,44 +34,16 @@ const categoryLabel = {
   qna: 'QnA',
 };
 
-const loadCommunityMockApi = ENABLE_API_MOCKS
-  ? (() => {
-      let communityMockApiPromise;
-      return () => {
-        if (!communityMockApiPromise) {
-          // Lazy import keeps mock code out of the normal production path.
-          communityMockApiPromise = import('./mocks/community.mock').then(
-            (module) => module.communityMockApi
-          );
-        }
-        return communityMockApiPromise;
-      };
-    })()
-  : null;
-
 export const communityApi = {
   async list(params = {}) {
     const serverParams = { ...params, view: 'list' };
-    try {
-      const res = await api.get('/api/community/free', { params: serverParams });
-      return normalizePaginatedResponse(res.data, PAGE_SIZE_DEFAULT);
-    } catch (err) {
-      if (!shouldUseMockFallback(err)) throw err;
-      const mockApi = await loadCommunityMockApi();
-      const mock = await mockApi.list(params);
-      return normalizePaginatedResponse(mock, PAGE_SIZE_DEFAULT);
-    }
+    const res = await api.get('/api/community/free', { params: serverParams });
+    return normalizePaginatedResponse(res.data, PAGE_SIZE_DEFAULT);
   },
 
   async get(id) {
-    try {
-      const res = await api.get(`/api/community/free/${id}`);
-      return res.data;
-    } catch (err) {
-      if (!shouldUseMockFallback(err)) throw err;
-      const mockApi = await loadCommunityMockApi();
-      return mockApi.get(id);
-    }
+    const res = await api.get(`/api/community/free/${id}`);
+    return res.data;
   },
 
   async create(payload) {
@@ -90,30 +57,18 @@ export const communityApi = {
       });
       return created;
     } catch (err) {
-      const useMockFallback = shouldUseMockFallback(err);
-      if (!useMockFallback) {
-        // Record only real API failures; mock fallback in dev should not pollute failure metrics.
-        trackPostCreateFailed({
-          boardType: 'free_board',
-          userRole: payload?.author?.role,
-          errorType: err,
-        });
-        throw err;
-      }
-      const mockApi = await loadCommunityMockApi();
-      return mockApi.create(payload);
+      trackPostCreateFailed({
+        boardType: 'free_board',
+        userRole: payload?.author?.role,
+        errorType: err,
+      });
+      throw err;
     }
   },
 
   async update(id, payload) {
-    try {
-      const res = await api.put(`/api/community/free/${id}`, payload);
-      return res.data;
-    } catch (err) {
-      if (!shouldUseMockFallback(err)) throw err;
-      const mockApi = await loadCommunityMockApi();
-      return mockApi.update(id, payload);
-    }
+    const res = await api.put(`/api/community/free/${id}`, payload);
+    return res.data;
   },
 
   async approve(id) {
@@ -127,88 +82,45 @@ export const communityApi = {
   },
 
   async remove(id) {
-    try {
-      const res = await api.delete(`/api/community/free/${id}`);
-      return res.data;
-    } catch (err) {
-      if (!shouldUseMockFallback(err)) throw err;
-      const mockApi = await loadCommunityMockApi();
-      return mockApi.remove(id);
-    }
+    const res = await api.delete(`/api/community/free/${id}`);
+    return res.data;
   },
 
   async react(id, type) {
-    try {
-      const res = await api.post(`/api/community/free/${id}/reactions`, { type });
-      return res.data;
-    } catch (err) {
-      if (!shouldUseMockFallback(err)) throw err;
-      const mockApi = await loadCommunityMockApi();
-      return mockApi.react(id, type);
-    }
+    const res = await api.post(`/api/community/free/${id}/reactions`, { type });
+    return res.data;
   },
 
   async toggleBookmark(id) {
-    try {
-      const res = await api.post(`/api/community/free/${id}/bookmark`);
-      return res.data;
-    } catch (err) {
-      if (!shouldUseMockFallback(err)) throw err;
-      const mockApi = await loadCommunityMockApi();
-      return mockApi.toggleBookmark(id);
-    }
+    const res = await api.post(`/api/community/free/${id}/bookmark`);
+    return res.data;
   },
 
   async listComments(id, params = {}) {
-    try {
-      const res = await api.get(`/api/community/free/${id}/comments`, { params });
-      return normalizePaginatedResponse(res.data, 50);
-    } catch (err) {
-      if (!shouldUseMockFallback(err)) throw err;
-      const mockApi = await loadCommunityMockApi();
-      const mock = await mockApi.listComments(id, params);
-      return normalizePaginatedResponse(mock, 50);
-    }
+    const res = await api.get(`/api/community/free/${id}/comments`, { params });
+    return normalizePaginatedResponse(res.data, 50);
   },
 
   async createComment(id, body) {
-    try {
-      const res = await api.post(`/api/community/free/${id}/comments`, { body });
-      return res.data;
-    } catch (err) {
-      if (!shouldUseMockFallback(err)) throw err;
-      const mockApi = await loadCommunityMockApi();
-      return mockApi.createComment(id, body);
-    }
+    const res = await api.post(`/api/community/free/${id}/comments`, { body });
+    return res.data;
   },
 
   async deleteComment(postId, commentId) {
-    try {
-      const res = await api.delete(`/api/community/free/${postId}/comments/${commentId}`);
-      return res.data;
-    } catch (err) {
-      if (!shouldUseMockFallback(err)) throw err;
-      const mockApi = await loadCommunityMockApi();
-      return mockApi.deleteComment(postId, commentId);
-    }
+    const res = await api.delete(`/api/community/free/${postId}/comments/${commentId}`);
+    return res.data;
   },
 
   async upload(file) {
-    try {
-      if (file.size > MAX_FILE_SIZE) {
-        throw new Error(`첨부 용량은 ${UPLOAD_MAX_FILE_SIZE_MB}MB 이하만 가능합니다.`);
-      }
-      const formData = new FormData();
-      formData.append('file', file);
-      const res = await api.post('/api/community/free/uploads', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      return normalizeUploadResponse(res.data);
-    } catch (err) {
-      if (!shouldUseMockFallback(err)) throw err;
-      const mockApi = await loadCommunityMockApi();
-      return mockApi.upload(file);
+    if (file.size > MAX_FILE_SIZE) {
+      throw new Error(`첨부 용량은 ${UPLOAD_MAX_FILE_SIZE_MB}MB 이하만 가능합니다.`);
     }
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await api.post('/api/community/free/uploads', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return normalizeUploadResponse(res.data);
   },
 
   categoryLabel,

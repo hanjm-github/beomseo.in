@@ -64,7 +64,7 @@ export default function FreeBoardDetailView() {
       const res = await communityApi.react(post.id, type);
       setPost((p) => (p ? { ...p, ...res } : p));
     } catch {
-      // ignore for mock
+      // Ignore transient reaction failures and keep the current optimistic UI state.
     }
   };
 

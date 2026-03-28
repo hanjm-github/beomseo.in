@@ -6,19 +6,14 @@
  * Key dependencies:
  * - ./auth
  * - ./normalizers
- * - ./mockPolicy
  * - ../analytics/zaraz
  * Side effects:
  * - Performs HTTP requests to backend endpoints via shared API clients.
  * Role in app flow:
  * - Acts as the data boundary between UI code and backend HTTP endpoints.
  */
-/**
- * Survey exchange API with optional dev-only mock fallback.
- */
 import api from './auth';
 import { normalizePaginatedResponse } from './normalizers';
-import { ENABLE_API_MOCKS, shouldUseMockFallback } from './mockPolicy';
 import { trackPostCreated, trackPostCreateFailed } from '../analytics/zaraz';
 
 export const BASE_RESPONSE_QUOTA = 0;
@@ -37,18 +32,6 @@ const computeStatus = (survey) => {
   return 'open';
 };
 
-const loadSurveyMockApi = ENABLE_API_MOCKS
-  ? (() => {
-      let surveyMockApiPromise;
-      return () => {
-        if (!surveyMockApiPromise) {
-          surveyMockApiPromise = import('./mocks/survey.mock').then((module) => module.surveyMockApi);
-        }
-        return surveyMockApiPromise;
-      };
-    })()
-  : null;
-
 export const surveyApi = {
   async list(params = {}) {
     const normalized = {
@@ -61,26 +44,13 @@ export const surveyApi = {
       pageSize: params.pageSize,
       view: 'list',
     };
-    try {
-      const res = await api.get('/api/surveys', { params: normalized });
-      return normalizePaginatedResponse(res.data, PAGE_SIZE_DEFAULT);
-    } catch (err) {
-      if (!shouldUseMockFallback(err)) throw err;
-      const mockApi = await loadSurveyMockApi();
-      const mock = await mockApi.list(params);
-      return normalizePaginatedResponse(mock, PAGE_SIZE_DEFAULT);
-    }
+    const res = await api.get('/api/surveys', { params: normalized });
+    return normalizePaginatedResponse(res.data, PAGE_SIZE_DEFAULT);
   },
 
   async detail(id) {
-    try {
-      const res = await api.get(`/api/surveys/${id}`);
-      return res.data;
-    } catch (err) {
-      if (!shouldUseMockFallback(err)) throw err;
-      const mockApi = await loadSurveyMockApi();
-      return mockApi.detail(id);
-    }
+    const res = await api.get(`/api/surveys/${id}`);
+    return res.data;
   },
 
   async create(payload) {
@@ -94,29 +64,18 @@ export const surveyApi = {
       });
       return created;
     } catch (err) {
-      const useMockFallback = shouldUseMockFallback(err);
-      if (!useMockFallback) {
-        trackPostCreateFailed({
-          boardType: 'survey',
-          userRole: payload?.owner?.role ?? payload?.author?.role,
-          errorType: err,
-        });
-        throw err;
-      }
-      const mockApi = await loadSurveyMockApi();
-      return mockApi.create(payload);
+      trackPostCreateFailed({
+        boardType: 'survey',
+        userRole: payload?.owner?.role ?? payload?.author?.role,
+        errorType: err,
+      });
+      throw err;
     }
   },
 
   async update(id, payload) {
-    try {
-      const res = await api.patch(`/api/surveys/${id}`, payload);
-      return res.data;
-    } catch (err) {
-      if (!shouldUseMockFallback(err)) throw err;
-      const mockApi = await loadSurveyMockApi();
-      return mockApi.update(id, payload);
-    }
+    const res = await api.patch(`/api/surveys/${id}`, payload);
+    return res.data;
   },
 
   async approve(id) {
@@ -130,47 +89,23 @@ export const surveyApi = {
   },
 
   async submitResponse(id, answers) {
-    try {
-      const res = await api.post(`/api/surveys/${id}/responses`, { answers });
-      return res.data;
-    } catch (err) {
-      if (!shouldUseMockFallback(err)) throw err;
-      const mockApi = await loadSurveyMockApi();
-      return mockApi.submitResponse(id, answers);
-    }
+    const res = await api.post(`/api/surveys/${id}/responses`, { answers });
+    return res.data;
   },
 
   async summary(id) {
-    try {
-      const res = await api.get(`/api/surveys/${id}/summary`);
-      return res.data;
-    } catch (err) {
-      if (!shouldUseMockFallback(err)) throw err;
-      const mockApi = await loadSurveyMockApi();
-      return mockApi.summary(id);
-    }
+    const res = await api.get(`/api/surveys/${id}/summary`);
+    return res.data;
   },
 
   async rawResponses(id, params = {}) {
-    try {
-      const res = await api.get(`/api/surveys/${id}/responses`, { params: { ...params, view: 'raw' } });
-      return res.data;
-    } catch (err) {
-      if (!shouldUseMockFallback(err)) throw err;
-      const mockApi = await loadSurveyMockApi();
-      return mockApi.rawResponses(id);
-    }
+    const res = await api.get(`/api/surveys/${id}/responses`, { params: { ...params, view: 'raw' } });
+    return res.data;
   },
 
   async credits() {
-    try {
-      const res = await api.get('/api/surveys/credits/me');
-      return res.data;
-    } catch (err) {
-      if (!shouldUseMockFallback(err)) throw err;
-      const mockApi = await loadSurveyMockApi();
-      return mockApi.credits();
-    }
+    const res = await api.get('/api/surveys/credits/me');
+    return res.data;
   },
 
   computeStatus,

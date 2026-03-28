@@ -105,7 +105,6 @@ npm run preview
 | 변수명 | 기본값 | 설명 |
 |---|---|---|
 | `VITE_API_URL` | `http://localhost:5000/` | 백엔드 API Base URL |
-| `VITE_ENABLE_API_MOCKS` | `0` | 개발 환경 네트워크 실패 시 mock fallback 활성화 (`1`/`0`) |
 | `VITE_ANALYTICS_ENABLED` | `1` | 분석 이벤트 전송 전체 활성화 |
 | `VITE_ANALYTICS_ALLOW_IN_DEV` | `0` | 개발 환경에서도 트래킹 허용 여부 |
 | `VITE_ANALYTICS_ALLOWED_HOSTS` | `beomseo.in` | 이벤트 전송 허용 host 목록 (`,` 구분, `*` 지원) |
@@ -177,8 +176,6 @@ graph TD
 - 실시간 수신은 `GET /api/sports-league/categories/:categoryId/stream` EventSource를 사용하고, 스트림 오류 시 5초 polling + 3초 재연결로 복구를 시도합니다.
 - 팀별 라인업/개인별 순위는 `usePlayersStore`가 별도 `/players` API로 관리합니다. 즉, 선수 데이터는 snapshot/SSE에 포함되지 않고 진입 시 조회 + 수정 응답으로만 갱신됩니다.
 - 다른 탭과의 동기화는 `BroadcastChannel`을 우선 사용하고, 지원되지 않는 브라우저에서는 `storage` 이벤트로 폴백합니다.
-- 개발 환경에서 `VITE_ENABLE_API_MOCKS=1`이고 네트워크 계열 실패가 나면 `src/api/mocks/sportsLeague.mock.js`가 동일한 snapshot 계약을 흉내 냅니다.
-- mock transport는 선수 라인업도 별도 `beomseo:sports-league:players:{categoryId}` localStorage 키 공간에 저장해 snapshot 캐시와 분리합니다.
 
 ## 오프라인 및 PWA 설치 흐름
 

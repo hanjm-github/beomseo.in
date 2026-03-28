@@ -6,19 +6,14 @@
  * Key dependencies:
  * - ./auth
  * - ./normalizers
- * - ./mockPolicy
  * - ../analytics/zaraz
  * Side effects:
  * - Performs HTTP requests to backend endpoints via shared API clients.
  * Role in app flow:
  * - Acts as the data boundary between UI code and backend HTTP endpoints.
  */
-/**
- * Petition board API with optional dev-only mock fallback.
- */
 import api from './auth';
 import { normalizePaginatedResponse } from './normalizers';
-import { ENABLE_API_MOCKS, shouldUseMockFallback } from './mockPolicy';
 import { trackPostCreated, trackPostCreateFailed } from '../analytics/zaraz';
 import { PETITION_THRESHOLD_DEFAULT } from '../config/env';
 
@@ -48,41 +43,16 @@ const deriveStatus = (item) => {
   return 'needs-support';
 };
 
-const loadPetitionMockApi = ENABLE_API_MOCKS
-  ? (() => {
-      let petitionMockApiPromise;
-      return () => {
-        if (!petitionMockApiPromise) {
-          petitionMockApiPromise = import('./mocks/petition.mock').then((module) => module.petitionMockApi);
-        }
-        return petitionMockApiPromise;
-      };
-    })()
-  : null;
-
 export const petitionApi = {
   async list(params = {}) {
     const serverParams = { ...params, view: 'list' };
-    try {
-      const res = await api.get('/api/community/petitions', { params: serverParams });
-      return normalizePaginatedResponse(res.data, PAGE_SIZE_DEFAULT);
-    } catch (err) {
-      if (!shouldUseMockFallback(err)) throw err;
-      const mockApi = await loadPetitionMockApi();
-      const mock = await mockApi.list(params);
-      return normalizePaginatedResponse(mock, PAGE_SIZE_DEFAULT);
-    }
+    const res = await api.get('/api/community/petitions', { params: serverParams });
+    return normalizePaginatedResponse(res.data, PAGE_SIZE_DEFAULT);
   },
 
   async detail(id) {
-    try {
-      const res = await api.get(`/api/community/petitions/${id}`);
-      return res.data;
-    } catch (err) {
-      if (!shouldUseMockFallback(err)) throw err;
-      const mockApi = await loadPetitionMockApi();
-      return mockApi.detail(id);
-    }
+    const res = await api.get(`/api/community/petitions/${id}`);
+    return res.data;
   },
 
   async create(payload) {
@@ -96,62 +66,33 @@ export const petitionApi = {
       });
       return created;
     } catch (err) {
-      const useMockFallback = shouldUseMockFallback(err);
-      if (!useMockFallback) {
-        trackPostCreateFailed({
-          boardType: 'petition',
-          userRole: payload?.author?.role,
-          errorType: err,
-        });
-        throw err;
-      }
-      const mockApi = await loadPetitionMockApi();
-      return mockApi.create(payload);
+      trackPostCreateFailed({
+        boardType: 'petition',
+        userRole: payload?.author?.role,
+        errorType: err,
+      });
+      throw err;
     }
   },
 
   async vote(id, action = 'up') {
-    try {
-      const res = await api.post(`/api/community/petitions/${id}/vote`, { action });
-      return res.data;
-    } catch (err) {
-      if (!shouldUseMockFallback(err)) throw err;
-      const mockApi = await loadPetitionMockApi();
-      return mockApi.vote(id, action);
-    }
+    const res = await api.post(`/api/community/petitions/${id}/vote`, { action });
+    return res.data;
   },
 
   async answer(id, payload) {
-    try {
-      const res = await api.post(`/api/community/petitions/${id}/answer`, payload);
-      return res.data;
-    } catch (err) {
-      if (!shouldUseMockFallback(err)) throw err;
-      const mockApi = await loadPetitionMockApi();
-      return mockApi.answer(id, payload);
-    }
+    const res = await api.post(`/api/community/petitions/${id}/answer`, payload);
+    return res.data;
   },
 
   async approve(id) {
-    try {
-      const res = await api.post(`/api/community/petitions/${id}/approve`);
-      return res.data;
-    } catch (err) {
-      if (!shouldUseMockFallback(err)) throw err;
-      const mockApi = await loadPetitionMockApi();
-      return mockApi.approve(id);
-    }
+    const res = await api.post(`/api/community/petitions/${id}/approve`);
+    return res.data;
   },
 
   async unapprove(id) {
-    try {
-      const res = await api.post(`/api/community/petitions/${id}/reject`);
-      return res.data;
-    } catch (err) {
-      if (!shouldUseMockFallback(err)) throw err;
-      const mockApi = await loadPetitionMockApi();
-      return mockApi.unapprove(id);
-    }
+    const res = await api.post(`/api/community/petitions/${id}/reject`);
+    return res.data;
   },
 
   deriveStatus,

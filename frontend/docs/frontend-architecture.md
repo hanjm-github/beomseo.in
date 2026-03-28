@@ -104,26 +104,15 @@ sequenceDiagram
 - login/register/refresh 자체 요청은 재귀 refresh 대상에서 제외
 - 초기 비로그인 `GET /api/auth/me` 실패는 글로벌 만료 경고로 확장하지 않음
 
-## 4. Mock Fallback 흐름
-
-mock fallback은 개발 환경의 네트워크 실패 복원용입니다.
+## 4. API 오류 전파 흐름
 
 ```mermaid
 flowchart TD
     A[Feature API call] --> B[Real API request]
     B --> C{에러 발생?}
     C -- 아니오 --> D[실제 응답 반환]
-    C -- 예 --> E{fallback 조건 충족}
-    E -- false --> F[오류 throw]
-    E -- true --> G[동적 import src/api/mocks/*.mock.js]
-    G --> H[Mock 응답 반환]
+    C -- 예 --> E[오류 throw]
 ```
-
-`shouldUseMockFallback(error)` 조건:
-
-- `import.meta.env.DEV === true`
-- `VITE_ENABLE_API_MOCKS === '1'`
-- `!error.response` (transport/network 계열 실패)
 
 ## 4.1 네트워크 실패와 오프라인 오버레이 흐름
 
@@ -154,7 +143,7 @@ flowchart TD
 
 ## 4.2 스포츠리그 실시간 동기화 흐름
 
-스포츠리그 화면은 단순 REST 조회가 아니라 `snapshot + SSE + 탭 간 동기화 + mock transport`를 함께 사용합니다.
+스포츠리그 화면은 단순 REST 조회를 넘어 `snapshot + SSE + 탭 간 동기화`를 함께 사용합니다.
 스포츠리그 API 호출은 `VITE_SPORTS_LEAGUE_API_URL`을 기준으로 하는 전용 `sportsApi` Axios 인스턴스를 사용합니다.
 미설정 시 `VITE_API_URL` (Flask 서버)로 fallback합니다.
 
@@ -172,8 +161,6 @@ flowchart TD
     J --> K["다른 탭 listener 갱신"]
     G --> L["오류"]
     L --> M["5초 polling + 3초 reconnect"]
-    L --> N["DEV + transport error + mocks=1"]
-    N --> O["sportsLeague.mock.js"]
 ```
 
 핵심 포인트:
@@ -181,7 +168,6 @@ flowchart TD
 - category별 구독 상태를 공유해 컴포넌트가 여러 개여도 EventSource는 1개만 유지됩니다.
 - 최초 진입은 캐시된 snapshot을 먼저 보여주고, 백그라운드 refresh로 최신 값을 덮어씁니다.
 - SSE가 끊기면 즉시 실패 처리하지 않고 polling/reconnect로 복구를 시도합니다.
-- mock 전환은 개발 환경 transport 오류에만 열리고, 한 번 전환된 category는 세션 동안 mock transport를 유지합니다.
 - `sportsApi` 인스턴스는 `auth.js`의 token refresh interceptor를 공유하지 않으며, CSRF 토큰만 자체 interceptor로 첨부합니다.
 
 ### 4.3 스포츠리그 선수 라인업/개인 순위 흐름
@@ -205,7 +191,6 @@ flowchart TD
 - 선수 데이터는 `build_snapshot()` 결과에 포함되지 않으므로 SSE만으로는 갱신되지 않습니다.
 - `TeamLineupPanel`과 `PlayerRankingPanel`은 같은 `usePlayersStore` 상태를 공유합니다.
 - 운영진 조작은 절대값 overwrite가 아니라 `delta=-1|1` 증감형 계약으로 전달됩니다.
-- mock transport도 snapshot과 선수 라인업을 별도 localStorage 키 공간으로 분리해 저장합니다.
 
 ## 5. 보안 경계와 데이터 신뢰 수준
 
@@ -299,7 +284,7 @@ flowchart LR
 
 1. `src/pages/<Feature>/`에 `List/Detail/Compose` 라우트 화면 추가
 2. `src/components/<feature>/`에 UI 컴포넌트 추가
-3. `src/api/<feature>.js`에 API 모듈 추가 및 필요 시 mock 모듈 추가
+3. `src/api/<feature>.js`에 API 모듈 추가
 4. `CommunityRouter` 또는 상위 라우트에 경로 연결
 5. 필요 시 `trackPostCreated`/`trackPostCreateFailed` 연결
 6. 문서 동기화
@@ -340,7 +325,6 @@ flowchart TD
 ## 8. 운영 관점 체크 포인트
 
 - 인증 만료 UX: `AUTH_EXPIRED_EVENT` 수신 시 로그인 유도 흐름 확인
-- 환경 분리: 운영에서 mock fallback 비활성 유지
 - 트래킹 품질: 허용 host/PII 차단 정책 검증
 - 계약 안정성: API 응답 변경은 `src/api/*`에서 먼저 흡수 후 페이지 레이어에 반영
 
