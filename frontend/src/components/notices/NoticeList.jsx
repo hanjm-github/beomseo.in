@@ -19,19 +19,23 @@ import styles from './notices.module.css';
 /**
  * NoticeList module entry point.
  */
-export default function NoticeList({ items, basePath, isLoading }) {
+export default function NoticeList({ items, basePath, isLoading, emptyStateProps, cardProps }) {
   if (isLoading) {
     return <div className={styles.placeholder}>불러오는 중...</div>;
   }
 
   if (!items?.length) {
-    return <EmptyState />;
+    // Budget board pages override the empty-state copy/path while the default
+    // notice boards can keep their route-derived behavior.
+    return <EmptyState {...emptyStateProps} />;
   }
 
   return (
     <div className={styles.listGrid}>
       {items.map((notice) => (
-        <NoticeCard key={notice.id} notice={notice} to={`${basePath}/${notice.id}`} />
+        // Shared notice cards stay reusable by letting callers hide budget-
+        // incompatible chrome instead of forking the whole list component.
+        <NoticeCard key={notice.id} notice={notice} to={`${basePath}/${notice.id}`} {...cardProps} />
       ))}
     </div>
   );

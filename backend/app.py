@@ -92,6 +92,26 @@ def validate_security_config(app):
     if int(app.config.get('MAX_CONTENT_LENGTH', 0)) <= 0:
         errors.append('MAX_CONTENT_LENGTH must be positive.')
 
+    # Budget board routing depends on a coherent inclusive year window for
+    # default redirects, payload validation, and hidden archived cycles.
+    raw_budget_start_year = app.config.get('BUDGET_BOARD_START_YEAR_RAW')
+    raw_budget_end_year = app.config.get('BUDGET_BOARD_END_YEAR_RAW')
+    budget_start_year = app.config.get('BUDGET_BOARD_START_YEAR')
+    budget_end_year = app.config.get('BUDGET_BOARD_END_YEAR')
+
+    if raw_budget_start_year not in (None, ''):
+        try:
+            int(str(raw_budget_start_year).strip())
+        except (TypeError, ValueError):
+            errors.append('BUDGET_BOARD_START_YEAR must be an integer when provided.')
+    if raw_budget_end_year not in (None, ''):
+        try:
+            int(str(raw_budget_end_year).strip())
+        except (TypeError, ValueError):
+            errors.append('BUDGET_BOARD_END_YEAR must be an integer when provided.')
+    if int(budget_start_year) > int(budget_end_year):
+        errors.append('BUDGET_BOARD_START_YEAR must be less than or equal to BUDGET_BOARD_END_YEAR.')
+
     if errors:
         raise RuntimeError('Invalid security configuration: ' + '; '.join(errors))
 

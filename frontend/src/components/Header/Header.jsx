@@ -46,6 +46,10 @@ const communityNavigationItems = [
   { label: '곰솔마켓', path: '/community/gomsol-market' },
 ].filter(Boolean);
 
+const noticeNavigationItems = [
+  { label: '예산 공개', path: '/notices/budget' },
+];
+
 const navigationItems = [
   {
     label: '공지사항',
@@ -53,7 +57,7 @@ const navigationItems = [
     children: [
       { label: '학교 공지', path: '/notices/school' },
       { label: '학생회 공지', path: '/notices/council' },
-    ],
+    ].concat(noticeNavigationItems),
   },
   {
     label: '소통하는 범서고',

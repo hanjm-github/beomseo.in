@@ -30,7 +30,7 @@ function Badge({ icon: Icon, label, tone = 'neutral' }) {
 /**
  * NoticeCard module entry point.
  */
-export default function NoticeCard({ notice, to }) {
+export default function NoticeCard({ notice, to, hideBadges = false, hideTags = false }) {
   const attachmentsCount =
     typeof notice.attachmentsCount === 'number'
       ? notice.attachmentsCount
@@ -42,9 +42,10 @@ export default function NoticeCard({ notice, to }) {
     <Link to={to} className={styles.card}>
       <div className={styles.cardHeader}>
         <div className={styles.titleRow}>
-          {notice.pinned && <Badge icon={Pin} label="상단 고정" tone="primary" />}
-          {notice.important && <Badge icon={AlertTriangle} label="중요" tone="warn" />}
-          {notice.examRelated && <Badge icon={GraduationCap} label="시험" tone="info" />}
+          {/* Budget disclosures intentionally suppress legacy notice badges. */}
+          {!hideBadges && notice.pinned && <Badge icon={Pin} label="상단 고정" tone="primary" />}
+          {!hideBadges && notice.important && <Badge icon={AlertTriangle} label="중요" tone="warn" />}
+          {!hideBadges && notice.examRelated && <Badge icon={GraduationCap} label="시험" tone="info" />}
           <h3 className={styles.cardTitle}>{notice.title}</h3>
         </div>
         <div className={styles.metaRow}>
@@ -69,7 +70,8 @@ export default function NoticeCard({ notice, to }) {
       <p className={styles.cardSummary}>{notice.summary || '본문 미리보기가 제공되지 않습니다.'}</p>
       <div className={styles.cardFooter}>
         <div className={styles.tagRow}>
-          {notice.tags?.map((tag) => (
+          {/* Budget disclosures also hide tag chips because the backend strips them. */}
+          {!hideTags && notice.tags?.map((tag) => (
             <span key={tag} className={styles.tag}>
               #{tag}
             </span>

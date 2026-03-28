@@ -21,18 +21,25 @@ import { useParams, Link } from 'react-router-dom';
 /**
  * EmptyState module entry point.
  */
-export default function EmptyState() {
+export default function EmptyState({
+  title = '아직 등록된 공지가 없습니다.',
+  description = '첫 공지를 등록해보세요.',
+  createPath,
+}) {
   const { user } = useAuth();
   const { category = 'school' } = useParams();
   const canCreate = ['admin', 'student_council'].includes(user?.role);
+  // Shared boards can inject a different CTA target without losing the default
+  // category-derived path for school/council notices.
+  const resolvedCreatePath = createPath || `/notices/${category}/new`;
 
   return (
     <div className={styles.empty}>
       <FilePlus2 size={32} />
-      <h3>아직 등록된 공지가 없습니다.</h3>
-      <p className={styles.metaMuted}>첫 공지를 등록해보세요.</p>
+      <h3>{title}</h3>
+      <p className={styles.metaMuted}>{description}</p>
       {canCreate ? (
-        <Link to={`/notices/${category}/new`} className={styles.btnPrimary}>
+        <Link to={resolvedCreatePath} className={styles.btnPrimary}>
           공지 작성
         </Link>
       ) : null}

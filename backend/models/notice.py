@@ -1,9 +1,11 @@
 """
-Notice and Attachment models for school / student council announcements.
+Notice and Attachment models for school, student council, and budget notices.
 """
 from datetime import datetime
 from enum import Enum
 import re
+
+from sqlalchemy import Index
 from sqlalchemy.schema import UniqueConstraint
 
 from .user import db, UserRole
@@ -12,13 +14,19 @@ from .user import db, UserRole
 class NoticeCategory(str, Enum):
     SCHOOL = 'school'
     COUNCIL = 'council'
+    BUDGET = 'budget'
 
 
 class Attachment(db.Model):
     __tablename__ = 'attachments'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    notice_id = db.Column(db.Integer, db.ForeignKey('notices.id', ondelete='CASCADE'), nullable=False, index=True)
+    notice_id = db.Column(
+        db.Integer,
+        db.ForeignKey('notices.id', ondelete='CASCADE'),
+        nullable=False,
+        index=True,
+    )
     name = db.Column(db.String(255), nullable=False)
     url = db.Column(db.String(500), nullable=False)
     mime = db.Column(db.String(128), nullable=True)
@@ -49,8 +57,18 @@ class NoticeReaction(db.Model):
     __tablename__ = 'notice_reactions'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    notice_id = db.Column(db.Integer, db.ForeignKey('notices.id', ondelete='CASCADE'), nullable=False, index=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False, index=True)
+    notice_id = db.Column(
+        db.Integer,
+        db.ForeignKey('notices.id', ondelete='CASCADE'),
+        nullable=False,
+        index=True,
+    )
+    user_id = db.Column(
+        db.Integer,
+        db.ForeignKey('users.id', ondelete='CASCADE'),
+        nullable=False,
+        index=True,
+    )
     type = db.Column(db.Enum(ReactionType), nullable=False)
     ip_address = db.Column(db.String(64), nullable=True)
     user_agent = db.Column(db.String(255), nullable=True)
@@ -65,13 +83,28 @@ class Comment(db.Model):
     __tablename__ = 'comments'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    notice_id = db.Column(db.Integer, db.ForeignKey('notices.id', ondelete='CASCADE'), nullable=False, index=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False, index=True)
+    notice_id = db.Column(
+        db.Integer,
+        db.ForeignKey('notices.id', ondelete='CASCADE'),
+        nullable=False,
+        index=True,
+    )
+    user_id = db.Column(
+        db.Integer,
+        db.ForeignKey('users.id', ondelete='CASCADE'),
+        nullable=False,
+        index=True,
+    )
     body = db.Column(db.Text, nullable=False)
     ip_address = db.Column(db.String(64), nullable=True)
     user_agent = db.Column(db.String(255), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    updated_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
+        nullable=False,
+    )
     deleted_at = db.Column(db.DateTime, nullable=True, index=True)
 
     user = db.relationship('User', backref=db.backref('comments', lazy='dynamic'))
@@ -92,11 +125,25 @@ class Comment(db.Model):
 
 
 class Notice(db.Model):
-    """Notice aggregate including attachments, comments, and reactions."""
+    """Notice aggregate including attachments, comments, reactions, and budget metadata."""
+
     __tablename__ = 'notices'
+    __table_args__ = (
+        Index(
+            'ix_notices_budget_list',
+            'category',
+            'budget_year',
+            'budget_month',
+            'deleted_at',
+            'pinned',
+            'created_at',
+        ),
+    )
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     category = db.Column(db.Enum(NoticeCategory), nullable=False, index=True)
+    budget_year = db.Column(db.Integer, nullable=True)
+    budget_month = db.Column(db.Integer, nullable=True)
     title = db.Column(db.String(200), nullable=False)
     body = db.Column(db.Text, nullable=False)
     summary = db.Column(db.String(255), nullable=True)
@@ -119,25 +166,30 @@ class Notice(db.Model):
         'NoticeReaction',
         backref='notice',
         cascade='all, delete-orphan',
-        lazy='dynamic'
+        lazy='dynamic',
     )
     comments = db.relationship(
         'Comment',
         backref='notice',
         cascade='all, delete-orphan',
         lazy='dynamic',
-        order_by='Comment.created_at.asc()'
+        order_by='Comment.created_at.asc()',
     )
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    updated_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
+        nullable=False,
+    )
 
     attachments = db.relationship(
         'Attachment',
         backref='notice',
         cascade='all, delete-orphan',
         lazy='selectin',
-        order_by='Attachment.id.asc()'
+        order_by='Attachment.id.asc()',
     )
 
     @staticmethod
@@ -148,12 +200,27 @@ class Notice(db.Model):
         text = body.replace('<', ' <').split()
         plain = ' '.join(text)
         if len(plain) > 240:
-            return plain[:240] + '…'
+            return plain[:240] + '...'
         return plain
 
     def tags_list(self):
         """Return normalized tag list from comma-separated storage."""
-        return [t.strip() for t in (self.tags or '').split(',') if t.strip()]
+        return [tag.strip() for tag in (self.tags or '').split(',') if tag.strip()]
+
+    def visible_tags_list(self):
+        """Return tags that are safe to expose on the current board type."""
+        if self.category == NoticeCategory.BUDGET:
+            return []
+        return self.tags_list()
+
+    def visible_pinned(self):
+        return False if self.category == NoticeCategory.BUDGET else self.pinned
+
+    def visible_important(self):
+        return False if self.category == NoticeCategory.BUDGET else self.important
+
+    def visible_exam_related(self):
+        return False if self.category == NoticeCategory.BUDGET else self.exam_related
 
     def to_dict(self, my_reaction=None):
         """Detail serializer used by notice detail endpoint."""
@@ -161,22 +228,24 @@ class Notice(db.Model):
         return {
             'id': self.id,
             'category': self.category.value if self.category else None,
+            'budgetYear': str(self.budget_year) if self.budget_year is not None else None,
+            'budgetMonth': str(self.budget_month).zfill(2) if self.budget_month is not None else None,
             'title': self.title,
             'summary': self.summary,
-            'pinned': self.pinned,
-            'important': self.important,
-            'examRelated': self.exam_related,
-            'tags': self.tags_list(),
+            'pinned': self.visible_pinned(),
+            'important': self.visible_important(),
+            'examRelated': self.visible_exam_related(),
+            'tags': self.visible_tags_list(),
             'author': {
                 'id': self.author_id,
                 'name': self.author.nickname if self.author else None,
                 'role': self.author_role,
-                'role_alias': role_alias
+                'role_alias': role_alias,
             },
             'createdAt': self.created_at.isoformat() if self.created_at else None,
             'updatedAt': self.updated_at.isoformat() if self.updated_at else None,
             'views': self.views,
-            'attachments': [a.to_dict() for a in self.attachments],
+            'attachments': [attachment.to_dict() for attachment in self.attachments],
             'body': self.body,
             'deletedAt': self.deleted_at.isoformat() if self.deleted_at else None,
             'likes': self.like_count,
@@ -191,12 +260,14 @@ class Notice(db.Model):
         return {
             'id': self.id,
             'category': self.category.value if self.category else None,
+            'budgetYear': str(self.budget_year) if self.budget_year is not None else None,
+            'budgetMonth': str(self.budget_month).zfill(2) if self.budget_month is not None else None,
             'title': self.title,
             'summary': self.summary,
-            'pinned': self.pinned,
-            'important': self.important,
-            'examRelated': self.exam_related,
-            'tags': self.tags_list(),
+            'pinned': self.visible_pinned(),
+            'important': self.visible_important(),
+            'examRelated': self.visible_exam_related(),
+            'tags': self.visible_tags_list(),
             'author': {
                 'id': self.author_id,
                 'name': self.author.nickname if self.author else None,
@@ -213,14 +284,29 @@ class Notice(db.Model):
         }
 
 
-# Helpful scopes
-def apply_notice_filters(query, category=None, query_text=None, pinned=None, important=None, exam=None, tags=None):
+def apply_notice_filters(
+    query,
+    category=None,
+    query_text=None,
+    pinned=None,
+    important=None,
+    exam=None,
+    tags=None,
+    budget_year=None,
+    budget_month=None,
+):
     """Reusable filter helper for notice listing queries."""
     query = query.filter(Notice.deleted_at.is_(None))
     if category in {NoticeCategory.SCHOOL.value, NoticeCategory.SCHOOL}:
         query = query.filter(Notice.category == NoticeCategory.SCHOOL)
     elif category in {NoticeCategory.COUNCIL.value, NoticeCategory.COUNCIL}:
         query = query.filter(Notice.category == NoticeCategory.COUNCIL)
+    elif category in {NoticeCategory.BUDGET.value, NoticeCategory.BUDGET}:
+        query = query.filter(Notice.category == NoticeCategory.BUDGET)
+        if budget_year is not None:
+            query = query.filter(Notice.budget_year == budget_year)
+        if budget_month is not None:
+            query = query.filter(Notice.budget_month == budget_month)
 
     if pinned is not None:
         query = query.filter(Notice.pinned.is_(bool(pinned)))
@@ -241,7 +327,7 @@ def apply_notice_filters(query, category=None, query_text=None, pinned=None, imp
         )
     if tags:
         if isinstance(tags, str):
-            tags = [t.strip() for t in re.split(r'[,\n;，]+', tags) if t.strip()]
+            tags = [tag.strip() for tag in re.split(r'[,\n;，]+', tags) if tag.strip()]
         if tags:
             for tag in tags:
                 query = query.filter(Notice.tags.ilike(f"%{tag}%"))

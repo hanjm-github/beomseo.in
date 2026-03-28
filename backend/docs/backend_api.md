@@ -297,97 +297,154 @@ flowchart TD
 
 ### 5.1 Enum/필드 규약
 
-- `category`: `school | council`
+- `category`: `school | council | budget`
+- `budgetYear`: 예산 공개 글에서만 사용, 회계연도 시작 연도
+- `budgetMonth`: 예산 공개 글에서만 사용, `01~12` 입력을 받되 보드 UI는 `03~12`, `01`, `02` 순서로 사용
+- 활성 예산 공개 범위: `BUDGET_BOARD_START_YEAR <= budgetYear <= BUDGET_BOARD_END_YEAR`
+- 예산 공개 글은 `pinned`, `important`, `examRelated`, `tags`를 저장/노출하지 않음
 - `reaction.type`: `like | dislike`
 - 댓글 길이: `1~1000`
 - 제목 길이: `2~200`
 - 첨부 개수: 최대 `MAX_ATTACH_COUNT`(기본 5)
 
-### 5.2 `GET /api/notices`
+### 5.2 `GET /api/notices/budget/settings`
+
+- 권한: 선택 인증
+- 캐시: `notices`
+- 설명:
+  - 예산 공개 게시판의 활성 회계연도 범위와 기본 진입 연/월을 반환
+  - 프론트 `/notices/budget` 루트 리다이렉트와 연도 탭 가드의 기준값
+
+성공 예시:
+
+```json
+{
+  "startYear": 2026,
+  "endYear": 2026,
+  "monthOrder": ["03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "01", "02"],
+  "currentBudgetYear": 2026,
+  "currentBudgetMonth": "03",
+  "defaultBudgetYear": 2026,
+  "defaultBudgetMonth": "03"
+}
+```
+
+### 5.3 `GET /api/notices`
 
 - 권한: 선택 인증
 - 캐시: `notices`
 - Query:
-  - `category`: `school|council`
+  - `category`: `school|council|budget`
   - `query`: 제목/본문/요약/태그 검색
   - `pinned`, `important`, `exam`: boolean
   - `tags`: 콤마/개행/세미콜론 구분
   - `sort`: `recent|views|important`
   - `view`: `list`면 리스트 직렬화
+  - `budgetYear`, `budgetMonth`: `category=budget`일 때 필수
   - `page`, `page_size|pageSize`
+- 예산 공개 제약:
+  - `category=budget`이고 `budgetYear` 또는 `budgetMonth`가 없으면 `422`
+  - `budgetYear`가 활성 범위를 벗어나면 `422`
+  - `budgetMonth`가 `1~12` 범위를 벗어나면 `422`
 
-### 5.3 `POST /api/notices`
+### 5.4 `POST /api/notices`
 
 - 권한: `student_council | admin`
 - Body:
   - `title` string `2~200`
   - `body` string 필수
-  - `category` required (`school|council`)
+  - `category` required (`school|council|budget`)
   - `summary` optional
   - `pinned`, `important`, `examRelated` optional
   - `tags` optional
   - `attachments` array optional
+- 예산 공개 추가 규칙:
+  - `category='budget'`일 때 `budgetYear`, `budgetMonth` 필수
+  - `budgetYear`는 활성 범위 안에 있어야 함
+  - `budgetMonth`는 `01~12`
+  - budget 글에서는 `pinned`, `important`, `examRelated`, `tags`를 보내도 서버가 비활성화 처리
 - 실패 `422` 예시:
 
 ```json
 {
   "errors": [
-    "제목은 2~200자로 입력해주세요."
+    "budgetYear is required for budget notices."
   ]
 }
 ```
 
-### 5.4 `GET /api/notices/{notice_id}`
+### 5.5 `GET /api/notices/{notice_id}`
 
 - 권한: 선택 인증
 - 성공: 상세 + `myReaction`
 - 실패: `404`(없음/삭제)
+- 예산 공개 추가 규칙:
+  - 활성 회계연도 범위 밖의 budget 글은 존재하더라도 `404`
 
-### 5.5 `PUT /api/notices/{notice_id}`
+### 5.6 `PUT /api/notices/{notice_id}`
 
 - 권한: 작성 학생회 본인 또는 `admin`
 - Body: 생성과 동일
+- 예산 공개 추가 규칙:
+  - 일반 공지와 같은 엔드포인트를 재사용
+  - 수정 가능 주체는 `admin` 또는 원작성 `student_council`
+  - 활성 범위 밖 budget 글은 수정도 `404`
 
-### 5.6 `DELETE /api/notices/{notice_id}`
+### 5.7 `DELETE /api/notices/{notice_id}`
 
 - 권한: 작성 학생회 본인 또는 `admin`
 - 동작: 소프트 삭제
+- 예산 공개 추가 규칙:
+  - 활성 범위 밖 budget 글은 삭제도 `404`
 
-### 5.7 `POST /api/notices/uploads`
+### 5.8 `POST /api/notices/uploads`
 
 - 권한: `student_council | admin`
 - Content-Type: `multipart/form-data`
 - 필드: `file`
 - 성공: 업로드 공통 계약
 
-### 5.8 `GET /api/notices/uploads/{filename}`
+### 5.9 `GET /api/notices/uploads/{filename}`
 
 - 권한: 선택 인증
 - 정책:
   - 공지 첨부/본문 연결 파일은 접근 허용
   - 임시 파일은 `preview_token` 필수
+  - 활성 범위 밖 budget 글에 연결된 첨부/본문 이미지 경로는 `404`
 
-### 5.9 `GET /api/notices/{notice_id}/comments`
+### 5.10 `GET /api/notices/{notice_id}/comments`
 
 - 권한: 선택 인증
 - 캐시: `notices`
 - Query: `order`, `page`, `page_size|pageSize`
+- 예산 공개 추가 규칙:
+  - 댓글 API는 기존 notices 댓글 계약을 그대로 재사용
+  - 활성 범위 밖 budget 글 댓글 조회는 `404`
 
-### 5.10 `POST /api/notices/{notice_id}/comments`
+### 5.11 `POST /api/notices/{notice_id}/comments`
 
 - 권한: 인증 필요
 - Body: `body` string `1~1000`
+- 예산 공개 추가 규칙:
+  - 활성 범위 밖 budget 글 댓글 작성은 `404`
 
-### 5.11 `DELETE /api/notices/{notice_id}/comments/{comment_id}`
+### 5.12 `DELETE /api/notices/{notice_id}/comments/{comment_id}`
 
 - 권한: `admin`
 - 동작: 소프트 삭제
 
-### 5.12 `POST /api/notices/{notice_id}/reactions`
+### 5.13 `POST /api/notices/{notice_id}/reactions`
 
 - 권한: 인증 필요
 - Body: `{"type":"like"|"dislike"}`
 - 동작: 같은 타입 재요청 시 토글 off, 다른 타입 시 전환
+- 예산 공개 추가 규칙:
+  - 반응 API는 기존 notices 반응 계약을 그대로 재사용
+  - 활성 범위 밖 budget 글 반응 처리는 `404`
+
+운영 메모:
+
+- 기존 `notices` 테이블이 이미 운영 중이면 `scripts/migrate_notice_budget_board.py`를 먼저 실행해 `budget_year`, `budget_month`, `BUDGET` enum, `ix_notices_budget_list` 인덱스를 추가합니다.
 
 ---
 

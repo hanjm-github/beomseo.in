@@ -221,6 +221,7 @@ flowchart TD
 
 - 최상위 라우트는 `src/App.jsx`에서만 정의
 - 세부 기능 라우트는 기능별 라우터(`CommunityRouter`, `NoticesPage/index.jsx`, `SchoolInfo/index.jsx`)로 위임
+- `NoticesPage/index.jsx`는 다시 `NoticeCenterPage`(학교/학생회 공지)와 `BudgetBoardPage`(예산 공개)로 분기합니다.
 - 페이지 컴포넌트는 가능한 한 API 호출 orchestration에 집중
 - 표시 로직은 `src/components/*`로 분리
 - data-dense 기능은 `src/features/<feature>/*`에 hook/data/utils를 묶어 페이지와 공용 API 사이를 정리
@@ -228,9 +229,30 @@ flowchart TD
 ### 헤더/정적 페이지 규칙
 
 - `Header`는 공지, 커뮤니티, 학교 생활 정보를 전역 내비게이션으로 노출합니다.
+- 공지 드롭다운에는 `학교 공지`, `학생회 공지`, `예산 공개` 3개 진입점이 있으며, 예산 공개는 별도 페이지(`/notices/budget/*`)로 연결됩니다.
 - 커뮤니티 드롭다운의 동아리 모집 링크는 `CLUB_RECRUIT_BOARD_ENABLED` 플래그가 켜진 경우에만 렌더링됩니다.
 - 학교 생활 정보 드롭다운의 스포츠리그 링크는 현재 기본 카테고리 ID로 직접 연결됩니다.
 - `/privacy`, `/terms`는 정적 법적 문서 페이지이며, 서버 데이터 fetch 없이 목차(anchor)와 `맨 위로` 스크롤 헬퍼만 제공합니다.
+
+### 예산 공개 보드 흐름
+
+```mermaid
+flowchart TD
+    A["/notices/budget/*"] --> B["BudgetBoardPage"]
+    B --> C["noticesApi.getBudgetSettings()"]
+    C --> D["활성 회계연도 범위 + 기본 진입 월 결정"]
+    B --> E["BudgetListView / BudgetDetailView / BudgetComposeView"]
+    E --> F["noticesApi.list/get/create/update/remove"]
+    E --> G["공유 notices UI 재사용"]
+    G --> H["NoticeToolbar: 공지 속성 필터 숨김"]
+    G --> I["NoticeCard: 배지/태그 숨김"]
+    G --> J["EmptyState: 월별 CTA 문구 교체"]
+```
+
+- `BudgetBoardPage`는 서버가 내려준 `monthOrder`와 연도 범위를 먼저 정규화한 뒤, 고정된 `03`~`02` 회계 사이클과 다르면 화면을 열지 않습니다.
+- `/notices/budget` 직접 진입은 백엔드 settings의 `defaultBudgetYear`, `defaultBudgetMonth`를 기준으로 리다이렉트됩니다.
+- settings 요청 실패 시에는 `budgetUtils.getCurrentBudgetRouteParams()`를 사용해 현재 KST 회계 사이클 한 개만 보이는 fallback 설정을 만듭니다.
+- 예산 공개 화면은 기존 `notices` API와 컴포넌트를 재사용하지만, 공지 전용 배지·태그·속성 필터는 숨겨서 월별 지출 공개 보드 형태에 맞춥니다.
 
 ### PWA 설치 상태 흐름
 

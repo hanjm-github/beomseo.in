@@ -1,0 +1,81 @@
+.budgetHeader {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.yearSelector {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+}
+
+.yearSummary {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.yearLabel {
+  margin: 0;
+  font-size: var(--text-lg);
+}
+
+.yearHint {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+}
+
+.yearButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-muted);
+  color: var(--color-text-primary);
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.yearButtonDisabled {
+  opacity: 0.45;
+  cursor: default;
+  pointer-events: none;
+}
+
+.monthChip {
+  text-decoration: none;
+}
+
+.monthMetaCard {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  background: linear-gradient(135deg, rgba(66, 133, 244, 0.08), rgba(52, 168, 83, 0.08));
+  color: var(--color-text-secondary);
+}
+
+.monthMetaStrong {
+  color: var(--color-text-primary);
+  font-weight: var(--font-semibold);
+}
+
+@media (min-width: 768px) {
+  .budgetHeader {
+    gap: var(--space-5);
+  }
+}

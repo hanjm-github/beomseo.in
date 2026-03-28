@@ -61,11 +61,36 @@
 | 경로 | 요소 |
 |---|---|
 | `/notices` | `Navigate -> /notices/school` |
-| `/notices/:category` | `ListView` (`school`, `council`만 허용) |
-| `/notices/:category/new` | `ComposeView(mode=create)` |
+| `/notices/budget/*` | `BudgetBoardPage` |
+| `/notices/*` (`budget` 외 경로) | `NoticeCenterPage` |
+
+#### 3.2.1 학교/학생회 공지 서브라우트 (`src/pages/NoticesPage/NoticeCenterPage.jsx`)
+
+| 경로 | 요소 |
+|---|---|
+| `/notices/school` | `ListView` |
+| `/notices/council` | `ListView` |
+| `/notices/:category/new` | `ComposeView(mode=create)` (`school`, `council`만 허용) |
 | `/notices/:category/:id` | `DetailView` (`id` 숫자 경로만 허용) |
-| `/notices/:category/:id/edit` | `ComposeView(mode=edit)` |
+| `/notices/:category/:id/edit` | `ComposeView(mode=edit)` (`id` 숫자 경로만 허용) |
 | `/notices/*` (invalid path) | `NotFoundPage` |
+
+#### 3.2.2 예산 공개 서브라우트 (`src/pages/NoticesPage/BudgetBoardPage.jsx`)
+
+| 경로 | 요소 |
+|---|---|
+| `/notices/budget` | `Navigate -> /notices/budget/:budgetYear/:budgetMonth` (`GET /api/notices/budget/settings`의 기본 연/월 사용) |
+| `/notices/budget/:budgetYear/:budgetMonth` | `BudgetListView` |
+| `/notices/budget/:budgetYear/:budgetMonth/new` | `BudgetComposeView(mode=create)` |
+| `/notices/budget/:budgetYear/:budgetMonth/:id` | `BudgetDetailView` (`budgetYear`, `id` 숫자 경로, `budgetMonth` 허용값 가드) |
+| `/notices/budget/:budgetYear/:budgetMonth/:id/edit` | `BudgetComposeView(mode=edit)` (`budgetYear`, `id` 숫자 경로, `budgetMonth` 허용값 가드) |
+| `/notices/budget/*` (invalid path) | `NotFoundPage` |
+
+예산 공개 라우트 메모:
+
+- 회계 사이클은 `03`~`12`, `01`, `02` 고정 순서를 사용합니다.
+- URL의 `budgetYear`는 달력 연도가 아니라 회계연도 시작 연도입니다.
+- `BudgetBoardPage`는 settings 응답의 연도 범위를 벗어난 경로를 즉시 404 화면으로 처리합니다.
 
 ### 3.3 커뮤니티 라우트 (`src/pages/CommunityRouter.jsx`)
 
@@ -176,7 +201,7 @@ graph TD
 
 | 기능 | 페이지 레이어 | 컴포넌트 레이어 | API 레이어 |
 |---|---|---|---|
-| 공지 | `src/pages/NoticesPage/*` | `src/components/notices/*` | `src/api/notices.js` |
+| 공지/예산 공개 | `src/pages/NoticesPage/*` | `src/components/notices/*` | `src/api/notices.js` |
 | 자유게시판 | `src/pages/FreeBoard/*` | `src/components/freeboard/*` | `src/api/community.js` |
 | 동아리 모집 | `src/pages/ClubRecruit/*` | `src/components/clubRecruit/*` | `src/api/clubRecruit.js` |
 | 선택과목 변경 | `src/pages/Subjects/*` | `src/components/subjects/*` | `src/api/subjectChanges.js` |
@@ -191,7 +216,23 @@ graph TD
 | 학교 생활 정보(학사 캘린더) | `src/pages/SchoolInfo/AcademicCalendarPage.jsx` | `src/components/AcademicUpcomingCard/*`, `src/features/academicCalendar/*` | 없음 (`src/features/academicCalendar/data.js` 정적 데이터 사용) |
 | 학교 생활 정보(스포츠리그 문자중계/라인업/개인 순위) | `src/pages/SchoolInfo/SportsLeagueCategoryPage.jsx` | `src/features/sportsLeague/*` (`useSportsLeagueLive`, `usePlayersStore`, `TeamLineupPanel`, `PlayerRankingPanel`) | `src/api/sportsLeague.js` |
 
-### 4.1 스포츠리그 feature 슬라이스 (`src/features/sportsLeague/*`)
+### 4.1 공지/예산 공개 파일 구성
+
+| 파일 | 역할 |
+|---|---|
+| `src/pages/NoticesPage/index.jsx` | `/notices/*`를 `NoticeCenterPage`와 `BudgetBoardPage`로 분기 |
+| `src/pages/NoticesPage/NoticeCenterPage.jsx` | 학교/학생회 공지 전용 셸과 중첩 라우트 |
+| `src/pages/NoticesPage/BudgetBoardPage.jsx` | 예산 공개 설정 로드, 연도 전환, 월 탭, 예산 공개 중첩 라우트 |
+| `src/pages/NoticesPage/BudgetListView.jsx` | `category='budget'`, `budgetYear`, `budgetMonth` 필터 기반 월별 리스트 |
+| `src/pages/NoticesPage/BudgetDetailView.jsx` | 예산 공개 상세, 댓글/반응/첨부 재사용 |
+| `src/pages/NoticesPage/BudgetComposeView.jsx` | 경로 기반 회계연도/월을 고정한 작성·수정 화면 |
+| `src/pages/NoticesPage/budgetUtils.js` | `03`~`02` 회계 사이클 계산 및 라벨/경로 유틸 |
+| `src/components/notices/NoticeToolbar.jsx` | `showAttributeFilters`, `sortOptions`, `searchPlaceholder`로 budget 보드 확장 |
+| `src/components/notices/NoticeList.jsx` | `emptyStateProps`, `cardProps`로 budget 전용 비어 있음/카드 렌더링 재사용 |
+| `src/components/notices/NoticeCard.jsx` | `hideBadges`, `hideTags`로 예산 공개 카드 표현 단순화 |
+| `src/components/notices/EmptyState.jsx` | `createPath`, `title`, `description` override 지원 |
+
+### 4.2 스포츠리그 feature 슬라이스 (`src/features/sportsLeague/*`)
 
 | 파일 | 역할 |
 |---|---|

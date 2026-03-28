@@ -6,7 +6,7 @@ policy (security, upload constraints, caching, and board defaults) lives here
  so behavior can be audited without scanning route code.
 """
 import os
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -51,6 +51,12 @@ def _parse_int(value, default=0):
         return int(value)
     except (TypeError, ValueError):
         return default
+
+
+def _current_kst_budget_cycle_year():
+    """Return current budget cycle year in KST (March-February cycle)."""
+    now_kst = datetime.now(timezone(timedelta(hours=9)))
+    return now_kst.year if now_kst.month >= 3 else now_kst.year - 1
 
 
 class Config:
@@ -208,6 +214,19 @@ class Config:
     CLUB_RECRUIT_BOARD_ENABLED = _parse_bool(
         os.getenv('CLUB_RECRUIT_BOARD_ENABLED', 'true'),
         default=True,
+    )
+
+    # Budget disclosure board
+    BUDGET_BOARD_CURRENT_CYCLE_YEAR = _current_kst_budget_cycle_year()
+    BUDGET_BOARD_START_YEAR_RAW = os.getenv('BUDGET_BOARD_START_YEAR')
+    BUDGET_BOARD_END_YEAR_RAW = os.getenv('BUDGET_BOARD_END_YEAR')
+    BUDGET_BOARD_START_YEAR = _parse_int(
+        BUDGET_BOARD_START_YEAR_RAW,
+        BUDGET_BOARD_CURRENT_CYCLE_YEAR,
+    )
+    BUDGET_BOARD_END_YEAR = _parse_int(
+        BUDGET_BOARD_END_YEAR_RAW,
+        BUDGET_BOARD_CURRENT_CYCLE_YEAR,
     )
 
     # Survey exchange

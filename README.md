@@ -61,7 +61,7 @@
 
 **beomseo.in**은 범서고등학교 17대 학생회 정보기술부에서 기획·개발한 **학생 커뮤니티 웹 플랫폼**입니다.
 
-학생들이 학교 생활에서 필요한 정보를 한곳에서 쉽게 찾고, 서로 소통할 수 있는 공간을 만들기 위해 시작되었습니다. 공지사항 확인부터 자유 게시판, 동아리 모집, 학생 청원, 설문조사, 실시간 투표, 분실물 게시판, 교내 중고거래, 수학여행 반별 미션 게시판, 그리고 학교 생활 정보 허브 안의 스포츠리그 문자중계·팀별 라인업·개인별 순위까지 — 범서고 학생이라면 누구나 참여할 수 있습니다.
+학생들이 학교 생활에서 필요한 정보를 한곳에서 쉽게 찾고, 서로 소통할 수 있는 공간을 만들기 위해 시작되었습니다. 학교/학생회 공지와 예산 공개 게시판 확인부터 자유 게시판, 동아리 모집, 학생 청원, 설문조사, 실시간 투표, 분실물 게시판, 교내 중고거래, 수학여행 반별 미션 게시판, 그리고 학교 생활 정보 허브 안의 스포츠리그 문자중계·팀별 라인업·개인별 순위까지 — 범서고 학생이라면 누구나 참여할 수 있습니다.
 
 > **개발 철학**
 > 1. 첫째도 **개발의 편리함**, 둘째도 **학생들의 편리함** 🛠️
@@ -86,6 +86,7 @@
 
 ### 📢 공지·소통
 - **학교/학생회 공지** — 카테고리별 CRUD, 댓글, 반응
+- **예산 공개 게시판** — 회계연도(3월~다음 해 2월) 기준 월별 예산 공개, 댓글/반응/첨부 재사용
 - **자유 게시판** — 북마크, 승인 시스템
 - **학생 청원** — 투표 + 학생회 답변
 
@@ -120,6 +121,12 @@
 </td>
   </tr>
 </table>
+
+### 공지 라우팅 메모
+
+- `/notices/*`는 학교/학생회 공지용 `NoticeCenterPage`와 예산 공개용 `BudgetBoardPage`로 분기됩니다.
+- `/notices/budget` 진입 시 백엔드 `GET /api/notices/budget/settings` 응답의 기본 연/월로 리다이렉트됩니다.
+- 예산 공개는 `BUDGET_BOARD_START_YEAR` ~ `BUDGET_BOARD_END_YEAR` 범위의 활성 회계연도만 노출합니다.
 
 ---
 
@@ -254,7 +261,7 @@ beomseo.in/
 │   ├── .env.example
 │   ├── routes/                # 11개 블루프린트 (기능별 API)
 │   │   ├── auth.py            #   인증/회원
-│   │   ├── notices.py         #   공지
+│   │   ├── notices.py         #   공지 + 예산 공개 설정/CRUD
 │   │   ├── free.py            #   자유게시판
 │   │   ├── club_recruit.py    #   동아리 모집
 │   │   ├── subject_changes.py #   과목변경
@@ -286,7 +293,8 @@ beomseo.in/
 │   ├── models/                # SQLAlchemy 모델
 │   ├── services/              # 도메인 서비스/실시간 보조 로직
 │   ├── scripts/               # 운영용 부트스트랩 스크립트
-│   │   └── bootstrap_field_trip.py    # 수학여행 기본 반/비밀번호 시드
+│   │   ├── bootstrap_field_trip.py    # 수학여행 기본 반/비밀번호 시드
+│   │   └── migrate_notice_budget_board.py # 기존 notices 스키마에 예산 공개 컬럼/인덱스 추가
 │   ├── utils/                 # 보안·캐시·업로드 유틸
 │   ├── uploads/               # 파일 업로드 저장소
 │   └── docs/                  # 백엔드 문서
@@ -352,7 +360,11 @@ pip install -r requirements.txt
 # 환경 변수 준비
 copy .env.example .env    # Windows
 cp .env.example .env      # macOS / Linux
-# .env 파일을 열어 DB 접속 정보, JWT_SECRET_KEY 등을 수정합니다
+# .env 파일을 열어 DB 접속 정보, JWT_SECRET_KEY,
+# BUDGET_BOARD_START_YEAR / BUDGET_BOARD_END_YEAR 등을 수정합니다
+
+# 기존 notices 테이블을 이미 사용 중인 환경이라면 예산 공개 확장 스키마를 먼저 반영합니다
+python scripts/migrate_notice_budget_board.py
 
 # 서버 실행
 python app.py
@@ -369,7 +381,7 @@ python -m uvicorn fastapi_app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
 > 💡 FastAPI 서버: `http://127.0.0.1:8000` (Swagger: `/docs`)
-> 스포츠리그 문자중계와 수학여행 게시판 API를 함께 제공합니다.
+> 스포츠리그 문자중계와 수학여행 게시판 API를 함께 제공합니다. 예산 공개 게시판은 Flask `notices` 도메인에서 처리됩니다.
 
 ### 3단계: 프론트엔드 설정
 

@@ -5,7 +5,7 @@
 
 ## 1. 시스템 개요
 
-이 서비스는 **Flask 메인 API + FastAPI 실시간/이벤트 API** 구조이며, 두 런타임이 같은 인증 쿠키와 MariaDB 스키마를 공유합니다. Flask는 일반 커뮤니티/인증 기능을, FastAPI는 스포츠리그, 수학여행 게시판, 급식 조회/평점/알림 기능을 담당합니다.
+이 서비스는 **Flask 메인 API + FastAPI 실시간/이벤트 API** 구조이며, 두 런타임이 같은 인증 쿠키와 MariaDB 스키마를 공유합니다. Flask는 일반 커뮤니티/인증 기능과 학교/학생회/예산 공개 공지 도메인을, FastAPI는 스포츠리그, 수학여행 게시판, 급식 조회/평점/알림 기능을 담당합니다.
 
 ```mermaid
 flowchart LR
@@ -54,7 +54,7 @@ sequenceDiagram
     App->>Config: 환경 결정(FLASK_ENV)
     App->>Config: app.config.from_object(...)
     App->>App: validate_security_config()
-    Note over App: JWT_SECRET 길이/값<br/>CORS_ORIGINS(운영)<br/>MAX_CONTENT_LENGTH 검증
+    Note over App: JWT_SECRET 길이/값<br/>CORS_ORIGINS(운영)<br/>MAX_CONTENT_LENGTH 검증<br/>BUDGET_BOARD 연도 범위 검증
     App->>Ext: init_cache()
     App->>Ext: db.init_app()
     App->>Ext: Session before_flush hook 등록(request metadata)
@@ -339,6 +339,17 @@ sequenceDiagram
    - 프론트 계약 안정화를 위해 camelCase 중심 응답 유지
 
 감사 메타데이터는 `users`, `notices`, `free_posts`, `club_recruits`, `subject_changes`, `petitions`, `surveys`, `votes`, `lost_found_*`, `gomsol_market_*` 및 관련 댓글/반응/이미지/응답 엔티티에 적용됩니다.
+
+### 예산 공개 공지 확장
+
+예산 공개 게시판은 별도 테이블을 만들지 않고 기존 `Notice` aggregate를 확장하는 방식으로 구현되어 있습니다.
+
+- `NoticeCategory.BUDGET` enum이 추가되었습니다.
+- `notices` 테이블에 `budget_year`, `budget_month` nullable 컬럼이 추가되었습니다.
+- 월별 리스트 성능을 위해 `(category, budget_year, budget_month, deleted_at, pinned, created_at)` 복합 인덱스 `ix_notices_budget_list`를 사용합니다.
+- 직렬화 시 budget 글은 `budgetYear`, `budgetMonth`를 응답에 포함하고, 공지 전용 affordance인 `pinned`, `important`, `examRelated`, `tags`는 숨깁니다.
+- 라우트 레이어는 `BUDGET_BOARD_START_YEAR` ~ `BUDGET_BOARD_END_YEAR` 범위 밖의 budget 글을 `404`로 처리해 비활성 회계연도 링크와 첨부 경로가 그대로 노출되지 않게 합니다.
+- 기존 운영 DB는 `scripts/migrate_notice_budget_board.py`를 사용해 enum, 컬럼, 인덱스를 idempotent하게 보강합니다.
 
 ### 9.1 ER 다이어그램 (핵심 관계)
 

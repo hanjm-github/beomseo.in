@@ -44,16 +44,29 @@
 
 | 메서드 | HTTP/Endpoint | 핵심 입력 | Mock fallback | 비고 |
 |---|---|---|---|---|
-| `list(params)` | `GET /api/notices` | `category`, `query`, `sort`, `page`, `pageSize`, `view=list` | 예 | 페이지네이션 정규화 |
+| `getBudgetSettings()` | `GET /api/notices/budget/settings` | 없음 | 예 | 활성 회계연도 범위 + 기본 진입 월 |
+| `list(params)` | `GET /api/notices` | `category`, `query`, `sort`, `page`, `pageSize`, `view=list`, `budgetYear?`, `budgetMonth?` | 예 | 페이지네이션 정규화 |
 | `get(id)` | `GET /api/notices/:id` | `id` | 예 | 상세 조회 |
-| `create(payload)` | `POST /api/notices` | 제목/본문/카테고리 등 | 예 | `post_created`/`post_create_failed` 트래킹 |
-| `update(id, payload)` | `PUT /api/notices/:id` | `id`, 수정 payload | 예 | 수정 |
+| `create(payload)` | `POST /api/notices` | 제목/본문/카테고리, `budgetYear?`, `budgetMonth?` | 예 | `post_created`/`post_create_failed` 트래킹 |
+| `update(id, payload)` | `PUT /api/notices/:id` | `id`, 수정 payload, `budgetYear?`, `budgetMonth?` | 예 | 수정 |
 | `remove(id)` | `DELETE /api/notices/:id` | `id` | 예 | 삭제 |
 | `react(id, type)` | `POST /api/notices/:id/reactions` | 반응 타입 | 예 | 반응 처리 |
 | `listComments(id, params)` | `GET /api/notices/:id/comments` | 페이지 파라미터 | 예 | 댓글 목록 |
 | `createComment(id, body)` | `POST /api/notices/:id/comments` | 댓글 본문 | 예 | 댓글 작성 |
 | `deleteComment(noticeId, commentId)` | `DELETE /api/notices/:noticeId/comments/:commentId` | 댓글 식별자 | 예 | 댓글 삭제 |
 | `upload(file)` | `POST /api/notices/uploads` | multipart 파일 | 예 | 업로드 용량 제한 적용 |
+
+공지/예산 공개 계약 요약:
+
+- `getBudgetSettings()`는 `startYear`, `endYear`, `monthOrder`, `currentBudgetYear`, `currentBudgetMonth`, `defaultBudgetYear`, `defaultBudgetMonth`를 반환합니다.
+- 예산 공개 루트(`/notices/budget`)는 위 settings 응답의 기본 연/월을 기준으로 월별 리스트 화면으로 이동합니다.
+- `category='budget'`일 때는 `budgetYear`(회계연도 시작 연도)와 `budgetMonth`(03~02)를 함께 전달합니다.
+- 예산 공개 상세 응답은 일반 notice 필드에 더해 `budgetYear`, `budgetMonth`를 포함할 수 있습니다.
+- 예산 공개 글은 공지 API를 재사용하지만, 백엔드가 `pinned`, `important`, `examRelated`, `tags`를 비활성화해 응답합니다.
+- 예산 공개 글 수정/삭제 권한은 `admin` 또는 원작성 `student_council` 기준으로 동작합니다.
+- 댓글, 반응, 첨부 업로드는 기존 공지사항 계약을 그대로 재사용합니다.
+- mock fallback도 `category='budget'`, `budgetYear`, `budgetMonth` 필터를 지원합니다.
+- mock fallback의 settings 응답도 실제 `/budget/settings`와 같은 키 구조를 유지합니다.
 
 ### 2.3 `src/api/community.js` (`communityApi`, 자유게시판)
 

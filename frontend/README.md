@@ -2,7 +2,7 @@
 # beomseo.in Frontend
 
 범서고 커뮤니티 서비스 `beomseo.in`의 React/Vite 프론트엔드입니다.  
-공지, 커뮤니티(자유/동아리/청원/설문/투표/분실물/곰솔마켓/수학여행), 학교 생활 정보(시간표/학사 캘린더/스포츠리그 문자중계/팀별 라인업/개인별 순위), 인증, 분석 트래킹을 단일 SPA로 제공합니다.
+공지(학교/학생회/예산 공개), 커뮤니티(자유/동아리/청원/설문/투표/분실물/곰솔마켓/수학여행), 학교 생활 정보(시간표/학사 캘린더/스포츠리그 문자중계/팀별 라인업/개인별 순위), 인증, 분석 트래킹을 단일 SPA로 제공합니다.
 
 ## 프로젝트 개요
 
@@ -135,10 +135,13 @@ graph TD
     R --> T["/terms  TermsOfServicePage"]
     R --> X["/*  NotFoundPage"]
 
-    N --> N1["/notices/:category"]
+    N --> N1["/notices/school | /council"]
     N --> N2["/notices/:category/new"]
     N --> N3["/notices/:category/:id"]
     N --> N4["/notices/:category/:id/edit"]
+    N --> NB1["/notices/budget"]
+    N --> NB2["/notices/budget/:budgetYear/:budgetMonth"]
+    N --> NB3["/notices/budget/:budgetYear/:budgetMonth/:id"]
 
     C --> CF["free/*"]
     C --> CC["club-recruit/*"]
@@ -154,6 +157,12 @@ graph TD
 ```
 
 세부 라우트/기능별 연결은 [frontend-code-map.md](docs/frontend-code-map.md)에서 확인할 수 있습니다.
+
+### 공지/예산 공개 라우팅 메모
+
+- `/notices/*`는 학교/학생회 공지용 `NoticeCenterPage`와 예산 공개용 `BudgetBoardPage`로 분기됩니다.
+- `/notices/budget` 진입 시 `GET /api/notices/budget/settings` 응답의 `defaultBudgetYear`, `defaultBudgetMonth`를 사용해 기본 월 화면으로 이동합니다.
+- 예산 공개 보드는 고정된 회계 사이클(`03`~`12`, `01`, `02`)을 기준으로 월 탭을 만들며, 공유 `NoticeToolbar`/`NoticeList`/`NoticeCard`를 재사용하되 공지 전용 배지·태그·속성 필터는 숨깁니다.
 
 ### 헤더와 정적 법적 페이지
 
@@ -207,6 +216,10 @@ map $uri $spa_route_ok {
     ~^/notices/(school|council)/new/?$ 1;
     ~^/notices/(school|council)/[0-9]+/?$ 1;
     ~^/notices/(school|council)/[0-9]+/edit/?$ 1;
+    ~^/notices/budget/?$ 1;
+    ~^/notices/budget/[0-9]{4}/(0[1-9]|1[0-2])/?$ 1;
+    ~^/notices/budget/[0-9]{4}/(0[1-9]|1[0-2])/[0-9]+/?$ 1;
+    ~^/notices/budget/[0-9]{4}/(0[1-9]|1[0-2])/[0-9]+/edit/?$ 1;
     ~^/community/?$ 1;
     ~^/community/(free|club-recruit|subjects|petition|survey|vote|lost-found|gomsol-market)/?$ 1;
     ~^/community/(free|club-recruit|subjects|petition|survey|vote|lost-found|gomsol-market)/new/?$ 1;

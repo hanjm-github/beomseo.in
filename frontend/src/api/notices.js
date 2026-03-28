@@ -45,6 +45,17 @@ const loadNoticesMockApi = ENABLE_API_MOCKS
   : null;
 
 export const noticesApi = {
+  async getBudgetSettings() {
+    try {
+      const response = await api.get('/api/notices/budget/settings');
+      return response.data;
+    } catch (err) {
+      if (!shouldUseMockFallback(err)) throw err;
+      const mockApi = await loadNoticesMockApi();
+      return mockApi.getBudgetSettings();
+    }
+  },
+
   async list(params) {
     const serverParams = { ...(params || {}), view: 'list' };
     try {

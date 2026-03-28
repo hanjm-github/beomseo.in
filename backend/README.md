@@ -1,7 +1,7 @@
 # beomseo.in Backend
 
 범서고 커뮤니티 서비스 `beomseo.in`의 백엔드 API입니다.
-메인 커뮤니티 기능은 Flask 서버가 담당하고, FastAPI 서버는 스포츠리그 문자중계, 수학여행 반별 게시판/점수판, 급식 조회/평점/알림 구독을 담당합니다. 두 서버는 같은 인증 쿠키와 DB 스키마를 공유하며, 인증·권한·레이트리밋·캐시·업로드 보안을 공통 정책으로 강제하고 쓰기 요청 메타데이터(IP/User-Agent)도 일관 수집합니다.
+메인 커뮤니티 기능은 Flask 서버가 담당하고, 학교/학생회 공지와 예산 공개 게시판도 같은 `notices` 도메인에서 처리합니다. FastAPI 서버는 스포츠리그 문자중계, 수학여행 반별 게시판/점수판, 급식 조회/평점/알림 구독을 담당합니다. 두 서버는 같은 인증 쿠키와 DB 스키마를 공유하며, 인증·권한·레이트리밋·캐시·업로드 보안을 공통 정책으로 강제하고 쓰기 요청 메타데이터(IP/User-Agent)도 일관 수집합니다.
 
 ## 시스템 개요
 
@@ -60,6 +60,13 @@ copy .env.example .env
 - `JWT_SECRET_KEY` (최소 길이 `JWT_MIN_SECRET_LENGTH`, 기본 32)
 - DB 접속 정보 (`DATABASE_URL` 또는 `DB_*`)
 - `CORS_ORIGINS`
+- `BUDGET_BOARD_START_YEAR`, `BUDGET_BOARD_END_YEAR` (예산 공개 활성 회계연도 범위)
+
+기존 `notices` 테이블을 이미 사용 중인 환경이라면 서버 실행 전에 예산 공개 확장 스키마를 반영합니다.
+
+```bash
+python scripts/migrate_notice_budget_board.py
+```
 
 ### 3) 서버 실행
 
@@ -138,7 +145,7 @@ Flask 메인 서버에 등록된 11개 블루프린트와 FastAPI 추가 라우�
 | Blueprint | URL Prefix | 주요 기능 |
 |---|---|---|
 | `auth` | `/api/auth` | 회원가입, 로그인, 토큰 갱신, 로그아웃 |
-| `notices` | `/api/notices` | 학교/학생회 공지 CRUD, 댓글, 반응 |
+| `notices` | `/api/notices` | 학교/학생회/예산 공개 공지 CRUD, 예산 공개 설정, 댓글, 반응 |
 | `free` | `/api/community/free` | 자유게시판 CRUD, 북마크, 승인 |
 | `club_recruit` | `/api/club-recruit` | 동아리 모집 CRUD, 승인 |
 | `subject_changes` | `/api/subject-changes` | 과목변경 매칭 CRUD, 상태 관리 |
@@ -176,7 +183,7 @@ backend/
 ├─ .env.example
 ├─ routes/                 # 기능별 API 엔드포인트
 │  ├─ auth.py              #   인증/회원
-│  ├─ notices.py            #   공지
+│  ├─ notices.py            #   공지 + 예산 공개 설정/CRUD
 │  ├─ free.py               #   자유게시판
 │  ├─ club_recruit.py       #   동아리 모집
 │  ├─ subject_changes.py    #   과목변경
@@ -226,7 +233,8 @@ backend/
 │  └─ sports_league_realtime.py # Redis pub/sub + in-process fallback
 ├─ scripts/
 │  ├─ bootstrap_sports_league.py # 스포츠리그 seed 반영 스크립트
-│  └─ bootstrap_field_trip.py    # 수학여행 기본 반/비밀번호 시드
+│  ├─ bootstrap_field_trip.py    # 수학여행 기본 반/비밀번호 시드
+│  └─ migrate_notice_budget_board.py # 기존 notices 스키마에 예산 공개 컬럼/인덱스 추가
 ├─ utils/                  # 보안/토큰/캐시/레이트리밋/업로드 유틸
 │  ├─ security.py          #   비밀번호 해시, IP 검증, 권한 데코레이터
 │  ├─ security_tokens.py   #   토큰 발급/회전/폐기
@@ -373,6 +381,19 @@ CSRF 쿠키/헤더 이름:
 | `FIELD_TRIP_CSRF_HEADER_NAME` | `X-Field-Trip-CSRF` | 수학여행 쓰기 요청 헤더 |
 | `FIELD_TRIP_MAX_BODY_LENGTH` | `6000` | 리치 HTML 본문 최대 길이 |
 | `FIELD_TRIP_MAX_NICKNAME_LENGTH` | `20` | 익명 작성 표시 닉네임 최대 길이 |
+
+### 예산 공개 게시판
+
+| 변수 | 기본값 | 설명 |
+|---|---|---|
+| `BUDGET_BOARD_START_YEAR` | 현재 KST 회계연도 | 예산 공개 게시판 시작 회계연도(포함) |
+| `BUDGET_BOARD_END_YEAR` | 현재 KST 회계연도 | 예산 공개 게시판 종료 회계연도(포함) |
+
+운영 메모:
+
+- 예산 공개 회계연도는 `3월~다음 해 2월` 기준으로 계산합니다.
+- `validate_security_config()`는 시작 연도와 종료 연도의 정수 여부 및 `start <= end` 조건을 부팅 시점에 검증합니다.
+- 구버전 `notices` 스키마를 쓰던 운영 DB는 `scripts/migrate_notice_budget_board.py` 실행으로 `budget_year`, `budget_month`, `BUDGET` enum, 복합 인덱스를 추가해야 합니다.
 
 ### 업로드
 
