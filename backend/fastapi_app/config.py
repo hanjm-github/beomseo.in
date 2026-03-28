@@ -127,6 +127,7 @@ class Settings(BaseSettings):
     UPLOAD_TEMP_PREVIEW_SIGNING_KEY: str = ''
 
     # Field trip
+    FIELD_TRIP_BOARD_ENABLED: bool = True
     FIELD_TRIP_UNLOCK_COOKIE_NAME: str = 'field_trip_unlock_token'
     FIELD_TRIP_CSRF_COOKIE_NAME: str = 'field_trip_csrf_token'
     FIELD_TRIP_CSRF_HEADER_NAME: str = 'X-Field-Trip-CSRF'

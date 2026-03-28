@@ -13,7 +13,7 @@
  */
 import { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { CLUB_RECRUIT_BOARD_ENABLED } from '../config/env';
+import { CLUB_RECRUIT_BOARD_ENABLED, FIELD_TRIP_BOARD_ENABLED } from '../config/env';
 import NotFoundPage from './NotFoundPage';
 import { NumericParamBoundary } from './RouteBoundaries';
 
@@ -97,19 +97,26 @@ export default function CommunityRouter() {
 
       <Route path="vote" element={lazyRoute(VoteListView)} />
       <Route path="vote/new" element={lazyRoute(VoteComposeView)} />
-      <Route path="field-trip" element={lazyRoute(FieldTripPage)} />
-      <Route path="field-trip/classes/:classId" element={lazyRoute(FieldTripClassBoardPage)} />
-      <Route path="field-trip/classes/:classId/new" element={lazyRoute(FieldTripClassBoardPage)} />
-      {/* Field-trip detail and edit were split so the board route can stay focused
-          on list/compose state while the detail page owns read-only rendering. */}
-      <Route
-        path="field-trip/classes/:classId/posts/:postId/edit"
-        element={lazyRoute(FieldTripClassBoardPage)}
-      />
-      <Route
-        path="field-trip/classes/:classId/posts/:postId"
-        element={lazyRoute(FieldTripPostDetailPage)}
-      />
+      {FIELD_TRIP_BOARD_ENABLED ? (
+        <>
+          <Route path="field-trip" element={lazyRoute(FieldTripPage)} />
+          <Route path="field-trip/classes/:classId" element={lazyRoute(FieldTripClassBoardPage)} />
+          <Route
+            path="field-trip/classes/:classId/new"
+            element={lazyRoute(FieldTripClassBoardPage)}
+          />
+          {/* Field-trip detail and edit were split so the board route can stay focused
+              on list/compose state while the detail page owns read-only rendering. */}
+          <Route
+            path="field-trip/classes/:classId/posts/:postId/edit"
+            element={lazyRoute(FieldTripClassBoardPage)}
+          />
+          <Route
+            path="field-trip/classes/:classId/posts/:postId"
+            element={lazyRoute(FieldTripPostDetailPage)}
+          />
+        </>
+      ) : null}
 
       <Route path="lost-found" element={lazyRoute(LostFoundListView)} />
       <Route path="lost-found/new" element={lazyRoute(LostFoundComposeView)} />

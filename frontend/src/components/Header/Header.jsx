@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
-import { APP_NAME, CLUB_RECRUIT_BOARD_ENABLED } from '../../config/env';
+import { APP_NAME, CLUB_RECRUIT_BOARD_ENABLED, FIELD_TRIP_BOARD_ENABLED } from '../../config/env';
 import { buildAuthRedirectState, resolveAuthRedirectTarget } from '../../utils/authRedirect';
 import { SPORTS_LEAGUE_CATEGORY_ID } from '../../features/sportsLeague/data';
 import styles from './Header.module.css';
@@ -41,7 +41,7 @@ const communityNavigationItems = [
   { label: '학생 청원', path: '/community/petition' },
   { label: '설문 품앗이', path: '/community/survey' },
   { label: '실시간 투표', path: '/community/vote' },
-  { label: '수학여행', path: '/community/field-trip' },
+  FIELD_TRIP_BOARD_ENABLED ? { label: '수학여행', path: '/community/field-trip' } : null,
   { label: '분실물 센터', path: '/community/lost-found' },
   { label: '곰솔마켓', path: '/community/gomsol-market' },
 ].filter(Boolean);

@@ -63,6 +63,10 @@ export const CLUB_RECRUIT_BOARD_ENABLED = readBooleanEnv(
   'VITE_CLUB_RECRUIT_BOARD_ENABLED',
   true
 );
+export const FIELD_TRIP_BOARD_ENABLED = readBooleanEnv(
+  'VITE_FIELD_TRIP_BOARD_ENABLED',
+  true
+);
 export const FIREBASE_API_KEY = readStringEnv('VITE_FIREBASE_API_KEY', '');
 export const FIREBASE_AUTH_DOMAIN = readStringEnv('VITE_FIREBASE_AUTH_DOMAIN', '');
 export const FIREBASE_PROJECT_ID = readStringEnv('VITE_FIREBASE_PROJECT_ID', '');

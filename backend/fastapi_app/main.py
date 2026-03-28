@@ -110,7 +110,8 @@ def create_app() -> FastAPI:
 
     # The FastAPI process owns async-heavy feature areas while keeping the same auth/session model as Flask.
     app.include_router(sports_league_router)
-    app.include_router(field_trip_router)
+    if settings.FIELD_TRIP_BOARD_ENABLED:
+        app.include_router(field_trip_router)
     app.include_router(meals_router)
 
     return app
