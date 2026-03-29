@@ -1,0 +1,106 @@
+﻿/**
+ * @file src/components/Community/Subjects/SubjectFilterBar.jsx
+ * @description Defines reusable UI components and feature-specific interaction blocks.
+ * Responsibilities:
+ * - Render composable UI pieces with clear prop-driven behavior and minimal coupling.
+ * Key dependencies:
+ * - lucide-react
+ * - ./subjects.module.css
+ * Side effects:
+ * - No significant side effects beyond React state and rendering behavior.
+ * Role in app flow:
+ * - Implements reusable view logic consumed by route-level pages.
+ */
+import { Search } from 'lucide-react';
+import styles from './subjects.module.css';
+
+const subjectTags = [
+  { value: 'all', label: '전체' },
+  { value: '국', label: '국어' },
+  { value: '수', label: '수학' },
+  { value: '영', label: '영어' },
+  { value: '사', label: '사회' },
+  { value: '과', label: '과학' },
+  { value: '예', label: '예체능' },
+];
+
+/**
+ * SubjectFilterBar module entry point.
+ */
+export default function SubjectFilterBar({
+  search,
+  onSearchChange,
+  onlyMine,
+  onToggleOnlyMine,
+  hideClosed,
+  onToggleHideClosed,
+  subjectTag,
+  onSubjectTagChange,
+  isAdmin = false,
+  approval = 'all',
+  onApprovalChange,
+}) {
+  return (
+    <div className={styles.section}>
+      <div className={styles.filterBar} role="search">
+        <div className={styles.searchWrap}>
+          <Search size={16} />
+          <input
+            type="search"
+            placeholder="과목명, 닉네임, 메모로 검색"
+            value={search}
+            onChange={(e) => onSearchChange?.(e.target.value)}
+            aria-label="선택 과목 검색"
+          />
+        </div>
+
+        {isAdmin ? (
+          <div className={styles.selectWrap}>
+            <select
+              value={approval}
+              onChange={(e) => onApprovalChange?.(e.target.value)}
+              aria-label="승인 상태 필터"
+            >
+              <option value="all">승인 전체</option>
+              <option value="approved">승인됨</option>
+              <option value="pending">미승인</option>
+            </select>
+          </div>
+        ) : null}
+
+        <button
+          type="button"
+          className={styles.toggleBtn}
+          aria-pressed={onlyMine}
+          onClick={() => onToggleOnlyMine?.(!onlyMine)}
+        >
+          내 글만
+        </button>
+
+        <button
+          type="button"
+          className={styles.toggleBtn}
+          aria-pressed={hideClosed}
+          onClick={() => onToggleHideClosed?.(!hideClosed)}
+        >
+          매칭 완료 숨기기
+        </button>
+      </div>
+
+      <div className={styles.chipRow} aria-label="과목군 필터">
+        {subjectTags.map((tag) => (
+          <button
+            key={tag.value}
+            type="button"
+            className={`${styles.chip} ${subjectTag === tag.value ? styles.chipActive : ''}`}
+            onClick={() => onSubjectTagChange?.(tag.value)}
+          >
+            {tag.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+

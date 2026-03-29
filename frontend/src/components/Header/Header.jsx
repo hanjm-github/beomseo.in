@@ -30,6 +30,7 @@ import { useAuth } from '../../context/AuthContext';
 import { APP_NAME, CLUB_RECRUIT_BOARD_ENABLED, FIELD_TRIP_BOARD_ENABLED } from '../../config/env';
 import { buildAuthRedirectState, resolveAuthRedirectTarget } from '../../utils/authRedirect';
 import { SPORTS_LEAGUE_CATEGORY_ID } from '../../features/sportsLeague/data';
+import { LOST_FOUND_NOTICE_BASE_PATH } from '../../pages/Notices/LostFound/paths';
 import styles from './Header.module.css';
 import RoleName from '../RoleName/RoleName';
 
@@ -42,11 +43,11 @@ const communityNavigationItems = [
   { label: '설문 품앗이', path: '/community/survey' },
   { label: '실시간 투표', path: '/community/vote' },
   FIELD_TRIP_BOARD_ENABLED ? { label: '수학여행', path: '/community/field-trip' } : null,
-  { label: '분실물 센터', path: '/community/lost-found' },
   { label: '곰솔마켓', path: '/community/gomsol-market' },
 ].filter(Boolean);
 
 const noticeNavigationItems = [
+  { label: '분실물 센터', path: LOST_FOUND_NOTICE_BASE_PATH },
   { label: '예산 공개', path: '/notices/budget' },
 ];
 

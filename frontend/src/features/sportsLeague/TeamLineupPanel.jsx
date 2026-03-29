@@ -6,7 +6,7 @@
 
 import { useMemo, useState } from 'react';
 import { Plus, Trash2, UserPlus } from 'lucide-react';
-import styles from '../../pages/SchoolInfo/SportsLeagueCategoryPage.module.css';
+import styles from '../../pages/SchoolLifeInfo/SportsLeagueCategory/SportsLeagueCategoryPage.module.css';
 
 export default function TeamLineupPanel({
     teams,

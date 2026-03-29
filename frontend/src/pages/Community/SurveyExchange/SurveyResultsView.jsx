@@ -1,0 +1,213 @@
+﻿/**
+ * @file src/pages/SurveyExchange/SurveyResultsView.jsx
+ * @description Implements route-level views and page orchestration logic.
+ * Responsibilities:
+ * - Coordinate route state, fetch lifecycles, and permission-driven page behavior.
+ * Key dependencies:
+ * - react
+ * - react-router-dom
+ * - lucide-react
+ * - ../../../api/survey
+ * Side effects:
+ * - Interacts with browser runtime APIs.
+ * Role in app flow:
+ * - Owns route-level user flows and composes feature components.
+ */
+import { useEffect, useMemo, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { Loader2, Table } from 'lucide-react';
+import { surveyApi } from '../../../api/survey';
+import SurveyResultsCharts from '../../../components/Community/SurveyExchange/SurveyResultsCharts';
+import styles from '../../../components/Community/SurveyExchange/survey.module.css';
+import { escapeCsvCell } from '../../../security/csvSanitizer';
+import '../../page-shell.css';
+
+/**
+ * SurveyResultsView module entry point.
+ */
+export default function SurveyResultsView() {
+  const { id } = useParams();
+  const [survey, setSurvey] = useState(null);
+  const [summary, setSummary] = useState(null);
+  const [raw, setRaw] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [tab, setTab] = useState('summary');
+
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchAll() {
+      try {
+        const [detailRes, summaryRes, rawRes] = await Promise.all([
+          surveyApi.detail(id),
+          surveyApi.summary(id),
+          surveyApi.rawResponses(id),
+        ]);
+        if (cancelled) return;
+        setSurvey(detailRes);
+        setSummary(summaryRes);
+        setRaw(rawRes);
+        setError('');
+      } catch {
+        if (cancelled) return;
+        setSurvey(null);
+        setSummary(null);
+        setRaw(null);
+        setError('결과를 불러오지 못했습니다.');
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    fetchAll();
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
+
+  const flattenedRows = useMemo(() => {
+    if (!raw?.rows) return [];
+    return raw.rows.map((row) => ({
+      id: row.id,
+      submittedAt: row.submittedAt,
+      ...row.answers,
+    }));
+  }, [raw]);
+
+  const exportSheet = (format) => {
+    if (!flattenedRows.length) return;
+    const headers = Object.keys(flattenedRows[0]);
+
+    const lines = [headers.map(escapeCsvCell).join(',')];
+    flattenedRows.forEach((row) => {
+      lines.push(headers.map((h) => escapeCsvCell(row[h])).join(','));
+    });
+
+    // Excel에서 한글/UTF-8 깨짐 방지를 위해 BOM 추가
+    const csvWithBom = '\uFEFF' + lines.join('\n');
+
+    // Excel 버튼은 XLSX가 아닌 Excel 호환 CSV(.xls 확장자)로 다운로드됩니다.
+    const isExcel = format === 'xls';
+    const blob = new Blob([csvWithBom], {
+      type: isExcel
+        ? 'application/vnd.ms-excel;charset=utf-8;'
+        : 'text/csv;charset=utf-8;',
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `survey-${id}.${isExcel ? 'xls' : 'csv'}`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const formatResponseValue = (value) => {
+    if (value == null || value === '') return '-';
+    if (Array.isArray(value)) {
+      return value.map((item) => String(item)).join(', ');
+    }
+    if (typeof value === 'object') {
+      const entries = Object.entries(value);
+      const active = entries
+        .filter(([, v]) => Boolean(v))
+        .map(([k, v]) => (typeof v === 'boolean' ? k : `${k}: ${v}`));
+      if (active.length) return active.join(', ');
+      try {
+        return JSON.stringify(value);
+      } catch {
+        return String(value);
+      }
+    }
+    return String(value);
+  };
+
+  if (loading) {
+    return (
+      <div className="page-shell u-flex-center-gap-2">
+        <Loader2 className="spin" size={18} /> 불러오는 중…
+      </div>
+    );
+  }
+
+  if (!survey) {
+    return (
+      <div className="page-shell">
+        <p>{error || '결과를 불러오지 못했습니다.'}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="page-shell">
+      <div className={styles.pageHeader}>
+        <div>
+          <p className="eyebrow">설문 결과</p>
+          <h1>{survey.title}</h1>
+          <p className="lede">{survey.description}</p>
+        </div>
+        <div className="u-flex-gap-2">
+          <button className="btn btn-secondary" onClick={() => exportSheet('csv')}>
+            CSV 다운로드
+          </button>
+          <button className="btn btn-primary" onClick={() => exportSheet('xls')}>
+            Excel(.xls) 다운로드
+          </button>
+        </div>
+      </div>
+
+      <div className={styles.resultTabs}>
+        <button
+          className={`${styles.chip} ${tab === 'summary' ? styles.chipActive : ''}`}
+          onClick={() => setTab('summary')}
+        >
+          그래프 보기
+        </button>
+        <button
+          className={`${styles.chip} ${tab === 'raw' ? styles.chipActive : ''}`}
+          onClick={() => setTab('raw')}
+        >
+          개별 응답
+        </button>
+      </div>
+
+      {tab === 'summary' ? (
+        <SurveyResultsCharts summary={summary} />
+      ) : (
+        <div className="u-overflow-x-auto">
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>제출 시각</th>
+                {summary?.questions?.map((q) => (
+                  <th key={q.id}>{q.text}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {flattenedRows.length ? (
+                flattenedRows.map((row) => (
+                  <tr key={row.id}>
+                    <td>{row.id}</td>
+                    <td>{new Date(row.submittedAt).toLocaleString()}</td>
+                    {summary?.questions?.map((q) => (
+                      <td key={q.id}>{formatResponseValue(row[q.id])}</td>
+                    ))}
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={2 + (summary?.questions?.length || 0)} className="u-center-text u-p-3">
+                    <Table size={16} /> 아직 응답이 없습니다.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+

@@ -6,7 +6,7 @@
 
 import { useMemo, useState } from 'react';
 import { Minus, Plus } from 'lucide-react';
-import styles from '../../pages/SchoolInfo/SportsLeagueCategoryPage.module.css';
+import styles from '../../pages/SchoolLifeInfo/SportsLeagueCategory/SportsLeagueCategoryPage.module.css';
 
 const RANKING_SUB_TABS = [
     { key: 'goals', label: '득점' },
