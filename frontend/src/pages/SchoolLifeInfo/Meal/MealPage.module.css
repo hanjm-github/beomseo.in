@@ -9,7 +9,11 @@
   border: 1px solid var(--color-card-border);
   border-radius: var(--radius-2xl);
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--color-card-bg) 94%, white 6%), var(--color-card-bg)),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-card-bg) 92%, var(--color-page-bg-elevated) 8%),
+      var(--color-card-bg)
+    ),
     repeating-linear-gradient(
       180deg,
       transparent 0,
@@ -23,13 +27,14 @@
   margin-bottom: var(--space-4);
   padding: var(--space-3) var(--space-4);
   border-radius: var(--radius-xl);
-  border: 1px solid var(--color-card-border);
-  background: color-mix(in srgb, var(--color-accent-100) 55%, white 45%);
+  border: 1px solid color-mix(in srgb, var(--color-status-accent-border) 70%, var(--color-card-border) 30%);
+  background: color-mix(in srgb, var(--color-status-accent-bg) 82%, var(--color-card-bg) 18%);
   color: var(--color-text-primary);
 }
 
 .pageNoticeError {
-  background: color-mix(in srgb, var(--color-alert-warning-bg) 80%, white 20%);
+  border-color: color-mix(in srgb, var(--color-alert-warning-border) 74%, var(--color-card-border) 26%);
+  background: color-mix(in srgb, var(--color-alert-warning-bg) 88%, var(--color-card-bg) 12%);
   color: var(--color-alert-warning-text);
 }
 
@@ -103,14 +108,17 @@
   border-radius: 32px;
   background: linear-gradient(
     135deg,
-    color-mix(in srgb, var(--color-primary-500) 16%, white),
-    color-mix(in srgb, var(--color-accent-100) 65%, white)
+    color-mix(in srgb, var(--color-primary-400) 34%, var(--color-page-bg-elevated) 66%),
+    color-mix(in srgb, var(--color-accent-300) 24%, var(--color-card-bg) 76%)
   );
   font-family: var(--font-accent);
   font-size: clamp(2rem, 6vw, 3rem);
   font-weight: var(--font-bold);
   color: var(--color-text-primary);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-card-border) 80%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-card-highlight-fg) 18%, var(--color-card-border) 82%);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--color-card-border) 70%, transparent),
+    0 18px 32px -26px color-mix(in srgb, var(--color-primary-500) 60%, transparent);
 }
 
 .heroTitle {
@@ -118,12 +126,25 @@
   line-height: var(--leading-tight);
 }
 
-.heroDate,
 .sectionDescription,
 .reactionDescription,
 .sideNote {
   color: var(--color-text-secondary);
   line-height: var(--leading-relaxed);
+}
+
+.heroDate {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  margin-top: var(--space-2);
+  padding: 0.45rem 0.8rem;
+  border: 1px solid color-mix(in srgb, var(--color-chip-border) 72%, transparent);
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--color-chip-bg) 88%, var(--color-card-bg) 12%);
+  color: var(--color-text-secondary);
+  line-height: var(--leading-normal);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-card-border) 16%, transparent);
 }
 
 .heroPreview {
@@ -173,8 +194,9 @@
   width: 40px;
   height: 40px;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--color-primary-100) 72%, white 28%);
-  color: var(--color-primary-700);
+  border: 1px solid color-mix(in srgb, var(--color-card-highlight-fg) 18%, transparent);
+  background: color-mix(in srgb, var(--color-card-highlight-bg) 82%, var(--color-card-bg) 18%);
+  color: var(--color-card-highlight-fg);
   flex-shrink: 0;
 }
 
@@ -434,12 +456,13 @@
   padding: var(--space-3) var(--space-4);
   border-radius: var(--radius-xl);
   border: 1px solid var(--color-card-border-muted);
-  background: color-mix(in srgb, var(--color-surface) 90%, transparent);
+  background: color-mix(in srgb, var(--color-surface) 82%, var(--color-page-bg-elevated) 18%);
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: flex-start;
   gap: 2px;
+  color: var(--color-text-primary);
   transition:
     border-color var(--transition-base),
     transform var(--transition-base),
@@ -452,6 +475,7 @@
 
 .monthChipActive {
   border-color: var(--color-primary-500);
+  background: color-mix(in srgb, var(--color-card-highlight-bg) 70%, var(--color-card-bg) 30%);
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-primary-500) 18%, transparent);
 }
 
@@ -542,7 +566,7 @@
   font-size: 0.62rem;
   font-weight: var(--font-semibold);
   letter-spacing: 0.14em;
-  color: var(--color-primary-600);
+  color: var(--color-card-highlight-fg);
 }
 
 .dayContent {
@@ -578,10 +602,12 @@
 .dayMenuItem {
   padding: 8px 10px;
   border-radius: var(--radius-lg);
-  background: color-mix(in srgb, var(--color-primary-100) 60%, white 40%);
-  color: var(--color-text-primary);
+  border: 1px solid color-mix(in srgb, var(--color-card-highlight-fg) 16%, transparent);
+  background: color-mix(in srgb, var(--color-card-highlight-bg) 82%, var(--color-card-bg) 18%);
+  color: var(--color-card-highlight-fg);
   font-size: 0.76rem;
   line-height: 1.4;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-card-border) 12%, transparent);
 }
 
 .menuChip,
@@ -594,9 +620,11 @@
   min-height: 28px;
   padding: 0 10px;
   border-radius: var(--radius-full);
+  border: 1px solid color-mix(in srgb, var(--color-chip-border) 68%, transparent);
   background: var(--color-chip-bg);
   color: var(--color-chip-text);
   font-size: 0.72rem;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-card-border) 12%, transparent);
 }
 
 .moreCount {
@@ -657,7 +685,8 @@
   min-height: 120px;
   padding: var(--space-5);
   border-radius: var(--radius-xl);
-  background: color-mix(in srgb, var(--color-alert-warning-bg) 80%, white 20%);
+  border: 1px solid color-mix(in srgb, var(--color-alert-warning-border) 74%, transparent);
+  background: color-mix(in srgb, var(--color-alert-warning-bg) 88%, var(--color-card-bg) 12%);
   color: var(--color-alert-warning-text);
 }
 
@@ -745,8 +774,8 @@
 
 .scoreButtonActive {
   border-color: var(--color-primary-500);
-  background: color-mix(in srgb, var(--color-primary-100) 78%, white 22%);
-  color: var(--color-primary-700);
+  background: color-mix(in srgb, var(--color-card-highlight-bg) 78%, var(--color-card-bg) 22%);
+  color: var(--color-card-highlight-fg);
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-primary-500) 18%, transparent);
 }
 
@@ -779,7 +808,8 @@
 .ratingLockedReason {
   padding: var(--space-3) var(--space-4);
   border-radius: var(--radius-xl);
-  background: color-mix(in srgb, var(--color-alert-warning-bg) 82%, white 18%);
+  border: 1px solid color-mix(in srgb, var(--color-alert-warning-border) 72%, transparent);
+  background: color-mix(in srgb, var(--color-alert-warning-bg) 88%, var(--color-card-bg) 12%);
   color: var(--color-alert-warning-text);
   line-height: var(--leading-relaxed);
 }
@@ -796,8 +826,8 @@
   gap: 6px;
   padding: var(--space-4);
   border-radius: var(--radius-xl);
-  border: 1px solid var(--color-card-border-muted);
-  background: color-mix(in srgb, var(--color-primary-100) 68%, white 32%);
+  border: 1px solid color-mix(in srgb, var(--color-card-highlight-fg) 14%, var(--color-card-border-muted) 86%);
+  background: color-mix(in srgb, var(--color-card-highlight-bg) 74%, var(--color-card-bg) 26%);
 }
 
 .nutritionLabel {
@@ -857,7 +887,7 @@
   background: linear-gradient(
     90deg,
     var(--color-primary-500),
-    color-mix(in srgb, var(--color-accent-300) 58%, white)
+    color-mix(in srgb, var(--color-accent-300) 58%, var(--color-page-bg-elevated) 42%)
   );
 }
 
@@ -899,19 +929,35 @@
 }
 
 .tone-positive .reactionFill {
-  background: linear-gradient(90deg, var(--color-success), color-mix(in srgb, var(--color-success) 40%, white));
+  background: linear-gradient(
+    90deg,
+    var(--color-success),
+    color-mix(in srgb, var(--color-success) 40%, var(--color-page-bg-elevated) 60%)
+  );
 }
 
 .tone-negative .reactionFill {
-  background: linear-gradient(90deg, var(--color-error), color-mix(in srgb, var(--color-error) 42%, white));
+  background: linear-gradient(
+    90deg,
+    var(--color-error),
+    color-mix(in srgb, var(--color-error) 42%, var(--color-page-bg-elevated) 58%)
+  );
 }
 
 .tone-accent .reactionFill {
-  background: linear-gradient(90deg, var(--color-accent-500), color-mix(in srgb, var(--color-accent-300) 60%, white));
+  background: linear-gradient(
+    90deg,
+    var(--color-accent-500),
+    color-mix(in srgb, var(--color-accent-300) 60%, var(--color-page-bg-elevated) 40%)
+  );
 }
 
 .tone-warning .reactionFill {
-  background: linear-gradient(90deg, var(--color-warning), color-mix(in srgb, var(--color-warning) 42%, white));
+  background: linear-gradient(
+    90deg,
+    var(--color-warning),
+    color-mix(in srgb, var(--color-warning) 42%, var(--color-page-bg-elevated) 58%)
+  );
 }
 
 @media (min-width: 768px) {
