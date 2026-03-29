@@ -24,6 +24,7 @@ from utils.pagination import parse_pagination, build_paginated_response
 from utils.files import (
     build_upload_preview_url,
     save_upload_for_scope,
+    resolve_upload_path_for_scope,
     resolve_scope_upload_dir,
     ensure_dir,
     build_upload_url,
@@ -351,10 +352,15 @@ def upload_image():
 @lost_found_bp.route('/uploads/<path:filename>', methods=['GET'], strict_slashes=False)
 def serve_upload(filename):
     """Serve image with fallback access for unsaved temporary uploads."""
-    upload_dir = resolve_scope_upload_dir(current_app.config, 'lost_found')
+    resolved_upload = resolve_upload_path_for_scope(current_app.config, 'lost_found', filename)
+    if not resolved_upload:
+        return jsonify({'error': '첨부파일을 찾을 수 없습니다.'}), 404
+
+    upload_dir = resolved_upload['upload_dir']
     ensure_dir(upload_dir)
-    file_path = Path(upload_dir) / filename
-    attachment_url = build_upload_url(current_app.config, 'lost_found', filename)
+    safe_filename = resolved_upload['filename']
+    file_path = resolved_upload['path']
+    attachment_url = build_upload_url(current_app.config, 'lost_found', safe_filename)
     attachment = LostFoundImage.query.filter_by(url=attachment_url).first()
     if not attachment:
         # Backward compatibility for rows that stored absolute URLs.
@@ -366,16 +372,16 @@ def serve_upload(filename):
         if not is_valid_upload_preview_token(
             current_app.config,
             'lost_found',
-            filename,
+            safe_filename,
             preview_token,
         ):
             return jsonify({'error': '첨부파일을 찾을 수 없습니다.'}), 404
         # Allow temporary preview only with a valid signed preview token.
-        response = send_from_directory(upload_dir, filename, as_attachment=False, download_name=filename)
+        response = send_from_directory(upload_dir, safe_filename, as_attachment=False, download_name=safe_filename)
         response.headers['X-Content-Type-Options'] = 'nosniff'
         return response
-    download_name = attachment.name if attachment else filename
-    response = send_from_directory(upload_dir, filename, as_attachment=False, download_name=download_name)
+    download_name = attachment.name if attachment else safe_filename
+    response = send_from_directory(upload_dir, safe_filename, as_attachment=False, download_name=download_name)
     response.headers['X-Content-Type-Options'] = 'nosniff'
     return response
 

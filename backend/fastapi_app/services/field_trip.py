@@ -22,6 +22,7 @@ from utils.files import (
     ensure_dir,
     extract_upload_filename_for_scope,
     is_valid_upload_preview_token,
+    resolve_upload_path_for_scope,
     resolve_scope_upload_dir,
     save_upload_for_scope,
     validate_upload,
@@ -774,9 +775,14 @@ async def get_upload_delivery(
     unlocked_class_ids: set[str],
 ) -> dict:
     config = _field_trip_upload_config(settings)
-    upload_dir = Path(resolve_scope_upload_dir(config, 'field_trip'))
-    ensure_dir(str(upload_dir))
-    file_path = upload_dir / filename
+    resolved_upload = resolve_upload_path_for_scope(config, 'field_trip', filename)
+    if not resolved_upload:
+        raise FieldTripError('첨부 파일을 찾을 수 없습니다.', 404, 'field_trip_upload_not_found')
+
+    upload_dir = resolved_upload['upload_dir']
+    ensure_dir(upload_dir)
+    safe_filename = resolved_upload['filename']
+    file_path = resolved_upload['path']
 
     if not file_path.exists():
         raise FieldTripError('첨부 파일을 찾을 수 없습니다.', 404, 'field_trip_upload_not_found')
@@ -784,10 +790,10 @@ async def get_upload_delivery(
     result = await session.execute(
         select(FieldTripPostAttachment)
         .options(selectinload(FieldTripPostAttachment.post))
-        .where(FieldTripPostAttachment.stored_filename == filename)
+        .where(FieldTripPostAttachment.stored_filename == safe_filename)
     )
     attachment = result.scalar_one_or_none()
-    attachment_url = build_upload_url(config, 'field_trip', filename)
+    attachment_url = build_upload_url(config, 'field_trip', safe_filename)
     attachment_post = attachment.post if attachment else None
     access_mode = await get_field_trip_access_mode(session)
 
@@ -801,7 +807,7 @@ async def get_upload_delivery(
         attachment_post = post_result.scalar_one_or_none()
 
     if not attachment and not attachment_post:
-        if not is_valid_upload_preview_token(config, 'field_trip', filename, preview_token or ''):
+        if not is_valid_upload_preview_token(config, 'field_trip', safe_filename, preview_token or ''):
             raise FieldTripError(
                 '첨부 파일을 찾을 수 없습니다.',
                 404,
@@ -810,7 +816,7 @@ async def get_upload_delivery(
         media_type = _guess_mime_from_path(file_path)
         return {
             'path': file_path,
-            'downloadName': filename,
+            'downloadName': safe_filename,
             'contentDisposition': 'inline' if _is_inline_media_mime(media_type) else 'attachment',
             'mediaType': media_type,
         }
@@ -827,7 +833,7 @@ async def get_upload_delivery(
 
     return {
         'path': file_path,
-        'downloadName': attachment.original_name if attachment else filename,
+        'downloadName': attachment.original_name if attachment else safe_filename,
         'contentDisposition': (
             'inline'
             if (

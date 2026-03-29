@@ -142,6 +142,46 @@ def normalize_upload_url_for_scope(config: dict, scope: str, url_value):
     return build_upload_url(config, scope, filename)
 
 
+def resolve_upload_path_for_scope(config: dict, scope: str, filename):
+    """
+    Resolve a route-provided upload filename inside its configured scope directory.
+
+    Route parameters are user-controlled, so this helper rejects traversal tokens,
+    nested segments, and any normalized path that escapes the scope upload root.
+    """
+    if not isinstance(filename, str):
+        return None
+
+    raw_filename = unquote(filename).strip()
+    if not raw_filename:
+        return None
+
+    normalized_filename = extract_upload_filename_for_scope(
+        config,
+        scope,
+        build_upload_url(config, scope, raw_filename),
+    )
+    if not normalized_filename or normalized_filename in {'.', '..'}:
+        return None
+
+    upload_dir = Path(resolve_scope_upload_dir(config, scope)).resolve()
+    file_path = (upload_dir / normalized_filename).resolve()
+
+    try:
+        file_path.relative_to(upload_dir)
+    except ValueError:
+        return None
+
+    if file_path.name != normalized_filename:
+        return None
+
+    return {
+        'filename': normalized_filename,
+        'upload_dir': str(upload_dir),
+        'path': file_path,
+    }
+
+
 def canonicalize_upload_urls_in_text(config: dict, scope: str, text_value):
     """
     Canonicalize scope upload URLs embedded in HTML/text to path-only URLs.

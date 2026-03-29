@@ -28,7 +28,7 @@ from utils.files import (
     build_upload_preview_url,
     canonicalize_upload_urls_in_text,
     save_upload_for_scope,
-    resolve_scope_upload_dir,
+    resolve_upload_path_for_scope,
     ensure_dir,
     is_valid_upload_preview_token,
     validate_upload,
@@ -675,10 +675,15 @@ def serve_upload(filename):
 
     Newly uploaded files can be previewed before notice linkage is saved.
     """
-    upload_dir = resolve_scope_upload_dir(current_app.config, 'notices')
+    resolved_upload = resolve_upload_path_for_scope(current_app.config, 'notices', filename)
+    if not resolved_upload:
+        return jsonify({'error': 'Attachment not found.'}), 404
+
+    upload_dir = resolved_upload['upload_dir']
     ensure_dir(upload_dir)
-    file_path = Path(upload_dir) / filename
-    attachment_url = build_upload_url(current_app.config, 'notices', filename)
+    safe_filename = resolved_upload['filename']
+    file_path = resolved_upload['path']
+    attachment_url = build_upload_url(current_app.config, 'notices', safe_filename)
     attachment = Attachment.query.filter_by(url=attachment_url).first()
     if not attachment:
         attachment = Attachment.query.filter(Attachment.url.like(f'%{attachment_url}%')).first()
@@ -702,29 +707,29 @@ def serve_upload(filename):
         if not is_valid_upload_preview_token(
             current_app.config,
             'notices',
-            filename,
+            safe_filename,
             preview_token,
         ):
             return jsonify({'error': 'Attachment not found.'}), 404
 
-        ext = Path(filename).suffix.lower()
+        ext = Path(safe_filename).suffix.lower()
         inline_exts = {'.jpg', '.jpeg', '.png', '.gif', '.webp'}
         response = send_from_directory(
             upload_dir,
-            filename,
+            safe_filename,
             as_attachment=ext not in inline_exts,
-            download_name=filename,
+            download_name=safe_filename,
         )
         response.headers['X-Content-Type-Options'] = 'nosniff'
         return response
 
-    ext = Path(filename).suffix.lower()
+    ext = Path(safe_filename).suffix.lower()
     inline_exts = {'.jpg', '.jpeg', '.png', '.gif', '.webp'}
-    download_name = attachment.name if attachment and attachment.name else filename
+    download_name = attachment.name if attachment and attachment.name else safe_filename
     inline_mime = (attachment.mime or '').startswith('image/') if attachment else ext in inline_exts
     response = send_from_directory(
         upload_dir,
-        filename,
+        safe_filename,
         as_attachment=not inline_mime,
         download_name=download_name,
     )

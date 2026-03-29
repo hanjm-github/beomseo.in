@@ -2,7 +2,6 @@
 Club recruit board routes with admin approval workflow.
 """
 from datetime import datetime
-from pathlib import Path
 from flask import Blueprint, request, jsonify, current_app, send_from_directory
 from flask_jwt_extended import jwt_required, get_jwt_identity, verify_jwt_in_request
 from sqlalchemy import or_, case
@@ -25,7 +24,7 @@ from utils.files import (
     ensure_dir,
     is_valid_upload_preview_token,
     normalize_upload_url_for_scope,
-    resolve_scope_upload_dir,
+    resolve_upload_path_for_scope,
     save_upload_for_scope,
     validate_upload,
 )
@@ -406,10 +405,15 @@ def upload_poster():
 @club_recruit_bp.route('/uploads/<path:filename>', methods=['GET'], strict_slashes=False)
 def serve_poster(filename):
     """Serve poster with pending-content access controls and temp fallback."""
-    upload_dir = resolve_scope_upload_dir(current_app.config, 'club_recruit')
+    resolved_upload = resolve_upload_path_for_scope(current_app.config, 'club_recruit', filename)
+    if not resolved_upload:
+        return jsonify({'error': '첨부파일을 찾을 수 없습니다.'}), 404
+
+    upload_dir = resolved_upload['upload_dir']
     ensure_dir(upload_dir)
-    file_path = Path(upload_dir) / filename
-    poster_url = build_upload_url(current_app.config, 'club_recruit', filename)
+    safe_filename = resolved_upload['filename']
+    file_path = resolved_upload['path']
+    poster_url = build_upload_url(current_app.config, 'club_recruit', safe_filename)
     item = ClubRecruit.query.filter(
         ClubRecruit.deleted_at.is_(None),
         ClubRecruit.poster_url == poster_url
@@ -433,12 +437,12 @@ def serve_poster(filename):
         if not is_valid_upload_preview_token(
             current_app.config,
             'club_recruit',
-            filename,
+            safe_filename,
             preview_token,
         ):
             return jsonify({'error': '첨부파일을 찾을 수 없습니다.'}), 404
         # Allow temporary preview only when a valid signed preview token is provided.
-        response = send_from_directory(upload_dir, filename, as_attachment=False, download_name=filename)
+        response = send_from_directory(upload_dir, safe_filename, as_attachment=False, download_name=safe_filename)
         response.headers['X-Content-Type-Options'] = 'nosniff'
         return response
 
@@ -446,6 +450,6 @@ def serve_poster(filename):
     if item.status != RecruitStatus.APPROVED and not (is_admin(current_user) or (current_user and current_user.id == item.author_id)):
         return jsonify({'error': '열람 권한이 없습니다.'}), 403
 
-    response = send_from_directory(upload_dir, filename, as_attachment=False, download_name=filename)
+    response = send_from_directory(upload_dir, safe_filename, as_attachment=False, download_name=safe_filename)
     response.headers['X-Content-Type-Options'] = 'nosniff'
     return response

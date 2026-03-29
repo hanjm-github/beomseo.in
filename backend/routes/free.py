@@ -30,7 +30,7 @@ from utils.files import (
     build_upload_preview_url,
     canonicalize_upload_urls_in_text,
     save_upload_for_scope,
-    resolve_scope_upload_dir,
+    resolve_upload_path_for_scope,
     ensure_dir,
     is_valid_upload_preview_token,
     validate_upload,
@@ -592,10 +592,15 @@ def upload_file():
 @free_bp.route('/uploads/<path:filename>', methods=['GET'], strict_slashes=False)
 def serve_upload(filename):
     """Serve upload with post-level visibility and temporary-file fallback."""
-    upload_dir = resolve_scope_upload_dir(current_app.config, 'free')
+    resolved_upload = resolve_upload_path_for_scope(current_app.config, 'free', filename)
+    if not resolved_upload:
+        return jsonify({'error': '첨부파일을 찾을 수 없습니다.'}), 404
+
+    upload_dir = resolved_upload['upload_dir']
     ensure_dir(upload_dir)
-    file_path = Path(upload_dir) / filename
-    attachment_url = build_upload_url(current_app.config, 'free', filename)
+    safe_filename = resolved_upload['filename']
+    file_path = resolved_upload['path']
+    attachment_url = build_upload_url(current_app.config, 'free', safe_filename)
     post = FreePost.query.filter(
         FreePost.deleted_at.is_(None),
         FreePost.body.ilike(f'%{attachment_url}%')
@@ -607,18 +612,18 @@ def serve_upload(filename):
         if not is_valid_upload_preview_token(
             current_app.config,
             'free',
-            filename,
+            safe_filename,
             preview_token,
         ):
             return jsonify({'error': '첨부파일을 찾을 수 없습니다.'}), 404
         # Allow temporary preview/download only with a valid signed preview token.
-        ext = Path(filename).suffix.lower()
+        ext = Path(safe_filename).suffix.lower()
         inline_exts = {'.jpg', '.jpeg', '.png', '.gif', '.webp'}
         response = send_from_directory(
             upload_dir,
-            filename,
+            safe_filename,
             as_attachment=ext not in inline_exts,
-            download_name=filename,
+            download_name=safe_filename,
         )
         response.headers['X-Content-Type-Options'] = 'nosniff'
         return response
@@ -628,14 +633,14 @@ def serve_upload(filename):
     if post.status != FreeStatus.APPROVED and not (is_admin(current_user) or (current_user and current_user.id == post.author_id)):
         return jsonify({'error': '열람 권한이 없습니다.'}), 403
 
-    ext = Path(filename).suffix.lower()
+    ext = Path(safe_filename).suffix.lower()
     inline_exts = {'.jpg', '.jpeg', '.png', '.gif', '.webp'}
     inline_mime = ext in inline_exts
     response = send_from_directory(
         upload_dir,
-        filename,
+        safe_filename,
         as_attachment=not inline_mime,
-        download_name=filename,
+        download_name=safe_filename,
     )
     response.headers['X-Content-Type-Options'] = 'nosniff'
     return response
