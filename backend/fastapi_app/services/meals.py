@@ -699,6 +699,7 @@ async def get_meal_range_payload(
     end_date: date,
     max_range_days: int,
 ) -> dict:
+    """Return a continuous date range payload with synthesized empty days."""
     validate_meal_range(start_date, end_date, max_days=max_range_days)
     reference_date = _kst_today()
     viewer_key = _viewer_rating_key(
@@ -799,6 +800,8 @@ async def submit_meal_rating(
             )
             session.add(rating)
         else:
+            # The same viewer/category/date tuple is overwritten so one browser
+            # maintains a single latest opinion instead of accumulating rows.
             rating.score = score
             rating.user_id = int(current_user.id) if current_user is not None else None
 

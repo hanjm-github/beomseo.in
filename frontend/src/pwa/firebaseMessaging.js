@@ -1,3 +1,11 @@
+/**
+ * @file src/pwa/firebaseMessaging.js
+ * @description Browser-side Firebase Web Push helpers for meal reminders.
+ * Responsibilities:
+ * - Lazily initialize Firebase Messaging only on supported clients.
+ * - Keep the service worker registration/token lifecycle behind one module.
+ * - Mirror foreground messages with browser notifications while the app is open.
+ */
 import { FIREBASE_CONFIG, FIREBASE_MESSAGING_ENABLED, FIREBASE_VAPID_KEY } from '../config/env';
 
 
@@ -33,6 +41,8 @@ function parseMenuItemsJson(rawValue) {
 
 
 function buildNotificationBody(payload) {
+  // Background payloads include a JSON-encoded menu list so the foreground case
+  // can render the same multiline body as the service worker notification.
   const menuItems = parseMenuItemsJson(payload?.data?.menuItemsJson);
   if (menuItems.length > 0) {
     return menuItems.join('\n');
@@ -65,6 +75,8 @@ function showForegroundNotification(payload) {
   });
 
   notification.onclick = () => {
+    // The app already knows how to render the meal route, so foreground clicks
+    // navigate back into the SPA instead of opening an unrelated destination.
     window.focus();
     window.location.assign(link);
   };
@@ -115,6 +127,8 @@ async function getFirebaseMessagingContext() {
       import('firebase/messaging'),
     ]);
 
+    // The dedicated service worker scope avoids colliding with the main app
+    // service worker when the frontend build changes.
     const app = getApps().length ? getApp() : initializeApp(FIREBASE_CONFIG);
     const serviceWorkerRegistration = await navigator.serviceWorker.register(
       FIREBASE_MESSAGING_SW_URL,
@@ -192,6 +206,8 @@ export async function startFirebaseForegroundMessageListener() {
   if (!supported) return;
 
   const context = await getFirebaseMessagingContext();
+  // Foreground delivery does not rely on the service worker, so we mirror the
+  // same payload shape manually for consistency with background pushes.
   context.messagingModule.onMessage(context.messaging, (payload) => {
     showForegroundNotification(payload);
   });

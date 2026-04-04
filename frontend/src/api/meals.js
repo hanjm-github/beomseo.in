@@ -1,3 +1,9 @@
+/**
+ * @file src/api/meals.js
+ * @description Normalizes school-meal payloads for the meal page.
+ * This layer hides FastAPI wrapper shapes (`item`, `items`) and guarantees that
+ * both real meals and synthesized empty days share the same client contract.
+ */
 import { fastapiApi } from './fastapiClient';
 
 const MEAL_RATING_SCORES = [1, 2, 3, 4, 5];
@@ -16,6 +22,8 @@ function buildEmptyRatingSummary() {
 }
 
 function normalizeRatingSummary(summary) {
+  // The backend usually sends a complete distribution, but the UI still
+  // backfills missing buckets so charts and summaries remain structurally stable.
   const bucketsByScore = new Map(
     (Array.isArray(summary?.distribution) ? summary.distribution : []).map((bucket) => {
       const score = Number(bucket?.score);
@@ -129,6 +137,7 @@ export const mealsApi = {
   async getToday() {
     try {
       const response = await fastapiApi.get('/api/school-info/meals/today');
+      // The page consumes a plain entry object, not the transport-level wrapper.
       return normalizeMealEntry(response.data?.item, response.data?.meta?.date);
     } catch (error) {
       throw new Error(getMealErrorMessage(error, '오늘 급식 정보를 불러오지 못했어요.'));
@@ -145,6 +154,8 @@ export const mealsApi = {
       });
 
       const items = Array.isArray(response.data?.items) ? response.data.items : [];
+      // Empty days are already synthesized server-side, so the returned list can
+      // be rendered directly as a complete calendar range.
       return items.map((item) => normalizeMealEntry(item, item?.date));
     } catch (error) {
       throw new Error(getMealErrorMessage(error, '급식 정보를 불러오지 못했어요.'));
@@ -157,6 +168,8 @@ export const mealsApi = {
         category,
         score,
       });
+      // Ratings are returned as an aggregate snapshot so the UI can replace the
+      // visible summary without issuing a second read request.
       return normalizeMealRatings(response.data?.ratings);
     } catch (error) {
       throw new Error(getMealErrorMessage(error, '급식 평점을 저장하지 못했어요.'));

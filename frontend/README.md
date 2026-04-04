@@ -2,16 +2,18 @@
 # beomseo.in Frontend
 
 범서고 커뮤니티 서비스 `beomseo.in`의 React/Vite 프론트엔드입니다.  
-공지(학교/학생회/예산 공개), 커뮤니티(자유/동아리/청원/설문/투표/분실물/곰솔마켓/수학여행), 학교 생활 정보(시간표/학사 캘린더/스포츠리그 문자중계/팀별 라인업/개인별 순위), 인증, 분석 트래킹을 단일 SPA로 제공합니다.
+공지(학교/학생회/예산 공개), 커뮤니티(자유/인성 가치 PICK!/동아리/청원/설문/투표/분실물/곰솔마켓/수학여행), 학교 생활 정보(시간표/학사 캘린더/급식 조회/평점/PWA 알림/스포츠리그 문자중계/팀별 라인업/개인별 순위), 인증, 분석 트래킹을 단일 SPA로 제공합니다.
 
 ## 프로젝트 개요
 
 - 앱 타입: React SPA (`react-router-dom`)
 - 빌드 도구: Vite
 - 데이터 통신: Axios 기반 API 모듈 (`src/api/*`)
+- FastAPI 경계: `fastapiClient` + `mealNotificationsApi` + `sportsLeagueApi`
 - 상태 관리: React Context (`ThemeContext`, `NetworkStatusContext`, `PwaInstallContext`, `AuthContext`)
 - 실시간 동기화: 스포츠리그 화면에서 `EventSource + BroadcastChannel/localStorage + polling fallback`
 - 수학여행 게시판: 반 비밀번호 기반 잠금 해제, 익명/로그인 글쓰기, rich HTML 본문, 5점 단위 점수판
+- 급식 알림: 설치된 PWA 기기별 `installationId` + Firebase Web Push 구독
 - 보안 경계: URL/HTML/CSV sanitize 유틸리티 (`src/security/*`)
 - 분석: Cloudflare Zaraz + GA4 이벤트 래퍼 (`src/analytics/zaraz.js`)
 
@@ -91,12 +93,16 @@ cp .env.example .env
 npm run dev
 ```
 
+개발 서버 실행 전 `predev` 스크립트가 Firebase Messaging 서비스워커를 현재 환경 기준으로 생성합니다.
+
 4. 프로덕션 빌드 확인
 
 ```bash
 npm run build
 npm run preview
 ```
+
+`npm run build` 전에는 `prebuild` 스크립트가 Firebase Messaging 서비스워커와 SEO 산출물(`scripts/generateSeoArtifacts.mjs`)을 먼저 갱신합니다.
 
 ## 환경 변수
 
@@ -110,12 +116,16 @@ npm run preview
 | `VITE_ANALYTICS_ALLOWED_HOSTS` | `beomseo.in` | 이벤트 전송 허용 host 목록 (`,` 구분, `*` 지원) |
 | `VITE_ANALYTICS_BLOCKED_KEYS` | `nickname,password,email,token,refresh_token,access_token` | 트래킹 payload에서 제거할 민감 키 |
 | `VITE_APP_NAME` | `beomseo.in` | 헤더/푸터 앱 표시 이름 |
+| `VITE_CLUB_RECRUIT_BOARD_ENABLED` | `1` | 동아리 모집 보드 UI/라우트 노출 여부 |
+| `VITE_FIELD_TRIP_BOARD_ENABLED` | `1` | 수학여행 보드 UI/라우트 노출 여부 |
 | `VITE_ALLOWED_ASSET_HOSTS` | `""` | 외부 에셋 허용 host 목록 (비어 있으면 모두 허용) |
 | `VITE_UPLOAD_MAX_ATTACHMENTS` | `5` | 첨부 파일 최대 개수 |
 | `VITE_UPLOAD_MAX_IMAGES` | `5` | 이미지 최대 개수 |
 | `VITE_UPLOAD_MAX_FILE_SIZE_MB` | `10` | 업로드 파일 최대 용량(MB) |
+| `VITE_FIELD_TRIP_VIDEO_MAX_SIZE_MB` | `500` | 수학여행 영상 업로드 최대 용량(MB) |
 | `VITE_PETITION_THRESHOLD_DEFAULT` | `50` | 청원 기본 임계치 |
 | `VITE_SPORTS_LEAGUE_API_URL` | `VITE_API_URL` | 스포츠리그 + 수학여행 FastAPI 서버 URL (미설정 시 Flask fallback) |
+| `VITE_FIREBASE_*` | 빈 문자열 | 급식 PWA 알림용 Firebase Web Push 설정 |
 
 ## 라우팅 개요
 
@@ -143,14 +153,17 @@ graph TD
     N --> NB3["/notices/budget/:budgetYear/:budgetMonth/:id"]
 
     C --> CF["free/*"]
+    C --> CVP["value-pick/*"]
     C --> CC["club-recruit/*"]
     C --> CS["subjects/*"]
     C --> CP["petition/*"]
     C --> CSV["survey/*"]
     C --> CV["vote/*"]
+    C --> CFT["field-trip/*"]
     C --> CL["lost-found/*"]
     C --> CG["gomsol-market/*"]
     SI --> SIT["/school-info/timetable"]
+    SI --> SIM["/school-info/meal"]
     SI --> SIC["/school-info/calendar"]
     SI --> SIL["/school-info/sports-league/:categoryId"]
 ```
@@ -165,7 +178,9 @@ graph TD
 
 ### 헤더와 정적 법적 페이지
 
+- `Header`의 커뮤니티 메뉴는 `인성 가치 PICK!`를 항상 노출합니다.
 - `Header`의 커뮤니티 메뉴는 `CLUB_RECRUIT_BOARD_ENABLED` 환경변수에 따라 동아리 모집 링크를 조건부로 노출합니다.
+- `Header`의 커뮤니티 메뉴는 `FIELD_TRIP_BOARD_ENABLED` 환경변수에 따라 수학여행 링크를 조건부로 노출합니다.
 - 학교 생활 정보 메뉴의 스포츠리그 링크는 기본 카테고리 ID로 바로 연결됩니다.
 - `/privacy`, `/terms` 페이지는 정적 법적 문서이며, 페이지 내부 목차(anchor)와 `맨 위로` 스크롤 헬퍼를 직접 렌더링합니다.
 
@@ -183,6 +198,15 @@ graph TD
 - 브라우저가 `online` 이벤트를 보내도 API origin이 실제로 죽어 있으면 `recheckConnection()`이 계속 오프라인 상태를 유지합니다.
 - 인증 클라이언트 외 다른 API 모듈도 필요하면 같은 `app:network-request-failed` 이벤트 패턴을 재사용할 수 있습니다.
 - iOS Safari는 설치 프롬프트 API가 없기 때문에 `promptInstall()` 호출 시 도움말 UI를 여는 `manual` 경로를 사용합니다.
+
+## 급식 PWA 알림 흐름
+
+- 급식 알림 설정은 `오늘의 급식` 페이지에서만 노출됩니다.
+- 브라우저/설치 인스턴스별 식별자는 `localStorage`의 `meal-notification-installation-id`를 사용합니다.
+- 알림 권한이 허용되면 Firebase Messaging 토큰을 만들고, `mealNotificationsApi`가 `installationId + notificationTime + timezone + fcmToken` 조합으로 저장합니다.
+- 같은 기기에서 시간만 변경할 때는 기존 FCM 토큰을 재사용해 불필요한 등록 churn을 줄입니다.
+- 기기 등록 해제 시에는 브라우저 토큰 삭제와 백엔드 subscription row 삭제를 함께 수행합니다.
+- 서비스워커/foreground notification payload는 `menuItemsJson`을 사용해 메뉴 목록을 여러 줄로 복원합니다.
 
 ## 수학여행 게시판 흐름
 
@@ -218,10 +242,16 @@ map $uri $spa_route_ok {
     ~^/notices/budget/[0-9]{4}/(0[1-9]|1[0-2])/[0-9]+/?$ 1;
     ~^/notices/budget/[0-9]{4}/(0[1-9]|1[0-2])/[0-9]+/edit/?$ 1;
     ~^/community/?$ 1;
-    ~^/community/(free|club-recruit|subjects|petition|survey|vote|lost-found|gomsol-market)/?$ 1;
-    ~^/community/(free|club-recruit|subjects|petition|survey|vote|lost-found|gomsol-market)/new/?$ 1;
-    ~^/community/(free|club-recruit|subjects|petition|survey|vote|lost-found|gomsol-market)/[0-9]+/?$ 1;
+    ~^/community/(free|value-pick|club-recruit|subjects|petition|survey|vote|lost-found|gomsol-market)/?$ 1;
+    ~^/community/(free|value-pick|club-recruit|subjects|petition|survey|vote|lost-found|gomsol-market)/new/?$ 1;
+    ~^/community/(free|value-pick|club-recruit|subjects|petition|survey|vote|lost-found|gomsol-market)/[0-9]+/?$ 1;
+    ~^/community/value-pick/[0-9]+/edit/?$ 1;
     ~^/community/survey/[0-9]+/(edit|results)/?$ 1;
+    ~^/community/field-trip/?$ 1;
+    ~^/community/field-trip/classes/[0-9]+/?$ 1;
+    ~^/community/field-trip/classes/[0-9]+/new/?$ 1;
+    ~^/community/field-trip/classes/[0-9]+/posts/[0-9]+/?$ 1;
+    ~^/community/field-trip/classes/[0-9]+/posts/[0-9]+/edit/?$ 1;
     ~^/school-info/?$ 1;
     ~^/school-info/(timetable|meal|calendar)/?$ 1;
     ~^/school-info/sports-league/?$ 1;

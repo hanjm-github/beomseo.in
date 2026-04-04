@@ -88,6 +88,7 @@
 - **학교/학생회 공지** — 카테고리별 CRUD, 댓글, 반응
 - **예산 공개 게시판** — 회계연도(3월~다음 해 2월) 기준 월별 예산 공개, 댓글/반응/첨부 재사용
 - **자유 게시판** — 북마크, 승인 시스템
+- **인성 가치 PICK!** — 역량/실천 다짐 공유, 승인 기반 운영, 반응/댓글
 - **학생 청원** — 투표 + 학생회 답변
 
 </td>
@@ -108,7 +109,7 @@
 - **분실물 게시판** — 사진 첨부, 댓글
 - **곰솔 마켓** — 교내 중고거래 플랫폼
 - **과목 변경 매칭** — 과목 교환 요청 & 상태 관리
-- **학교 생활 정보 허브** — 시간표 다운로드, 학사 캘린더, 스포츠리그 문자중계/라인업/개인 순위
+- **학교 생활 정보 허브** — 시간표 다운로드, 학사 캘린더, 급식 조회/평점/PWA 알림, 스포츠리그 문자중계/라인업/개인 순위
 
 </td>
 <td>
@@ -146,6 +147,7 @@
 | 인증 | **Flask-JWT-Extended** / **PyJWT** | Cookie + CSRF 이중 보호 |
 | 비밀번호 | **bcrypt** | |
 | 레이트리밋 | **Flask-Limiter** | 사용자ID/IP 기반 |
+| 푸시 알림 | **firebase-admin** | 급식 Web Push sender 스크립트 |
 
 ### 프론트엔드
 
@@ -159,6 +161,7 @@
 | 폼 빌더 | **react-form-builder2** | 설문 빌더 |
 | 아이콘 | **Lucide React** | |
 | XSS 방어 | **DOMPurify** | |
+| 푸시/알림 | **Firebase Web Push** | 설치형 PWA 급식 알림 |
 | 분석 | **Cloudflare Zaraz** + GA4 | 민감 키 자동 필터링 |
 
 ---
@@ -263,14 +266,14 @@ beomseo.in/
 │   │   ├── auth.py            #   인증/회원
 │   │   ├── notices.py         #   공지 + 예산 공개 설정/CRUD
 │   │   ├── free.py            #   자유게시판
+│   │   ├── value_pick.py      #   인성 가치 PICK!
 │   │   ├── club_recruit.py    #   동아리 모집
 │   │   ├── subject_changes.py #   과목변경
 │   │   ├── petitions.py       #   학생 청원
 │   │   ├── surveys.py         #   설문 교환
 │   │   ├── votes.py           #   실시간 투표
 │   │   ├── lost_found.py      #   분실물
-│   │   ├── gomsol_market.py   #   곰솔 마켓
-│   │   └── sports_league.py   #   스포츠리그 문자중계
+│   │   └── gomsol_market.py   #   곰솔 마켓
 │   ├── fastapi_app/           # FastAPI 실시간/급식 전용 서버
 │   │   ├── main.py            #   앱 팩토리, CORS, 보안 헤더
 │   │   ├── config.py          #   Pydantic Settings (동일 .env 공유)
@@ -289,11 +292,14 @@ beomseo.in/
 │   │       ├── sports_league_realtime.py  # asyncio pub/sub
 │   │       ├── sports_league_seed.py  # 시드 데이터
 │   │       ├── field_trip.py          # 수학여행 게시판/점수판/업로드 로직
-│   │       └── meals.py               # 급식 동기화/조회/평점 로직
+│   │       ├── meals.py               # 급식 동기화/조회/평점 로직
+│   │       └── meal_notifications.py  # 급식 알림 구독/발송 로직
 │   ├── models/                # SQLAlchemy 모델
 │   ├── services/              # 도메인 서비스/실시간 보조 로직
 │   ├── scripts/               # 운영용 부트스트랩 스크립트
 │   │   ├── bootstrap_field_trip.py    # 수학여행 기본 반/비밀번호 시드
+│   │   ├── sync_school_meals.py       # NEIS 급식 동기화
+│   │   ├── send_school_meal_notifications.py # Firebase 급식 알림 발송
 │   │   └── migrate_notice_budget_board.py # 기존 notices 스키마에 예산 공개 컬럼/인덱스 추가
 │   ├── utils/                 # 보안·캐시·업로드 유틸
 │   ├── uploads/               # 파일 업로드 저장소
@@ -307,11 +313,12 @@ beomseo.in/
     ├── src/
     │   ├── App.jsx            # 라우터 + Provider
     │   ├── main.jsx           # 엔트리포인트
-    │   ├── api/               # Axios 기반 API 모듈
+    │   ├── api/               # Axios 기반 API 모듈 + FastAPI/급식 알림 클라이언트
     │   ├── components/        # 재사용 컴포넌트 (70개)
     │   ├── features/          # 기능 단위 hook/data/utils 묶음
     │   ├── pages/             # 페이지 컴포넌트 (45개)
     │   ├── context/           # Auth/Theme/NetworkStatus/PWA 컨텍스트
+    │   ├── pwa/               # 설치/푸시 알림/오프라인 유틸
     │   ├── security/          # URL/HTML/CSV sanitize
     │   ├── analytics/         # Zaraz 이벤트 래퍼
     │   ├── layout/            # AppLayout
@@ -381,7 +388,7 @@ python -m uvicorn fastapi_app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
 > 💡 FastAPI 서버: `http://127.0.0.1:8000` (Swagger: `/docs`)
-> 스포츠리그 문자중계와 수학여행 게시판 API를 함께 제공합니다. 예산 공개 게시판은 Flask `notices` 도메인에서 처리됩니다.
+> 스포츠리그 문자중계와 수학여행 게시판 API를 함께 제공합니다.
 
 ### 3단계: 프론트엔드 설정
 
@@ -432,7 +439,7 @@ npm run preview  # 빌드된 결과물 미리보기
 | [backend/README.md](backend/README.md) | 백엔드 종합 가이드 |
 | [backend/docs/backend_api.md](backend/docs/backend_api.md) | API 레퍼런스 |
 | [backend/docs/backend_architecture.md](backend/docs/backend_architecture.md) | 아키텍처 문서 |
-| [backend/docs/fastapi_deployment.md](backend/docs/fastapi_deployment.md) | FastAPI 스포츠리그/수학여행 서버 배포 가이드 |
+| [backend/docs/fastapi_deployment.md](backend/docs/fastapi_deployment.md) | FastAPI 스포츠리그/수학여행/급식 서버 배포 가이드 |
 | [backend/docs/school_meals.md](backend/docs/school_meals.md) | 급식 조회 + PWA 급식 알림 문서 |
 
 ### 프론트엔드 문서
@@ -452,24 +459,6 @@ npm run preview  # 빌드된 결과물 미리보기
 |---|---|
 | [TODO.md](TODO.md) | 개발 로드맵 & 아이디어 |
 | [LICENSE](LICENSE) | GNU GPL-3.0 라이선스 |
-
----
-
-## 오늘의 급식 알림
-
-- 설치된 PWA 기기별로 급식 알림 시간을 저장합니다.
-- 급식 알림 설정 UI는 `오늘의 급식` 페이지에서만 노출됩니다.
-- 실제 발송은 Firebase Web Push + FastAPI sender script 조합으로 동작합니다.
-- 운영 시에는 아래 cron을 추가하면 됩니다.
-
-```cron
-* * * * * cd /path/to/repo/backend && /path/to/venv/bin/python scripts/send_school_meal_notifications.py
-```
-
-세부 설정값과 API 계약은 [backend/docs/school_meals.md](backend/docs/school_meals.md)에 정리되어 있습니다.
-
----
-
 
 ## 📜 라이선스
 

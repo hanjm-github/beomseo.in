@@ -205,8 +205,8 @@ flowchart TD
 ## 6. 라우팅 설계 원칙
 
 - 최상위 라우트는 `src/App.jsx`에서만 정의
-- 세부 기능 라우트는 기능별 라우터(`CommunityRouter`, `NoticesPage/index.jsx`, `SchoolInfo/index.jsx`)로 위임
-- `NoticesPage/index.jsx`는 다시 `NoticeCenterPage`(학교/학생회 공지)와 `BudgetBoardPage`(예산 공개)로 분기합니다.
+- 세부 기능 라우트는 기능별 라우터(`src/pages/Community/index.jsx`, `src/pages/Notices/index.jsx`, `src/pages/SchoolLifeInfo/index.jsx`)로 위임
+- `src/pages/Notices/index.jsx`는 다시 `NoticeCenterPage`(학교/학생회 공지)와 `BudgetBoardPage`(예산 공개)로 분기합니다.
 - 페이지 컴포넌트는 가능한 한 API 호출 orchestration에 집중
 - 표시 로직은 `src/components/*`로 분리
 - data-dense 기능은 `src/features/<feature>/*`에 hook/data/utils를 묶어 페이지와 공용 API 사이를 정리
@@ -215,7 +215,9 @@ flowchart TD
 
 - `Header`는 공지, 커뮤니티, 학교 생활 정보를 전역 내비게이션으로 노출합니다.
 - 공지 드롭다운에는 `학교 공지`, `학생회 공지`, `예산 공개` 3개 진입점이 있으며, 예산 공개는 별도 페이지(`/notices/budget/*`)로 연결됩니다.
+- 커뮤니티 드롭다운은 `인성 가치 PICK!`를 기본 메뉴로 포함합니다.
 - 커뮤니티 드롭다운의 동아리 모집 링크는 `CLUB_RECRUIT_BOARD_ENABLED` 플래그가 켜진 경우에만 렌더링됩니다.
+- 커뮤니티 드롭다운의 수학여행 링크는 `FIELD_TRIP_BOARD_ENABLED` 플래그가 켜진 경우에만 렌더링됩니다.
 - 학교 생활 정보 드롭다운의 스포츠리그 링크는 현재 기본 카테고리 ID로 직접 연결됩니다.
 - `/privacy`, `/terms`는 정적 법적 문서 페이지이며, 서버 데이터 fetch 없이 목차(anchor)와 `맨 위로` 스크롤 헬퍼만 제공합니다.
 
@@ -244,6 +246,25 @@ flowchart TD
 - `PwaInstallContext`는 `beforeinstallprompt`, `appinstalled`, `display-mode: standalone` media query를 함께 사용합니다.
 - 설치 가능한 브라우저에서는 `deferredPrompt`를 저장했다가 CTA 클릭 시 `prompt()`를 호출합니다.
 - iOS Safari는 `beforeinstallprompt`를 지원하지 않으므로 `isIosManualInstall`이 `true`일 때 수동 설치 도움말을 엽니다.
+
+### 급식 알림 흐름
+
+```mermaid
+flowchart TD
+    A["MealPage"] --> B["getMealNotificationInstallationId()"]
+    B --> C["mealNotificationsApi.getSubscription()"]
+    A --> D["requestFirebaseMessagingPermissionAndToken()"]
+    D --> E["Firebase token"]
+    E --> F["mealNotificationsApi.saveSubscription()"]
+    F --> G["installationId 기준 upsert"]
+    A --> H["deleteCurrentFirebaseMessagingToken()"]
+    H --> I["mealNotificationsApi.deleteSubscription()"]
+```
+
+- 급식 알림은 로그인 계정이 아니라 설치된 PWA/브라우저 인스턴스를 기준으로 동작합니다.
+- `mealNotificationInstallationId`는 `localStorage`에 저장돼 같은 기기 설정을 재사용합니다.
+- 알림 저장 시 기존 FCM token을 우선 재사용하고, 없을 때만 새 권한 요청/토큰 발급을 시도합니다.
+- foreground 메시지는 `firebaseMessaging.js`가 `menuItemsJson`을 복원해 browser notification으로 직접 보여줍니다.
 
 ## 6.1 정적 템플릿 기반 화면 패턴
 
@@ -330,11 +351,12 @@ flowchart TD
 
 ## 9. 커뮤니티 라우트 트리
 
-`CommunityRouter`는 8개 일반 보드와 1개의 이벤트 페이지를 함께 위임합니다.
+`CommunityRouter`는 자유게시판, 인성 가치 PICK!, 동아리 모집, 선택과목 변경, 청원, 설문, 투표, 수학여행, 분실물 리다이렉트, 곰솔마켓 경로를 함께 위임합니다.
 
 ```mermaid
 graph LR
     CR["CommunityRouter"] --> FREE["free/*\n(List/Detail/Compose/Edit)"]
+    CR --> VP["value-pick/*\n(List/Detail/Compose/Edit)"]
     CR --> CLUB["club-recruit/*\n(List/Detail/Compose)"]
     CR --> SUBJ["subjects/*\n(List/Detail/Compose)"]
     CR --> PET["petition/*\n(List/Detail/Compose)"]
@@ -346,6 +368,7 @@ graph LR
 ```
 
 `survey` 보드만 `/:id/edit`과 `/:id/results` 추가 라우트가 존재합니다.  
+`value-pick` 보드는 자유게시판과 유사하게 list/detail/compose/edit 흐름을 가지지만, `competency + pledge + rich body` 전용 입력 모델을 사용합니다.  
 `field-trip`은 허브(`/community/field-trip`), 반 게시판(`/community/field-trip/classes/:classId`), 상세(`/posts/:postId`), 수정(`/posts/:postId/edit`)으로 분리되며,
 허브에서는 `tab` 쿼리만 유지하고 게시글 상태는 개별 라우트로 표현합니다.  
 전체 경로 매핑은 [frontend-code-map.md §3.3](./frontend-code-map.md)을 참고합니다.

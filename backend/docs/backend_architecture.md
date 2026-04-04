@@ -338,7 +338,7 @@ sequenceDiagram
 5. 직렬화 계약:
    - 프론트 계약 안정화를 위해 camelCase 중심 응답 유지
 
-감사 메타데이터는 `users`, `notices`, `free_posts`, `club_recruits`, `subject_changes`, `petitions`, `surveys`, `votes`, `lost_found_*`, `gomsol_market_*` 및 관련 댓글/반응/이미지/응답 엔티티에 적용됩니다.
+감사 메타데이터는 `users`, `notices`, `free_posts`, `value_pick_posts`, `club_recruits`, `subject_changes`, `petitions`, `surveys`, `votes`, `lost_found_*`, `gomsol_market_*` 및 관련 댓글/반응/이미지/응답 엔티티에 적용됩니다.
 
 ### 예산 공개 공지 확장
 
@@ -366,6 +366,10 @@ erDiagram
     FREE_POSTS ||--o{ FREE_COMMENTS : has
     FREE_POSTS ||--o{ FREE_REACTIONS : has
     FREE_POSTS ||--o{ FREE_BOOKMARKS : has
+
+    USERS ||--o{ VALUE_PICK_POSTS : writes
+    VALUE_PICK_POSTS ||--o{ VALUE_PICK_COMMENTS : has
+    VALUE_PICK_POSTS ||--o{ VALUE_PICK_REACTIONS : has
 
     USERS ||--o{ CLUB_RECRUITS : writes
     USERS ||--o{ SUBJECT_CHANGES : writes
@@ -420,10 +424,10 @@ erDiagram
 ```mermaid
 sequenceDiagram
     participant Operator as 학생회/Admin
-    participant Route as routes/sports_league.py
-    participant Service as services/sports_league.py
+    participant Route as fastapi_app/routes/sports_league.py
+    participant Service as fastapi_app/services/sports_league.py
     participant DB as MariaDB
-    participant RT as services/sports_league_realtime.py
+    participant RT as fastapi_app/services/sports_league_realtime.py
     participant FE as Frontend SSE
 
     Operator->>Route: POST/PATCH/DELETE event
@@ -480,6 +484,10 @@ sequenceDiagram
 - 읽기/평점 엔드포인트는 `MEAL_RATING_COOKIE_NAME` 쿠키를 발급해 비로그인 브라우저도 날짜/카테고리별 1개 평점을 유지합니다.
 - 평점 viewer key는 `JWT_SECRET_KEY`와 사용자/익명 토큰을 해시한 값으로 저장되어, 브라우저 원문 식별자를 DB에 직접 남기지 않습니다.
 - 알림 구독은 사용자 계정이 아니라 `installationId` 기준의 PWA 기기 단위 레코드입니다.
+- 알림 시각은 `notificationTime -> minute_of_day`로 정규화되고 5분 단위만 허용됩니다.
+- 같은 FCM token이 다른 설치 레코드에 이미 묶여 있으면 최신 installationId가 소유권을 가져가고 이전 레코드는 비활성화됩니다.
+- 발송 payload는 menu 목록을 `menuItemsJson`으로도 보내므로 foreground/browser notification에서도 여러 줄 메뉴를 복원할 수 있습니다.
+- sender가 `registration token not registered` 계열 오류를 받으면 해당 구독의 token을 즉시 제거하고 `is_enabled=0`으로 내려 후속 재시도를 막습니다.
 - `taste` 평점은 당일(KST)만, `anticipation` 평점은 당일 또는 미래 급식만 허용합니다.
 
 ```mermaid
@@ -501,7 +509,7 @@ sequenceDiagram
     Service->>DB: school_meals + school_meal_ratings 조회
     Service-->>Browser: item + ratings
 
-    Browser->>Route: PUT /notifications/subscription
+    Browser->>Route: PUT /api/school-info/meals/notifications/subscription
     Route->>Service: installationId 기준 upsert
     Service->>DB: subscription 저장
 ```
@@ -511,6 +519,7 @@ sequenceDiagram
 다음 보드는 공통적으로 승인 워크플로우를 가집니다.
 
 - `free_posts`
+- `value_pick_posts`
 - `club_recruits`
 - `subject_changes`(approval_status)
 - `petitions`(pending/approved/rejected)
@@ -523,6 +532,16 @@ sequenceDiagram
 2. 관리자 승인 시 승인자/승인시각 기록
 3. 비관리자 목록 조회는 “승인 + 본인 작성글”로 제한
 4. 상세 조회에도 동일한 가시성 규칙 적용
+
+### 10.1 Value Pick 보드 패턴
+
+`value_pick`은 자유게시판과 비슷한 moderation 보드지만, 도메인 모델이 `competency + pledge + rich body` 조합에 맞춰 따로 분리되어 있습니다.
+
+- 생성 시 항상 `pending`
+- 비관리자 목록/상세는 `approved OR author_id=current_user.id`
+- 반응은 `like | dislike` 2종만 허용
+- 본문은 rich HTML을 저장하지만, 목록 preview는 모델 `summarize_body()`가 plain text로 축약합니다.
+- 첨부는 별도 row가 아니라 업로드 canonical URL이 본문에 연결되었는지로 공개 여부를 판정합니다.
 
 ## 11. 크레딧 경제(설문/투표)
 
@@ -564,12 +583,13 @@ sequenceDiagram
 | `auth` | `User`, `AuthToken` | (없음) | login/register/refresh 별도 |
 | `notices` | `Notice`, `Attachment`, `Comment`, `NoticeReaction` | `notices` | 공통 write limit |
 | `free` | `FreePost`, `FreeComment`, `FreeReaction`, `FreeBookmark` | `free` | 공통 write limit |
+| `value_pick` | `ValuePickPost`, `ValuePickComment`, `ValuePickReaction` | `value_pick` | 공통 write limit |
 | `club_recruit` | `ClubRecruit` | `club_recruit` | 공통 write limit |
 | `subject_changes` | `SubjectChange`, `SubjectChangeComment` | `subject_changes` | 공통 write limit |
 | `petitions` | `Petition`, `PetitionVote`, `PetitionAnswer` | `petitions` | 공통 write limit |
 | `surveys` | `Survey`, `SurveyResponse`, `SurveyCredit` | `surveys` | 공통 write limit |
 | `votes` | `Vote`, `VoteOption`, `VoteResponse` | `votes` | 공통 write limit |
-| `sports_league` | `SportsLeagueCategory`, `SportsLeagueMatch`, `SportsLeaguePlayer`, `SportsLeagueEvent`, `SportsLeagueStandingOverride` | `sports_league` | 공통 write limit |
+| `sports_league` (FastAPI) | `SportsLeagueCategory`, `SportsLeagueMatch`, `SportsLeaguePlayer`, `SportsLeagueEvent`, `SportsLeagueStandingOverride` | `sports_league` | route별 limiter/SSE 정책 |
 | `field_trip` (FastAPI) | `FieldTripClass`, `FieldTripPost`, `FieldTripPostAttachment` | (별도 response cache 없음) | FastAPI route별 권한/CSRF |
 | `school_meals` (FastAPI) | `SchoolMeal`, `SchoolMealRating`, `SchoolMealNotificationSubscription` | (별도 response cache 없음) | 익명 평점 쿠키 + installationId 구독 |
 | `lost_found` | `LostFoundPost`, `LostFoundImage`, `LostFoundComment` | `lost_found` | 공통 write limit |
@@ -587,14 +607,15 @@ sequenceDiagram
 8. `routes/surveys.py`
 9. `routes/petitions.py`
 10. `routes/notices.py`
-11. `routes/sports_league.py`
-12. `services/sports_league.py`
-13. `services/sports_league_players.py`
-14. `services/sports_league_realtime.py`
-15. `fastapi_app/routes/field_trip.py`
-16. `fastapi_app/services/field_trip.py`
-17. `fastapi_app/routes/meals.py`
-18. `fastapi_app/services/meals.py`
+11. `routes/value_pick.py`
+12. `fastapi_app/routes/sports_league.py`
+13. `fastapi_app/services/sports_league.py`
+14. `fastapi_app/services/sports_league_players.py`
+15. `fastapi_app/services/sports_league_realtime.py`
+16. `fastapi_app/routes/field_trip.py`
+17. `fastapi_app/services/field_trip.py`
+18. `fastapi_app/routes/meals.py`
+19. `fastapi_app/services/meals.py`
 
 ## 14. 변경 시 아키텍처 체크리스트
 

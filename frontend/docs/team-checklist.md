@@ -12,9 +12,9 @@ PR 전에 아래 항목을 체크해 문서/코드 정합성을 유지합니다.
 
 ## 2. 라우트/화면 동기화 점검
 
-- [ ] `src/App.jsx` 또는 `src/pages/CommunityRouter.jsx` 라우트 변경 시 `docs/frontend-code-map.md`를 갱신했다.
+- [ ] `src/App.jsx` 또는 `src/pages/Community/index.jsx` 라우트 변경 시 `docs/frontend-code-map.md`를 갱신했다.
 - [ ] 신규 화면 추가 시 "페이지 파일 -> 컴포넌트 -> API" 연결 정보를 문서에 반영했다.
-- [ ] 레거시 wrapper 경로(`src/pages/NoticesPage.jsx`)를 깨지 않도록 import 경로를 확인했다.
+- [ ] 폴더 기반 엔트리(`src/pages/Notices/index.jsx`, `src/pages/SchoolLifeInfo/index.jsx`) 기준으로 import 경로와 문서를 함께 확인했다.
 
 ## 3. API 동기화 점검
 

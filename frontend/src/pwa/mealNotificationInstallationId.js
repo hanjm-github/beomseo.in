@@ -1,3 +1,9 @@
+/**
+ * @file src/pwa/mealNotificationInstallationId.js
+ * @description Persists a device-scoped identifier for meal reminders.
+ * The backend stores notification preferences by installationId so the same
+ * signed-in user can manage multiple browsers or installed PWAs independently.
+ */
 const STORAGE_KEY = 'meal-notification-installation-id';
 
 
@@ -14,6 +20,8 @@ export function getMealNotificationInstallationId() {
     return existing;
   }
 
+  // Prefer the browser UUID API so reinstall/refresh flows do not invent a
+  // custom identifier format when native support is available.
   const nextId =
     typeof window.crypto?.randomUUID === 'function'
       ? window.crypto.randomUUID()

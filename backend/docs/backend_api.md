@@ -138,7 +138,7 @@ JWT 공통 에러 코드:
 적용 범위(요약):
 
 - 사용자/인증: `users`, `auth_tokens`
-- 공지/자유게시판/댓글/반응/북마크
+- 공지/자유게시판/인성 가치 PICK!/댓글/반응/북마크
 - 청원/설문/투표/분실물/곰솔마켓/동아리모집/과목변경 관련 쓰기 엔티티
 
 ## 2. 엔드포인트 인덱스
@@ -150,6 +150,7 @@ flowchart TD
     API --> Auth["/api/auth/*"]
     API --> Notices["/api/notices/*"]
     API --> Free["/api/community/free/*"]
+    API --> ValuePick["/api/community/value-pick/*"]
     API --> Club["/api/club-recruit/*"]
     API --> Subject["/api/subject-changes/*"]
     API --> Petition["/api/community/petitions/*"]
@@ -167,6 +168,8 @@ flowchart TD
     Notices --> N2["reactions + uploads"]
     Free --> F1["CRUD + approve"]
     Free --> F2["bookmark + comments"]
+    ValuePick --> VP1["CRUD + approve"]
+    ValuePick --> VP2["reactions + comments + uploads"]
     Survey --> S1["CRUD + responses"]
     Survey --> S2["credits / summary"]
     FieldTrip --> FT1["class unlock / posts / uploads"]
@@ -178,6 +181,7 @@ flowchart TD
 - Health/Auth: `/api/health`, `/api/auth/*`
 - Notices: `/api/notices/*`
 - Free: `/api/community/free/*`
+- Value Pick: `/api/community/value-pick/*`
 - Club Recruit: `/api/club-recruit/*`
 - Subject Changes: `/api/subject-changes/*`
 - Petitions: `/api/community/petitions/*`
@@ -548,6 +552,110 @@ flowchart TD
 - 권한: 선택 인증
 - pending 게시글 첨부는 admin/작성자만 접근
 - 임시 파일은 `preview_token` 필요
+
+---
+
+## 6A. Value Pick API (`/api/community/value-pick`)
+
+### 6A.1 규약
+
+- `status`: `pending | approved`
+- reaction: `like | dislike`
+- `competency`: `1~50`
+- `pledge`: `1~180`
+- `body`: rich HTML 허용, 최대 `10000`
+- 댓글 길이: `1~1000`
+
+### 6A.2 `GET /api/community/value-pick`
+
+- 권한: 선택 인증
+- 캐시: `value_pick`
+- Query:
+  - `query | q`
+  - `sort`: `recent | comments | likes`
+  - `mine` boolean
+  - `status` (`admin`에서만 의미)
+  - `view`
+  - `page`, `page_size|pageSize`
+- 가시성:
+  - 비로그인: 승인 글만
+  - 일반 로그인: 승인 글 + 본인 pending
+  - admin: 전체
+
+### 6A.3 `POST /api/community/value-pick`
+
+- 권한: 인증 필요
+- Body:
+  - `competency` required, `1~50`
+  - `pledge` required, `1~180`
+  - `body` optional rich HTML, 최대 `10000`
+- 성공: `status=pending`
+
+### 6A.4 `GET /api/community/value-pick/{post_id}`
+
+- 권한: 선택 인증
+- pending 가시성: admin/작성자만
+- 동작: 조회 성공 시 `views` 카운터를 best-effort로 증가
+
+### 6A.5 `PUT /api/community/value-pick/{post_id}`
+
+- 권한: 작성자 또는 `admin`
+- 본문 저장 시 업로드 canonical URL을 기준으로 정규화
+
+### 6A.6 `DELETE /api/community/value-pick/{post_id}`
+
+- 권한: `admin`
+- 동작: 소프트 삭제
+
+### 6A.7 `POST /api/community/value-pick/{post_id}/approve`
+
+- 권한: `admin`
+
+### 6A.8 `POST /api/community/value-pick/{post_id}/unapprove`
+
+- 권한: `admin`
+
+### 6A.9 `POST /api/community/value-pick/{post_id}/reactions`
+
+- 권한: 인증 필요
+- Body: `{"type":"like"|"dislike"}`
+- 동작:
+  - 같은 타입 재요청 시 토글 off
+  - 다른 타입이면 기존 반응을 전환
+
+### 6A.10 `GET /api/community/value-pick/{post_id}/comments`
+
+- 권한: 선택 인증
+- 캐시: `value_pick`
+- Query: `order`, `page`, `page_size|pageSize`
+- pending 글 댓글 가시성: admin/작성자만
+
+### 6A.11 `POST /api/community/value-pick/{post_id}/comments`
+
+- 권한: 인증 필요
+- Body: `body` `1~1000`
+- pending 글 댓글 작성 권한: admin/작성자만
+
+### 6A.12 `DELETE /api/community/value-pick/{post_id}/comments/{comment_id}`
+
+- 권한: `admin`
+- 동작: 소프트 삭제 + `comments_count` 감소
+
+### 6A.13 `POST /api/community/value-pick/uploads`
+
+- 권한: 인증 필요
+- Content-Type: `multipart/form-data`
+- 필드: `file`
+- 업로드: 파일/이미지 허용(`require_image=false`)
+- 응답: 업로드 공통 계약 (`url`, `canonicalUrl`, `preview_token`)
+
+### 6A.14 `GET /api/community/value-pick/uploads/{filename}`
+
+- 권한: 선택 인증
+- 정책:
+  - 승인 글에 연결된 파일은 공개 열람
+  - pending 글 연결 파일은 admin/작성자만 열람
+  - 아직 글 본문에 연결되지 않은 임시 파일은 `preview_token` 필요
 
 ---
 

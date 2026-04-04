@@ -1,14 +1,8 @@
 ﻿/**
  * @file src/config/env.js
  * @description Reads and normalizes frontend environment configuration values.
- * Responsibilities:
- * - Encapsulate file-local responsibilities in support of the overall frontend architecture.
- * Key dependencies:
- * - Module-local logic without direct import dependencies.
- * Side effects:
- * - No significant side effects beyond React state and rendering behavior.
- * Role in app flow:
- * - Participates as a supporting module in the frontend runtime graph.
+ * This module is the single source of truth for feature flags, API origins,
+ * upload limits, and Firebase Web Push settings used across the SPA.
  */
 function readStringEnv(key, fallback) {
   const value = readEnvValue(key);
@@ -58,6 +52,8 @@ function readEnvValue(key) {
 
 export const APP_NAME = readStringEnv('VITE_APP_NAME', 'beomseo.in');
 export const API_BASE_URL = readBaseUrlEnv('VITE_API_URL', 'http://localhost:5000');
+// Sports league, field trip, and meal APIs can be moved to a dedicated FastAPI
+// origin without forcing the rest of the app off the main Flask backend.
 export const FASTAPI_BASE_URL = readBaseUrlEnv('VITE_SPORTS_LEAGUE_API_URL', API_BASE_URL);
 export const CLUB_RECRUIT_BOARD_ENABLED = readBooleanEnv(
   'VITE_CLUB_RECRUIT_BOARD_ENABLED',
@@ -67,6 +63,7 @@ export const FIELD_TRIP_BOARD_ENABLED = readBooleanEnv(
   'VITE_FIELD_TRIP_BOARD_ENABLED',
   true
 );
+// Web Push is considered configured only when every required Firebase key exists.
 export const FIREBASE_API_KEY = readStringEnv('VITE_FIREBASE_API_KEY', '');
 export const FIREBASE_AUTH_DOMAIN = readStringEnv('VITE_FIREBASE_AUTH_DOMAIN', '');
 export const FIREBASE_PROJECT_ID = readStringEnv('VITE_FIREBASE_PROJECT_ID', '');

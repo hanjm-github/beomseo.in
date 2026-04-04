@@ -126,7 +126,8 @@ async def get_meal_notification_subscription(
     db: DbSession,
     installation_id: str = Query(alias='installationId', min_length=1, max_length=64),
 ):
-    # Subscriptions are device-scoped, so lookup is keyed by installationId instead of user session state.
+    # Subscriptions are device-scoped, so lookup is keyed by installationId instead
+    # of user session state.
     return {
         'item': await get_subscription(
             db,

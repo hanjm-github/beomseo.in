@@ -1,8 +1,8 @@
-# FastAPI 스포츠리그/수학여행 서버 배포 가이드
+# FastAPI 스포츠리그/수학여행/급식 서버 배포 가이드
 
 ## 개요
 
-FastAPI 서버는 Flask+uWSGI 메인 서버와 분리되어 **스포츠리그 문자중계**와 **수학여행 반 게시판/점수판**을 담당합니다.
+FastAPI 서버는 Flask+uWSGI 메인 서버와 분리되어 **스포츠리그 문자중계**, **수학여행 반 게시판/점수판**, **급식 조회/평점/알림 구독 API**를 담당합니다.
 기존 Flask 서버와 별도 포트/도메인에서 실행되며, **같은 MySQL DB와 JWT 쿠키 계약**을 공유합니다.
 
 ## 필수 요구사항
@@ -10,6 +10,7 @@ FastAPI 서버는 Flask+uWSGI 메인 서버와 분리되어 **스포츠리그 �
 - Python 3.10+
 - MySQL/MariaDB (기존 Flask 서버와 동일)
 - Redis (선택사항, SSE pub/sub 최적화)
+- Firebase 서비스 계정 JSON (급식 Web Push sender 사용 시)
 
 ## 설치
 
@@ -34,6 +35,9 @@ pip install -r requirements_fastapi.txt
 | `FIELD_TRIP_CSRF_COOKIE_NAME` | 수학여행 쓰기용 CSRF 쿠키 이름 | `field_trip_csrf_token` |
 | `FIELD_TRIP_CSRF_HEADER_NAME` | 수학여행 쓰기용 CSRF 헤더 이름 | `X-Field-Trip-CSRF` |
 | `FIELD_TRIP_MAX_BODY_LENGTH` | 수학여행 리치 본문 최대 길이 | `6000` |
+| `NEIS_API`, `ATPT_OFCDC_SC_CODE`, `SD_SCHUL_CODE` | 급식 동기화용 NEIS 설정 | 필수 |
+| `WEB_APP_ORIGIN` | 급식 알림 클릭 시 열 프론트 origin | `http://localhost:5173` |
+| `FIREBASE_SERVICE_ACCOUNT_PATH` | 급식 알림 sender가 쓸 Firebase 서비스 계정 경로 | 빈 문자열 |
 
 ## 개발 실행
 
@@ -149,6 +153,22 @@ curl -N http://127.0.0.1:8000/api/sports-league/categories/2026-spring-grade3-bo
 
 # 수학여행 반 목록 조회
 curl http://127.0.0.1:8000/api/community/field-trip/classes
+
+# 오늘 급식 조회
+curl http://127.0.0.1:8000/api/school-info/meals/today
+
+# 급식 알림 구독 조회
+curl "http://127.0.0.1:8000/api/school-info/meals/notifications/subscription?installationId=test-device"
+```
+
+급식/알림 운영 검증:
+
+```bash
+# NEIS 급식 동기화
+python scripts/sync_school_meals.py --year current
+
+# 알림 sender dry-run
+python scripts/send_school_meal_notifications.py --dry-run
 ```
 
 ## 아키텍처
@@ -159,11 +179,13 @@ curl http://127.0.0.1:8000/api/community/field-trip/classes
 │  Frontend    │     │  :5000           │
 │              │     └──────────────────┘
 │              │     ┌──────────────────┐
-│              │────▶│  FastAPI+Uvicorn  │  ← 신규 (스포츠리그 + 수학여행)
+│              │────▶│  FastAPI+Uvicorn  │  ← 신규 (스포츠리그 + 수학여행 + 급식)
 └──────────────┘     │  :8000           │
                      └──────────────────┘
                              │
-                     ┌───────┴───────┐
-                     │  MySQL (공유)  │
-                     └───────────────┘
+            ┌────────────────┴────────────────┐
+            │                                 │
+    ┌───────▼───────┐                 ┌───────▼────────────────┐
+    │  MySQL (공유)  │                 │ Firebase Web Push Sender │
+    └───────────────┘                 └─────────────────────────┘
 ```

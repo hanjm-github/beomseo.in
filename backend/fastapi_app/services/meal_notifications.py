@@ -211,6 +211,7 @@ async def get_subscription(
     *,
     installation_id: str,
 ) -> dict[str, Any]:
+    """Load one device-scoped subscription or return the default disabled shape."""
     try:
         result = await session.execute(
             select(SchoolMealNotificationSubscription).where(
@@ -245,6 +246,7 @@ async def upsert_subscription(
     fcm_token: str | None,
     current_user: User | None,
 ) -> dict[str, Any]:
+    """Create or update the subscription row for one installed device."""
     minute_of_day = _notification_time_to_minute_of_day(notification_time)
     normalized_token = (fcm_token or '').strip() or None
 
@@ -257,6 +259,9 @@ async def upsert_subscription(
         row = existing_result.scalar_one_or_none()
 
         if normalized_token:
+            # One FCM registration token should belong to at most one installation.
+            # When browsers rotate storage or the user reinstalls the PWA, the
+            # latest installation wins and older rows are neutralized.
             token_owner_result = await session.execute(
                 select(SchoolMealNotificationSubscription).where(
                     SchoolMealNotificationSubscription.fcm_token == normalized_token,
@@ -309,6 +314,7 @@ async def delete_subscription(
     *,
     installation_id: str,
 ) -> None:
+    """Delete the subscription row for one installed device."""
     try:
         result = await session.execute(
             select(SchoolMealNotificationSubscription).where(
@@ -329,6 +335,7 @@ async def find_due_subscriptions(
     *,
     now: datetime | None = None,
 ) -> list[DueMealNotificationSubscription]:
+    """Return enabled subscriptions whose local notification minute is due now."""
     try:
         result = await session.execute(
             select(SchoolMealNotificationSubscription).where(
@@ -348,6 +355,8 @@ async def find_due_subscriptions(
         if scheduled_minute != local_minute:
             continue
         if row.last_sent_meal_date == local_date:
+            # Prevent duplicate sends when the scheduler runs multiple times
+            # within the same minute window for one local calendar day.
             continue
         due_rows.append(DueMealNotificationSubscription(subscription=row, local_date=local_date))
 
@@ -397,6 +406,7 @@ async def build_multiline_meal_notification_payload(
     settings: Settings,
     target_date: date,
 ) -> dict[str, str] | None:
+    """Build the richer multiline payload used by Web Push delivery."""
     payload = await build_meal_notification_payload(
         session,
         settings=settings,
@@ -420,6 +430,8 @@ async def build_multiline_meal_notification_payload(
 
     menu_items = _normalize_notification_menu_items(meal.menu_items())
     payload['body'] = _build_menu_items_notification_body(menu_items) or payload['body']
+    # The JSON copy lets the browser rebuild a multiline foreground notification
+    # even though FCM's plain notification body is a single string field.
     payload['menuItemsJson'] = json.dumps(menu_items, ensure_ascii=False)
     return payload
 
@@ -467,6 +479,7 @@ async def send_due_notifications(
     now: datetime | None = None,
     dry_run: bool = False,
 ) -> dict[str, Any]:
+    """Send one meal notification batch for every installation that is due now."""
     due_rows = await find_due_subscriptions(session, now=now)
     if not due_rows:
         return {
@@ -520,6 +533,8 @@ async def send_due_notifications(
                 if exception is not None and _is_invalid_registration_token_error(exception):
                     invalidated_count += 1
                     if not dry_run:
+                        # Invalid tokens are cleared eagerly so the scheduler
+                        # stops retrying dead browser registrations.
                         item.subscription.fcm_token = None
                         item.subscription.is_enabled = 0
 

@@ -15,16 +15,19 @@ _WHITESPACE_RE = re.compile(r'\s+')
 
 
 class ValuePickStatus(str, Enum):
+    """Moderation lifecycle for Value Pick posts."""
     PENDING = 'pending'
     APPROVED = 'approved'
 
 
 class ValuePickReactionType(str, Enum):
+    """Supported reaction types for the board."""
     LIKE = 'like'
     DISLIKE = 'dislike'
 
 
 class ValuePickReaction(db.Model):
+    """One reaction per user per post, enforced by a unique constraint."""
     __tablename__ = 'value_pick_reactions'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -51,6 +54,7 @@ class ValuePickReaction(db.Model):
 
 
 class ValuePickComment(db.Model):
+    """Comment entity for Value Pick detail pages."""
     __tablename__ = 'value_pick_comments'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -76,6 +80,7 @@ class ValuePickComment(db.Model):
     user = db.relationship('User', backref=db.backref('value_pick_comments', lazy='dynamic'))
 
     def to_dict(self):
+        """Serialize one comment using the camelCase contract expected by the SPA."""
         return {
             'id': self.id,
             'postId': self.post_id,
@@ -135,6 +140,7 @@ class ValuePickPost(db.Model):
 
     @staticmethod
     def summarize_body(body: str, max_length: int = 180) -> str:
+        """Create the plain-text preview used by list cards from rich HTML body content."""
         if not body:
             return ''
         no_tags = _HTML_TAG_RE.sub(' ', body)
@@ -145,6 +151,8 @@ class ValuePickPost(db.Model):
         return plain
 
     def to_dict(self, my_reaction=None):
+        # The board does not currently persist attachment rows, but the frontend
+        # expects the same shape as other post serializers.
         return {
             'id': self.id,
             'competency': self.competency,
@@ -173,6 +181,7 @@ class ValuePickPost(db.Model):
         }
 
     def to_list_dict(self, my_reaction=None):
+        """Serialize the lightweight list-card representation of a post."""
         return {
             'id': self.id,
             'competency': self.competency,

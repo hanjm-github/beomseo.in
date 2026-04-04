@@ -29,10 +29,10 @@
 |---|---|
 | `src/pages` | 라우트 단위 화면 컴포넌트 |
 | `src/components` | 재사용 UI 컴포넌트 |
-| `src/api` | 백엔드 연동 모듈 |
+| `src/api` | 백엔드 연동 모듈 + FastAPI/급식 알림 클라이언트 |
 | `src/features` | 기능 단위 data/hook/utils 묶음 |
 | `src/context` | 전역 상태 컨텍스트(Theme/NetworkStatus/PWA/Auth) |
-| `src/pwa` | 오프라인/설치 상태에서 재사용하는 브라우저 이벤트 유틸 |
+| `src/pwa` | 오프라인/설치 상태, Firebase Web Push, 설치 기기 식별 유틸 |
 | `src/security` | URL/HTML/CSV/설문 스키마 sanitize 정책 |
 | `src/analytics` | Zaraz 이벤트 전송 래퍼 |
 | `src/config` | 환경변수 파싱 및 상수 노출 |
@@ -47,16 +47,16 @@
 | `/` | `MainPage` |
 | `/login` | `LoginPage` |
 | `/signup` | `SignUpPage` |
-| `/notices/*` | `NoticesPage` |
+| `/notices/*` | `NoticesPage` (`src/pages/Notices/index.jsx`) |
 | `/community/*` | `CommunityRouter` |
-| `/school-info/*` | `SchoolInfoRouter` (`src/pages/SchoolInfo/index.jsx`) |
+| `/school-info/*` | `SchoolInfoRouter` (`src/pages/SchoolLifeInfo/index.jsx`) |
 | `/privacy` | `PrivacyPolicyPage` |
 | `/terms` | `TermsOfServicePage` |
 | `*` | `NotFoundPage` |
 
 `/privacy`, `/terms`는 정적 법적 문서 페이지이며, 서버 데이터 fetch 없이 anchor 기반 목차와 `맨 위로` 스크롤 헬퍼를 렌더링합니다.
 
-### 3.2 공지 라우트 (`src/pages/NoticesPage/index.jsx`)
+### 3.2 공지 라우트 (`src/pages/Notices/index.jsx`)
 
 | 경로 | 요소 |
 |---|---|
@@ -64,7 +64,7 @@
 | `/notices/budget/*` | `BudgetBoardPage` |
 | `/notices/*` (`budget` 외 경로) | `NoticeCenterPage` |
 
-#### 3.2.1 학교/학생회 공지 서브라우트 (`src/pages/NoticesPage/NoticeCenterPage.jsx`)
+#### 3.2.1 학교/학생회 공지 서브라우트 (`src/pages/Notices/NoticeCenter/NoticeCenterPage.jsx`)
 
 | 경로 | 요소 |
 |---|---|
@@ -75,7 +75,7 @@
 | `/notices/:category/:id/edit` | `ComposeView(mode=edit)` (`id` 숫자 경로만 허용) |
 | `/notices/*` (invalid path) | `NotFoundPage` |
 
-#### 3.2.2 예산 공개 서브라우트 (`src/pages/NoticesPage/BudgetBoardPage.jsx`)
+#### 3.2.2 예산 공개 서브라우트 (`src/pages/Notices/BudgetBoard/BudgetBoardPage.jsx`)
 
 | 경로 | 요소 |
 |---|---|
@@ -92,7 +92,7 @@
 - URL의 `budgetYear`는 달력 연도가 아니라 회계연도 시작 연도입니다.
 - `BudgetBoardPage`는 settings 응답의 연도 범위를 벗어난 경로를 즉시 404 화면으로 처리합니다.
 
-### 3.3 커뮤니티 라우트 (`src/pages/CommunityRouter.jsx`)
+### 3.3 커뮤니티 라우트 (`src/pages/Community/index.jsx`)
 
 ```mermaid
 graph TD
@@ -195,7 +195,7 @@ graph TD
 | `/community/gomsol-market/:id` | `GomsolMarketDetailView` (`id` 숫자 경로만 허용) |
 | `/community/*` (invalid path) | `NotFoundPage` |
 
-### 3.4 학교 생활 정보 라우트 (`src/pages/SchoolInfo/index.jsx`)
+### 3.4 학교 생활 정보 라우트 (`src/pages/SchoolLifeInfo/index.jsx`)
 
 | 경로 | 요소 |
 |---|---|
@@ -211,33 +211,33 @@ graph TD
 
 | 기능 | 페이지 레이어 | 컴포넌트 레이어 | API 레이어 |
 |---|---|---|---|
-| 공지/예산 공개 | `src/pages/NoticesPage/*` | `src/components/notices/*` | `src/api/notices.js` |
-| 자유게시판 | `src/pages/FreeBoard/*` | `src/components/freeboard/*` | `src/api/community.js` |
+| 공지/예산 공개 | `src/pages/Notices/*` | `src/components/notices/*` | `src/api/notices.js` |
+| 자유게시판 | `src/pages/Community/FreeBoard/*` | `src/components/freeboard/*` | `src/api/community.js` |
 | 인성 가치 PICK! | `src/pages/Community/ValuePick/*` | `src/components/Community/ValuePick/*` | `src/api/valuePick.js` |
-| 동아리 모집 | `src/pages/ClubRecruit/*` | `src/components/clubRecruit/*` | `src/api/clubRecruit.js` |
-| 선택과목 변경 | `src/pages/Subjects/*` | `src/components/subjects/*` | `src/api/subjectChanges.js` |
-| 청원 | `src/pages/Petition/*` | `src/components/petition/*` | `src/api/petition.js` |
-| 설문 품앗이 | `src/pages/SurveyExchange/*` | `src/components/survey/*` | `src/api/survey.js` |
-| 투표 | `src/pages/Vote/*` | `src/components/vote/*` | `src/api/vote.js` |
-| 수학여행 이벤트 | `src/pages/FieldTrip/*` (`FieldTripHubPage`, `FieldTripClassBoardPage`, `FieldTripPostDetailPage`) | `src/components/fieldTrip/*`, `src/features/fieldTrip/*` | `src/api/fieldTrip.js` |
-| 분실물 | `src/pages/LostFound/*` | `src/components/lostfound/*` | `src/api/lostFound.js` |
-| 곰솔마켓 | `src/pages/GomsolMarket/*` | `src/components/gomsolmarket/*` | `src/api/gomsolMarket.js` |
-| 학교 생활 정보(시간표) | `src/pages/SchoolInfo/*` | `src/components/timetable/*` | 없음 (`src/components/timetable/timetableTemplates.json` 정적 템플릿 사용) |
-| 학교 생활 정보(오늘의 급식) | `src/pages/SchoolInfo/MealPage.jsx` | `src/components/MealCard/*`, `src/features/meals/*` | `src/api/meals.js` |
-| 학교 생활 정보(학사 캘린더) | `src/pages/SchoolInfo/AcademicCalendarPage.jsx` | `src/components/AcademicUpcomingCard/*`, `src/features/academicCalendar/*` | 없음 (`src/features/academicCalendar/data.js` 정적 데이터 사용) |
-| 학교 생활 정보(스포츠리그 문자중계/라인업/개인 순위) | `src/pages/SchoolInfo/SportsLeagueCategoryPage.jsx` | `src/features/sportsLeague/*` (`useSportsLeagueLive`, `usePlayersStore`, `TeamLineupPanel`, `PlayerRankingPanel`) | `src/api/sportsLeague.js` |
+| 동아리 모집 | `src/pages/Community/ClubRecruit/*` | `src/components/clubRecruit/*` | `src/api/clubRecruit.js` |
+| 선택과목 변경 | `src/pages/Community/Subjects/*` | `src/components/subjects/*` | `src/api/subjectChanges.js` |
+| 청원 | `src/pages/Community/Petition/*` | `src/components/petition/*` | `src/api/petition.js` |
+| 설문 품앗이 | `src/pages/Community/SurveyExchange/*` | `src/components/survey/*` | `src/api/survey.js` |
+| 투표 | `src/pages/Community/Vote/*` | `src/components/vote/*` | `src/api/vote.js` |
+| 수학여행 이벤트 | `src/pages/Community/FieldTrip/*` (`FieldTripHubPage`, `FieldTripClassBoardPage`, `FieldTripPostDetailPage`) | `src/components/fieldTrip/*`, `src/features/fieldTrip/*` | `src/api/fieldTrip.js` |
+| 분실물 | `src/pages/Notices/LostFound/*` | `src/components/lostfound/*` | `src/api/lostFound.js` |
+| 곰솔마켓 | `src/pages/Community/GomsolMarket/*` | `src/components/gomsolmarket/*` | `src/api/gomsolMarket.js` |
+| 학교 생활 정보(시간표) | `src/pages/SchoolLifeInfo/TimetableDownload/*` | `src/components/timetable/*` | 없음 (`src/components/timetable/timetableTemplates.json` 정적 템플릿 사용) |
+| 학교 생활 정보(오늘의 급식) | `src/pages/SchoolLifeInfo/Meal/MealPage.jsx` | `src/components/MealCard/*`, `src/features/meals/*` | `src/api/meals.js`, `src/api/mealNotifications.js` |
+| 학교 생활 정보(학사 캘린더) | `src/pages/SchoolLifeInfo/AcademicCalendar/AcademicCalendarPage.jsx` | `src/components/AcademicUpcomingCard/*`, `src/features/academicCalendar/*` | 없음 (`src/features/academicCalendar/data.js` 정적 데이터 사용) |
+| 학교 생활 정보(스포츠리그 문자중계/라인업/개인 순위) | `src/pages/SchoolLifeInfo/SportsLeagueCategory/SportsLeagueCategoryPage.jsx` | `src/features/sportsLeague/*` (`useSportsLeagueLive`, `usePlayersStore`, `TeamLineupPanel`, `PlayerRankingPanel`) | `src/api/sportsLeague.js` |
 
 ### 4.1 공지/예산 공개 파일 구성
 
 | 파일 | 역할 |
 |---|---|
-| `src/pages/NoticesPage/index.jsx` | `/notices/*`를 `NoticeCenterPage`와 `BudgetBoardPage`로 분기 |
-| `src/pages/NoticesPage/NoticeCenterPage.jsx` | 학교/학생회 공지 전용 셸과 중첩 라우트 |
-| `src/pages/NoticesPage/BudgetBoardPage.jsx` | 예산 공개 설정 로드, 연도 전환, 월 탭, 예산 공개 중첩 라우트 |
-| `src/pages/NoticesPage/BudgetListView.jsx` | `category='budget'`, `budgetYear`, `budgetMonth` 필터 기반 월별 리스트 |
-| `src/pages/NoticesPage/BudgetDetailView.jsx` | 예산 공개 상세, 댓글/반응/첨부 재사용 |
-| `src/pages/NoticesPage/BudgetComposeView.jsx` | 경로 기반 회계연도/월을 고정한 작성·수정 화면 |
-| `src/pages/NoticesPage/budgetUtils.js` | `03`~`02` 회계 사이클 계산 및 라벨/경로 유틸 |
+| `src/pages/Notices/index.jsx` | `/notices/*`를 `NoticeCenterPage`와 `BudgetBoardPage`로 분기 |
+| `src/pages/Notices/NoticeCenter/NoticeCenterPage.jsx` | 학교/학생회 공지 전용 셸과 중첩 라우트 |
+| `src/pages/Notices/BudgetBoard/BudgetBoardPage.jsx` | 예산 공개 설정 로드, 연도 전환, 월 탭, 예산 공개 중첩 라우트 |
+| `src/pages/Notices/BudgetBoard/BudgetListView.jsx` | `category='budget'`, `budgetYear`, `budgetMonth` 필터 기반 월별 리스트 |
+| `src/pages/Notices/BudgetBoard/BudgetDetailView.jsx` | 예산 공개 상세, 댓글/반응/첨부 재사용 |
+| `src/pages/Notices/BudgetBoard/BudgetComposeView.jsx` | 경로 기반 회계연도/월을 고정한 작성·수정 화면 |
+| `src/pages/Notices/BudgetBoard/budgetUtils.js` | `03`~`02` 회계 사이클 계산 및 라벨/경로 유틸 |
 | `src/components/notices/NoticeToolbar.jsx` | `showAttributeFilters`, `sortOptions`, `searchPlaceholder`로 budget 보드 확장 |
 | `src/components/notices/NoticeList.jsx` | `emptyStateProps`, `cardProps`로 budget 전용 비어 있음/카드 렌더링 재사용 |
 | `src/components/notices/NoticeCard.jsx` | `hideBadges`, `hideTags`로 예산 공개 카드 표현 단순화 |
@@ -286,6 +286,7 @@ graph TD
 | 구분 | 소스 오브 트루스 파일 | 설명 |
 |---|---|---|
 | 공통 HTTP 클라이언트 | `src/api/auth.js` | Axios 인스턴스, CSRF 헤더, 401 refresh 재시도, transport 실패 시 오프라인 이벤트 발행 |
+| FastAPI HTTP 클라이언트 | `src/api/fastapiClient.js` | FastAPI origin 전용 Axios 인스턴스, CSRF 헤더, transport 실패 전파 |
 | 기능 API | `src/api/*.js` | 기능별 endpoint 래핑 및 응답 정규화 |
 | 응답 정규화 | `src/api/normalizers.js` | 페이지네이션/업로드 URL 보정 |
 
@@ -305,11 +306,9 @@ graph TD
 
 | 파일 | 목적 |
 |---|---|
-| `src/pages/NoticesPage.jsx` | 레거시 import 호환용 wrapper (`./NoticesPage/index.jsx` re-export) |
 | `src/pages/MainPage/index.js` | `MainPage.jsx` 진입점 재-export |
-| `src/pages/SchoolInfoPage.jsx` | 레거시 import 호환용 wrapper (`./SchoolInfo/index.jsx` re-export) |
 
-새 코드에서는 폴더 기반 엔트리(`src/pages/NoticesPage/index.jsx`)를 우선 사용합니다.
+새 코드에서는 폴더 기반 엔트리(`src/pages/Notices/index.jsx`, `src/pages/SchoolLifeInfo/index.jsx`)를 우선 사용합니다.
 
 ## 9. 온보딩 권장 읽기 순서
 
@@ -319,7 +318,7 @@ graph TD
 4. `src/context/AuthContext.jsx`
 5. `src/api/auth.js`
 6. `src/security/urlPolicy.js` + `src/security/htmlSanitizer.js`
-7. `src/pages/CommunityRouter.jsx`
+7. `src/pages/Community/index.jsx`
 8. 임의의 기능 1개 수직 슬라이스(page + component + api) 끝까지 추적
 
 ## 10. 변경 시 동기화 규칙
@@ -351,7 +350,7 @@ graph TD
 
 | 파일 | 역할 |
 |---|---|
-| `src/pages/SchoolInfo/TimetableDownloadPage.jsx` | 학년/반 선택, 입력 상태, 다운로드 액션 orchestration |
+| `src/pages/SchoolLifeInfo/TimetableDownload/TimetableDownloadPage.jsx` | 학년/반 선택, 입력 상태, 다운로드 액션 orchestration |
 | `src/components/timetable/TimetableControls.jsx` | 학년/반 드롭다운과 선택과목 입력 폼 |
 | `src/components/timetable/TimetablePreview.jsx` | 미리보기 카드와 SVG 프리뷰 래퍼 |
 | `src/components/timetable/TimetableSvg.jsx` | 시간표 SVG 렌더링 |
@@ -368,12 +367,35 @@ graph TD
 | Export | 환경변수 | 타입 | 기본값 |
 |---|---|---|---|
 | `APP_NAME` | `VITE_APP_NAME` | `string` | `beomseo.in` |
+| `API_BASE_URL` | `VITE_API_URL` | `string` | `http://localhost:5000` |
+| `FASTAPI_BASE_URL` | `VITE_SPORTS_LEAGUE_API_URL` | `string` | `API_BASE_URL` fallback |
+| `CLUB_RECRUIT_BOARD_ENABLED` | `VITE_CLUB_RECRUIT_BOARD_ENABLED` | `boolean` | `true` |
+| `FIELD_TRIP_BOARD_ENABLED` | `VITE_FIELD_TRIP_BOARD_ENABLED` | `boolean` | `true` |
 | `UPLOAD_MAX_ATTACHMENTS` | `VITE_UPLOAD_MAX_ATTACHMENTS` | `number` | `5` |
 | `UPLOAD_MAX_IMAGES` | `VITE_UPLOAD_MAX_IMAGES` | `number` | `5` |
 | `UPLOAD_MAX_FILE_SIZE_MB` | `VITE_UPLOAD_MAX_FILE_SIZE_MB` | `number` | `10` |
 | `UPLOAD_MAX_FILE_SIZE_BYTES` | (계산값) | `number` | `10 * 1024 * 1024` |
+| `FIELD_TRIP_VIDEO_MAX_SIZE_MB` | `VITE_FIELD_TRIP_VIDEO_MAX_SIZE_MB` | `number` | `500` |
 | `PETITION_THRESHOLD_DEFAULT` | `VITE_PETITION_THRESHOLD_DEFAULT` | `number` | `50` |
 | `ALLOWED_ASSET_HOSTS` | `VITE_ALLOWED_ASSET_HOSTS` | `string[]` | `[]` |
+
+### `src/pwa/firebaseMessaging.js`
+
+Firebase Web Push와 foreground 알림을 담당합니다.
+
+| Export | 역할 |
+|---|---|
+| `isFirebaseMessagingConfigured()` | 필수 `VITE_FIREBASE_*` 값 충족 여부 |
+| `isFirebaseMessagingSupported()` | 현재 브라우저/서비스워커 환경 지원 여부 |
+| `getCurrentFirebaseMessagingToken()` | 기존 FCM token 조회 |
+| `requestFirebaseMessagingPermissionAndToken()` | 권한 요청 + token 발급 |
+| `deleteCurrentFirebaseMessagingToken()` | 현재 기기의 token 해제 |
+| `startFirebaseForegroundMessageListener()` | foreground 메시지를 브라우저 알림으로 표시 |
+
+### `src/pwa/mealNotificationInstallationId.js`
+
+- `localStorage`에 저장되는 브라우저/PWA 인스턴스 식별자 관리
+- 급식 알림 구독 API의 `installationId` 입력값 소스
 
 ### `src/utils/roleDisplay.js`
 

@@ -1,7 +1,7 @@
 # beomseo.in Backend
 
 범서고 커뮤니티 서비스 `beomseo.in`의 백엔드 API입니다.
-메인 커뮤니티 기능은 Flask 서버가 담당하고, 학교/학생회 공지와 예산 공개 게시판도 같은 `notices` 도메인에서 처리합니다. FastAPI 서버는 스포츠리그 문자중계, 수학여행 반별 게시판/점수판, 급식 조회/평점/알림 구독을 담당합니다. 두 서버는 같은 인증 쿠키와 DB 스키마를 공유하며, 인증·권한·레이트리밋·캐시·업로드 보안을 공통 정책으로 강제하고 쓰기 요청 메타데이터(IP/User-Agent)도 일관 수집합니다.
+메인 커뮤니티 기능은 Flask 서버가 담당하고, 학교/학생회 공지와 예산 공개 게시판도 같은 `notices` 도메인에서 처리합니다. Flask 쪽에는 자유게시판, 인성 가치 PICK!, 동아리 모집, 과목 변경, 청원, 설문, 투표, 분실물, 곰솔마켓이 포함됩니다. FastAPI 서버는 스포츠리그 문자중계, 수학여행 반별 게시판/점수판, 급식 조회/평점/알림 구독을 담당합니다. 두 서버는 같은 인증 쿠키와 DB 스키마를 공유하며, 인증·권한·레이트리밋·캐시·업로드 보안을 공통 정책으로 강제하고 쓰기 요청 메타데이터(IP/User-Agent)도 일관 수집합니다.
 
 ## 시스템 개요
 
@@ -147,6 +147,7 @@ Flask 메인 서버에 등록된 11개 블루프린트와 FastAPI 추가 라우�
 | `auth` | `/api/auth` | 회원가입, 로그인, 토큰 갱신, 로그아웃 |
 | `notices` | `/api/notices` | 학교/학생회/예산 공개 공지 CRUD, 예산 공개 설정, 댓글, 반응 |
 | `free` | `/api/community/free` | 자유게시판 CRUD, 북마크, 승인 |
+| `value_pick` | `/api/community/value-pick` | 인성 가치 PICK! CRUD, 승인, 반응, 댓글 |
 | `club_recruit` | `/api/club-recruit` | 동아리 모집 CRUD, 승인 |
 | `subject_changes` | `/api/subject-changes` | 과목변경 매칭 CRUD, 상태 관리 |
 | `petitions` | `/api/community/petitions` | 학생 청원, 투표, 답변 |
@@ -154,8 +155,8 @@ Flask 메인 서버에 등록된 11개 블루프린트와 FastAPI 추가 라우�
 | `votes` | `/api/community/votes` | 실시간 투표 |
 | `lost_found` | `/api/community/lost-found` | 분실물 게시판 |
 | `gomsol_market` | `/api/community/gomsol-market` | 곰솔 중고마켓 |
-| `sports_league` | `/api/sports-league` | 스포츠리그 문자중계 + 선수 라인업/개인 순위 + SSE |
 | `field_trip` (FastAPI router) | `/api/community/field-trip` | 수학여행 반 게시판, 업로드, 점수판 |
+| `sports_league` (FastAPI router) | `/api/sports-league` | 스포츠리그 문자중계 + 선수 라인업/개인 순위 + SSE |
 | `school_meals` (FastAPI router) | `/api/school-info/meals` | 급식 조회, 급식 평점, 급식 알림 구독 |
 
 FastAPI 공개 기능 보안 기본값:
@@ -185,14 +186,14 @@ backend/
 │  ├─ auth.py              #   인증/회원
 │  ├─ notices.py            #   공지 + 예산 공개 설정/CRUD
 │  ├─ free.py               #   자유게시판
+│  ├─ value_pick.py         #   인성 가치 PICK!
 │  ├─ club_recruit.py       #   동아리 모집
 │  ├─ subject_changes.py    #   과목변경
 │  ├─ petitions.py          #   학생 청원
 │  ├─ surveys.py            #   설문 교환
 │  ├─ votes.py              #   실시간 투표
 │  ├─ lost_found.py         #   분실물
-│  ├─ gomsol_market.py      #   곰솔 마켓
-│  └─ sports_league.py      #   스포츠리그 문자중계
+│  └─ gomsol_market.py      #   곰솔 마켓
 ├─ fastapi_app/            # FastAPI 스포츠리그/수학여행/급식 서버
 │  ├─ main.py              #   앱 팩토리, CORS, 보안 헤더, 라이프사이클
 │  ├─ config.py            #   Pydantic Settings (.env 공유)
@@ -211,12 +212,14 @@ backend/
 │     ├─ sports_league_realtime.py #   asyncio + Redis pub/sub
 │     ├─ sports_league_seed.py     #   시드 데이터 상수
 │     ├─ field_trip.py             #   수학여행 게시판/점수판/업로드 로직
-│     └─ meals.py                  #   급식 동기화/조회/평점 로직
+│     ├─ meals.py                  #   급식 동기화/조회/평점 로직
+│     └─ meal_notifications.py     #   급식 알림 구독/발송 로직
 ├─ models/                 # SQLAlchemy 모델 및 enum
 │  ├─ user.py              #   User, UserRole, db
 │  ├─ auth_token.py        #   AuthToken, AuthTokenType
 │  ├─ notice.py            #   Notice, Attachment, Comment, Reaction
 │  ├─ free_post.py         #   FreePost, FreeComment, Bookmark, Reaction
+│  ├─ value_pick.py        #   ValuePickPost, Comment, Reaction
 │  ├─ club_recruit.py      #   ClubRecruit, GradeGroup
 │  ├─ petition.py          #   Petition, PetitionVote, PetitionAnswer
 │  ├─ subject_change.py    #   SubjectChange, Comment, Like
@@ -234,6 +237,8 @@ backend/
 ├─ scripts/
 │  ├─ bootstrap_sports_league.py # 스포츠리그 seed 반영 스크립트
 │  ├─ bootstrap_field_trip.py    # 수학여행 기본 반/비밀번호 시드
+│  ├─ sync_school_meals.py       # NEIS 급식 동기화
+│  ├─ send_school_meal_notifications.py # Firebase 급식 알림 발송
 │  └─ migrate_notice_budget_board.py # 기존 notices 스키마에 예산 공개 컬럼/인덱스 추가
 ├─ utils/                  # 보안/토큰/캐시/레이트리밋/업로드 유틸
 │  ├─ security.py          #   비밀번호 해시, IP 검증, 권한 데코레이터
@@ -247,7 +252,8 @@ backend/
 └─ docs/
    ├─ backend_api.md       # API 레퍼런스
    ├─ backend_architecture.md  # 아키텍처 문서
-   └─ fastapi_deployment.md    # FastAPI 스포츠리그 서버 배포 가이드
+   ├─ fastapi_deployment.md    # FastAPI 스포츠리그/수학여행/급식 서버 배포 가이드
+   └─ school_meals.md          # 급식 조회/평점/PWA 알림 문서
 ```
 
 ## 인증 흐름 (Cookie JWT + CSRF)

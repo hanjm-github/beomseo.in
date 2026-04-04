@@ -1,3 +1,11 @@
+/**
+ * @file src/pages/SchoolLifeInfo/Meal/MealPage.jsx
+ * @description Renders the meal calendar, ratings, and PWA reminder controls.
+ * This page bridges three concerns:
+ * - meal data from FastAPI,
+ * - browser-scoped rating/reminder identity,
+ * - install/notification capability checks from the PWA layer.
+ */
 import { startTransition, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Bell,
@@ -324,6 +332,8 @@ export default function MealPage() {
           return;
         }
 
+        // The API already includes synthesized empty-day entries, so the page
+        // can replace its local map wholesale for the visible three-month window.
         setMealEntriesByDate(Object.fromEntries(items.map((entry) => [entry.date, entry])));
         setMealLoadError('');
       } catch (error) {
@@ -356,6 +366,8 @@ export default function MealPage() {
       setMealNotificationError('');
       setMealNotificationNotice('');
 
+      // Reminder controls are meaningful only for installed experiences because
+      // subscriptions are modeled as device/PWA registrations.
       if (!isInstalled) {
         setMealNotificationSupported(null);
         setMealNotificationSubscription(
@@ -497,6 +509,8 @@ export default function MealPage() {
     );
 
     try {
+      // Save always uses the device installation id so toggling, rescheduling,
+      // and first-time opt-in go through the same backend contract.
       const savedItem = await mealNotificationsApi.saveSubscription({
         installationId: mealNotificationInstallationId,
         enabled,
@@ -524,6 +538,8 @@ export default function MealPage() {
     if (getBrowserNotificationPermission() === 'granted') {
       const existingToken = await getCurrentFirebaseMessagingToken().catch(() => '');
       if (existingToken) {
+        // Reuse the existing registration token when possible so the backend
+        // does not churn device rows on every settings save.
         return existingToken;
       }
     }
@@ -611,6 +627,8 @@ export default function MealPage() {
     setMealNotificationNotice('');
 
     try {
+      // Clearing both the browser token and the backend row keeps reminder state
+      // aligned when the user unregisters the current device.
       await deleteCurrentFirebaseMessagingToken().catch(() => false);
       await mealNotificationsApi.deleteSubscription(mealNotificationInstallationId);
       setMealNotificationSubscription(

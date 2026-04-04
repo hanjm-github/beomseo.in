@@ -85,6 +85,30 @@
 | `deleteComment` | `DELETE /api/community/free/:postId/comments/:commentId` | 예 | 댓글 삭제 |
 | `upload` | `POST /api/community/free/uploads` | 예 | 첨부 업로드 |
 
+### 2.3A `src/api/valuePick.js` (`valuePickApi`)
+
+| 메서드 | HTTP/Endpoint | 오류 처리 | 비고 |
+|---|---|---|---|
+| `list` | `GET /api/community/value-pick` | 예 | 목록 |
+| `get` | `GET /api/community/value-pick/:id` | 예 | 상세 |
+| `create` | `POST /api/community/value-pick` | 예 | 생성 트래킹(`value_pick_board`) |
+| `update` | `PUT /api/community/value-pick/:id` | 예 | 수정 |
+| `approve` | `POST /api/community/value-pick/:id/approve` | 아니오 | 관리자 승인 |
+| `unapprove` | `POST /api/community/value-pick/:id/unapprove` | 아니오 | 관리자 승인 해제 |
+| `remove` | `DELETE /api/community/value-pick/:id` | 예 | 삭제 |
+| `react` | `POST /api/community/value-pick/:id/reactions` | 예 | `like/dislike` 반응 |
+| `listComments` | `GET /api/community/value-pick/:id/comments` | 예 | 댓글 목록 |
+| `createComment` | `POST /api/community/value-pick/:id/comments` | 예 | 댓글 작성 |
+| `deleteComment` | `DELETE /api/community/value-pick/:postId/comments/:commentId` | 예 | 댓글 삭제 |
+| `upload` | `POST /api/community/value-pick/uploads` | 예 | 첨부 업로드 |
+
+Value Pick 계약 요약:
+
+- `competency + pledge + rich HTML body` 구조를 사용합니다.
+- 목록 preview는 서버 또는 클라이언트가 HTML을 plain text로 축약한 `bodyPreview`를 사용합니다.
+- 첨부 업로드 응답은 공통 upload contract를 따르며, 본문 저장 시 canonical URL 기준으로 연결됩니다.
+- pending 글은 일반 사용자에게는 자신의 글만 보이고, admin은 전체를 볼 수 있습니다.
+
 ### 2.4 `src/api/clubRecruit.js` (`clubRecruitApi`)
 
 | 메서드 | HTTP/Endpoint | 오류 처리 | 비고 |
@@ -318,9 +342,37 @@ Field Trip 추가 계약 요약:
   - 지난 급식 날짜는 두 항목 모두 `422`
 - 실제 FastAPI 응답은 `items[]` / `item` wrapper를 가지지만, `mealsApi`는 화면 코드에 바로 쓰도록 entry 배열/객체만 반환합니다.
 
+### 2.13A `src/api/mealNotifications.js` (`mealNotificationsApi`)
+
+| 메서드 | HTTP/Endpoint | 오류 처리 | 비고 |
+|---|---|---|---|
+| `getSubscription(installationId)` | `GET /api/school-info/meals/notifications/subscription` | 예 | 기기별 구독 조회 |
+| `saveSubscription(payload)` | `PUT /api/school-info/meals/notifications/subscription` | 예 | installationId 기준 upsert |
+| `deleteSubscription(installationId)` | `DELETE /api/school-info/meals/notifications/subscription` | 예 | 기기 등록 해제 |
+
+급식 알림 계약 요약:
+
+- 구독은 로그인 계정이 아니라 `installationId` 기준으로 저장됩니다.
+- `enabled=true`일 때는 `fcmToken`이 필요합니다.
+- `notificationTime`은 `HH:MM` 형식이며 backend가 5분 단위로 정규화합니다.
+- API 응답은 모두 `{ item }` wrapper를 사용하고, 클라이언트는 그 내부 객체만 반환합니다.
+
 ## 3. 공통 유틸리티 및 지원 모듈
 
-### 3.1 `src/api/normalizers.js`
+### 3.1 `src/api/fastapiClient.js`
+
+| Export | 역할 |
+|---|---|
+| `fastapiApi` | 스포츠리그/수학여행/급식용 FastAPI Axios 인스턴스 |
+| `FASTAPI_BASE_URL` | `VITE_SPORTS_LEAGUE_API_URL` 또는 `VITE_API_URL` fallback |
+| `readCookie(name)` | FastAPI 요청용 CSRF 쿠키 읽기 |
+
+동작 메모:
+
+- 비안전 메서드에서 `csrf_access_token`을 읽어 `X-CSRF-TOKEN`을 자동 첨부합니다.
+- `auth.js`의 refresh interceptor는 공유하지 않으며, transport 실패만 `app:network-request-failed`로 전파합니다.
+
+### 3.2 `src/api/normalizers.js`
 
 | 함수 | 역할 |
 |---|---|
@@ -332,18 +384,19 @@ Field Trip 추가 계약 요약:
 
 | 화면 그룹 | API 모듈 |
 |---|---|
-| `pages/NoticesPage/*` | `noticesApi` |
-| `pages/FreeBoard/*` | `communityApi` |
-| `pages/ClubRecruit/*` | `clubRecruitApi` |
-| `pages/Subjects/*` | `subjectChangesApi` |
-| `pages/Petition/*` | `petitionApi` |
-| `pages/SurveyExchange/*` | `surveyApi` |
-| `pages/Vote/*` | `voteApi` |
-| `pages/LostFound/*` | `lostFoundApi` |
-| `pages/GomsolMarket/*` | `gomsolMarketApi` |
-| `pages/SchoolInfo/MealPage.jsx` | `mealsApi` |
-| `pages/SchoolInfo/SportsLeagueCategoryPage.jsx` | `sportsLeagueApi` |
-| `context/AuthContext.jsx` | `authApi` |
+| `src/pages/Notices/*` | `noticesApi` |
+| `src/pages/Community/FreeBoard/*` | `communityApi` |
+| `src/pages/Community/ValuePick/*` | `valuePickApi` |
+| `src/pages/Community/ClubRecruit/*` | `clubRecruitApi` |
+| `src/pages/Community/Subjects/*` | `subjectChangesApi` |
+| `src/pages/Community/Petition/*` | `petitionApi` |
+| `src/pages/Community/SurveyExchange/*` | `surveyApi` |
+| `src/pages/Community/Vote/*` | `voteApi` |
+| `src/pages/Notices/LostFound/*` | `lostFoundApi` |
+| `src/pages/Community/GomsolMarket/*` | `gomsolMarketApi` |
+| `src/pages/SchoolLifeInfo/Meal/MealPage.jsx` | `mealsApi`, `mealNotificationsApi` |
+| `src/pages/SchoolLifeInfo/SportsLeagueCategory/SportsLeagueCategoryPage.jsx` | `sportsLeagueApi` |
+| `src/context/AuthContext.jsx` | `authApi` |
 
 ## 5. 변경 시 동기화 규칙
 

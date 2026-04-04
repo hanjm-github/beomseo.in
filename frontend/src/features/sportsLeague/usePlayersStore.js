@@ -87,6 +87,8 @@ export default function usePlayersStore(categoryId) {
     async (playerId, stat) => {
       if (!categoryId || !playerId) return null;
       try {
+        // Stats are mutated with +/- deltas so concurrent admin actions do not
+        // need the client to send stale absolute totals.
         const result = await sportsLeagueApi.adjustPlayerStat(categoryId, playerId, {
           stat,
           delta: 1,

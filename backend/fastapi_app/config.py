@@ -94,6 +94,8 @@ class Settings(BaseSettings):
     MEAL_RATING_COOKIE_NAME: str = 'meal_rating_anon_token'
     MEAL_RATING_COOKIE_PATH: str = '/api/school-info/meals'
     MEAL_RATING_COOKIE_MAX_AGE_SECONDS: int = 31536000
+    # The sender script needs these settings to build notification payload URLs
+    # and authenticate with Firebase outside the request/response cycle.
     FIREBASE_SERVICE_ACCOUNT_PATH: str = ''
     WEB_APP_ORIGIN: str = 'http://localhost:5173'
 

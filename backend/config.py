@@ -163,6 +163,8 @@ class Config:
     UPLOAD_SCOPE_DIRS = {
         'notices': os.getenv('UPLOAD_NOTICES_DIR', 'notices'),
         'free': os.getenv('UPLOAD_FREE_DIR', 'free'),
+        # Value Pick stores editor uploads in its own scope so moderation and
+        # temporary preview checks stay independent from the free board.
         'value_pick': os.getenv('UPLOAD_VALUE_PICK_DIR', 'value_pick'),
         'club_recruit': os.getenv('UPLOAD_CLUB_RECRUIT_DIR', 'club_recruit'),
         'lost_found': os.getenv('UPLOAD_LOST_FOUND_DIR', 'lost_found'),

@@ -58,6 +58,8 @@ const GomsolMarketComposeView = lazy(() => import('./GomsolMarket/GomsolMarketCo
 
 function LegacyLostFoundRedirect() {
   const location = useLocation();
+  // Lost & Found moved out of the notice namespace, so legacy links are mapped
+  // forward instead of being left as hard 404s.
   const nextPath = location.pathname.startsWith(LOST_FOUND_LEGACY_BASE_PATH)
     ? location.pathname.replace(LOST_FOUND_LEGACY_BASE_PATH, LOST_FOUND_NOTICE_BASE_PATH)
     : LOST_FOUND_NOTICE_BASE_PATH;
@@ -93,6 +95,8 @@ export default function CommunityRouter() {
       <Route path="value-pick" element={lazyRoute(ValuePickListView)} />
       <Route path="value-pick/new" element={lazyRoute(ValuePickComposeView, { mode: 'create' })} />
 
+      {/* Feature flags hide both navigation and direct route access for boards
+          that the deployment has not enabled yet. */}
       {CLUB_RECRUIT_BOARD_ENABLED ? (
         <>
           <Route path="club-recruit" element={lazyRoute(ClubRecruitListPage)} />

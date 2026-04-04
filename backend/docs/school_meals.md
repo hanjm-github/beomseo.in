@@ -125,6 +125,15 @@
 
 알림 구독 API는 설치된 PWA 기기 단위로 동작합니다.
 
+### 운영 요약
+
+- 급식 알림 설정 UI는 프론트엔드 `오늘의 급식` 페이지에서만 노출됩니다.
+- 설치된 PWA 기기별로 급식 알림 시간을 저장합니다.
+- 실제 발송은 Firebase Web Push + FastAPI sender script 조합으로 동작합니다.
+- 구독은 계정 단위가 아니라 `installationId` 기준 기기 단위 레코드로 저장됩니다.
+- 알림 시각은 5분 단위(`HH:MM`)로 정규화됩니다.
+- 잘못된 FCM 토큰은 sender가 자동 비활성화합니다.
+
 ### 조회
 
 `GET /api/school-info/meals/notifications/subscription?installationId=...`
@@ -151,9 +160,10 @@
 규칙:
 
 - `enabled=true`면 `fcmToken`이 필요합니다.
-- `notificationTime`은 `HH:MM` 형식이어야 합니다.
+- `notificationTime`은 `HH:MM` 형식이어야 하며 5분 단위만 허용됩니다.
 - `timezone`은 유효한 IANA timezone이어야 합니다.
 - installationId 기준으로 upsert합니다.
+- 같은 `fcmToken`이 다른 installationId에 이미 연결되어 있으면, 새 installationId가 토큰 소유권을 가져가고 이전 레코드는 비활성화됩니다.
 
 ### 삭제
 
@@ -187,6 +197,13 @@ python scripts/send_school_meal_notifications.py
 ```bash
 python scripts/send_school_meal_notifications.py --dry-run
 ```
+
+sender 동작 메모:
+
+- 현재 시각을 각 subscription의 timezone으로 변환해 `notificationTime`과 같은 minute-of-day인 기기만 선택합니다.
+- 같은 로컬 날짜에 이미 발송한 subscription은 `last_sent_meal_date`로 한 번 더 걸러 중복 발송을 막습니다.
+- payload는 `title`, `body`, `link`, `icon` 외에 `menuItemsJson`을 함께 포함해 foreground 알림도 여러 줄 메뉴를 복원할 수 있습니다.
+- FCM이 `registration token not registered` 계열 오류를 돌려주면 sender가 해당 구독의 token을 지우고 `enabled=false`로 내려 다음 배치에서 재시도하지 않게 만듭니다.
 
 cron 예시:
 

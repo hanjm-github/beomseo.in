@@ -96,6 +96,7 @@ flowchart LR
 
 - `notice`
 - `free_board`
+- `value_pick_board`
 - `club_recruit`
 - `subject_change`
 - `petition`
@@ -137,6 +138,7 @@ flowchart LR
 | `src/context/AuthContext.jsx` | `login()`, `register()` 내부 성공/실패 트래킹 |
 | `src/api/notices.js` | `create()` 성공/실패 트래킹 |
 | `src/api/community.js` | `create()` 성공/실패 트래킹 |
+| `src/api/valuePick.js` | `create()` 성공/실패 트래킹 |
 | `src/api/clubRecruit.js` | `create()` 성공/실패 트래킹 |
 | `src/api/subjectChanges.js` | `create()` 성공/실패 트래킹 |
 | `src/api/petition.js` | `create()` 성공/실패 트래킹 |

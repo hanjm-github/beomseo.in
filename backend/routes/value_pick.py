@@ -118,6 +118,9 @@ def apply_filters(query, status, query_text, mine, user_id, user=None):
         query = query.filter(ValuePickPost.author_id == user_id)
 
     if not is_admin(user):
+        # Non-admin readers can always see approved posts and may additionally
+        # see their own pending submissions so moderation does not hide drafts
+        # from the original author.
         if user_id:
             query = query.filter(
                 or_(
@@ -262,6 +265,8 @@ def get_post(post_id):
             my_reaction = reaction.type.value
 
     try:
+        # View counts are best-effort metadata; failing to update them should not
+        # block the actual detail response.
         post.views += 1
         db.session.commit()
         invalidate_cache_namespaces('value_pick')
@@ -571,6 +576,8 @@ def serve_upload(filename):
     ).first()
 
     if not post:
+        # Files that are not yet referenced by a saved post remain accessible
+        # only through a signed preview token.
         if not file_path.exists():
             return jsonify({'error': '첨부파일을 찾을 수 없습니다.'}), 404
         preview_token = request.args.get('preview_token', '')

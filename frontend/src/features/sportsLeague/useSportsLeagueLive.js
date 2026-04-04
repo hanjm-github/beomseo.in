@@ -24,6 +24,8 @@ export default function useSportsLeagueLive(categoryId) {
         setError('');
         unsubscribe = sportsLeagueApi.subscribe(categoryId, (streamSnapshot) => {
           if (!active) return;
+          // Snapshot updates are authoritative; the hook never patches nested
+          // event arrays locally because the backend projection is the source of truth.
           setSnapshot(streamSnapshot);
         });
       })
@@ -46,6 +48,8 @@ export default function useSportsLeagueLive(categoryId) {
   const createEvent = useCallback(
     async (payload) => {
       const result = await sportsLeagueApi.createEvent(categoryId, payload);
+      // Mutation responses already contain the rebuilt snapshot, which keeps
+      // the UI responsive even before the SSE broadcast is observed.
       setSnapshot(result.snapshot);
       return result;
     },

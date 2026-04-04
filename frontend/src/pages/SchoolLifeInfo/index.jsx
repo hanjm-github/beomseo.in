@@ -1,3 +1,9 @@
+/**
+ * @file src/pages/SchoolLifeInfo/index.jsx
+ * @description Top-level router for school-life information pages.
+ * This slice groups static resources (timetable/calendar) with dynamic FastAPI
+ * features (meals and sports league) under one shared shell.
+ */
 import { Suspense, lazy } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import NotFoundPage from '../NotFoundPage';
@@ -24,6 +30,7 @@ export default function SchoolInfoRouter() {
       <Route path="calendar" element={lazyRoute(AcademicCalendarPage)} />
       <Route
         path="sports-league"
+        // Keep the bare route stable by redirecting to the current default category.
         element={<Navigate to={`/school-info/sports-league/${SPORTS_LEAGUE_CATEGORY_ID}`} replace />}
       />
       <Route
