@@ -130,6 +130,15 @@ export default function PetitionDetailView() {
   const pct = item ? Math.min(100, Math.round(((item.votes || 0) / threshold) * 100)) : 0;
   const derivedStatus = deriveStatus(item, threshold);
   const detailPath = `/community/petition/${id}`;
+  const seoTitle = item?.title || '학생 청원 상세';
+  const seoDescription =
+    joinSeoText([item?.summary, item?.body], 160) || '학생 청원 상세 페이지입니다.';
+  const seoBreadcrumbs = [
+    { name: '홈', url: '/' },
+    { name: '커뮤니티', url: '/community/petition' },
+    { name: '학생 청원', url: '/community/petition' },
+    { name: item?.title || '학생 청원 상세', url: detailPath },
+  ];
 
   const handleApprove = async () => {
     if (!item) return;
@@ -184,19 +193,12 @@ export default function PetitionDetailView() {
   return (
     <div className="page-shell">
       <SEO
-        title={item.title}
-        description={
-          joinSeoText([item.summary, item.body], 160) || '학생 청원 상세 페이지입니다.'
-        }
+        title={seoTitle}
+        description={seoDescription}
         path={detailPath}
         type="article"
-        noindex={Boolean(item.status && item.status !== 'approved')}
-        breadcrumbs={[
-          { name: '홈', url: '/' },
-          { name: '커뮤니티', url: '/community/petition' },
-          { name: '학생 청원', url: '/community/petition' },
-          { name: item.title, url: detailPath },
-        ]}
+        noindex={Boolean(item?.status && item.status !== 'approved')}
+        breadcrumbs={seoBreadcrumbs}
       />
       <button
         className="btn btn-secondary"
@@ -339,8 +341,9 @@ export default function PetitionDetailView() {
             </div>
           )}
         </div>
-      ) : null}
+      ) : (
+        <div className={styles.error}>존재하지 않는 청원입니다.</div>
+      )}
     </div>
   );
 }
-
