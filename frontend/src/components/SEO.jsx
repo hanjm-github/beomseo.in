@@ -2,17 +2,18 @@
  * @file src/components/SEO.jsx
  * @description Reusable SEO component providing per-page meta tags and structured data.
  * Responsibilities:
- * - Render <title>, <meta>, Open Graph, and Twitter Card tags natively.
+ * - Synchronize <title>, <meta>, Open Graph, and Twitter Card tags for the active route.
  * - Inject JSON-LD structured data for enhanced search engine understanding.
- * - None (native React 19 metadata)
  * Side effects:
- * - Modifies the document <head> via React 19 native hoisting.
+ * - Replaces SEO-related nodes inside document <head> on route changes.
  * Role in app flow:
  * - Drop-in component used at the top of every SEO-relevant page.
  */
+import { useEffect } from 'react';
 import { getStaticRouteSeo } from '../seo/policy';
 import {
   buildCanonicalUrl,
+  DEFAULT_TITLE,
   buildDocumentTitle,
   DEFAULT_DESCRIPTION,
   DEFAULT_OG_IMAGE_URL,
@@ -22,6 +23,39 @@ import {
   SITE_NAME,
   toAbsoluteAssetUrl,
 } from '../seo/site';
+
+const SEO_HEAD_SELECTORS = [
+  'meta[name="description"]',
+  'meta[name="robots"]',
+  'meta[property^="og:"]',
+  'meta[name^="twitter:"]',
+  'link[rel="canonical"]',
+  'script[type="application/ld+json"]',
+];
+
+function clearSeoHeadTags(head) {
+  SEO_HEAD_SELECTORS.forEach((selector) => {
+    head.querySelectorAll(selector).forEach((node) => node.remove());
+  });
+}
+
+function appendHeadNode(head, tagName, attributes, textContent) {
+  const node = document.createElement(tagName);
+
+  Object.entries(attributes).forEach(([name, value]) => {
+    if (value == null || value === false) {
+      return;
+    }
+
+    node.setAttribute(name, String(value));
+  });
+
+  if (textContent) {
+    node.textContent = textContent;
+  }
+
+  head.appendChild(node);
+}
 
 /**
  * SEO — renders <head> metadata for a single page.
@@ -64,11 +98,6 @@ export default function SEO({
   const pageTitle = buildDocumentTitle(resolvedTitle);
   const canonicalUrl = resolvedCanonicalPath ? buildCanonicalUrl(resolvedCanonicalPath) : null;
   const robotsContent = robots ?? (noindex || policy?.indexable === false ? NOINDEX_ROBOTS : INDEX_ROBOTS);
-
-  if (typeof window === 'undefined') {
-    return null;
-  }
-
   const breadcrumbJsonLd =
     resolvedBreadcrumbs.length > 0
       ? {
@@ -84,36 +113,65 @@ export default function SEO({
       : null;
 
   const allJsonLd = [...resolvedJsonLd, breadcrumbJsonLd].filter(Boolean);
+  const serializedJsonLd = JSON.stringify(allJsonLd);
 
-  return (
-    <>
-      {/* Basic */}
-      <title>{pageTitle}</title>
-      <meta name="description" content={resolvedDescription} />
-      {canonicalUrl ? <link rel="canonical" href={canonicalUrl} /> : null}
-      <meta name="robots" content={robotsContent} />
+  useEffect(() => {
+    if (typeof document === 'undefined') {
+      return undefined;
+    }
 
-      {/* Open Graph */}
-      <meta property="og:type" content={resolvedType} />
-      <meta property="og:title" content={pageTitle} />
-      <meta property="og:description" content={resolvedDescription} />
-      {canonicalUrl ? <meta property="og:url" content={canonicalUrl} /> : null}
-      <meta property="og:image" content={resolvedImage} />
-      <meta property="og:site_name" content={SITE_NAME} />
-      <meta property="og:locale" content={SITE_LOCALE} />
+    const head = document.head;
+    const jsonLdSchemas = JSON.parse(serializedJsonLd);
 
-      {/* Twitter Card */}
-      <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content={pageTitle} />
-      <meta name="twitter:description" content={resolvedDescription} />
-      <meta name="twitter:image" content={resolvedImage} />
+    clearSeoHeadTags(head);
+    document.title = pageTitle;
 
-      {/* JSON-LD structured data */}
-      {allJsonLd.map((schema, index) => (
-        <script key={`jsonld-${index}`} type="application/ld+json">
-          {JSON.stringify(schema)}
-        </script>
-      ))}
-    </>
-  );
+    appendHeadNode(head, 'meta', { name: 'description', content: resolvedDescription });
+    if (canonicalUrl) {
+      appendHeadNode(head, 'link', { rel: 'canonical', href: canonicalUrl });
+    }
+    appendHeadNode(head, 'meta', { name: 'robots', content: robotsContent });
+
+    appendHeadNode(head, 'meta', { property: 'og:type', content: resolvedType });
+    appendHeadNode(head, 'meta', { property: 'og:title', content: pageTitle });
+    appendHeadNode(head, 'meta', { property: 'og:description', content: resolvedDescription });
+    if (canonicalUrl) {
+      appendHeadNode(head, 'meta', { property: 'og:url', content: canonicalUrl });
+    }
+    appendHeadNode(head, 'meta', { property: 'og:image', content: resolvedImage });
+    appendHeadNode(head, 'meta', { property: 'og:site_name', content: SITE_NAME });
+    appendHeadNode(head, 'meta', { property: 'og:locale', content: SITE_LOCALE });
+
+    appendHeadNode(head, 'meta', { name: 'twitter:card', content: 'summary_large_image' });
+    appendHeadNode(head, 'meta', { name: 'twitter:title', content: pageTitle });
+    appendHeadNode(head, 'meta', { name: 'twitter:description', content: resolvedDescription });
+    appendHeadNode(head, 'meta', { name: 'twitter:image', content: resolvedImage });
+
+    jsonLdSchemas.forEach((schema) => {
+      appendHeadNode(
+        head,
+        'script',
+        { type: 'application/ld+json' },
+        JSON.stringify(schema),
+      );
+    });
+
+    return () => {
+      clearSeoHeadTags(head);
+
+      if (document.title === pageTitle) {
+        document.title = DEFAULT_TITLE;
+      }
+    };
+  }, [
+    canonicalUrl,
+    pageTitle,
+    resolvedDescription,
+    resolvedImage,
+    resolvedType,
+    robotsContent,
+    serializedJsonLd,
+  ]);
+
+  return null;
 }
