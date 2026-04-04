@@ -98,6 +98,7 @@
 graph TD
     CR["CommunityRouter"] -->|index| DEF["Navigate → /community/free"]
     CR --> F["free/*"]
+    CR --> VP["value-pick/*"]
     CR --> CLB["club-recruit/*"]
     CR --> SUB["subjects/*"]
     CR --> PET["petition/*"]
@@ -112,6 +113,11 @@ graph TD
     F --> F2["FreeBoardComposeView(create)"]
     F --> F3["FreeBoardDetailView"]
     F --> F4["FreeBoardComposeView(edit)"]
+
+    VP --> VP1["ValuePickListView"]
+    VP --> VP2["ValuePickComposeView(create)"]
+    VP --> VP3["ValuePickDetailView"]
+    VP --> VP4["ValuePickComposeView(edit)"]
 
     CLB --> CLB1["ClubRecruitListPage"]
     CLB --> CLB2["ClubRecruitComposePage"]
@@ -155,6 +161,10 @@ graph TD
 | `/community/free/new` | `FreeBoardComposeView(mode=create)` |
 | `/community/free/:id` | `FreeBoardDetailView` (`id` 숫자 경로만 허용) |
 | `/community/free/:id/edit` | `FreeBoardComposeView(mode=edit)` (`id` 숫자 경로만 허용) |
+| `/community/value-pick` | `ValuePickListView` |
+| `/community/value-pick/new` | `ValuePickComposeView(mode=create)` |
+| `/community/value-pick/:id` | `ValuePickDetailView` (`id` 숫자 경로만 허용) |
+| `/community/value-pick/:id/edit` | `ValuePickComposeView(mode=edit)` (`id` 숫자 경로만 허용) |
 | `/community/club-recruit` | `ClubRecruitListPage` |
 | `/community/club-recruit/new` | `ClubRecruitComposePage` |
 | `/community/club-recruit/:id` | `ClubRecruitDetailPage` (`id` 숫자 경로만 허용) |
@@ -203,6 +213,7 @@ graph TD
 |---|---|---|---|
 | 공지/예산 공개 | `src/pages/NoticesPage/*` | `src/components/notices/*` | `src/api/notices.js` |
 | 자유게시판 | `src/pages/FreeBoard/*` | `src/components/freeboard/*` | `src/api/community.js` |
+| 인성 가치 PICK! | `src/pages/Community/ValuePick/*` | `src/components/Community/ValuePick/*` | `src/api/valuePick.js` |
 | 동아리 모집 | `src/pages/ClubRecruit/*` | `src/components/clubRecruit/*` | `src/api/clubRecruit.js` |
 | 선택과목 변경 | `src/pages/Subjects/*` | `src/components/subjects/*` | `src/api/subjectChanges.js` |
 | 청원 | `src/pages/Petition/*` | `src/components/petition/*` | `src/api/petition.js` |

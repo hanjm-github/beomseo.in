@@ -16,6 +16,13 @@ from .free_post import (
     FreeCategory,
     FreeStatus,
 )
+from .value_pick import (
+    ValuePickPost,
+    ValuePickReaction,
+    ValuePickReactionType,
+    ValuePickComment,
+    ValuePickStatus,
+)
 from .club_recruit import (
     ClubRecruit,
     GradeGroup,
@@ -95,6 +102,11 @@ __all__ = [
     'FreeBookmark',
     'FreeCategory',
     'FreeStatus',
+    'ValuePickPost',
+    'ValuePickReaction',
+    'ValuePickReactionType',
+    'ValuePickComment',
+    'ValuePickStatus',
     'ClubRecruit',
     'GradeGroup',
     'RecruitStatus',

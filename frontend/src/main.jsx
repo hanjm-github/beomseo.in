@@ -29,6 +29,7 @@ async function preloadPrerenderModules() {
     import('./pages/Notices/LostFound/LostFoundListView'),
     import('./pages/Community'),
     import('./pages/Community/FreeBoard/FreeBoardListView'),
+    import('./pages/Community/ValuePick/ValuePickListView'),
     import('./pages/Community/ClubRecruit/ClubRecruitListPage'),
     import('./pages/Community/Subjects/SubjectsListPage'),
     import('./pages/Community/Petition/PetitionListView'),

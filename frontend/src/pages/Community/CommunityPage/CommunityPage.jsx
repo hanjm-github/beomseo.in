@@ -15,7 +15,7 @@
  */
 import { createElement, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { MessageCircle, Users, Shuffle, Vote, PlugZap, ShieldCheck, Package, Store } from 'lucide-react';
+import { MessageCircle, Users, Shuffle, Vote, PlugZap, ShieldCheck, Package, Store, Droplets } from 'lucide-react';
 import { CLUB_RECRUIT_BOARD_ENABLED } from '../../../config/env';
 import '../../page-shell.css';
 
@@ -26,6 +26,13 @@ const allBoards = [
     label: '자유 게시판',
     description: '잡담, 정보, QnA 글을 자유롭게 공유하세요.',
     icon: MessageCircle,
+  },
+  {
+    key: 'value-pick',
+    path: 'value-pick',
+    label: '인성 가치 PICK!',
+    description: '수적천석을 바탕으로 올해 실천할 인성 가치를 기록해요.',
+    icon: Droplets,
   },
   {
     key: 'club-recruit',
@@ -124,5 +131,4 @@ export default function CommunityPage() {
     </div>
   );
 }
-
 

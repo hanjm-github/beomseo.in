@@ -163,6 +163,7 @@ class Config:
     UPLOAD_SCOPE_DIRS = {
         'notices': os.getenv('UPLOAD_NOTICES_DIR', 'notices'),
         'free': os.getenv('UPLOAD_FREE_DIR', 'free'),
+        'value_pick': os.getenv('UPLOAD_VALUE_PICK_DIR', 'value_pick'),
         'club_recruit': os.getenv('UPLOAD_CLUB_RECRUIT_DIR', 'club_recruit'),
         'lost_found': os.getenv('UPLOAD_LOST_FOUND_DIR', 'lost_found'),
         'gomsol_market': os.getenv('UPLOAD_GOMSOL_MARKET_DIR', 'gomsol_market'),
@@ -171,6 +172,7 @@ class Config:
     UPLOAD_ROUTE_PREFIXES = {
         'notices': '/api/notices/uploads',
         'free': '/api/community/free/uploads',
+        'value_pick': '/api/community/value-pick/uploads',
         'club_recruit': '/api/club-recruit/uploads',
         'lost_found': '/api/community/lost-found/uploads',
         'gomsol_market': '/api/community/gomsol-market/uploads',

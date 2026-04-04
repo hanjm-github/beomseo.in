@@ -18,6 +18,7 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   Bell,
   MessageCircle,
+  Droplets,
   Download,
   Utensils,
   Calendar,
@@ -210,6 +211,15 @@ export default function MainPage() {
                   title="자유게시판"
                   description="범서고의 커뮤니티 공간"
                   variant="accent"
+                />
+              </div>
+              <div className={`${styles.fadeUp} ${styles.delay5}`}>
+                <QuickLinkCard
+                  to="/community/value-pick"
+                  icon={Droplets}
+                  title="인성 가치 PICK!"
+                  description="수적천석을 바탕으로 올해의 다짐을 기록"
+                  variant="success"
                 />
               </div>
               <div className={`${styles.fadeUp} ${styles.delay5}`}>

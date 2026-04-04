@@ -24,6 +24,9 @@ import {
 const FreeBoardListView = lazy(() => import('./FreeBoard/FreeBoardListView'));
 const FreeBoardDetailView = lazy(() => import('./FreeBoard/FreeBoardDetailView'));
 const FreeBoardComposeView = lazy(() => import('./FreeBoard/FreeBoardComposeView'));
+const ValuePickListView = lazy(() => import('./ValuePick/ValuePickListView'));
+const ValuePickDetailView = lazy(() => import('./ValuePick/ValuePickDetailView'));
+const ValuePickComposeView = lazy(() => import('./ValuePick/ValuePickComposeView'));
 
 const ClubRecruitListPage = lazy(() => import('./ClubRecruit/ClubRecruitListPage'));
 const ClubRecruitDetailPage = lazy(() => import('./ClubRecruit/ClubRecruitDetailPage'));
@@ -87,6 +90,8 @@ export default function CommunityRouter() {
       <Route index element={<Navigate to="/community/free" replace />} />
       <Route path="free" element={lazyRoute(FreeBoardListView)} />
       <Route path="free/new" element={lazyRoute(FreeBoardComposeView, { mode: 'create' })} />
+      <Route path="value-pick" element={lazyRoute(ValuePickListView)} />
+      <Route path="value-pick/new" element={lazyRoute(ValuePickComposeView, { mode: 'create' })} />
 
       {CLUB_RECRUIT_BOARD_ENABLED ? (
         <>
@@ -145,6 +150,11 @@ export default function CommunityRouter() {
       >
         <Route path="free/:id" element={lazyRoute(FreeBoardDetailView)} />
         <Route path="free/:id/edit" element={lazyRoute(FreeBoardComposeView, { mode: 'edit' })} />
+        <Route path="value-pick/:id" element={lazyRoute(ValuePickDetailView)} />
+        <Route
+          path="value-pick/:id/edit"
+          element={lazyRoute(ValuePickComposeView, { mode: 'edit' })}
+        />
         {CLUB_RECRUIT_BOARD_ENABLED ? (
           <Route path="club-recruit/:id" element={lazyRoute(ClubRecruitDetailPage)} />
         ) : null}

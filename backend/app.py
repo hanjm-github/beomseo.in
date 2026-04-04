@@ -17,6 +17,7 @@ from config import config
 from models.user import db
 from models import notice  # noqa: F401 ensure models are registered
 from models import free_post  # noqa: F401 ensure models are registered
+from models import value_pick  # noqa: F401 ensure models are registered
 from models import club_recruit  # noqa: F401 ensure models are registered
 from models import vote  # noqa: F401 ensure models are registered
 from models import lost_found  # noqa: F401 ensure models are registered
@@ -225,6 +226,7 @@ def create_app(config_name=None):
     from routes.auth import auth_bp
     from routes.notices import notices_bp
     from routes.free import free_bp
+    from routes.value_pick import value_pick_bp
     from routes.club_recruit import club_recruit_bp
     from routes.subject_changes import subject_changes_bp
     from routes.petitions import petitions_bp
@@ -239,6 +241,7 @@ def create_app(config_name=None):
     write_limit = app.config.get('RATELIMIT_WRITE_LIMIT', '120 per minute')
     apply_blueprint_write_limit(notices_bp, write_limit)
     apply_blueprint_write_limit(free_bp, write_limit)
+    apply_blueprint_write_limit(value_pick_bp, write_limit)
     if club_recruit_board_enabled:
         apply_blueprint_write_limit(club_recruit_bp, write_limit)
     apply_blueprint_write_limit(subject_changes_bp, write_limit)
@@ -251,6 +254,7 @@ def create_app(config_name=None):
     app.register_blueprint(auth_bp)
     app.register_blueprint(notices_bp)
     app.register_blueprint(free_bp)
+    app.register_blueprint(value_pick_bp)
     # The club recruit board can be disabled at config level without changing the rest of the app shell.
     if club_recruit_board_enabled:
         app.register_blueprint(club_recruit_bp)

@@ -37,6 +37,7 @@ import RoleName from '../RoleName/RoleName';
 // Feature-flagged board links are built once so both desktop and mobile menus stay in sync.
 const communityNavigationItems = [
   { label: '자유 게시판', path: '/community/free' },
+  { label: '인성 가치 PICK!', path: '/community/value-pick' },
   CLUB_RECRUIT_BOARD_ENABLED ? { label: '동아리 모집', path: '/community/club-recruit' } : null,
   { label: '선택과목 변경', path: '/community/subjects' },
   { label: '학생 청원', path: '/community/petition' },

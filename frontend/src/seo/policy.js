@@ -194,6 +194,20 @@ function createStaticRouteEntries(date = new Date()) {
       ],
     },
     {
+      path: '/community/value-pick',
+      title: '인성 가치 PICK!',
+      description:
+        '범서고 인성 브랜드 수적천석을 바탕으로, 올해 실천할 인성 역량과 나만의 다짐을 기록하는 게시판입니다.',
+      indexable: true,
+      prerender: true,
+      sitemap: true,
+      breadcrumbs: [
+        { name: '홈', url: '/' },
+        { name: '커뮤니티', url: '/community/value-pick' },
+        { name: '인성 가치 PICK!', url: '/community/value-pick' },
+      ],
+    },
+    {
       path: '/community/club-recruit',
       title: '동아리 모집 게시판',
       description:
@@ -368,6 +382,7 @@ export function isNoindexRoute(pathname) {
     /^\/notices\/lost-found\/new$/u,
     /^\/community\/[^/]+\/new$/u,
     /^\/community\/free\/\d+\/edit$/u,
+    /^\/community\/value-pick\/\d+\/edit$/u,
     /^\/community\/survey\/\d+\/edit$/u,
     /^\/community\/survey\/\d+\/results$/u,
     /^\/community\/subjects\/\d+$/u,
