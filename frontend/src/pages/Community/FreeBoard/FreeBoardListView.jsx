@@ -17,6 +17,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { Plus } from 'lucide-react';
+import SEO from '../../../components/SEO';
 import FreeBoardToolbar from '../../../components/Community/FreeBoard/FreeBoardToolbar';
 import FreePostList from '../../../components/Community/FreeBoard/FreePostList';
 import styles from '../../../components/Community/FreeBoard/freeboard.module.css';
@@ -146,6 +147,7 @@ export default function FreeBoardListView() {
 
   return (
     <div className="page-shell">
+      <SEO path="/community/free" />
       <div className="page-header">
         <div>
           <p className="eyebrow">소통하는 범서고</p>
@@ -210,5 +212,4 @@ export default function FreeBoardListView() {
     </div>
   );
 }
-
 

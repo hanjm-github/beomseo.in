@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useParams, useSearchParams } from 'react-router-dom';
 
+import SEO from '../../../components/SEO';
 import { sportsLeagueApi } from '../../../api/sportsLeague';
 import { useAuth } from '../../../context/AuthContext';
 import {
@@ -664,6 +665,15 @@ export default function SportsLeagueCategoryPage() {
 
   return (
     <div className={`page-shell ${styles.page}`}>
+      <SEO
+        path={`/school-info/sports-league/${categoryId}`}
+        title={snapshot?.category?.title || '스포츠리그'}
+        description={
+          snapshot?.category?.subtitle ||
+          '범서고 스포츠리그 실시간 중계, 예선 순위판, 주차별 대진표를 확인하세요.'
+        }
+        noindex={categoryId !== SPORTS_LEAGUE_CATEGORY_ID}
+      />
       <div className="page-header">
         <div>
           <p className="eyebrow">학교 생활 정보</p>

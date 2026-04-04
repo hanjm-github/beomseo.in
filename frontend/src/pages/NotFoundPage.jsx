@@ -1,5 +1,6 @@
 import { ArrowLeft, Compass, FileSearch } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import SEO from '../components/SEO';
 import styles from './NotFoundPage.module.css';
 import './page-shell.css';
 
@@ -26,6 +27,7 @@ export default function NotFoundPage({
 
   return (
     <div className={`page-shell ${styles.shell}`}>
+      <SEO title={title} description={description} noindex canonical={false} />
       <div className={styles.panel}>
         <div className={styles.content}>
           <p className="eyebrow">{eyebrow}</p>

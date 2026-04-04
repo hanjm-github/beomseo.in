@@ -1,6 +1,7 @@
 import { startTransition, useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import fieldTripApi, { getFieldTripErrorMessage } from '../../../api/fieldTrip';
+import SEO from '../../../components/SEO';
 import FieldTripClassGrid from '../../../components/Community/FieldTrip/FieldTripClassGrid';
 import FieldTripScoreboard from '../../../components/Community/FieldTrip/FieldTripScoreboard';
 import FieldTripTabBar from '../../../components/Community/FieldTrip/FieldTripTabBar';
@@ -140,6 +141,7 @@ export default function FieldTripHubPage() {
 
   return (
     <div className={`page-shell ${styles.page}`}>
+      <SEO path="/community/field-trip" />
       <section className={`${styles.hero} ${styles.heroMinimal}`}>
         <div className={styles.heroContent}>
           <div className={styles.heroText}>

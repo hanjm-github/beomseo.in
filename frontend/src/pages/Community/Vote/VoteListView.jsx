@@ -16,6 +16,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Loader2, Plus, Vote as VoteIcon } from 'lucide-react';
+import SEO from '../../../components/SEO';
 import { useAuth } from '../../../context/AuthContext';
 import { voteApi } from '../../../api/vote';
 import VoteCard from '../../../components/Community/Vote/VoteCard';
@@ -119,6 +120,7 @@ export default function VoteListView() {
 
   return (
     <div className="page-shell">
+      <SEO path="/community/vote" />
       <div className={styles.pageHeader}>
         <div>
           <p className="eyebrow">소통하는 범서고</p>
@@ -225,5 +227,4 @@ export default function VoteListView() {
     </div>
   );
 }
-
 

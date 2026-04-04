@@ -16,6 +16,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Plus } from 'lucide-react';
+import SEO from '../../../components/SEO';
 import { gomsolMarketApi } from '../../../api/gomsolMarket';
 import { useAuth } from '../../../context/AuthContext';
 import GomsolMarketFilterBar from '../../../components/Community/GomsolMarket/GomsolMarketFilterBar';
@@ -118,6 +119,7 @@ export default function GomsolMarketListView() {
 
   return (
     <div className="page-shell">
+      <SEO path="/community/gomsol-market" />
       <div className={styles.pageHeader}>
         <div>
           <p className="eyebrow">소통하는 범서고</p>
@@ -202,5 +204,4 @@ export default function GomsolMarketListView() {
     </div>
   );
 }
-
 

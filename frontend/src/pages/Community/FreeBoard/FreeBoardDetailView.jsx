@@ -16,6 +16,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { Bookmark, BookmarkCheck, Heart, ThumbsDown, Eye, MessageCircle, ArrowLeft, ShieldAlert } from 'lucide-react';
+import SEO from '../../../components/SEO';
 import styles from '../../../components/Community/FreeBoard/freeboard.module.css';
 import { communityApi } from '../../../api/community';
 import FreeCommentsPanel from '../../../components/Community/FreeBoard/FreeCommentsPanel';
@@ -23,6 +24,7 @@ import SafeHtml from '../../../components/security/SafeHtml';
 import '../../page-shell.css';
 import { useAuth } from '../../../context/AuthContext';
 import RoleName from '../../../components/RoleName/RoleName';
+import { buildSeoExcerpt } from '../../../seo/text';
 
 /**
  * FreeBoardDetailView module entry point.
@@ -108,9 +110,23 @@ export default function FreeBoardDetailView() {
 
   const isAdmin = user?.role === 'admin';
   const isOwner = user?.id && post?.author?.id && Number(user.id) === Number(post.author.id);
+  const detailPath = `/community/free/${post.id}`;
 
   return (
     <div className="page-shell">
+      <SEO
+        title={post.title}
+        description={buildSeoExcerpt(post.body || post.title) || '자유 게시판 상세 페이지입니다.'}
+        path={detailPath}
+        type="article"
+        noindex={post.status === 'pending'}
+        breadcrumbs={[
+          { name: '홈', url: '/' },
+          { name: '커뮤니티', url: '/community/free' },
+          { name: '자유 게시판', url: '/community/free' },
+          { name: post.title, url: detailPath },
+        ]}
+      />
       <Link to="/community/free" className="btn btn-secondary" style={{ alignSelf: 'flex-start' }}>
         <ArrowLeft size={14} />
         목록으로
@@ -209,5 +225,4 @@ export default function FreeBoardDetailView() {
     </div>
   );
 }
-
 

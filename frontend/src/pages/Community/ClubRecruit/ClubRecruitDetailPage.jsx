@@ -15,12 +15,14 @@
  */
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import SEO from '../../../components/SEO';
 import { clubRecruitApi } from '../../../api/clubRecruit';
 import RecruitCard from '../../../components/Community/ClubRecruit/RecruitCard';
 import InfiniteLoader from '../../../components/Community/ClubRecruit/InfiniteLoader';
 import ErrorState from '../../../components/Community/ClubRecruit/ErrorState';
 import SafeHtml from '../../../components/security/SafeHtml';
 import { useAuth } from '../../../context/AuthContext';
+import { joinSeoText } from '../../../seo/text';
 import '../../page-shell.css';
 
 /**
@@ -80,9 +82,26 @@ export default function ClubRecruitDetailPage() {
       : '모집 기간 미정';
   const isAdmin = user?.role === 'admin';
   const isOwner = Boolean(user?.id && data?.author?.id && String(user.id) === String(data.author.id));
+  const detailPath = `/community/club-recruit/${id}`;
 
   return (
     <div className="page-shell">
+      <SEO
+        title={data.clubName}
+        description={
+          joinSeoText([applyLabel, data.extraNote, data.body], 160) ||
+          '동아리 모집 상세 페이지입니다.'
+        }
+        path={detailPath}
+        type="article"
+        noindex={data.status !== 'approved'}
+        breadcrumbs={[
+          { name: '홈', url: '/' },
+          { name: '커뮤니티', url: '/community/club-recruit' },
+          { name: '동아리 모집', url: '/community/club-recruit' },
+          { name: data.clubName, url: detailPath },
+        ]}
+      />
       <div className="page-header">
         <div>
           <p className="eyebrow">동아리 모집</p>
@@ -156,5 +175,4 @@ export default function ClubRecruitDetailPage() {
     </div>
   );
 }
-
 

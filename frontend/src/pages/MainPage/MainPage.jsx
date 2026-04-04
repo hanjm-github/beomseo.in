@@ -32,10 +32,12 @@ import AcademicUpcomingCard from '../../components/AcademicUpcomingCard/Academic
 import QuickLinkCard from '../../components/QuickLinkCard';
 import AnnouncementCard from '../../components/AnnouncementCard';
 import MealCard from '../../components/MealCard';
+import SEO from '../../components/SEO';
 import { noticesApi } from '../../api/notices';
 import { useAuth } from '../../context/AuthContext';
 import { APP_NAME, CLUB_RECRUIT_BOARD_ENABLED } from '../../config/env';
 import { getNextAcademicEvent } from '../../features/academicCalendar/utils';
+import { HOME_JSON_LD } from '../../seo/policy';
 import { buildAuthRedirectState } from '../../utils/authRedirect';
 
 import styles from './MainPage.module.css';
@@ -104,6 +106,7 @@ export default function MainPage() {
 
   return (
     <div className={styles.page}>
+      <SEO path="/" jsonLd={HOME_JSON_LD} />
       <main className={styles.main}>
         <section className={styles.hero}>
           <div className={styles.heroContent}>

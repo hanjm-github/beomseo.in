@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file src/context/ThemeContext.jsx
  * @description Defines React context state and helper hooks shared across the app.
  * Responsibilities:
@@ -21,13 +21,15 @@ const ThemeContext = createContext(undefined);
  */
 export function ThemeProvider({ children }) {
   const [theme, setTheme] = useState(() => {
+    if (typeof window === 'undefined') return 'light'; // SSR fallback
+    
     // Check localStorage first
     const stored = localStorage.getItem('theme');
     if (stored === 'dark' || stored === 'light') {
       return stored;
     }
     // Check system preference
-    if (typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
       return 'dark';
     }
     return 'light';

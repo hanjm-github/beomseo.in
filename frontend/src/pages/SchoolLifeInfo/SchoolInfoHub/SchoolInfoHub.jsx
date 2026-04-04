@@ -7,6 +7,8 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
+import SEO from '../../../components/SEO';
+
 import { SPORTS_LEAGUE_CATEGORY_ID } from '../../../features/sportsLeague/data';
 import '../../page-shell.css';
 
@@ -49,6 +51,7 @@ const schoolInfoCards = [
 export default function SchoolInfoHub() {
   return (
     <div className="page-shell">
+      <SEO path="/school-info" />
       <div className="page-header">
         <div>
           <p className="eyebrow">학교 생활 정보</p>

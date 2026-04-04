@@ -16,6 +16,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Filter, Plus, RotateCcw, Search } from 'lucide-react';
+import SEO from '../../../components/SEO';
 import PetitionCard from '../../../components/Community/Petition/PetitionCard';
 import { petitionApi, THRESHOLD_DEFAULT } from '../../../api/petition';
 import { useAuth } from '../../../context/AuthContext';
@@ -166,6 +167,7 @@ export default function PetitionListView() {
 
   return (
     <div className="page-shell">
+      <SEO path="/community/petition" />
       <div className="page-header">
         <div>
           <p className="eyebrow">소통하는 범서고</p>
@@ -311,5 +313,4 @@ export default function PetitionListView() {
     </div>
   );
 }
-
 

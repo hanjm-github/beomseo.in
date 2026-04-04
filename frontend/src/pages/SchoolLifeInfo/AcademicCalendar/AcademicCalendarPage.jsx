@@ -1,6 +1,8 @@
-﻿import { startTransition, useEffect, useMemo } from 'react';
+import { startTransition, useEffect, useMemo } from 'react';
 import { CalendarDays, FileText, GraduationCap, Sparkles } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
+
+import SEO from '../../../components/SEO';
 
 import {
   ACADEMIC_CATEGORY_META,
@@ -374,6 +376,7 @@ export default function AcademicCalendarPage() {
 
   return (
     <div className="page-shell">
+      <SEO path="/school-info/calendar" />
       <div className="page-header">
         <div>
           <p className="eyebrow">학교 생활 정보</p>
@@ -548,7 +551,6 @@ export default function AcademicCalendarPage() {
     </div>
   );
 }
-
 
 
 

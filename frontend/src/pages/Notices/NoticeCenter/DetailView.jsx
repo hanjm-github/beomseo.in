@@ -28,6 +28,7 @@ import {
   ThumbsUp,
   ThumbsDown,
 } from 'lucide-react';
+import SEO from '../../../components/SEO';
 import styles from '../../../components/notices/NoticeCenter/notices.module.css';
 import { noticesApi } from '../../../api/notices';
 import Attachments from '../../../components/notices/NoticeCenter/Attachments';
@@ -35,6 +36,7 @@ import SafeHtml from '../../../components/security/SafeHtml';
 import { useAuth } from '../../../context/AuthContext';
 import RoleName from '../../../components/RoleName/RoleName';
 import CommentsPanel from '../../../components/notices/NoticeCenter/CommentsPanel';
+import { buildSeoExcerpt } from '../../../seo/text';
 import { buildAuthRedirectState } from '../../../utils/authRedirect';
 
 /**
@@ -140,6 +142,8 @@ export default function DetailView() {
   }
 
   const metaTitle = category === 'school' ? '학교 공지' : '학생회 공지';
+  const seoDescription =
+    buildSeoExcerpt(notice.summary || notice.body || '') || `${metaTitle} 상세 페이지입니다.`;
   const isAdmin = user?.role === 'admin';
   const isCouncilOwner =
     user?.role === 'student_council' &&
@@ -149,8 +153,21 @@ export default function DetailView() {
   const canEdit = isAdmin || isCouncilOwner;
 
   return (
-    <div className={styles.detail}>
-      <div className={styles.detailBody}>
+    <>
+      <SEO
+        title={notice.title}
+        description={seoDescription}
+        path={`/notices/${category}/${id}`}
+        type="article"
+        breadcrumbs={[
+          { name: '홈', url: '/' },
+          { name: '공지사항', url: '/notices/school' },
+          { name: metaTitle, url: `/notices/${category}` },
+          { name: notice.title, url: `/notices/${category}/${id}` },
+        ]}
+      />
+      <div className={styles.detail}>
+        <div className={styles.detailBody}>
         <div className={styles.titleRow}>
           {badges.map((b) => (
             <span key={b.label} className={`${styles.badge} ${styles[`badge-${b.tone}`]}`}>
@@ -203,7 +220,7 @@ export default function DetailView() {
         <CommentsPanel noticeId={id} currentUser={user} isAuthenticated={isAuthenticated} />
       </div>
 
-      <aside className={styles.sidePanel}>
+        <aside className={styles.sidePanel}>
         <div className={styles.sidebarCard}>
           <h4 className={styles.sidebarTitle}>정보</h4>
           <div className={styles.pillRow}>
@@ -255,9 +272,9 @@ export default function DetailView() {
           </div>
           {error ? <p className={styles.errorText}>{error}</p> : null}
         </div>
-      </aside>
-    </div>
+        </aside>
+      </div>
+    </>
   );
 }
-
 

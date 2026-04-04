@@ -6,11 +6,15 @@ import { fileURLToPath } from 'node:url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
-const outputPath = path.join(rootDir, 'public', 'firebase-messaging-sw.js');
+const filesToRemove = [
+  path.join(rootDir, 'public', 'firebase-messaging-sw.js'),
+  path.join(rootDir, 'public', 'robots.txt'),
+  path.join(rootDir, 'public', 'sitemap.xml'),
+];
 
 
 async function main() {
-  await rm(outputPath, { force: true });
+  await Promise.all(filesToRemove.map((targetPath) => rm(targetPath, { force: true })));
 }
 
 

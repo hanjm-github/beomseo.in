@@ -17,6 +17,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Filter, Loader2, Plus, Sparkles } from 'lucide-react';
+import SEO from '../../../components/SEO';
 import SurveyCard from '../../../components/Community/SurveyExchange/SurveyCard';
 import SurveyCreditBadge from '../../../components/Community/SurveyExchange/SurveyCreditBadge';
 import styles from '../../../components/Community/SurveyExchange/survey.module.css';
@@ -142,6 +143,7 @@ export default function SurveyExchangeListView() {
 
   return (
     <div className="page-shell">
+      <SEO path="/community/survey" />
       <div className={styles.pageHeader}>
         <div>
           <p className="eyebrow">소통하는 범서고</p>
@@ -266,5 +268,4 @@ export default function SurveyExchangeListView() {
     </div>
   );
 }
-
 

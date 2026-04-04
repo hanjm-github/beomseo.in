@@ -18,9 +18,11 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { ArrowLeft, BookOpen, CheckCircle2, Clock3, Share2, ThumbsUp } from 'lucide-react';
+import SEO from '../../../components/SEO';
 import { petitionApi, THRESHOLD_DEFAULT } from '../../../api/petition';
 import { useAuth } from '../../../context/AuthContext';
 import RoleName from '../../../components/RoleName/RoleName';
+import { joinSeoText } from '../../../seo/text';
 import styles from '../../../components/Community/Petition/petition.module.css';
 import '../../page-shell.css';
 
@@ -127,6 +129,7 @@ export default function PetitionDetailView() {
   const threshold = item?.threshold || THRESHOLD_DEFAULT;
   const pct = item ? Math.min(100, Math.round(((item.votes || 0) / threshold) * 100)) : 0;
   const derivedStatus = deriveStatus(item, threshold);
+  const detailPath = `/community/petition/${id}`;
 
   const handleApprove = async () => {
     if (!item) return;
@@ -180,6 +183,21 @@ export default function PetitionDetailView() {
 
   return (
     <div className="page-shell">
+      <SEO
+        title={item.title}
+        description={
+          joinSeoText([item.summary, item.body], 160) || '학생 청원 상세 페이지입니다.'
+        }
+        path={detailPath}
+        type="article"
+        noindex={Boolean(item.status && item.status !== 'approved')}
+        breadcrumbs={[
+          { name: '홈', url: '/' },
+          { name: '커뮤니티', url: '/community/petition' },
+          { name: '학생 청원', url: '/community/petition' },
+          { name: item.title, url: detailPath },
+        ]}
+      />
       <button
         className="btn btn-secondary"
         onClick={() => navigate(location.state?.from || '/community/petition')}
@@ -325,5 +343,4 @@ export default function PetitionDetailView() {
     </div>
   );
 }
-
 

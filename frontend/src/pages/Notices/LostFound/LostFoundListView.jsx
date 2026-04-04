@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file src/pages/LostFound/LostFoundListView.jsx
  * @description Implements route-level views and page orchestration logic.
  * Responsibilities:
@@ -16,6 +16,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Plus } from 'lucide-react';
+import SEO from '../../../components/SEO';
 import { lostFoundApi } from '../../../api/lostFound';
 import { useAuth } from '../../../context/AuthContext';
 import LostFoundFilterBar from '../../../components/notices/LostFound/LostFoundFilterBar';
@@ -100,6 +101,7 @@ export default function LostFoundListView() {
 
   return (
     <div className="page-shell">
+      <SEO path="/notices/lost-found" />
       <div className={styles.pageHeader}>
         <div>
           <p className="eyebrow">소통하는 범서고</p>
@@ -152,5 +154,4 @@ export default function LostFoundListView() {
     </div>
   );
 }
-
 

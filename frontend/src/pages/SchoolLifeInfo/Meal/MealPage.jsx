@@ -11,6 +11,8 @@ import {
 } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 
+import SEO from '../../../components/SEO';
+
 import { mealNotificationsApi } from '../../../api/mealNotifications';
 import { mealsApi } from '../../../api/meals';
 import { usePwaInstall } from '../../../context/PwaInstallContext';
@@ -767,6 +769,7 @@ export default function MealPage() {
 
   return (
     <div className="page-shell">
+      <SEO path="/school-info/meal" />
       <div className="page-header">
         <div>
           <p className="eyebrow">학교 생활 정보</p>

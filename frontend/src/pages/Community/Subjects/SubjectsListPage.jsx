@@ -16,6 +16,7 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Info } from 'lucide-react';
+import SEO from '../../../components/SEO';
 import { useAuth } from '../../../context/AuthContext';
 import { subjectChangesApi } from '../../../api/subjectChanges';
 import GradeTabs from '../../../components/Community/Subjects/GradeTabs';
@@ -120,6 +121,7 @@ export default function SubjectsListPage() {
 
   return (
     <div className="page-shell">
+      <SEO path="/community/subjects" />
       <div className="page-header">
         <div>
           <p className="eyebrow">소통하는 범서고</p>
@@ -194,5 +196,4 @@ export default function SubjectsListPage() {
     </div>
   );
 }
-
 

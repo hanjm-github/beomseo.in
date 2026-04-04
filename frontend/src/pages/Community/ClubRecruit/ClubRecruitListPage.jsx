@@ -14,6 +14,7 @@
  * - Owns route-level user flows and composes feature components.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import SEO from '../../../components/SEO';
 import { useAuth } from '../../../context/AuthContext';
 import { clubRecruitApi } from '../../../api/clubRecruit';
 import GradeTabs from '../../../components/Community/ClubRecruit/GradeTabs';
@@ -118,6 +119,7 @@ export default function ClubRecruitListPage() {
 
   return (
     <div className="page-shell">
+      <SEO path="/community/club-recruit" />
       <div className="page-header">
         <div>
           <p className="eyebrow">소통하는 범서고</p>
@@ -175,5 +177,4 @@ export default function ClubRecruitListPage() {
     </div>
   );
 }
-
 

@@ -1,5 +1,20 @@
-﻿import { defineConfig } from 'vite';
+import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { getPrerenderRoutes } from './src/seo/policy.js';
+
+// Pre-rendering: generates static HTML for SEO-critical pages at build time.
+// Uses vite-prerender-plugin which calls the prerender() export in main.jsx.
+let prerenderPlugin = null;
+try {
+  const { vitePrerenderPlugin } = await import('vite-prerender-plugin');
+  prerenderPlugin = vitePrerenderPlugin({
+    // CSS selector for the element where the React app is mounted.
+    renderTarget: '#root',
+    additionalPrerenderRoutes: getPrerenderRoutes().filter((route) => route !== '/'),
+  });
+} catch {
+  // Gracefully skip pre-rendering if the package is not yet installed.
+}
 
 const REACT_PACKAGES = new Set([
   'react',
@@ -47,7 +62,7 @@ const getPackageName = (id) => {
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), prerenderPlugin].filter(Boolean),
   define: {
     global: {},
   },

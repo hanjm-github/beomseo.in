@@ -16,9 +16,11 @@
 import { Suspense, lazy, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Calendar, Loader2, PieChart, Send, CheckCircle2, XCircle } from 'lucide-react';
+import SEO from '../../../components/SEO';
 import styles from '../../../components/Community/SurveyExchange/survey.module.css';
 import { surveyApi } from '../../../api/survey';
 import { useAuth } from '../../../context/AuthContext';
+import { buildSeoExcerpt } from '../../../seo/text';
 import '../../page-shell.css';
 
 const loadSurveyResponseModal = () => import('../../../components/Community/SurveyExchange/SurveyResponseModal');
@@ -129,9 +131,26 @@ export default function SurveyExchangeDetailView() {
   }
 
   const remaining = Math.max(0, (survey.responseQuota || 0) - (survey.responsesReceived || 0));
+  const detailPath = `/community/survey/${id}`;
 
   return (
     <div className="page-shell">
+      <SEO
+        title={survey.title}
+        description={
+          buildSeoExcerpt(survey.summary || survey.description || survey.title) ||
+          '설문조사 상세 페이지입니다.'
+        }
+        path={detailPath}
+        type="article"
+        noindex={Boolean(survey.approvalStatus && survey.approvalStatus !== 'approved')}
+        breadcrumbs={[
+          { name: '홈', url: '/' },
+          { name: '커뮤니티', url: '/community/survey' },
+          { name: '설문조사 품앗이', url: '/community/survey' },
+          { name: survey.title, url: detailPath },
+        ]}
+      />
       <div className={styles.pageHeader}>
         <div>
           <p className="eyebrow">설문 상세</p>
@@ -221,5 +240,4 @@ export default function SurveyExchangeDetailView() {
     </div>
   );
 }
-
 

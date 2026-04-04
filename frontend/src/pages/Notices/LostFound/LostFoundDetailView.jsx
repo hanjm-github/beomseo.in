@@ -16,10 +16,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { CalendarDays, Eye, MapPin, PackageCheck } from 'lucide-react';
+import SEO from '../../../components/SEO';
 import { lostFoundApi } from '../../../api/lostFound';
 import { useAuth } from '../../../context/AuthContext';
 import RoleName from '../../../components/RoleName/RoleName';
 import LostFoundCommentsPanel from '../../../components/notices/LostFound/LostFoundCommentsPanel';
+import { joinSeoText } from '../../../seo/text';
 import styles from '../../../components/notices/LostFound/lostfound.module.css';
 import '../../page-shell.css';
 
@@ -50,6 +52,7 @@ export default function LostFoundDetailView() {
 
   const coverImage = useMemo(() => item?.images?.[activeImageIndex] || item?.images?.[0], [item, activeImageIndex]);
   const statusClass = item?.status === 'found' ? styles.statusFound : styles.statusSearching;
+  const detailPath = `/notices/lost-found/${id}`;
 
   useEffect(() => {
     let cancelled = false;
@@ -112,6 +115,27 @@ export default function LostFoundDetailView() {
 
   return (
     <div className="page-shell">
+      <SEO
+        title={item.title}
+        description={
+          joinSeoText(
+            [
+              lostFoundApi.statusLabel[item.status],
+              item.foundLocation ? `습득장소 ${item.foundLocation}` : '',
+              item.description,
+            ],
+            160
+          ) || '분실물 상세 페이지입니다.'
+        }
+        path={detailPath}
+        type="article"
+        breadcrumbs={[
+          { name: '홈', url: '/' },
+          { name: '공지사항', url: '/notices/school' },
+          { name: '분실물 센터', url: '/notices/lost-found' },
+          { name: item.title, url: detailPath },
+        ]}
+      />
       <div className={styles.detailWrap}>
         <div className={styles.detailMain}>
           <div className={styles.cardBadgeRow} style={{ position: 'static' }}>
@@ -214,5 +238,4 @@ export default function LostFoundDetailView() {
     </div>
   );
 }
-
 

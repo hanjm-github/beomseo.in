@@ -16,6 +16,7 @@
  */
 import { useMemo } from 'react';
 import { Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
+import SEO from '../../../components/SEO';
 import { Plus } from 'lucide-react';
 import ListView from './ListView';
 import DetailView from './DetailView';
@@ -60,8 +61,11 @@ export default function NoticeCenterPage() {
 
   const activePath = tabs.find((tab) => tab.key === active)?.path || null;
 
+  const seoPath = active === 'council' ? '/notices/council' : '/notices/school';
+
   return (
     <div className="page-shell">
+      <SEO path={seoPath} />
       <div className="page-header">
         <div>
           <p className="eyebrow">공지 센터</p>

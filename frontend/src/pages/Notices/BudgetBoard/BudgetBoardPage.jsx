@@ -17,6 +17,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Plus, CalendarRange } from 'lucide-react';
+import SEO from '../../../components/SEO';
 import NotFoundPage from '../../NotFoundPage';
 import { NumericParamBoundary } from '../../RouteBoundaries';
 import { useAuth } from '../../../context/AuthContext';
@@ -203,6 +204,16 @@ export default function BudgetBoardPage() {
 
   return (
     <div className="page-shell">
+      <SEO
+        title="예산 공개 게시판"
+        description="범서고 학생회 예산 집행과 지출 내역을 월별로 투명하게 확인하세요."
+        path={activeListPath}
+        breadcrumbs={[
+          { name: '홈', url: '/' },
+          { name: '공지사항', url: '/notices/school' },
+          { name: '예산 공개', url: activeListPath },
+        ]}
+      />
       <div className="page-header">
         <div>
           <p className="eyebrow">예산 공개</p>

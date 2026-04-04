@@ -38,16 +38,23 @@ export default function BudgetListView() {
   const location = useLocation();
   const { user } = useAuth();
   const canCreate = ['admin', 'student_council'].includes(user?.role);
+  const budgetScope = `${budgetYear}-${budgetMonth}`;
 
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState('recent');
-  const [page, setPage] = useState(1);
+  const [pageState, setPageState] = useState({ scope: budgetScope, value: 1 });
   const [data, setData] = useState({ items: [], total: 0 });
   const [loading, setLoading] = useState(true);
+  const page = pageState.scope === budgetScope ? pageState.value : 1;
 
-  useEffect(() => {
-    setPage(1);
-  }, [budgetYear, budgetMonth]);
+  const setPage = (nextPage) => {
+    setPageState((current) => {
+      const currentValue = current.scope === budgetScope ? current.value : 1;
+      const resolvedValue =
+        typeof nextPage === 'function' ? nextPage(currentValue) : nextPage;
+      return { scope: budgetScope, value: resolvedValue };
+    });
+  };
 
   useEffect(() => {
     let cancelled = false;

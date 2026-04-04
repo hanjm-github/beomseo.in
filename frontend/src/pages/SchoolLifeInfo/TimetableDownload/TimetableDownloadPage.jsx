@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { GraduationCap, ImageDown, Layers3 } from 'lucide-react';
+import SEO from '../../../components/SEO';
 import TimetableControls from '../../../components/SchoolLifeInfo/TimetableDownload/TimetableControls';
 import TimetablePreview from '../../../components/SchoolLifeInfo/TimetableDownload/TimetablePreview';
 import { exportTimetablePng } from '../../../components/SchoolLifeInfo/TimetableDownload/exportTimetablePng';
@@ -141,6 +142,7 @@ export default function TimetableDownloadPage() {
 
   return (
     <div className="page-shell">
+      <SEO path="/school-info/timetable" />
       <div className="page-header">
         <div>
           <p className="eyebrow">생활 정보</p>

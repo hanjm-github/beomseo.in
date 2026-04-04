@@ -16,10 +16,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { CheckCircle2, Loader2, Lock, Vote as VoteIcon } from 'lucide-react';
+import SEO from '../../../components/SEO';
 import { useAuth } from '../../../context/AuthContext';
 import { voteApi } from '../../../api/vote';
 import VoteResultsDonut from '../../../components/Community/Vote/VoteResultsDonut';
 import RoleName from '../../../components/RoleName/RoleName';
+import { buildSeoExcerpt } from '../../../seo/text';
 import styles from '../../../components/Community/Vote/vote.module.css';
 import '../../page-shell.css';
 
@@ -123,6 +125,19 @@ export default function VoteDetailView() {
 
   return (
     <div className="page-shell">
+      <SEO
+        title={post.title}
+        description={buildSeoExcerpt(post.description || post.title) || '실시간 투표 상세 페이지입니다.'}
+        path={`/community/vote/${id}`}
+        type="article"
+        noindex={Boolean(post.approvalStatus && post.approvalStatus !== 'approved')}
+        breadcrumbs={[
+          { name: '홈', url: '/' },
+          { name: '커뮤니티', url: '/community/vote' },
+          { name: '실시간 투표', url: '/community/vote' },
+          { name: post.title, url: `/community/vote/${id}` },
+        ]}
+      />
       <div className={styles.detailShell}>
         <div className={styles.detailHeader}>
           <div className="u-flex-wrap-gap-2">
@@ -212,6 +227,5 @@ export default function VoteDetailView() {
     </div>
   );
 }
-
 
 

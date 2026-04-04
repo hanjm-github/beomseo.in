@@ -18,6 +18,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams, Link, useLocation } from 'react-router-dom';
 import { Eye, Pencil, ArrowLeft, Trash2, ThumbsUp, ThumbsDown } from 'lucide-react';
+import SEO from '../../../components/SEO';
 import styles from '../../../components/notices/NoticeCenter/notices.module.css';
 import { noticesApi } from '../../../api/notices';
 import Attachments from '../../../components/notices/NoticeCenter/Attachments';
@@ -25,6 +26,7 @@ import SafeHtml from '../../../components/security/SafeHtml';
 import { useAuth } from '../../../context/AuthContext';
 import RoleName from '../../../components/RoleName/RoleName';
 import CommentsPanel from '../../../components/notices/NoticeCenter/CommentsPanel';
+import { buildSeoExcerpt } from '../../../seo/text';
 import { buildAuthRedirectState } from '../../../utils/authRedirect';
 import { buildBudgetListPath, formatBudgetPeriodLabel } from './budgetUtils';
 
@@ -150,10 +152,26 @@ export default function BudgetDetailView() {
     notice?.author?.id != null &&
     Number(user.id) === Number(notice.author.id);
   const canEdit = isAdmin || isCouncilOwner;
+  const detailPath = `${listPath}/${id}`;
+  const seoDescription =
+    buildSeoExcerpt(notice.summary || notice.body || '') || '예산 공개 상세 페이지입니다.';
 
   return (
-    <div className={styles.detail}>
-      <div className={styles.detailBody}>
+    <>
+      <SEO
+        title={notice.title}
+        description={seoDescription}
+        path={detailPath}
+        type="article"
+        breadcrumbs={[
+          { name: '홈', url: '/' },
+          { name: '공지사항', url: '/notices/school' },
+          { name: '예산 공개', url: listPath },
+          { name: notice.title, url: detailPath },
+        ]}
+      />
+      <div className={styles.detail}>
+        <div className={styles.detailBody}>
         <h1 className={styles.detailTitle}>{notice.title}</h1>
         <div className={styles.detailMeta}>
           <RoleName
@@ -206,7 +224,7 @@ export default function BudgetDetailView() {
         <CommentsPanel noticeId={id} currentUser={user} isAuthenticated={isAuthenticated} />
       </div>
 
-      <aside className={styles.sidePanel}>
+        <aside className={styles.sidePanel}>
         <div className={styles.sidebarCard}>
           <h4 className={styles.sidebarTitle}>정보</h4>
           <div className={styles.pillRow}>
@@ -251,7 +269,8 @@ export default function BudgetDetailView() {
           </div>
           {error ? <p className={styles.errorText}>{error}</p> : null}
         </div>
-      </aside>
-    </div>
+        </aside>
+      </div>
+    </>
   );
 }

@@ -14,13 +14,13 @@
  * Role in app flow:
  * - App boundary connecting layout, runtime providers, and route-level pages.
  */
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, StaticRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext';
 import { NetworkStatusProvider } from './context/NetworkStatusContext';
 import { PwaInstallProvider } from './context/PwaInstallContext';
 import { AuthProvider } from './context/AuthContext';
 import { Suspense, lazy, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import AppRouteSeo from './seo/AppRouteSeo';
 
 import AppLayout from './layout/AppLayout';
 const MainPage = lazy(() => import('./pages/MainPage'));
@@ -46,19 +46,26 @@ function ScrollToTop() {
   return null;
 }
 
+
+
 function RouteFallback() {
   return <div className="route-fallback">페이지를 불러오는 중...</div>;
 }
 
-function App() {
+function App({ url }) {
+  const isServer = typeof window === 'undefined';
+  const RouterComponent = isServer ? StaticRouter : BrowserRouter;
+  const routerProps = isServer ? { location: url } : {};
+
   return (
     // Provider order is intentional: UI state first, then connectivity/PWA helpers, then auth/session state.
     <ThemeProvider>
       <NetworkStatusProvider>
         <PwaInstallProvider>
           <AuthProvider>
-            <Router>
+            <RouterComponent {...routerProps}>
               <ScrollToTop />
+              <AppRouteSeo />
               <AppLayout>
                 <Suspense fallback={<RouteFallback />}>
                   <Routes>
@@ -85,7 +92,7 @@ function App() {
                   </Routes>
                 </Suspense>
               </AppLayout>
-            </Router>
+            </RouterComponent>
           </AuthProvider>
         </PwaInstallProvider>
       </NetworkStatusProvider>
