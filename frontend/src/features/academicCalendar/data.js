@@ -183,16 +183,6 @@ export const ACADEMIC_EVENTS = [
     sourcePage: 1,
   },
   {
-    id: 'discretionary-holiday-0424',
-    title: '재량휴업일',
-    startDate: '2026-04-24',
-    endDate: '2026-04-24',
-    semester: 'spring',
-    category: 'holiday',
-    audience: ['all'],
-    sourcePage: 1,
-  },
-  {
     id: 'midterm-spring-0427',
     title: '중간고사',
     startDate: '2026-04-27',
