@@ -2,7 +2,7 @@
 # beomseo.in Frontend
 
 범서고 커뮤니티 서비스 `beomseo.in`의 React/Vite 프론트엔드입니다.  
-공지(학교/학생회/예산 공개), 커뮤니티(자유/인성 가치 PICK!/동아리/청원/설문/투표/분실물/곰솔마켓/수학여행), 학교 생활 정보(시간표/학사 캘린더/급식 조회/평점/PWA 알림/스포츠리그 문자중계/팀별 라인업/개인별 순위), 인증, 분석 트래킹을 단일 SPA로 제공합니다.
+공지(학교/학생회/예산 공개), 커뮤니티(자유/인성 가치 PICK!/동아리/청원/설문/투표/분실물/곰솔마켓/수학여행), 학교 생활 정보(시간표/평가계획서/학사 캘린더/급식 조회/평점/PWA 알림/스포츠리그 문자중계/팀별 라인업/개인별 순위), 인증, 분석 트래킹을 단일 SPA로 제공합니다.
 
 ## 프로젝트 개요
 
@@ -163,6 +163,7 @@ graph TD
     C --> CL["lost-found/*"]
     C --> CG["gomsol-market/*"]
     SI --> SIT["/school-info/timetable"]
+    SI --> SIE["/school-info/evaluation-plans"]
     SI --> SIM["/school-info/meal"]
     SI --> SIC["/school-info/calendar"]
     SI --> SIL["/school-info/sports-league/:categoryId"]
@@ -181,8 +182,14 @@ graph TD
 - `Header`의 커뮤니티 메뉴는 `인성 가치 PICK!`를 항상 노출합니다.
 - `Header`의 커뮤니티 메뉴는 `CLUB_RECRUIT_BOARD_ENABLED` 환경변수에 따라 동아리 모집 링크를 조건부로 노출합니다.
 - `Header`의 커뮤니티 메뉴는 `FIELD_TRIP_BOARD_ENABLED` 환경변수에 따라 수학여행 링크를 조건부로 노출합니다.
-- 학교 생활 정보 메뉴의 스포츠리그 링크는 기본 카테고리 ID로 바로 연결됩니다.
+- 학교 생활 정보 메뉴는 시간표 다운로드, 평가계획서 다운로드, 급식, 학사 캘린더, 스포츠리그를 노출하며 스포츠리그 링크는 기본 카테고리 ID로 바로 연결됩니다.
 - `/privacy`, `/terms` 페이지는 정적 법적 문서이며, 페이지 내부 목차(anchor)와 `맨 위로` 스크롤 헬퍼를 직접 렌더링합니다.
+
+### 평가계획서 정적 자료와 라이선스
+
+- `/school-info/evaluation-plans`는 백엔드 API 없이 `public/evaluation-plans/`의 HWP 원본 파일을 직접 다운로드합니다.
+- 평가계획서 HWP 3개와 `public/kogl/img_opentype03.jpg`는 GPL-3.0 코드 라이선스가 아니라 공공누리 제3유형 조건으로 제공되는 별도 자료입니다.
+- 출처와 조건은 루트의 [`../THIRD_PARTY_NOTICES.md`](../THIRD_PARTY_NOTICES.md)에 기록합니다.
 
 ## 스포츠리그 문자중계 동기화
 
@@ -253,7 +260,7 @@ map $uri $spa_route_ok {
     ~^/community/field-trip/classes/[0-9]+/posts/[0-9]+/?$ 1;
     ~^/community/field-trip/classes/[0-9]+/posts/[0-9]+/edit/?$ 1;
     ~^/school-info/?$ 1;
-    ~^/school-info/(timetable|meal|calendar)/?$ 1;
+    ~^/school-info/(timetable|evaluation-plans|meal|calendar)/?$ 1;
     ~^/school-info/sports-league/?$ 1;
     ~^/school-info/sports-league/[A-Za-z0-9._-]+/?$ 1;
 }

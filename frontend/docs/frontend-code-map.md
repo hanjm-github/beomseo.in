@@ -201,6 +201,7 @@ graph TD
 |---|---|
 | `/school-info` | `SchoolInfoHub` |
 | `/school-info/timetable` | `TimetableDownloadPage` |
+| `/school-info/evaluation-plans` | `EvaluationPlansPage` |
 | `/school-info/meal` | `MealPage` |
 | `/school-info/calendar` | `AcademicCalendarPage` |
 | `/school-info/sports-league` | `Navigate` → `/school-info/sports-league/2026-spring-grade3-boys-soccer` |
@@ -223,6 +224,7 @@ graph TD
 | 분실물 | `src/pages/Notices/LostFound/*` | `src/components/lostfound/*` | `src/api/lostFound.js` |
 | 곰솔마켓 | `src/pages/Community/GomsolMarket/*` | `src/components/gomsolmarket/*` | `src/api/gomsolMarket.js` |
 | 학교 생활 정보(시간표) | `src/pages/SchoolLifeInfo/TimetableDownload/*` | `src/components/timetable/*` | 없음 (`src/components/timetable/timetableTemplates.json` 정적 템플릿 사용) |
+| 학교 생활 정보(평가계획서) | `src/pages/SchoolLifeInfo/EvaluationPlans/*` | 없음 | 없음 (`public/evaluation-plans/*` 정적 HWP 사용) |
 | 학교 생활 정보(오늘의 급식) | `src/pages/SchoolLifeInfo/Meal/MealPage.jsx` | `src/components/MealCard/*`, `src/features/meals/*` | `src/api/meals.js`, `src/api/mealNotifications.js` |
 | 학교 생활 정보(학사 캘린더) | `src/pages/SchoolLifeInfo/AcademicCalendar/AcademicCalendarPage.jsx` | `src/components/AcademicUpcomingCard/*`, `src/features/academicCalendar/*` | 없음 (`src/features/academicCalendar/data.js` 정적 데이터 사용) |
 | 학교 생활 정보(스포츠리그 문자중계/라인업/개인 순위) | `src/pages/SchoolLifeInfo/SportsLeagueCategory/SportsLeagueCategoryPage.jsx` | `src/features/sportsLeague/*` (`useSportsLeagueLive`, `usePlayersStore`, `TeamLineupPanel`, `PlayerRankingPanel`) | `src/api/sportsLeague.js` |
@@ -357,6 +359,19 @@ graph TD
 | `src/components/timetable/exportTimetablePng.js` | SVG → PNG 다운로드 |
 | `src/components/timetable/timetableUtils.js` | 템플릿 조회, 글자 크기 계산, 폰트 로딩 유틸 |
 | `src/components/timetable/timetableTemplates.json` | 반별 시간표 템플릿 데이터 |
+
+## 11.2 평가계획서 다운로드 모듈
+
+`학교 생활 정보 > 평가계획서 다운로드` 기능은 백엔드 API 없이 `frontend/public/evaluation-plans/`의 HWP 원본 파일을 직접 제공합니다.
+
+| 파일 | 역할 |
+|---|---|
+| `src/pages/SchoolLifeInfo/EvaluationPlans/EvaluationPlansPage.jsx` | 학년별 다운로드 카드와 공공누리 제3유형 고지 렌더링 |
+| `src/pages/SchoolLifeInfo/EvaluationPlans/EvaluationPlansPage.module.css` | 다운로드 카드, 공공누리 고지, 반응형 레이아웃 |
+| `public/evaluation-plans/*.hwp` | 학교알리미 원본 평가계획서 파일 |
+| `public/kogl/img_opentype03.jpg` | 공공누리 제3유형 표시 마크 |
+
+평가계획서 HWP 파일과 공공누리 마크는 GPL-3.0 코드 라이선스가 아니라 루트의 `THIRD_PARTY_NOTICES.md`에 명시한 공공누리 제3유형 조건을 따릅니다.
 
 ## 12. 유틸리티 & 설정 파일
 

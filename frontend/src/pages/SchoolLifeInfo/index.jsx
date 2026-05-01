@@ -10,6 +10,7 @@ import NotFoundPage from '../NotFoundPage';
 import { SPORTS_LEAGUE_CATEGORY_ID } from '../../features/sportsLeague/data';
 
 const AcademicCalendarPage = lazy(() => import('./AcademicCalendar/AcademicCalendarPage'));
+const EvaluationPlansPage = lazy(() => import('./EvaluationPlans/EvaluationPlansPage'));
 const MealPage = lazy(() => import('./Meal/MealPage'));
 const SchoolInfoHub = lazy(() => import('./SchoolInfoHub/SchoolInfoHub'));
 const SportsLeagueCategoryPage = lazy(() => import('./SportsLeagueCategory/SportsLeagueCategoryPage'));
@@ -26,6 +27,7 @@ export default function SchoolInfoRouter() {
     <Routes>
       <Route index element={lazyRoute(SchoolInfoHub)} />
       <Route path="timetable" element={lazyRoute(TimetableDownloadPage)} />
+      <Route path="evaluation-plans" element={lazyRoute(EvaluationPlansPage)} />
       <Route path="meal" element={lazyRoute(MealPage)} />
       <Route path="calendar" element={lazyRoute(AcademicCalendarPage)} />
       <Route
@@ -47,6 +49,7 @@ export default function SchoolInfoRouter() {
             primaryAction={{ label: '학교 생활 정보 홈', to: '/school-info' }}
             secondaryActions={[
               { label: '시간표 다운로드', to: '/school-info/timetable' },
+              { label: '평가계획서 다운로드', to: '/school-info/evaluation-plans' },
               { label: '학사 캘린더', to: '/school-info/calendar' },
               { label: '스포츠리그', to: `/school-info/sports-league/${SPORTS_LEAGUE_CATEGORY_ID}` },
             ]}

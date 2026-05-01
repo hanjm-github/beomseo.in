@@ -71,6 +71,7 @@ const navigationItems = [
     path: '/school-info',
     children: [
       { label: '시간표 다운로드', path: '/school-info/timetable' },
+      { label: '평가계획서 다운로드', path: '/school-info/evaluation-plans' },
       { label: '오늘의 급식', path: '/school-info/meal' },
       { label: '학사 캘린더', path: '/school-info/calendar' },
       {

@@ -40,6 +40,7 @@ async function preloadPrerenderModules() {
     import('./pages/SchoolLifeInfo'),
     import('./pages/SchoolLifeInfo/SchoolInfoHub/SchoolInfoHub'),
     import('./pages/SchoolLifeInfo/TimetableDownload/TimetableDownloadPage'),
+    import('./pages/SchoolLifeInfo/EvaluationPlans/EvaluationPlansPage'),
     import('./pages/SchoolLifeInfo/Meal/MealPage'),
     import('./pages/SchoolLifeInfo/AcademicCalendar/AcademicCalendarPage'),
     import('./pages/SchoolLifeInfo/SportsLeagueCategory/SportsLeagueCategoryPage'),

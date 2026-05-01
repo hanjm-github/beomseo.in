@@ -135,6 +135,20 @@ function createStaticRouteEntries(date = new Date()) {
       ],
     },
     {
+      path: '/school-info/evaluation-plans',
+      title: '평가계획서 다운로드',
+      description:
+        '범서고 2026학년도 1학기 학년별 평가계획서 HWP 원본 파일을 다운로드할 수 있습니다.',
+      indexable: true,
+      prerender: true,
+      sitemap: true,
+      breadcrumbs: [
+        { name: '홈', url: '/' },
+        { name: '학교 생활 정보', url: '/school-info' },
+        { name: '평가계획서 다운로드', url: '/school-info/evaluation-plans' },
+      ],
+    },
+    {
       path: '/school-info/meal',
       title: '오늘의 급식',
       description:

@@ -1,6 +1,7 @@
 import {
   CalendarDays,
   Download,
+  FileText,
   Hammer,
   Radio,
   Soup,
@@ -31,6 +32,14 @@ const schoolInfoCards = [
     active: true,
   },
   {
+    key: 'evaluation-plans',
+    to: '/school-info/evaluation-plans',
+    title: '평가계획서 다운로드',
+    description: '2026학년도 1학기 학년별 평가계획서 HWP 원본 파일을 바로 내려받을 수 있습니다.',
+    icon: FileText,
+    active: true,
+  },
+  {
     key: 'calendar',
     to: '/school-info/calendar',
     title: '학사 캘린더',
@@ -57,13 +66,16 @@ export default function SchoolInfoHub() {
           <p className="eyebrow">학교 생활 정보</p>
           <h1>학교 생활 허브</h1>
           <p className="lede">
-            학교 생활에 자주 필요한 기능을 한 곳에 모았습니다. 시간표 다운로드, 급식, 학사
-            캘린더, 스포츠리그를 한 번에 확인할 수 있습니다.
+            학교 생활에 자주 필요한 기능을 한 곳에 모았습니다. 시간표 다운로드, 평가계획서,
+            급식, 학사 캘린더, 스포츠리그를 한 번에 확인할 수 있습니다.
           </p>
         </div>
         <div className="header-actions">
           <Link className="btn btn-primary" to="/school-info/timetable">
             시간표 다운로드 열기
+          </Link>
+          <Link className="btn btn-secondary" to="/school-info/evaluation-plans">
+            평가계획서 받기
           </Link>
           <Link
             className="btn btn-secondary"
