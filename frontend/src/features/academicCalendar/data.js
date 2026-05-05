@@ -236,8 +236,8 @@ export const ACADEMIC_EVENTS = [
   {
     id: 'sports-day-0515',
     title: '교내체육한마당',
-    startDate: '2026-05-15',
-    endDate: '2026-05-15',
+    startDate: '2026-05-22',
+    endDate: '2026-05-22',
     semester: 'spring',
     category: 'studentLife',
     audience: ['all'],
