@@ -333,12 +333,12 @@ sequenceDiagram
 1. 소프트 삭제 표준: `deleted_at`
 2. 카운터 캐시: `views`, `comments_count`, `votes_count`, `total_votes` 등
 3. 중복 방지 유니크 제약:
-   - 반응/북마크/투표/설문 응답
+   - 반응/북마크/투표/설문 응답/BOSPI 대기 예측/BOSPI 날짜별 예측
 4. 감사 메타데이터 컬럼: 주요 쓰기 엔티티에 `ip_address(64)`, `user_agent(255)` nullable 적용
 5. 직렬화 계약:
    - 프론트 계약 안정화를 위해 camelCase 중심 응답 유지
 
-감사 메타데이터는 `users`, `notices`, `free_posts`, `value_pick_posts`, `club_recruits`, `subject_changes`, `petitions`, `surveys`, `votes`, `lost_found_*`, `gomsol_market_*` 및 관련 댓글/반응/이미지/응답 엔티티에 적용됩니다.
+감사 메타데이터는 `users`, `notices`, `free_posts`, `value_pick_posts`, `club_recruits`, `subject_changes`, `petitions`, `surveys`, `votes`, `bospi_records`, `bospi_pending_predictions`, `bospi_predictions`, `lost_found_*`, `gomsol_market_*` 및 관련 댓글/반응/이미지/응답 엔티티에 적용됩니다.
 
 ### 예산 공개 공지 확장
 
@@ -388,6 +388,11 @@ erDiagram
     VOTES ||--o{ VOTE_OPTIONS : has
     VOTES ||--o{ VOTE_RESPONSES : has
 
+    USERS ||--o{ BOSPI_RECORDS : enters
+    USERS ||--o{ BOSPI_PENDING_PREDICTIONS : predicts
+    USERS ||--o{ BOSPI_PREDICTIONS : owns
+    USERS ||--|| BOSPI_USER_SCORES : scores
+
     SPORTS_LEAGUE_CATEGORIES ||--o{ SPORTS_LEAGUE_TEAMS : has
     SPORTS_LEAGUE_CATEGORIES ||--o{ SPORTS_LEAGUE_MATCHES : has
     SPORTS_LEAGUE_CATEGORIES ||--o{ SPORTS_LEAGUE_PLAYERS : has
@@ -411,6 +416,16 @@ erDiagram
 ```
 
 > **참고:** `COUNTDOWN_EVENTS`는 사용자 소유가 아닌 독립 엔티티입니다. 공지 목록 응답에 다음 카운트다운 이벤트가 부가 데이터로 포함됩니다.
+
+### 9.1A BOSPI 지수/예측 도메인
+
+BOSPI는 고정 운영일 설정을 두지 않고 공식 기록이 시간순으로 누적되는 구조입니다.
+
+- `BospiRecord`는 한 날짜의 전체 학생 수, 교복 착용 학생 수, 서버 계산 비율(소수 4자리), 입력자 역할을 저장합니다.
+- `BospiPendingPrediction`은 사용자의 다음 공식 기록 등락 예측을 날짜 없이 1건만 유지합니다.
+- 새 공식 기록이 들어오면 대기 예측을 해당 날짜의 `BospiPrediction`으로 확정하고, 이전 공식 기록과 비교해 `increase|decrease|tie` 결과를 평가합니다.
+- 점수는 매 요청마다 합산하지 않고 `BospiUserScore` 집계 테이블에 반영합니다. 재평가 대상 날짜가 바뀌면 영향받은 사용자만 다시 계산합니다.
+- 랭킹은 `total_score desc`, `correct_count desc`, `incorrect_count asc`, 닉네임, 사용자 ID 순으로 안정화하며, 같은 총점은 같은 표시 순위를 공유합니다.
 
 ### 9.2 스포츠리그 문자중계 도메인
 
@@ -589,6 +604,7 @@ sequenceDiagram
 | `petitions` | `Petition`, `PetitionVote`, `PetitionAnswer` | `petitions` | 공통 write limit |
 | `surveys` | `Survey`, `SurveyResponse`, `SurveyCredit` | `surveys` | 공통 write limit |
 | `votes` | `Vote`, `VoteOption`, `VoteResponse` | `votes` | 공통 write limit |
+| `bospi` | `BospiRecord`, `BospiPendingPrediction`, `BospiPrediction`, `BospiUserScore` | `bospi` | 공통 write limit |
 | `sports_league` (FastAPI) | `SportsLeagueCategory`, `SportsLeagueMatch`, `SportsLeaguePlayer`, `SportsLeagueEvent`, `SportsLeagueStandingOverride` | `sports_league` | route별 limiter/SSE 정책 |
 | `field_trip` (FastAPI) | `FieldTripClass`, `FieldTripPost`, `FieldTripPostAttachment` | (별도 response cache 없음) | FastAPI route별 권한/CSRF |
 | `school_meals` (FastAPI) | `SchoolMeal`, `SchoolMealRating`, `SchoolMealNotificationSubscription` | (별도 response cache 없음) | 익명 평점 쿠키 + installationId 구독 |
@@ -608,14 +624,15 @@ sequenceDiagram
 9. `routes/petitions.py`
 10. `routes/notices.py`
 11. `routes/value_pick.py`
-12. `fastapi_app/routes/sports_league.py`
-13. `fastapi_app/services/sports_league.py`
-14. `fastapi_app/services/sports_league_players.py`
-15. `fastapi_app/services/sports_league_realtime.py`
-16. `fastapi_app/routes/field_trip.py`
-17. `fastapi_app/services/field_trip.py`
-18. `fastapi_app/routes/meals.py`
-19. `fastapi_app/services/meals.py`
+12. `routes/bospi.py`
+13. `fastapi_app/routes/sports_league.py`
+14. `fastapi_app/services/sports_league.py`
+15. `fastapi_app/services/sports_league_players.py`
+16. `fastapi_app/services/sports_league_realtime.py`
+17. `fastapi_app/routes/field_trip.py`
+18. `fastapi_app/services/field_trip.py`
+19. `fastapi_app/routes/meals.py`
+20. `fastapi_app/services/meals.py`
 
 ## 14. 변경 시 아키텍처 체크리스트
 

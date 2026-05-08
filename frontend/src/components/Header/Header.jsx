@@ -43,6 +43,7 @@ const communityNavigationItems = [
   { label: '학생 청원', path: '/community/petition' },
   { label: '설문 품앗이', path: '/community/survey' },
   { label: '실시간 투표', path: '/community/vote' },
+  { label: 'BOSPI', path: '/community/bospi' },
   FIELD_TRIP_BOARD_ENABLED ? { label: '수학여행', path: '/community/field-trip' } : null,
   { label: '곰솔마켓', path: '/community/gomsol-market' },
 ].filter(Boolean);

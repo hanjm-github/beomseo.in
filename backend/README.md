@@ -133,14 +133,14 @@ sequenceDiagram
     A->>E: init_limiter()
     A->>E: CORS / JWTManager / 에러 핸들러
     A->>B: 블루프린트별 write limit 적용
-    A->>B: 11개 블루프린트 등록
+    A->>B: 12개 블루프린트 등록
     A->>A: /api/health 등록
     A-->>R: Flask app 반환
 ```
 
 ## Flask 블루프린트 + FastAPI 라우터 인덱스
 
-Flask 메인 서버에 등록된 11개 블루프린트와 FastAPI 추가 라우터의 URL 접두사:
+Flask 메인 서버에 등록된 12개 블루프린트와 FastAPI 추가 라우터의 URL 접두사:
 
 | Blueprint | URL Prefix | 주요 기능 |
 |---|---|---|
@@ -153,6 +153,7 @@ Flask 메인 서버에 등록된 11개 블루프린트와 FastAPI 추가 라우�
 | `petitions` | `/api/community/petitions` | 학생 청원, 투표, 답변 |
 | `surveys` | `/api/surveys` | 설문 교환, 크레딧 시스템 |
 | `votes` | `/api/community/votes` | 실시간 투표 |
+| `bospi` | `/api/community/bospi` | 교복 착용 비율 기록, 다음 지수 예측, 점수/랭킹 |
 | `lost_found` | `/api/community/lost-found` | 분실물 게시판 |
 | `gomsol_market` | `/api/community/gomsol-market` | 곰솔 중고마켓 |
 | `field_trip` (FastAPI router) | `/api/community/field-trip` | 수학여행 반 게시판, 업로드, 점수판 |
@@ -192,6 +193,7 @@ backend/
 │  ├─ petitions.py          #   학생 청원
 │  ├─ surveys.py            #   설문 교환
 │  ├─ votes.py              #   실시간 투표
+│  ├─ bospi.py              #   BOSPI 기록/예측/랭킹
 │  ├─ lost_found.py         #   분실물
 │  └─ gomsol_market.py      #   곰솔 마켓
 ├─ fastapi_app/            # FastAPI 스포츠리그/수학여행/급식 서버
@@ -225,6 +227,7 @@ backend/
 │  ├─ subject_change.py    #   SubjectChange, Comment, Like
 │  ├─ survey.py            #   Survey, SurveyResponse, SurveyCredit
 │  ├─ vote.py              #   Vote, VoteOption, VoteResponse
+│  ├─ bospi.py             #   BospiRecord, BospiPendingPrediction, BospiUserScore, BospiPrediction
 │  ├─ lost_found.py        #   LostFoundPost, Image, Comment
 │  ├─ gomsol_market.py     #   GomsolMarketPost, Image
 │  ├─ sports_league.py     #   SportsLeagueCategory/Team/Match/Player/Event/StandingOverride

@@ -97,6 +97,7 @@
 ### 🗳️ 참여·활동
 - **설문 교환** — 크레딧 기반 설문 시스템
 - **실시간 투표** — 즉석 투표 생성 & 참여
+- **BOSPI** — 교복 착용 비율 그래프, 다음 지수 등락 예측, 랭킹 보드
 - **동아리 모집** — 학년별 모집 공고 + 승인
 - **수학여행 미션 보드** — 반별 비밀번호 확인, 익명/로그인 글 작성, 점수판 운영
 
@@ -262,7 +263,7 @@ beomseo.in/
 │   ├── requirements.txt
 │   ├── requirements_fastapi.txt  # FastAPI 전용 의존성
 │   ├── .env.example
-│   ├── routes/                # 11개 블루프린트 (기능별 API)
+│   ├── routes/                # 12개 블루프린트 (기능별 API)
 │   │   ├── auth.py            #   인증/회원
 │   │   ├── notices.py         #   공지 + 예산 공개 설정/CRUD
 │   │   ├── free.py            #   자유게시판
@@ -272,6 +273,7 @@ beomseo.in/
 │   │   ├── petitions.py       #   학생 청원
 │   │   ├── surveys.py         #   설문 교환
 │   │   ├── votes.py           #   실시간 투표
+│   │   ├── bospi.py           #   BOSPI 기록/예측/랭킹
 │   │   ├── lost_found.py      #   분실물
 │   │   └── gomsol_market.py   #   곰솔 마켓
 │   ├── fastapi_app/           # FastAPI 실시간/급식 전용 서버

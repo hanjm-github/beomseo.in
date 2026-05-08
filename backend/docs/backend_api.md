@@ -139,7 +139,7 @@ JWT 공통 에러 코드:
 
 - 사용자/인증: `users`, `auth_tokens`
 - 공지/자유게시판/인성 가치 PICK!/댓글/반응/북마크
-- 청원/설문/투표/분실물/곰솔마켓/동아리모집/과목변경 관련 쓰기 엔티티
+- 청원/설문/투표/BOSPI/분실물/곰솔마켓/동아리모집/과목변경 관련 쓰기 엔티티
 
 ## 2. 엔드포인트 인덱스
 
@@ -156,6 +156,7 @@ flowchart TD
     API --> Petition["/api/community/petitions/*"]
     API --> Survey["/api/surveys/*"]
     API --> Vote["/api/community/votes/*"]
+    API --> Bospi["/api/community/bospi/*"]
     API --> SportsLeague["/api/sports-league/*"]
     API --> FieldTrip["/api/community/field-trip/*"]
     API --> SchoolMeals["/api/school-info/meals*"]
@@ -172,6 +173,8 @@ flowchart TD
     ValuePick --> VP2["reactions + comments + uploads"]
     Survey --> S1["CRUD + responses"]
     Survey --> S2["credits / summary"]
+    Bospi --> B1["상태 / 예측"]
+    Bospi --> B2["공식 기록 / 랭킹"]
     FieldTrip --> FT1["class unlock / posts / uploads"]
     FieldTrip --> FT2["scoreboard / admin board settings"]
     SchoolMeals --> SM1["today / range / ratings"]
@@ -187,6 +190,7 @@ flowchart TD
 - Petitions: `/api/community/petitions/*`
 - Surveys: `/api/surveys/*`
 - Votes: `/api/community/votes/*`
+- BOSPI: `/api/community/bospi/*`
 - Sports League: `/api/sports-league/*`
 - Field Trip: `/api/community/field-trip/*`
 - 급식: `/api/school-info/meals*`
@@ -1013,6 +1017,102 @@ flowchart TD
 - 권한: 인증 필요
 - Body: `optionId` required
 - 조건: open poll + 중복 투표 불가
+
+---
+
+## 11A. BOSPI API (`/api/community/bospi`)
+
+### 11A.1 규약
+
+- BOSPI는 공식 기록(`bospi_records`)의 교복 착용자 수/전체 학생 수로 비율을 계산합니다.
+- 비율은 서버에서 `(uniformedStudentCount / baselineStudentCount) * 100`으로 계산하고 4자리 소수로 저장/응답합니다.
+- 사용자의 다음 지수 예측은 날짜가 없는 `BospiPendingPrediction`으로 저장됩니다. 새 공식 기록이 입력되면 대기 예측을 해당 기록 날짜의 `BospiPrediction`으로 확정한 뒤 평가합니다.
+- 점수는 `BospiUserScore` 집계 테이블에 저장되며, 예측 재평가 후 영향받은 사용자만 재계산합니다.
+- `BospiSettings`, `/settings`, `/criteria` 계약은 현재 코드 기준으로 사용하지 않습니다.
+
+### 11A.2 `GET /api/community/bospi`
+
+- 권한: 선택 인증
+- 캐시: `bospi` (TTL 20)
+- 성공 `200` 주요 필드:
+
+```json
+{
+  "settings": { "rewardPoints": 10 },
+  "records": [
+    {
+      "id": 1,
+      "date": "2026-05-10",
+      "ratio": 72.4138,
+      "baselineStudentCount": 290,
+      "uniformedStudentCount": 210,
+      "createdAt": "2026-05-10T01:00:00",
+      "updatedAt": "2026-05-10T01:00:00",
+      "enteredBy": { "id": 3, "name": "학생회", "role": "student_council" }
+    }
+  ],
+  "comparisons": [{ "date": "2026-05-10", "outcome": "increase" }],
+  "predictionTargetDate": null,
+  "predictionOpen": true,
+  "myPrediction": {
+    "id": 4,
+    "targetDate": null,
+    "direction": "increase",
+    "pointsAwarded": 0,
+    "isCorrect": null,
+    "status": "pending",
+    "evaluatedAt": null
+  },
+  "myPredictions": [],
+  "myScore": 20,
+  "rankings": [
+    {
+      "rank": 1,
+      "userId": 7,
+      "nickname": "곰솔",
+      "totalScore": 20,
+      "correctCount": 2,
+      "incorrectCount": 1,
+      "nextPrediction": { "direction": "decrease", "status": "pending" },
+      "isCurrentUser": false
+    }
+  ],
+  "canManage": false,
+  "today": "2026-05-10"
+}
+```
+
+### 11A.3 `POST /api/community/bospi/predictions`
+
+- 권한: 인증 필요
+- Body:
+  - `direction`: `increase|decrease` (`up|down`도 서버에서 정규화)
+- 조건:
+  - 공식 BOSPI 기록이 1개 이상 있어야 예측 가능
+  - 동일 사용자의 대기 예측은 새 행을 만들지 않고 방향만 갱신
+- 성공:
+  - 신규 대기 예측 `201`
+  - 기존 대기 예측 갱신 `200`
+- 오류:
+  - `422`: 방향 누락/오류, 아직 공식 기록 없음
+  - `404`: 사용자 없음
+
+### 11A.4 `POST /api/community/bospi/records`
+
+- 권한: `admin | student_council`
+- Body:
+  - `date` 또는 `operationDate`: `YYYY-MM-DD`
+  - `baselineStudentCount`: 양의 정수
+  - `uniformedStudentCount`: 0 이상의 정수, `baselineStudentCount` 이하
+- 동작:
+  - 새 기록은 최신 공식 기록 날짜보다 이후 날짜만 허용합니다.
+  - 기존 날짜는 수정 가능하며, 해당 날짜와 다음 공식 기록의 예측 결과를 다시 평가합니다.
+  - 새 기록 입력 시 모든 대기 예측을 해당 날짜의 평가 대상 예측으로 이동합니다.
+  - 응답은 `GET /api/community/bospi`와 같은 상태 응답입니다.
+- 오류:
+  - `422`: 날짜/학생 수 유효성 오류 또는 최신 기록 이전 신규 날짜
+  - `404`: 사용자 없음
+  - `500`: 저장 실패
 
 ---
 

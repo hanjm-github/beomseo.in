@@ -187,6 +187,23 @@ Value Pick 계약 요약:
 
 - `writerRoles`
 
+### 2.8A `src/api/bospi.js` (`bospiApi`)
+
+| 메서드 | HTTP/Endpoint | 오류 처리 | 비고 |
+|---|---|---|---|
+| `getState()` | `GET /api/community/bospi` | 아니오 | 기록, 비교 결과, 내 대기 예측, 내 점수, 랭킹, 관리 권한을 정규화 |
+| `predict(direction)` | `POST /api/community/bospi/predictions` | 아니오 | `increase|decrease` 다음 지수 예측 생성/갱신 |
+| `saveRecord(payload)` | `POST /api/community/bospi/records` | 아니오 | 학생 수 count payload를 전송하고 서버 계산 비율을 반영 |
+| `canManage(user)` | - | - | `admin`, `student_council` 역할 확인 |
+
+정규화 계약:
+
+- `settings.rewardPoints`는 숫자로 보정하고 기본값은 `10`입니다.
+- `records[]`는 `date`, `ratio`, `baselineStudentCount`, `uniformedStudentCount`, `createdAt`, `updatedAt` 중심으로 정규화합니다.
+- `comparisons[]`는 날짜별 `outcome(increase|decrease|tie|null)`만 유지하며 이전 비교일/비율은 노출하지 않습니다.
+- `myPrediction`은 날짜 없는 대기 예측이고, `myPredictions[]`는 기록 날짜로 확정된 평가 이력입니다.
+- `rankings[]`는 `rank`, `totalScore`, `correctCount`, `incorrectCount`, `nextPrediction`, `isCurrentUser`를 포함합니다.
+
 ### 2.9 `src/api/lostFound.js` (`lostFoundApi`)
 
 | 메서드 | HTTP/Endpoint | 오류 처리 | 비고 |
@@ -392,6 +409,7 @@ Field Trip 추가 계약 요약:
 | `src/pages/Community/Petition/*` | `petitionApi` |
 | `src/pages/Community/SurveyExchange/*` | `surveyApi` |
 | `src/pages/Community/Vote/*` | `voteApi` |
+| `src/pages/Community/Bospi/BospiPage.jsx` | `bospiApi` |
 | `src/pages/Notices/LostFound/*` | `lostFoundApi` |
 | `src/pages/Community/GomsolMarket/*` | `gomsolMarketApi` |
 | `src/pages/SchoolLifeInfo/Meal/MealPage.jsx` | `mealsApi`, `mealNotificationsApi` |

@@ -368,7 +368,7 @@ flowchart TD
 
 ## 9. 커뮤니티 라우트 트리
 
-`CommunityRouter`는 자유게시판, 인성 가치 PICK!, 동아리 모집, 선택과목 변경, 청원, 설문, 투표, 수학여행, 분실물 리다이렉트, 곰솔마켓 경로를 함께 위임합니다.
+`CommunityRouter`는 자유게시판, 인성 가치 PICK!, 동아리 모집, 선택과목 변경, 청원, 설문, 투표, BOSPI, 수학여행, 분실물 리다이렉트, 곰솔마켓 경로를 함께 위임합니다.
 
 ```mermaid
 graph LR
@@ -379,6 +379,7 @@ graph LR
     CR --> PET["petition/*\n(List/Detail/Compose)"]
     CR --> SUR["survey/*\n(List/Detail/Compose/Edit/Results)"]
     CR --> VOTE["vote/*\n(List/Detail/Compose)"]
+    CR --> BOSPI["bospi\n(그래프/예측/랭킹)"]
     CR --> FT["field-trip\n(Hub + class board routes)"]
     CR --> LF["lost-found/*\n(List/Detail/Compose)"]
     CR --> GM["gomsol-market/*\n(List/Detail/Compose)"]
@@ -386,6 +387,7 @@ graph LR
 
 `survey` 보드만 `/:id/edit`과 `/:id/results` 추가 라우트가 존재합니다.  
 `value-pick` 보드는 자유게시판과 유사하게 list/detail/compose/edit 흐름을 가지지만, `competency + pledge + rich body` 전용 입력 모델을 사용합니다.  
+`bospi`는 단일 화면에서 `src/api/bospi.js` 상태 응답을 받아 현재 지수, 다음 예측, 랭킹, 날짜별 지수보드를 함께 렌더링합니다.
 `field-trip`은 허브(`/community/field-trip`), 반 게시판(`/community/field-trip/classes/:classId`), 상세(`/posts/:postId`), 수정(`/posts/:postId/edit`)으로 분리되며,
 허브에서는 `tab` 쿼리만 유지하고 게시글 상태는 개별 라우트로 표현합니다.  
 전체 경로 매핑은 [frontend-code-map.md §3.3](./frontend-code-map.md)을 참고합니다.

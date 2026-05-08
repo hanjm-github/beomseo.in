@@ -52,6 +52,13 @@ from .vote import (
     VoteOption,
     VoteResponse,
 )
+from .bospi import (
+    BospiRecord,
+    BospiPendingPrediction,
+    BospiUserScore,
+    BospiPrediction,
+    BospiPredictionDirection,
+)
 from .lost_found import (
     LostFoundPost,
     LostFoundImage,
@@ -126,6 +133,11 @@ __all__ = [
     'Vote',
     'VoteOption',
     'VoteResponse',
+    'BospiRecord',
+    'BospiPendingPrediction',
+    'BospiUserScore',
+    'BospiPrediction',
+    'BospiPredictionDirection',
     'LostFoundPost',
     'LostFoundImage',
     'LostFoundComment',

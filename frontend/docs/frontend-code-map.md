@@ -104,6 +104,7 @@ graph TD
     CR --> PET["petition/*"]
     CR --> SUR["survey/*"]
     CR --> VOT["vote/*"]
+    CR --> BOS["bospi"]
     CR --> FT["field-trip"]
     CR --> LF["lost-found/*"]
     CR --> GM["gomsol-market/*"]
@@ -140,6 +141,8 @@ graph TD
     VOT --> VOT1["VoteListView"]
     VOT --> VOT2["VoteComposeView"]
     VOT --> VOT3["VoteDetailView"]
+
+    BOS --> BOS1["BospiPage"]
 
     FT --> FT1["FieldTripPage (Hub)"]
     FT --> FT2["FieldTripClassBoardPage"]
@@ -182,6 +185,7 @@ graph TD
 | `/community/vote` | `VoteListView` |
 | `/community/vote/new` | `VoteComposeView` |
 | `/community/vote/:id` | `VoteDetailView` (`id` 숫자 경로만 허용) |
+| `/community/bospi` | `BospiPage` |
 | `/community/field-trip` | `FieldTripPage` (`FieldTripHubPage` re-export) |
 | `/community/field-trip/classes/:classId` | `FieldTripClassBoardPage` |
 | `/community/field-trip/classes/:classId/new` | `FieldTripClassBoardPage` |
@@ -220,6 +224,7 @@ graph TD
 | 청원 | `src/pages/Community/Petition/*` | `src/components/petition/*` | `src/api/petition.js` |
 | 설문 품앗이 | `src/pages/Community/SurveyExchange/*` | `src/components/survey/*` | `src/api/survey.js` |
 | 투표 | `src/pages/Community/Vote/*` | `src/components/vote/*` | `src/api/vote.js` |
+| BOSPI | `src/pages/Community/Bospi/BospiPage.jsx` | `BospiPage.module.css`의 현재 지수/예측/랭킹/지수보드 섹션 | `src/api/bospi.js` |
 | 수학여행 이벤트 | `src/pages/Community/FieldTrip/*` (`FieldTripHubPage`, `FieldTripClassBoardPage`, `FieldTripPostDetailPage`) | `src/components/fieldTrip/*`, `src/features/fieldTrip/*` | `src/api/fieldTrip.js` |
 | 분실물 | `src/pages/Notices/LostFound/*` | `src/components/lostfound/*` | `src/api/lostFound.js` |
 | 곰솔마켓 | `src/pages/Community/GomsolMarket/*` | `src/components/gomsolmarket/*` | `src/api/gomsolMarket.js` |

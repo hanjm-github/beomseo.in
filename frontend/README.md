@@ -159,6 +159,7 @@ graph TD
     C --> CP["petition/*"]
     C --> CSV["survey/*"]
     C --> CV["vote/*"]
+    C --> CB["bospi"]
     C --> CFT["field-trip/*"]
     C --> CL["lost-found/*"]
     C --> CG["gomsol-market/*"]
@@ -180,6 +181,7 @@ graph TD
 ### 헤더와 정적 법적 페이지
 
 - `Header`의 커뮤니티 메뉴는 `인성 가치 PICK!`를 항상 노출합니다.
+- `Header`와 커뮤니티 허브는 `BOSPI` 링크를 `/community/bospi`로 노출합니다.
 - `Header`의 커뮤니티 메뉴는 `CLUB_RECRUIT_BOARD_ENABLED` 환경변수에 따라 동아리 모집 링크를 조건부로 노출합니다.
 - `Header`의 커뮤니티 메뉴는 `FIELD_TRIP_BOARD_ENABLED` 환경변수에 따라 수학여행 링크를 조건부로 노출합니다.
 - 학교 생활 정보 메뉴는 시간표 다운로드, 평가계획서 다운로드, 급식, 학사 캘린더, 스포츠리그를 노출하며 스포츠리그 링크는 기본 카테고리 ID로 바로 연결됩니다.

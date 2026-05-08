@@ -15,7 +15,7 @@
  */
 import { createElement, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { MessageCircle, Users, Shuffle, Vote, PlugZap, ShieldCheck, Package, Store, Droplets } from 'lucide-react';
+import { MessageCircle, Users, Shuffle, Vote, PlugZap, ShieldCheck, Package, Store, Droplets, TrendingUp } from 'lucide-react';
 import { CLUB_RECRUIT_BOARD_ENABLED } from '../../../config/env';
 import '../../page-shell.css';
 
@@ -68,6 +68,13 @@ const allBoards = [
     label: '실시간 투표',
     description: '학급·학생회 투표를 실시간으로 확인할 수 있어요.',
     icon: Vote,
+  },
+  {
+    key: 'bospi',
+    path: 'bospi',
+    label: 'BOSPI',
+    description: '교복 착용 비율 그래프와 예측 점수를 확인해요.',
+    icon: TrendingUp,
   },
   {
     key: 'lost-found',

@@ -20,6 +20,7 @@ from models import free_post  # noqa: F401 ensure models are registered
 from models import value_pick  # noqa: F401 ensure models are registered
 from models import club_recruit  # noqa: F401 ensure models are registered
 from models import vote  # noqa: F401 ensure models are registered
+from models import bospi  # noqa: F401 ensure models are registered
 from models import lost_found  # noqa: F401 ensure models are registered
 from models import countdown_event  # noqa: F401 ensure models are registered
 from models import gomsol_market  # noqa: F401 ensure models are registered
@@ -232,6 +233,7 @@ def create_app(config_name=None):
     from routes.petitions import petitions_bp
     from routes.surveys import surveys_bp
     from routes.votes import votes_bp
+    from routes.bospi import bospi_bp
     from routes.lost_found import lost_found_bp
     from routes.gomsol_market import gomsol_market_bp
 
@@ -248,6 +250,7 @@ def create_app(config_name=None):
     apply_blueprint_write_limit(petitions_bp, write_limit)
     apply_blueprint_write_limit(surveys_bp, write_limit)
     apply_blueprint_write_limit(votes_bp, write_limit)
+    apply_blueprint_write_limit(bospi_bp, write_limit)
     apply_blueprint_write_limit(lost_found_bp, write_limit)
     apply_blueprint_write_limit(gomsol_market_bp, write_limit)
 
@@ -266,6 +269,7 @@ def create_app(config_name=None):
     app.register_blueprint(petitions_bp)
     app.register_blueprint(surveys_bp)
     app.register_blueprint(votes_bp)
+    app.register_blueprint(bospi_bp)
     app.register_blueprint(lost_found_bp)
     app.register_blueprint(gomsol_market_bp)
 
