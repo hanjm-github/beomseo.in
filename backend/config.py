@@ -215,6 +215,10 @@ class Config:
     MAX_PETITION_BODY = int(os.getenv('MAX_PETITION_BODY', 10_000))
 
     # Community feature flags
+    VALUE_PICK_BOARD_ENABLED = _parse_bool(
+        os.getenv('VALUE_PICK_BOARD_ENABLED', 'true'),
+        default=True,
+    )
     CLUB_RECRUIT_BOARD_ENABLED = _parse_bool(
         os.getenv('CLUB_RECRUIT_BOARD_ENABLED', 'true'),
         default=True,

@@ -36,7 +36,7 @@ import MealCard from '../../components/MealCard';
 import SEO from '../../components/SEO';
 import { noticesApi } from '../../api/notices';
 import { useAuth } from '../../context/AuthContext';
-import { APP_NAME, CLUB_RECRUIT_BOARD_ENABLED } from '../../config/env';
+import { APP_NAME, CLUB_RECRUIT_BOARD_ENABLED, VALUE_PICK_BOARD_ENABLED } from '../../config/env';
 import { getNextAcademicEvent } from '../../features/academicCalendar/utils';
 import { HOME_JSON_LD } from '../../seo/policy';
 import { buildAuthRedirectState } from '../../utils/authRedirect';
@@ -213,15 +213,17 @@ export default function MainPage() {
                   variant="accent"
                 />
               </div>
-              <div className={`${styles.fadeUp} ${styles.delay5}`}>
-                <QuickLinkCard
-                  to="/community/value-pick"
-                  icon={Droplets}
-                  title="인성 가치 PICK!"
-                  description="수적천석을 바탕으로 올해의 다짐을 기록"
-                  variant="success"
-                />
-              </div>
+              {VALUE_PICK_BOARD_ENABLED ? (
+                <div className={`${styles.fadeUp} ${styles.delay5}`}>
+                  <QuickLinkCard
+                    to="/community/value-pick"
+                    icon={Droplets}
+                    title="인성 가치 PICK!"
+                    description="수적천석을 바탕으로 올해의 다짐을 기록"
+                    variant="success"
+                  />
+                </div>
+              ) : null}
               <div className={`${styles.fadeUp} ${styles.delay5}`}>
                 <QuickLinkCard
                   to="/school-info/sports-league/2026-spring-grade3-boys-soccer"

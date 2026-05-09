@@ -27,7 +27,12 @@ import {
 } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
-import { APP_NAME, CLUB_RECRUIT_BOARD_ENABLED, FIELD_TRIP_BOARD_ENABLED } from '../../config/env';
+import {
+  APP_NAME,
+  CLUB_RECRUIT_BOARD_ENABLED,
+  FIELD_TRIP_BOARD_ENABLED,
+  VALUE_PICK_BOARD_ENABLED,
+} from '../../config/env';
 import { buildAuthRedirectState, resolveAuthRedirectTarget } from '../../utils/authRedirect';
 import { SPORTS_LEAGUE_CATEGORY_ID } from '../../features/sportsLeague/data';
 import { LOST_FOUND_NOTICE_BASE_PATH } from '../../pages/Notices/LostFound/paths';
@@ -37,7 +42,7 @@ import RoleName from '../RoleName/RoleName';
 // Feature-flagged board links are built once so both desktop and mobile menus stay in sync.
 const communityNavigationItems = [
   { label: '자유 게시판', path: '/community/free' },
-  { label: '인성 가치 PICK!', path: '/community/value-pick' },
+  VALUE_PICK_BOARD_ENABLED ? { label: '인성 가치 PICK!', path: '/community/value-pick' } : null,
   CLUB_RECRUIT_BOARD_ENABLED ? { label: '동아리 모집', path: '/community/club-recruit' } : null,
   { label: '선택과목 변경', path: '/community/subjects' },
   { label: '학생 청원', path: '/community/petition' },

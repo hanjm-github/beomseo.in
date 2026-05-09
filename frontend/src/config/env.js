@@ -55,6 +55,10 @@ export const API_BASE_URL = readBaseUrlEnv('VITE_API_URL', 'http://localhost:500
 // Sports league, field trip, and meal APIs can be moved to a dedicated FastAPI
 // origin without forcing the rest of the app off the main Flask backend.
 export const FASTAPI_BASE_URL = readBaseUrlEnv('VITE_SPORTS_LEAGUE_API_URL', API_BASE_URL);
+export const VALUE_PICK_BOARD_ENABLED = readBooleanEnv(
+  'VITE_VALUE_PICK_BOARD_ENABLED',
+  true
+);
 export const CLUB_RECRUIT_BOARD_ENABLED = readBooleanEnv(
   'VITE_CLUB_RECRUIT_BOARD_ENABLED',
   true

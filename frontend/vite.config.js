@@ -1,19 +1,32 @@
-import { defineConfig } from 'vite';
+import process from 'node:process';
+import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
-import { getPrerenderRoutes } from './src/seo/policy.js';
+import { getPrerenderRoutes, resolveSeoFeatureFlags } from './src/seo/policy.js';
 
-// Pre-rendering: generates static HTML for SEO-critical pages at build time.
-// Uses vite-prerender-plugin which calls the prerender() export in main.jsx.
-let prerenderPlugin = null;
-try {
-  const { vitePrerenderPlugin } = await import('vite-prerender-plugin');
-  prerenderPlugin = vitePrerenderPlugin({
-    // CSS selector for the element where the React app is mounted.
-    renderTarget: '#root',
-    additionalPrerenderRoutes: getPrerenderRoutes().filter((route) => route !== '/'),
+function applyLoadedEnvToProcess(env) {
+  Object.entries(env).forEach(([key, value]) => {
+    if (key.startsWith('VITE_') && process.env[key] == null) {
+      process.env[key] = value;
+    }
   });
-} catch {
-  // Gracefully skip pre-rendering if the package is not yet installed.
+}
+
+async function createPrerenderPlugin(featureFlags) {
+  // Pre-rendering generates static HTML for SEO-critical pages at build time.
+  // Uses vite-prerender-plugin which calls the prerender() export in main.jsx.
+  try {
+    const { vitePrerenderPlugin } = await import('vite-prerender-plugin');
+    return vitePrerenderPlugin({
+      // CSS selector for the element where the React app is mounted.
+      renderTarget: '#root',
+      additionalPrerenderRoutes: getPrerenderRoutes(new Date(), featureFlags).filter(
+        (route) => route !== '/'
+      ),
+    });
+  } catch {
+    // Gracefully skip pre-rendering if the package is not yet installed.
+    return null;
+  }
 }
 
 const REACT_PACKAGES = new Set([
@@ -61,27 +74,37 @@ const getPackageName = (id) => {
 };
 
 // https://vite.dev/config/
-export default defineConfig({
-  plugins: [react(), prerenderPlugin].filter(Boolean),
-  define: {
-    global: {},
-  },
-  build: {
-    rollupOptions: {
-      output: {
-        manualChunks(id) {
-          if (!id.includes('node_modules')) return;
+export default defineConfig(async ({ mode }) => {
+  const env = {
+    ...loadEnv(mode, process.cwd(), ''),
+    ...process.env,
+  };
+  applyLoadedEnvToProcess(env);
+  const seoFeatureFlags = resolveSeoFeatureFlags(env);
+  const prerenderPlugin = await createPrerenderPlugin(seoFeatureFlags);
 
-          const packageName = getPackageName(id);
-          if (!packageName) return;
+  return {
+    plugins: [react(), prerenderPlugin].filter(Boolean),
+    define: {
+      global: {},
+    },
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (!id.includes('node_modules')) return;
 
-          if (REACT_PACKAGES.has(packageName)) return 'react-vendor';
-          if (UI_PACKAGES.has(packageName)) return 'ui-vendor';
-          if (CHART_PACKAGES.has(packageName) || packageName.startsWith('d3-')) return 'charts-vendor';
+            const packageName = getPackageName(id);
+            if (!packageName) return;
 
-          return undefined;
+            if (REACT_PACKAGES.has(packageName)) return 'react-vendor';
+            if (UI_PACKAGES.has(packageName)) return 'ui-vendor';
+            if (CHART_PACKAGES.has(packageName) || packageName.startsWith('d3-')) return 'charts-vendor';
+
+            return undefined;
+          },
         },
       },
     },
-  },
+  };
 });

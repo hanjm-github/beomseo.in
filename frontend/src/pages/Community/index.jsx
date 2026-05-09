@@ -13,7 +13,11 @@
  */
 import { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { CLUB_RECRUIT_BOARD_ENABLED, FIELD_TRIP_BOARD_ENABLED } from '../../config/env';
+import {
+  CLUB_RECRUIT_BOARD_ENABLED,
+  FIELD_TRIP_BOARD_ENABLED,
+  VALUE_PICK_BOARD_ENABLED,
+} from '../../config/env';
 import NotFoundPage from '../NotFoundPage';
 import { NumericParamBoundary } from '../RouteBoundaries';
 import {
@@ -93,8 +97,15 @@ export default function CommunityRouter() {
       <Route index element={<Navigate to="/community/free" replace />} />
       <Route path="free" element={lazyRoute(FreeBoardListView)} />
       <Route path="free/new" element={lazyRoute(FreeBoardComposeView, { mode: 'create' })} />
-      <Route path="value-pick" element={lazyRoute(ValuePickListView)} />
-      <Route path="value-pick/new" element={lazyRoute(ValuePickComposeView, { mode: 'create' })} />
+      {VALUE_PICK_BOARD_ENABLED ? (
+        <>
+          <Route path="value-pick" element={lazyRoute(ValuePickListView)} />
+          <Route
+            path="value-pick/new"
+            element={lazyRoute(ValuePickComposeView, { mode: 'create' })}
+          />
+        </>
+      ) : null}
 
       {/* Feature flags hide both navigation and direct route access for boards
           that the deployment has not enabled yet. */}
@@ -156,11 +167,15 @@ export default function CommunityRouter() {
       >
         <Route path="free/:id" element={lazyRoute(FreeBoardDetailView)} />
         <Route path="free/:id/edit" element={lazyRoute(FreeBoardComposeView, { mode: 'edit' })} />
-        <Route path="value-pick/:id" element={lazyRoute(ValuePickDetailView)} />
-        <Route
-          path="value-pick/:id/edit"
-          element={lazyRoute(ValuePickComposeView, { mode: 'edit' })}
-        />
+        {VALUE_PICK_BOARD_ENABLED ? (
+          <>
+            <Route path="value-pick/:id" element={lazyRoute(ValuePickDetailView)} />
+            <Route
+              path="value-pick/:id/edit"
+              element={lazyRoute(ValuePickComposeView, { mode: 'edit' })}
+            />
+          </>
+        ) : null}
         {CLUB_RECRUIT_BOARD_ENABLED ? (
           <Route path="club-recruit/:id" element={lazyRoute(ClubRecruitDetailPage)} />
         ) : null}

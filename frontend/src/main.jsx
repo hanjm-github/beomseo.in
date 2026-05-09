@@ -16,6 +16,11 @@
 import { StrictMode } from 'react'
 import { createRoot, hydrateRoot } from 'react-dom/client'
 import App from './App.jsx'
+import {
+  CLUB_RECRUIT_BOARD_ENABLED,
+  FIELD_TRIP_BOARD_ENABLED,
+  VALUE_PICK_BOARD_ENABLED,
+} from './config/env'
 import { startFirebaseForegroundMessageListener } from './pwa/firebaseMessaging'
 
 async function preloadPrerenderModules() {
@@ -29,14 +34,14 @@ async function preloadPrerenderModules() {
     import('./pages/Notices/LostFound/LostFoundListView'),
     import('./pages/Community'),
     import('./pages/Community/FreeBoard/FreeBoardListView'),
-    import('./pages/Community/ValuePick/ValuePickListView'),
-    import('./pages/Community/ClubRecruit/ClubRecruitListPage'),
+    VALUE_PICK_BOARD_ENABLED ? import('./pages/Community/ValuePick/ValuePickListView') : null,
+    CLUB_RECRUIT_BOARD_ENABLED ? import('./pages/Community/ClubRecruit/ClubRecruitListPage') : null,
     import('./pages/Community/Subjects/SubjectsListPage'),
     import('./pages/Community/Petition/PetitionListView'),
     import('./pages/Community/SurveyExchange/SurveyExchangeListView'),
     import('./pages/Community/Vote/VoteListView'),
     import('./pages/Community/GomsolMarket/GomsolMarketListView'),
-    import('./pages/Community/FieldTrip/FieldTripPage'),
+    FIELD_TRIP_BOARD_ENABLED ? import('./pages/Community/FieldTrip/FieldTripPage') : null,
     import('./pages/SchoolLifeInfo'),
     import('./pages/SchoolLifeInfo/SchoolInfoHub/SchoolInfoHub'),
     import('./pages/SchoolLifeInfo/TimetableDownload/TimetableDownloadPage'),
@@ -47,7 +52,7 @@ async function preloadPrerenderModules() {
     import('./pages/PrivacyPolicyPage'),
     import('./pages/TermsOfServicePage'),
     import('./pages/NotFoundPage'),
-  ]);
+  ].filter(Boolean));
 }
 
 function inlinePrerenderedContent(html, parse) {

@@ -18,7 +18,7 @@
 | `src/main.jsx` | React 앱 엔트리포인트. `#root`에 `<App />` 마운트 |
 | `src/App.jsx` | 전역 Provider(`ThemeProvider`, `NetworkStatusProvider`, `PwaInstallProvider`, `AuthProvider`) + 최상위 라우팅 구성 |
 | `src/layout/AppLayout.jsx` | 공통 레이아웃(접근성 skip-link, Header, main, Footer, OfflineGate) |
-| `src/components/Header/Header.jsx` | 전역 내비게이션/테마 토글/인증 상태 UI. 동아리 모집 feature flag와 스포츠리그 직접 링크 포함 |
+| `src/components/Header/Header.jsx` | 전역 내비게이션/테마 토글/인증 상태 UI. 커뮤니티 보드 feature flag와 스포츠리그 직접 링크 포함 |
 | `src/components/Footer/Footer.jsx` | 외부 링크/법적 문서 링크/운영 정보 |
 | `src/components/pwa/OfflineGate.jsx` | 오프라인 시 전체 화면 오버레이와 재시도 흐름 제공 |
 | `src/pages/CommunityPage.jsx` | 커뮤니티 허브 페이지. 모든 보드 카드를 그리드로 나열하며, 현재 활성 보드를 하이라이트 |
@@ -93,6 +93,8 @@
 - `BudgetBoardPage`는 settings 응답의 연도 범위를 벗어난 경로를 즉시 404 화면으로 처리합니다.
 
 ### 3.3 커뮤니티 라우트 (`src/pages/Community/index.jsx`)
+
+인성 가치 PICK!, 동아리 모집, 수학여행 라우트는 각 보드 feature flag가 켜진 배포에서만 등록됩니다.
 
 ```mermaid
 graph TD
@@ -389,6 +391,7 @@ graph TD
 | `APP_NAME` | `VITE_APP_NAME` | `string` | `beomseo.in` |
 | `API_BASE_URL` | `VITE_API_URL` | `string` | `http://localhost:5000` |
 | `FASTAPI_BASE_URL` | `VITE_SPORTS_LEAGUE_API_URL` | `string` | `API_BASE_URL` fallback |
+| `VALUE_PICK_BOARD_ENABLED` | `VITE_VALUE_PICK_BOARD_ENABLED` | `boolean` | `true` |
 | `CLUB_RECRUIT_BOARD_ENABLED` | `VITE_CLUB_RECRUIT_BOARD_ENABLED` | `boolean` | `true` |
 | `FIELD_TRIP_BOARD_ENABLED` | `VITE_FIELD_TRIP_BOARD_ENABLED` | `boolean` | `true` |
 | `UPLOAD_MAX_ATTACHMENTS` | `VITE_UPLOAD_MAX_ATTACHMENTS` | `number` | `5` |

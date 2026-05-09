@@ -1,11 +1,19 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { getSitemapEntries } from '../src/seo/policy.js';
+import { loadEnv } from 'vite';
+import { getSitemapEntries, resolveSeoFeatureFlags } from '../src/seo/policy.js';
 import { SITE_URL } from '../src/seo/site.js';
 
 const scriptsDir = dirname(fileURLToPath(import.meta.url));
-const publicDir = join(scriptsDir, '..', 'public');
+const rootDir = join(scriptsDir, '..');
+const publicDir = join(rootDir, 'public');
+const mode = process.argv[2] || process.env.NODE_ENV || 'production';
+const env = {
+  ...loadEnv(mode, rootDir, ''),
+  ...process.env,
+};
+const seoFeatureFlags = resolveSeoFeatureFlags(env);
 
 function escapeXml(value) {
   return String(value)
@@ -17,7 +25,7 @@ function escapeXml(value) {
 }
 
 async function writeSeoArtifacts() {
-  const sitemapEntries = getSitemapEntries();
+  const sitemapEntries = getSitemapEntries(new Date(), seoFeatureFlags);
   const robotsTxt = ['User-agent: *', 'Allow: /', `Sitemap: ${SITE_URL}/sitemap.xml`, ''].join(
     '\n'
   );

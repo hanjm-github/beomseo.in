@@ -370,6 +370,14 @@ CSRF 쿠키/헤더 이름:
 | `RATELIMIT_REGISTER_LIMIT` | `5 per 10 minute` | 회원가입 제한 |
 | `RATELIMIT_REFRESH_LIMIT` | `20 per 10 minute` | 토큰 갱신 제한 |
 
+### 커뮤니티 보드 기능 플래그
+
+| 변수 | 기본값 | 설명 |
+|---|---|---|
+| `VALUE_PICK_BOARD_ENABLED` | `true` | `false`면 인성 가치 PICK! Flask 블루프린트 등록을 건너뛰어 API가 404 처리됨 |
+| `CLUB_RECRUIT_BOARD_ENABLED` | `true` | `false`면 동아리 모집 Flask 블루프린트 등록을 건너뛰어 API가 404 처리됨 |
+| `FIELD_TRIP_BOARD_ENABLED` | `true` | `false`면 FastAPI 수학여행 라우터 등록을 건너뛰어 API가 404 처리됨 |
+
 ### 스포츠리그 문자중계
 
 | 변수 | 기본값 | 설명 |

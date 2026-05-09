@@ -16,7 +16,10 @@
 import { createElement, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { MessageCircle, Users, Shuffle, Vote, PlugZap, ShieldCheck, Package, Store, Droplets, TrendingUp } from 'lucide-react';
-import { CLUB_RECRUIT_BOARD_ENABLED } from '../../../config/env';
+import {
+  CLUB_RECRUIT_BOARD_ENABLED,
+  VALUE_PICK_BOARD_ENABLED,
+} from '../../../config/env';
 import '../../page-shell.css';
 
 const allBoards = [
@@ -92,9 +95,12 @@ const allBoards = [
   },
 ];
 
-const boards = CLUB_RECRUIT_BOARD_ENABLED
-  ? allBoards
-  : allBoards.filter((board) => board.key !== 'club-recruit');
+const boardFeatureFlags = {
+  'value-pick': VALUE_PICK_BOARD_ENABLED,
+  'club-recruit': CLUB_RECRUIT_BOARD_ENABLED,
+};
+
+const boards = allBoards.filter((board) => boardFeatureFlags[board.key] ?? true);
 
 /**
  * CommunityPage module entry point.

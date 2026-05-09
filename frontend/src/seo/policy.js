@@ -35,6 +35,61 @@ export const HOME_JSON_LD = [
   },
 ];
 
+const TRUTHY_ENV_VALUES = new Set(['1', 'true', 'yes', 'on']);
+
+const BOARD_FEATURE_FLAGS = [
+  {
+    envKey: 'VITE_VALUE_PICK_BOARD_ENABLED',
+    flagKey: 'valuePickBoardEnabled',
+    pathPrefix: '/community/value-pick',
+  },
+  {
+    envKey: 'VITE_CLUB_RECRUIT_BOARD_ENABLED',
+    flagKey: 'clubRecruitBoardEnabled',
+    pathPrefix: '/community/club-recruit',
+  },
+  {
+    envKey: 'VITE_FIELD_TRIP_BOARD_ENABLED',
+    flagKey: 'fieldTripBoardEnabled',
+    pathPrefix: '/community/field-trip',
+  },
+];
+
+function readBooleanEnvValue(value, fallback = true) {
+  if (value === undefined || value === null || value === '') {
+    return fallback;
+  }
+  if (typeof value === 'boolean') {
+    return value;
+  }
+  return TRUTHY_ENV_VALUES.has(String(value).trim().toLowerCase());
+}
+
+export function resolveSeoFeatureFlags(env = globalThis?.process?.env ?? {}) {
+  return BOARD_FEATURE_FLAGS.reduce(
+    (flags, { envKey, flagKey }) => ({
+      ...flags,
+      [flagKey]: readBooleanEnvValue(env[envKey], true),
+    }),
+    {}
+  );
+}
+
+function normalizeSeoFeatureFlags(featureFlags) {
+  return {
+    ...resolveSeoFeatureFlags(),
+    ...(featureFlags || {}),
+  };
+}
+
+function isDisabledBoardPath(pathname, featureFlags) {
+  return BOARD_FEATURE_FLAGS.some(
+    ({ flagKey, pathPrefix }) =>
+      featureFlags[flagKey] === false &&
+      (pathname === pathPrefix || pathname.startsWith(`${pathPrefix}/`))
+  );
+}
+
 function createStaticRouteEntries(date = new Date()) {
   const { budgetYear, budgetMonth } = getCurrentBudgetRouteParams(date);
   const currentBudgetPath = buildBudgetListPath(budgetYear, budgetMonth);
@@ -362,29 +417,37 @@ function createStaticRouteEntries(date = new Date()) {
   ];
 }
 
-export function getStaticSeoEntries(date = new Date()) {
-  return createStaticRouteEntries(date);
+export function getStaticSeoEntries(date = new Date(), featureFlags) {
+  const resolvedFeatureFlags = normalizeSeoFeatureFlags(featureFlags);
+  return createStaticRouteEntries(date).filter(
+    (entry) => !isDisabledBoardPath(entry.path, resolvedFeatureFlags)
+  );
 }
 
-export function getStaticRouteSeo(pathname, date = new Date()) {
+export function getStaticRouteSeo(pathname, date = new Date(), featureFlags) {
   const normalized = normalizePathname(pathname);
-  return getStaticSeoEntries(date).find((entry) => entry.path === normalized) || null;
+  return getStaticSeoEntries(date, featureFlags).find((entry) => entry.path === normalized) || null;
 }
 
-export function getPrerenderRoutes(date = new Date()) {
-  return getStaticSeoEntries(date)
+export function getPrerenderRoutes(date = new Date(), featureFlags) {
+  return getStaticSeoEntries(date, featureFlags)
     .filter((entry) => entry.prerender)
     .map((entry) => entry.path);
 }
 
-export function getSitemapEntries(date = new Date()) {
-  return getStaticSeoEntries(date).filter((entry) => entry.sitemap);
+export function getSitemapEntries(date = new Date(), featureFlags) {
+  return getStaticSeoEntries(date, featureFlags).filter((entry) => entry.sitemap);
 }
 
-export function isNoindexRoute(pathname) {
+export function isNoindexRoute(pathname, date = new Date(), featureFlags) {
   const normalized = normalizePathname(pathname);
+  const resolvedFeatureFlags = normalizeSeoFeatureFlags(featureFlags);
 
-  if (getStaticRouteSeo(normalized)?.indexable === false) {
+  if (isDisabledBoardPath(normalized, resolvedFeatureFlags)) {
+    return true;
+  }
+
+  if (getStaticRouteSeo(normalized, date, resolvedFeatureFlags)?.indexable === false) {
     return true;
   }
 
@@ -408,8 +471,8 @@ export function isNoindexRoute(pathname) {
   ].some((pattern) => pattern.test(normalized));
 }
 
-export function createPrerenderHead(pathname, date = new Date()) {
-  const entry = getStaticRouteSeo(pathname, date);
+export function createPrerenderHead(pathname, date = new Date(), featureFlags) {
+  const entry = getStaticRouteSeo(pathname, date, featureFlags);
   const canonicalPath = entry?.canonicalPath || normalizePathname(pathname);
   const title = buildDocumentTitle(entry?.title);
   const description = entry?.description || DEFAULT_DESCRIPTION;

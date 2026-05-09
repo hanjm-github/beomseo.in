@@ -116,6 +116,7 @@ npm run preview
 | `VITE_ANALYTICS_ALLOWED_HOSTS` | `beomseo.in` | 이벤트 전송 허용 host 목록 (`,` 구분, `*` 지원) |
 | `VITE_ANALYTICS_BLOCKED_KEYS` | `nickname,password,email,token,refresh_token,access_token` | 트래킹 payload에서 제거할 민감 키 |
 | `VITE_APP_NAME` | `beomseo.in` | 헤더/푸터 앱 표시 이름 |
+| `VITE_VALUE_PICK_BOARD_ENABLED` | `1` | 인성 가치 PICK! 보드 UI/라우트/SEO 산출물 노출 여부 |
 | `VITE_CLUB_RECRUIT_BOARD_ENABLED` | `1` | 동아리 모집 보드 UI/라우트 노출 여부 |
 | `VITE_FIELD_TRIP_BOARD_ENABLED` | `1` | 수학여행 보드 UI/라우트 노출 여부 |
 | `VITE_ALLOWED_ASSET_HOSTS` | `""` | 외부 에셋 허용 host 목록 (비어 있으면 모두 허용) |
@@ -180,7 +181,7 @@ graph TD
 
 ### 헤더와 정적 법적 페이지
 
-- `Header`의 커뮤니티 메뉴는 `인성 가치 PICK!`를 항상 노출합니다.
+- `Header`의 커뮤니티 메뉴는 `VALUE_PICK_BOARD_ENABLED` 환경변수에 따라 인성 가치 PICK! 링크를 조건부로 노출합니다.
 - `Header`와 커뮤니티 허브는 `BOSPI` 링크를 `/community/bospi`로 노출합니다.
 - `Header`의 커뮤니티 메뉴는 `CLUB_RECRUIT_BOARD_ENABLED` 환경변수에 따라 동아리 모집 링크를 조건부로 노출합니다.
 - `Header`의 커뮤니티 메뉴는 `FIELD_TRIP_BOARD_ENABLED` 환경변수에 따라 수학여행 링크를 조건부로 노출합니다.
