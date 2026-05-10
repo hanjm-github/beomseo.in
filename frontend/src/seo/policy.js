@@ -204,6 +204,20 @@ function createStaticRouteEntries(date = new Date()) {
       ],
     },
     {
+      path: '/school-info/shany-card-generator',
+      title: '샤니마스 카드 생성기',
+      description:
+        '범서고 샤니마스 카드 생성기 — 샤니마스 스타일 이름 레이어와 카드 합성 이미지를 만들고 PNG/JPG/WebP로 바로 다운로드하세요.',
+      indexable: true,
+      prerender: true,
+      sitemap: true,
+      breadcrumbs: [
+        { name: '홈', url: '/' },
+        { name: '학교 생활 정보', url: '/school-info' },
+        { name: '샤니마스 카드 생성기', url: '/school-info/shany-card-generator' },
+      ],
+    },
+    {
       path: '/school-info/evaluation-plans',
       title: '평가계획서 다운로드',
       description:

@@ -23,6 +23,7 @@
     "react-form-builder2": "^0.20.3",
     "react-qrcode-logo": "^4.1.0",
     "react-router-dom": "^7.13.0",
+    "react-shany-card-generator": "^0.0.1",
     "recharts": "^2.15.4"
   },
   "devDependencies": {

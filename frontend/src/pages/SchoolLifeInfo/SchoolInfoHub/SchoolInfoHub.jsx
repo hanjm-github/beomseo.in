@@ -5,6 +5,7 @@ import {
   Hammer,
   QrCode,
   Radio,
+  Sparkles,
   Soup,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -63,6 +64,15 @@ const schoolInfoCards = [
     description:
       '텍스트·URL을 입력하고 색상, 스타일, 로고를 설정한 뒤 PNG/JPG/WebP로 바로 다운로드할 수 있습니다.',
     icon: QrCode,
+    active: true,
+  },
+  {
+    key: 'shany-card-generator',
+    to: '/school-info/shany-card-generator',
+    title: '샤니마스 카드 생성기',
+    description:
+      '샤니마스 스타일 카드 이름 레이어와 카드 합성 이미지를 만들고 브라우저에서 바로 저장할 수 있습니다.',
+    icon: Sparkles,
     active: true,
   },
 ];

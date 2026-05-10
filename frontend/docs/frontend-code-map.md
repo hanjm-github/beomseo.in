@@ -18,7 +18,7 @@
 | `src/main.jsx` | React 앱 엔트리포인트. `#root`에 `<App />` 마운트 |
 | `src/App.jsx` | 전역 Provider(`ThemeProvider`, `NetworkStatusProvider`, `PwaInstallProvider`, `AuthProvider`) + 최상위 라우팅 구성 |
 | `src/layout/AppLayout.jsx` | 공통 레이아웃(접근성 skip-link, Header, main, Footer, OfflineGate) |
-| `src/components/Header/Header.jsx` | 전역 내비게이션/테마 토글/인증 상태 UI. 커뮤니티 보드 feature flag, 학교 생활 정보 유틸리티 링크, 스포츠리그 직접 링크 포함 |
+| `src/components/Header/Header.jsx` | 전역 내비게이션/테마 토글/인증 상태 UI. 커뮤니티 보드 feature flag, 학교 생활 정보 유틸리티 링크(QR/샤니마스 카드/스포츠리그 등) 포함 |
 | `src/components/Footer/Footer.jsx` | 외부 링크/법적 문서 링크/운영 정보 |
 | `src/components/pwa/OfflineGate.jsx` | 오프라인 시 전체 화면 오버레이와 재시도 흐름 제공 |
 | `src/pages/CommunityPage.jsx` | 커뮤니티 허브 페이지. 모든 보드 카드를 그리드로 나열하며, 현재 활성 보드를 하이라이트 |
@@ -207,6 +207,7 @@ graph TD
 |---|---|
 | `/school-info` | `SchoolInfoHub` |
 | `/school-info/qr-generator` | `QrCodeGeneratorPage` |
+| `/school-info/shany-card-generator` | `ShanyCardGeneratorPage` |
 | `/school-info/timetable` | `TimetableDownloadPage` |
 | `/school-info/evaluation-plans` | `EvaluationPlansPage` |
 | `/school-info/meal` | `MealPage` |
@@ -232,6 +233,7 @@ graph TD
 | 분실물 | `src/pages/Notices/LostFound/*` | `src/components/lostfound/*` | `src/api/lostFound.js` |
 | 곰솔마켓 | `src/pages/Community/GomsolMarket/*` | `src/components/gomsolmarket/*` | `src/api/gomsolMarket.js` |
 | 학교 생활 정보(QR 코드 생성기) | `src/pages/SchoolLifeInfo/QrCodeGenerator/QrCodeGeneratorPage.jsx` | `QrCodeGeneratorPage.module.css`, `react-qrcode-logo` | 없음 (브라우저 캔버스 기반 생성/다운로드) |
+| 학교 생활 정보(샤니마스 카드 생성기) | `src/pages/SchoolLifeInfo/ShanyCardGenerator/ShanyCardGeneratorPage.jsx` | `ShanyCardGeneratorPage.module.css`, `react-shany-card-generator` | 없음 (브라우저 Blob 기반 생성/다운로드) |
 | 학교 생활 정보(시간표) | `src/pages/SchoolLifeInfo/TimetableDownload/*` | `src/components/timetable/*` | 없음 (`src/components/timetable/timetableTemplates.json` 정적 템플릿 사용) |
 | 학교 생활 정보(평가계획서) | `src/pages/SchoolLifeInfo/EvaluationPlans/*` | 없음 | 없음 (`public/evaluation-plans/*` 정적 HWP 사용) |
 | 학교 생활 정보(오늘의 급식) | `src/pages/SchoolLifeInfo/Meal/MealPage.jsx` | `src/components/MealCard/*`, `src/features/meals/*` | `src/api/meals.js`, `src/api/mealNotifications.js` |
@@ -401,6 +403,28 @@ graph TD
 - 다운로드 API가 실패하면 캔버스 `toDataURL()` 기반 대체 경로로 같은 파일 형식을 생성합니다.
 - 기본 로고 또는 업로드 로고가 선택되면 중앙 모듈 손실을 보완하기 위해 오류 보정 단계가 4단계로 고정됩니다.
 - 사용자 업로드 로고는 `FileReader.readAsDataURL()`로 변환해 서버 업로드 없이 미리보기와 다운로드에 사용합니다.
+
+## 11.4 샤니마스 카드 생성기 모듈
+
+`학교 생활 정보 > 샤니마스 카드 생성기` 기능은 백엔드 API 없이 브라우저에서 샤니마스 스타일 이름 레이어와 카드 합성 이미지를 생성합니다.
+
+| 파일 | 역할 |
+|---|---|
+| `src/pages/SchoolLifeInfo/ShanyCardGenerator/ShanyCardGeneratorPage.jsx` | 생성 모드, 레어리티, 텍스트, 업로드 이미지, 이름 위치, 파일 형식, 배율, 배경색 상태를 관리하고 `react-shany-card-generator` 렌더링/다운로드 API를 호출 |
+| `src/pages/SchoolLifeInfo/ShanyCardGenerator/ShanyCardGeneratorPage.module.css` | 프리셋 바, 설정 패널, sticky 미리보기, 업로드 입력, 슬라이더, 상태 메시지 반응형 스타일 |
+| `src/pages/SchoolLifeInfo/index.jsx` | `/school-info/shany-card-generator` 지연 로딩 라우트 등록 |
+| `src/pages/SchoolLifeInfo/SchoolInfoHub/SchoolInfoHub.jsx` | 학교 생활 정보 허브 카드 등록 |
+| `src/components/Header/Header.jsx` | 전역 학교 생활 정보 메뉴 링크 등록 |
+| `src/seo/policy.js` | 샤니마스 카드 생성기 정적 SEO/sitemap/prerender 메타데이터 등록 |
+| `package.json` / `package-lock.json` | `react-shany-card-generator`와 전이 의존성 `html-to-image` 추가 |
+
+동작 메모:
+
+- 이름 레이어 모드는 `ShanyCardNameLayer` 미리보기와 `renderCardNameBlob()` 다운로드 경로를 사용합니다.
+- 카드 합성 모드는 업로드한 이미지 파일을 `ShanyCardPreview`와 `renderShanyCardBlob()`에 전달하며, 이미지 크기 안에서 X/Y 위치를 보정합니다.
+- `ensureShanyCardFontElements()`를 페이지 마운트 시 호출해 미리보기와 export 이미지의 폰트 표현을 맞춥니다.
+- 파일명은 카드 이름을 기반으로 만들되 파일 시스템에서 문제가 되는 문자를 `-`로 치환합니다.
+- 출력 배율, 캡처 배율, 이름 배율은 UI에서는 0~500% 범위를 제공하지만 실제 렌더링에는 0 크기 이미지가 생기지 않도록 최소 양수 배율로 보정합니다.
 
 ## 12. 유틸리티 & 설정 파일
 

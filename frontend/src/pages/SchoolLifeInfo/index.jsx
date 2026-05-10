@@ -16,6 +16,7 @@ const SchoolInfoHub = lazy(() => import('./SchoolInfoHub/SchoolInfoHub'));
 const SportsLeagueCategoryPage = lazy(() => import('./SportsLeagueCategory/SportsLeagueCategoryPage'));
 const TimetableDownloadPage = lazy(() => import('./TimetableDownload/TimetableDownloadPage'));
 const QrCodeGeneratorPage = lazy(() => import('./QrCodeGenerator/QrCodeGeneratorPage'));
+const ShanyCardGeneratorPage = lazy(() => import('./ShanyCardGenerator/ShanyCardGeneratorPage'));
 
 const lazyRoute = (Component, props = {}) => (
   <Suspense fallback={<div className="route-fallback">페이지를 불러오는 중...</div>}>
@@ -29,6 +30,7 @@ export default function SchoolInfoRouter() {
       <Route index element={lazyRoute(SchoolInfoHub)} />
       <Route path="timetable" element={lazyRoute(TimetableDownloadPage)} />
       <Route path="qr-generator" element={lazyRoute(QrCodeGeneratorPage)} />
+      <Route path="shany-card-generator" element={lazyRoute(ShanyCardGeneratorPage)} />
       <Route path="evaluation-plans" element={lazyRoute(EvaluationPlansPage)} />
       <Route path="meal" element={lazyRoute(MealPage)} />
       <Route path="calendar" element={lazyRoute(AcademicCalendarPage)} />
@@ -52,6 +54,7 @@ export default function SchoolInfoRouter() {
             secondaryActions={[
               { label: '시간표 다운로드', to: '/school-info/timetable' },
               { label: 'QR 코드 생성기', to: '/school-info/qr-generator' },
+              { label: '샤니마스 카드 생성기', to: '/school-info/shany-card-generator' },
               { label: '평가계획서 다운로드', to: '/school-info/evaluation-plans' },
               { label: '학사 캘린더', to: '/school-info/calendar' },
               { label: '스포츠리그', to: `/school-info/sports-league/${SPORTS_LEAGUE_CATEGORY_ID}` },

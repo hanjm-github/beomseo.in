@@ -86,6 +86,7 @@ const navigationItems = [
         label: '스포츠리그',
         path: `/school-info/sports-league/${SPORTS_LEAGUE_CATEGORY_ID}`,
       },
+      { label: '샤니마스 카드 생성기', path: '/school-info/shany-card-generator' },
     ],
   },
 ];

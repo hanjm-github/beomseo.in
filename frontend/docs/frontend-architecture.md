@@ -210,7 +210,7 @@ flowchart TD
 - 페이지 컴포넌트는 가능한 한 API 호출 orchestration에 집중
 - 표시 로직은 `src/components/*`로 분리
 - data-dense 기능은 `src/features/<feature>/*`에 hook/data/utils를 묶어 페이지와 공용 API 사이를 정리
-- QR 코드 생성기처럼 백엔드 계약이 없는 화면은 페이지 내부 상태와 브라우저 API만 사용하고 `src/api/*`를 거치지 않습니다.
+- QR 코드 생성기와 샤니마스 카드 생성기처럼 백엔드 계약이 없는 화면은 페이지 내부 상태, 브라우저 파일/캔버스/Blob API, 전용 렌더링 라이브러리만 사용하고 `src/api/*`를 거치지 않습니다.
 
 ### 헤더/정적 페이지 규칙
 
@@ -219,7 +219,7 @@ flowchart TD
 - 커뮤니티 드롭다운의 인성 가치 PICK! 링크는 `VALUE_PICK_BOARD_ENABLED` 플래그가 켜진 경우에만 렌더링됩니다.
 - 커뮤니티 드롭다운의 동아리 모집 링크는 `CLUB_RECRUIT_BOARD_ENABLED` 플래그가 켜진 경우에만 렌더링됩니다.
 - 커뮤니티 드롭다운의 수학여행 링크는 `FIELD_TRIP_BOARD_ENABLED` 플래그가 켜진 경우에만 렌더링됩니다.
-- 학교 생활 정보 드롭다운은 QR 코드 생성기, 시간표 다운로드, 평가계획서 다운로드, 급식, 학사 캘린더, 스포츠리그를 노출하며 스포츠리그 링크는 현재 기본 카테고리 ID로 직접 연결됩니다.
+- 학교 생활 정보 드롭다운은 QR 코드 생성기, 샤니마스 카드 생성기, 시간표 다운로드, 평가계획서 다운로드, 급식, 학사 캘린더, 스포츠리그를 노출하며 스포츠리그 링크는 현재 기본 카테고리 ID로 직접 연결됩니다.
 - `/privacy`, `/terms`는 정적 법적 문서 페이지이며, 서버 데이터 fetch 없이 목차(anchor)와 `맨 위로` 스크롤 헬퍼만 제공합니다.
 
 ### 예산 공개 보드 흐름
@@ -338,6 +338,29 @@ flowchart LR
 - `/school-info/qr-generator`는 `SchoolInfoRouter`에서 lazy-load되며 QR 관련 의존성은 해당 라우트 번들에서만 사용됩니다.
 - 기본 정보기술부 로고는 `public/mit_logo.png`를 직접 참조하고, 사용자 업로드 로고는 데이터 URL로 변환해 캔버스에 전달합니다.
 - 로고 삽입 시 QR 중앙 영역 일부가 덮이므로 오류 보정 단계는 사용자 설정과 관계없이 4단계로 고정됩니다.
+- SEO 정책에는 별도 정적 route entry를 등록해 sitemap/prerender 산출물이 실제 라우트와 맞도록 유지합니다.
+
+## 6.5 샤니마스 카드 생성기 흐름
+
+샤니마스 카드 생성기는 서버 저장 없이 현재 브라우저에서 이름 레이어 또는 합성 이미지를 만들고 파일로 내려받는 화면입니다.
+
+```mermaid
+flowchart LR
+    A["사용자 입력\n레어리티/이름/카드명/이미지"] --> B["ShanyCardGeneratorPage 상태"]
+    B --> C{"생성 모드"}
+    C -->|"이름 레이어"| D["ShanyCardNameLayer\nrenderCardNameBlob()"]
+    C -->|"카드 합성"| E["ShanyCardPreview\nrenderShanyCardBlob()"]
+    D --> F["downloadBlob()"]
+    E --> F
+    F --> G["PNG/JPG/WebP 파일"]
+```
+
+핵심 포인트:
+
+- `/school-info/shany-card-generator`는 `SchoolInfoRouter`에서 lazy-load되며 카드 생성 관련 의존성은 해당 라우트 번들에서만 사용됩니다.
+- `react-shany-card-generator`가 미리보기 컴포넌트와 Blob 렌더링 함수를 제공하고, 내부적으로 `html-to-image`를 사용해 DOM 기반 이미지를 파일로 변환합니다.
+- 업로드 이미지는 서버로 보내지 않고 `File` 객체로만 보관하며, `URL.createObjectURL()`로 실제 크기를 읽은 뒤 cleanup 시 object URL을 해제합니다.
+- 카드 합성 모드의 X/Y 위치는 업로드 이미지의 width/height를 기준으로 보정되어 렌더링 API에 범위 밖 좌표가 전달되지 않도록 합니다.
 - SEO 정책에는 별도 정적 route entry를 등록해 sitemap/prerender 산출물이 실제 라우트와 맞도록 유지합니다.
 
 ## 7. 기능 확장 규칙 (새 보드 추가 기준)
