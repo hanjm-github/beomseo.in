@@ -210,6 +210,7 @@ flowchart TD
 - 페이지 컴포넌트는 가능한 한 API 호출 orchestration에 집중
 - 표시 로직은 `src/components/*`로 분리
 - data-dense 기능은 `src/features/<feature>/*`에 hook/data/utils를 묶어 페이지와 공용 API 사이를 정리
+- QR 코드 생성기처럼 백엔드 계약이 없는 화면은 페이지 내부 상태와 브라우저 API만 사용하고 `src/api/*`를 거치지 않습니다.
 
 ### 헤더/정적 페이지 규칙
 
@@ -218,7 +219,7 @@ flowchart TD
 - 커뮤니티 드롭다운의 인성 가치 PICK! 링크는 `VALUE_PICK_BOARD_ENABLED` 플래그가 켜진 경우에만 렌더링됩니다.
 - 커뮤니티 드롭다운의 동아리 모집 링크는 `CLUB_RECRUIT_BOARD_ENABLED` 플래그가 켜진 경우에만 렌더링됩니다.
 - 커뮤니티 드롭다운의 수학여행 링크는 `FIELD_TRIP_BOARD_ENABLED` 플래그가 켜진 경우에만 렌더링됩니다.
-- 학교 생활 정보 드롭다운은 시간표 다운로드, 평가계획서 다운로드, 급식, 학사 캘린더, 스포츠리그를 노출하며 스포츠리그 링크는 현재 기본 카테고리 ID로 직접 연결됩니다.
+- 학교 생활 정보 드롭다운은 QR 코드 생성기, 시간표 다운로드, 평가계획서 다운로드, 급식, 학사 캘린더, 스포츠리그를 노출하며 스포츠리그 링크는 현재 기본 카테고리 ID로 직접 연결됩니다.
 - `/privacy`, `/terms`는 정적 법적 문서 페이지이며, 서버 데이터 fetch 없이 목차(anchor)와 `맨 위로` 스크롤 헬퍼만 제공합니다.
 
 ### 예산 공개 보드 흐름
@@ -318,6 +319,27 @@ flowchart LR
 - HWP 파일은 변환하지 않고 원본 파일명과 내용 그대로 제공합니다.
 - 페이지와 `THIRD_PARTY_NOTICES.md`에 공공누리 제3유형 출처표시와 변경금지 조건을 함께 고지합니다.
 - 이 정적 자료는 GPL-3.0 코드 라이선스가 아니라 별도 공공누리 조건을 따릅니다.
+
+## 6.4 QR 코드 생성기 흐름
+
+QR 코드 생성기는 서버 저장이나 업로드 없이 브라우저에서 입력값을 QR 캔버스로 렌더링하고 파일로 내려받는 화면입니다.
+
+```mermaid
+flowchart LR
+    A["사용자 입력\n텍스트/URL/색상/로고"] --> B["QrCodeGeneratorPage 상태"]
+    B --> C["react-qrcode-logo QRCode"]
+    C --> D["캔버스 미리보기"]
+    D --> E["download() 또는 캔버스 데이터 URL"]
+    E --> F["PNG/JPG/WebP 파일"]
+```
+
+핵심 포인트:
+
+- `/school-info/qr-generator`는 `SchoolInfoRouter`에서 lazy-load되며 QR 관련 의존성은 해당 라우트 번들에서만 사용됩니다.
+- 기본 정보기술부 로고는 `public/mit_logo.png`를 직접 참조하고, 사용자 업로드 로고는 데이터 URL로 변환해 캔버스에 전달합니다.
+- 로고 삽입 시 QR 중앙 영역 일부가 덮이므로 오류 보정 단계는 사용자 설정과 관계없이 4단계로 고정됩니다.
+- SEO 정책에는 별도 정적 route entry를 등록해 sitemap/prerender 산출물이 실제 라우트와 맞도록 유지합니다.
+
 ## 7. 기능 확장 규칙 (새 보드 추가 기준)
 
 1. `src/pages/<Feature>/`에 `List/Detail/Compose` 라우트 화면 추가

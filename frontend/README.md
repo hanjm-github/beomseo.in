@@ -2,7 +2,7 @@
 # beomseo.in Frontend
 
 범서고 커뮤니티 서비스 `beomseo.in`의 React/Vite 프론트엔드입니다.  
-공지(학교/학생회/예산 공개), 커뮤니티(자유/인성 가치 PICK!/동아리/청원/설문/투표/분실물/곰솔마켓/수학여행), 학교 생활 정보(시간표/평가계획서/학사 캘린더/급식 조회/평점/PWA 알림/스포츠리그 문자중계/팀별 라인업/개인별 순위), 인증, 분석 트래킹을 단일 SPA로 제공합니다.
+공지(학교/학생회/예산 공개), 커뮤니티(자유/인성 가치 PICK!/동아리/청원/설문/투표/분실물/곰솔마켓/수학여행), 학교 생활 정보(QR 코드 생성기/시간표/평가계획서/학사 캘린더/급식 조회/평점/PWA 알림/스포츠리그 문자중계/팀별 라인업/개인별 순위), 인증, 분석 트래킹을 단일 SPA로 제공합니다.
 
 ## 프로젝트 개요
 
@@ -13,6 +13,7 @@
 - 상태 관리: React Context (`ThemeContext`, `NetworkStatusContext`, `PwaInstallContext`, `AuthContext`)
 - 실시간 동기화: 스포츠리그 화면에서 `EventSource + BroadcastChannel/localStorage + polling fallback`
 - 수학여행 게시판: 반 비밀번호 기반 잠금 해제, 익명/로그인 글쓰기, rich HTML 본문, 5점 단위 점수판
+- QR 코드 생성기: 브라우저 안에서 텍스트·URL 입력, 색상/로고/스타일 조정, PNG/JPG/WebP 다운로드 처리
 - 급식 알림: 설치된 PWA 기기별 `installationId` + Firebase Web Push 구독
 - 보안 경계: URL/HTML/CSV sanitize 유틸리티 (`src/security/*`)
 - 분석: Cloudflare Zaraz + GA4 이벤트 래퍼 (`src/analytics/zaraz.js`)
@@ -63,6 +64,7 @@ flowchart LR
 | HTTP Client | `axios` |
 | Charts | `recharts` |
 | Form Builder | `react-form-builder2` |
+| QR 생성 | `react-qrcode-logo` |
 | Rich Content Sanitizing | `dompurify` |
 | Icons | `lucide-react` |
 | Bundler | `vite` |
@@ -165,6 +167,7 @@ graph TD
     C --> CL["lost-found/*"]
     C --> CG["gomsol-market/*"]
     SI --> SIT["/school-info/timetable"]
+    SI --> SIQ["/school-info/qr-generator"]
     SI --> SIE["/school-info/evaluation-plans"]
     SI --> SIM["/school-info/meal"]
     SI --> SIC["/school-info/calendar"]
@@ -185,7 +188,7 @@ graph TD
 - `Header`와 커뮤니티 허브는 `BOSPI` 링크를 `/community/bospi`로 노출합니다.
 - `Header`의 커뮤니티 메뉴는 `CLUB_RECRUIT_BOARD_ENABLED` 환경변수에 따라 동아리 모집 링크를 조건부로 노출합니다.
 - `Header`의 커뮤니티 메뉴는 `FIELD_TRIP_BOARD_ENABLED` 환경변수에 따라 수학여행 링크를 조건부로 노출합니다.
-- 학교 생활 정보 메뉴는 시간표 다운로드, 평가계획서 다운로드, 급식, 학사 캘린더, 스포츠리그를 노출하며 스포츠리그 링크는 기본 카테고리 ID로 바로 연결됩니다.
+- 학교 생활 정보 메뉴는 QR 코드 생성기, 시간표 다운로드, 평가계획서 다운로드, 급식, 학사 캘린더, 스포츠리그를 노출하며 스포츠리그 링크는 기본 카테고리 ID로 바로 연결됩니다.
 - `/privacy`, `/terms` 페이지는 정적 법적 문서이며, 페이지 내부 목차(anchor)와 `맨 위로` 스크롤 헬퍼를 직접 렌더링합니다.
 
 ### 평가계획서 정적 자료와 라이선스
@@ -193,6 +196,13 @@ graph TD
 - `/school-info/evaluation-plans`는 백엔드 API 없이 `public/evaluation-plans/`의 HWP 원본 파일을 직접 다운로드합니다.
 - 평가계획서 HWP 3개와 `public/kogl/img_opentype03.jpg`는 GPL-3.0 코드 라이선스가 아니라 공공누리 제3유형 조건으로 제공되는 별도 자료입니다.
 - 출처와 조건은 루트의 [`../THIRD_PARTY_NOTICES.md`](../THIRD_PARTY_NOTICES.md)에 기록합니다.
+
+### QR 코드 생성기 흐름
+
+- `/school-info/qr-generator`는 `react-qrcode-logo`를 사용하는 클라이언트 전용 화면이며 백엔드 API를 호출하지 않습니다.
+- 사용자는 QR 내용, 오류 보정 단계, 크기, 여백, 전경색/배경색, 패턴 스타일, 눈 색상, 기본/사용자 업로드 로고를 조정할 수 있습니다.
+- 로고가 선택되면 QR 중앙 영역이 가려지는 점을 보완하기 위해 오류 보정 단계가 자동으로 4단계로 고정됩니다.
+- 다운로드는 컴포넌트 참조(ref)의 `download()`를 우선 사용하고, 실패 시 캔버스 데이터 URL 방식으로 PNG/JPG/WebP 파일을 생성합니다.
 
 ## 스포츠리그 문자중계 동기화
 
@@ -263,7 +273,7 @@ map $uri $spa_route_ok {
     ~^/community/field-trip/classes/[0-9]+/posts/[0-9]+/?$ 1;
     ~^/community/field-trip/classes/[0-9]+/posts/[0-9]+/edit/?$ 1;
     ~^/school-info/?$ 1;
-    ~^/school-info/(timetable|evaluation-plans|meal|calendar)/?$ 1;
+    ~^/school-info/(qr-generator|timetable|evaluation-plans|meal|calendar)/?$ 1;
     ~^/school-info/sports-league/?$ 1;
     ~^/school-info/sports-league/[A-Za-z0-9._-]+/?$ 1;
 }

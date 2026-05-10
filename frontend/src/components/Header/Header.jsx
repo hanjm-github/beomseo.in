@@ -76,6 +76,8 @@ const navigationItems = [
     label: '학교 생활 정보',
     path: '/school-info',
     children: [
+      // Keep utility links in this menu aligned with the school-info hub cards.
+      { label: 'QR 코드 생성기', path: '/school-info/qr-generator' },
       { label: '시간표 다운로드', path: '/school-info/timetable' },
       { label: '평가계획서 다운로드', path: '/school-info/evaluation-plans' },
       { label: '오늘의 급식', path: '/school-info/meal' },

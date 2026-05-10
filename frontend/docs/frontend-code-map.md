@@ -18,7 +18,7 @@
 | `src/main.jsx` | React 앱 엔트리포인트. `#root`에 `<App />` 마운트 |
 | `src/App.jsx` | 전역 Provider(`ThemeProvider`, `NetworkStatusProvider`, `PwaInstallProvider`, `AuthProvider`) + 최상위 라우팅 구성 |
 | `src/layout/AppLayout.jsx` | 공통 레이아웃(접근성 skip-link, Header, main, Footer, OfflineGate) |
-| `src/components/Header/Header.jsx` | 전역 내비게이션/테마 토글/인증 상태 UI. 커뮤니티 보드 feature flag와 스포츠리그 직접 링크 포함 |
+| `src/components/Header/Header.jsx` | 전역 내비게이션/테마 토글/인증 상태 UI. 커뮤니티 보드 feature flag, 학교 생활 정보 유틸리티 링크, 스포츠리그 직접 링크 포함 |
 | `src/components/Footer/Footer.jsx` | 외부 링크/법적 문서 링크/운영 정보 |
 | `src/components/pwa/OfflineGate.jsx` | 오프라인 시 전체 화면 오버레이와 재시도 흐름 제공 |
 | `src/pages/CommunityPage.jsx` | 커뮤니티 허브 페이지. 모든 보드 카드를 그리드로 나열하며, 현재 활성 보드를 하이라이트 |
@@ -206,6 +206,7 @@ graph TD
 | 경로 | 요소 |
 |---|---|
 | `/school-info` | `SchoolInfoHub` |
+| `/school-info/qr-generator` | `QrCodeGeneratorPage` |
 | `/school-info/timetable` | `TimetableDownloadPage` |
 | `/school-info/evaluation-plans` | `EvaluationPlansPage` |
 | `/school-info/meal` | `MealPage` |
@@ -230,6 +231,7 @@ graph TD
 | 수학여행 이벤트 | `src/pages/Community/FieldTrip/*` (`FieldTripHubPage`, `FieldTripClassBoardPage`, `FieldTripPostDetailPage`) | `src/components/fieldTrip/*`, `src/features/fieldTrip/*` | `src/api/fieldTrip.js` |
 | 분실물 | `src/pages/Notices/LostFound/*` | `src/components/lostfound/*` | `src/api/lostFound.js` |
 | 곰솔마켓 | `src/pages/Community/GomsolMarket/*` | `src/components/gomsolmarket/*` | `src/api/gomsolMarket.js` |
+| 학교 생활 정보(QR 코드 생성기) | `src/pages/SchoolLifeInfo/QrCodeGenerator/QrCodeGeneratorPage.jsx` | `QrCodeGeneratorPage.module.css`, `react-qrcode-logo` | 없음 (브라우저 캔버스 기반 생성/다운로드) |
 | 학교 생활 정보(시간표) | `src/pages/SchoolLifeInfo/TimetableDownload/*` | `src/components/timetable/*` | 없음 (`src/components/timetable/timetableTemplates.json` 정적 템플릿 사용) |
 | 학교 생활 정보(평가계획서) | `src/pages/SchoolLifeInfo/EvaluationPlans/*` | 없음 | 없음 (`public/evaluation-plans/*` 정적 HWP 사용) |
 | 학교 생활 정보(오늘의 급식) | `src/pages/SchoolLifeInfo/Meal/MealPage.jsx` | `src/components/MealCard/*`, `src/features/meals/*` | `src/api/meals.js`, `src/api/mealNotifications.js` |
@@ -379,6 +381,26 @@ graph TD
 | `public/kogl/img_opentype03.jpg` | 공공누리 제3유형 표시 마크 |
 
 평가계획서 HWP 파일과 공공누리 마크는 GPL-3.0 코드 라이선스가 아니라 루트의 `THIRD_PARTY_NOTICES.md`에 명시한 공공누리 제3유형 조건을 따릅니다.
+
+## 11.3 QR 코드 생성기 모듈
+
+`학교 생활 정보 > QR 코드 생성기` 기능은 백엔드 API 없이 브라우저에서 QR 생성과 파일 다운로드를 끝내는 클라이언트 전용 유틸리티입니다.
+
+| 파일 | 역할 |
+|---|---|
+| `src/pages/SchoolLifeInfo/QrCodeGenerator/QrCodeGeneratorPage.jsx` | QR 내용, 오류 보정 단계, 색상, 로고, 패턴, 눈 스타일, 다운로드 형식 상태를 관리하고 `QRCode` 컴포넌트에 props로 전달 |
+| `src/pages/SchoolLifeInfo/QrCodeGenerator/QrCodeGeneratorPage.module.css` | 좌측 설정 패널, 우측 sticky 미리보기, 컬러 입력, 토글/라디오, 다운로드 버튼 반응형 스타일 |
+| `src/pages/SchoolLifeInfo/index.jsx` | `/school-info/qr-generator` 지연 로딩 라우트 등록 |
+| `src/pages/SchoolLifeInfo/SchoolInfoHub/SchoolInfoHub.jsx` | 학교 생활 정보 허브 카드 등록 |
+| `src/components/Header/Header.jsx` | 전역 학교 생활 정보 메뉴 링크 등록 |
+| `src/seo/policy.js` | QR 생성기 정적 SEO/sitemap/prerender 메타데이터 등록 |
+
+동작 메모:
+
+- `react-qrcode-logo`가 QR 캔버스를 렌더링하고 참조(ref)의 `download()` 메서드로 PNG/JPG/WebP 저장을 시도합니다.
+- 다운로드 API가 실패하면 캔버스 `toDataURL()` 기반 대체 경로로 같은 파일 형식을 생성합니다.
+- 기본 로고 또는 업로드 로고가 선택되면 중앙 모듈 손실을 보완하기 위해 오류 보정 단계가 4단계로 고정됩니다.
+- 사용자 업로드 로고는 `FileReader.readAsDataURL()`로 변환해 서버 업로드 없이 미리보기와 다운로드에 사용합니다.
 
 ## 12. 유틸리티 & 설정 파일
 

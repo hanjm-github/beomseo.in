@@ -190,6 +190,20 @@ function createStaticRouteEntries(date = new Date()) {
       ],
     },
     {
+      path: '/school-info/qr-generator',
+      title: 'QR 코드 생성기',
+      description:
+        '범서고 QR 코드 생성기 — 텍스트, URL 등을 입력하고 색상·스타일·로고를 설정한 뒤 PNG/JPG/WebP로 바로 다운로드하세요.',
+      indexable: true,
+      prerender: true,
+      sitemap: true,
+      breadcrumbs: [
+        { name: '홈', url: '/' },
+        { name: '학교 생활 정보', url: '/school-info' },
+        { name: 'QR 코드 생성기', url: '/school-info/qr-generator' },
+      ],
+    },
+    {
       path: '/school-info/evaluation-plans',
       title: '평가계획서 다운로드',
       description:

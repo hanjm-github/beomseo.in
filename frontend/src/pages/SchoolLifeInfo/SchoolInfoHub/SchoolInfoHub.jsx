@@ -3,6 +3,7 @@ import {
   Download,
   FileText,
   Hammer,
+  QrCode,
   Radio,
   Soup,
 } from 'lucide-react';
@@ -53,6 +54,15 @@ const schoolInfoCards = [
     title: '스포츠리그',
     description: '실시간 중계, 예선 순위판, 주차별 대진표, 경기 규칙을 탭으로 나눠 빠르게 확인할 수 있습니다.',
     icon: Radio,
+    active: true,
+  },
+  {
+    key: 'qr-generator',
+    to: '/school-info/qr-generator',
+    title: 'QR 코드 생성기',
+    description:
+      '텍스트·URL을 입력하고 색상, 스타일, 로고를 설정한 뒤 PNG/JPG/WebP로 바로 다운로드할 수 있습니다.',
+    icon: QrCode,
     active: true,
   },
 ];
