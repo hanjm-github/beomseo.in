@@ -92,6 +92,11 @@
 - URL의 `budgetYear`는 달력 연도가 아니라 회계연도 시작 연도입니다.
 - `BudgetBoardPage`는 settings 응답의 연도 범위를 벗어난 경로를 즉시 404 화면으로 처리합니다.
 
+#### 3.2.3 학교 소개 라우트 (`src/pages/Notices/SchoolInfo/index.jsx`)
+| 경로 | 요소 |
+|---|---|
+| `/notices/cshs-info` | `CSHSInfoPage` |
+
 ### 3.3 커뮤니티 라우트 (`src/pages/Community/index.jsx`)
 
 인성 가치 PICK!, 동아리 모집, 수학여행 라우트는 각 보드 feature flag가 켜진 배포에서만 등록됩니다.
