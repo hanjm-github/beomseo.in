@@ -3,7 +3,7 @@
  * @description 천상고등학교 소개 페이지
  */
 import SEO from '../../../components/SEO';
-import schoolEmblem from '../../../assets/images/cshs-emblem.png';
+import schoolEmblem from './cshs-emblem.png';
 import '../../page-shell.css';
 import styles from './CSHSInfoPage.module.css';
 
@@ -11,7 +11,7 @@ const SCHOOL_INFO = {
   name: '천상고등학교',
   motto: '배움을 실천하고 선을 행하여 더불어 행복한 사람이 되자',
   emblemAlt: '천상고등학교 교표',
-  description: '천상고등학교는 실천, 상선, 인화의 교훈 아래 학생들이 학업에 성실히 임하고, 뛰어난 선을 행하며, 서로 화합하는 학교입니다. 우리 학교는 학생들이 배움을 통해 성장하고, 더불어 행복한 삶을 영위할 수 있도록 다양한 교육 프로그램과 활동을 제공하고 있습니다.',
+  description: '천상고등학교 창체동아리 \'코드랩\'에서 제작하였습니다.',
 };
 
 const INTRO_CARDS = [
