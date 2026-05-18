@@ -204,6 +204,27 @@ Value Pick 계약 요약:
 - `myPrediction`은 날짜 없는 대기 예측이고, `myPredictions[]`는 기록 날짜로 확정된 평가 이력입니다.
 - `rankings[]`는 `rank`, `totalScore`, `correctCount`, `incorrectCount`, `nextPrediction`, `isCurrentUser`를 포함합니다.
 
+### 2.8B `src/api/studyWithBeomseo.js` (`studyWithBeomseoApi`)
+
+| 메서드 | HTTP/Endpoint | 오류 처리 | 비고 |
+|---|---|---|---|
+| `getScoreboard()` | `GET /api/community/study-with-beomseo/scoreboard` | 아니오 | 30개 반 순위, 서버 시간, 공개 반영 시각, 관리 권한을 정규화 |
+| `scheduleScoreUpdate(payload)` | `POST /api/community/study-with-beomseo/score-updates` | 아니오 | `classId`, 최종 `totalScore`, 공개 예정 `effectiveAt` 저장 |
+| `canManage(user)` | - | - | `admin`, `student_council` 역할 확인 |
+
+정규화 계약:
+
+- `items[]`는 항상 `1-1`부터 `3-10`까지 30개 반을 포함합니다.
+- 공개 시간이 지난 최신 점수만 일반 사용자 순위에 반영됩니다.
+- `pendingUpdates[]`는 학생회 이상에게만 내려오는 미래 예약 목록입니다.
+- `serverNow`, `updatedThrough`, `lastPublishedAt`, `effectiveAt`은 backend의 `+09:00` offset 포함 ISO 값을 사용합니다.
+- `scheduleScoreUpdate()`는 점수 증감이 아니라 최종 총점 snapshot을 저장합니다.
+- `classOptions`는 프론트가 즉시 렌더링할 수 있도록 `1-1`부터 `3-10`까지 고정 생성하며, backend의 `CLASS_OPTIONS`와 같은 범위를 전제로 합니다.
+- 응답 정규화는 camelCase와 snake_case를 모두 허용합니다. `classId/class_id`, `totalScore/total_score`, `pendingUpdates/pending_updates`가 대표 예입니다.
+- `canManage(user)`는 클라이언트 표시용 보조 판정이며, 실제 저장 권한은 `POST /score-updates`의 서버 권한 검사가 결정합니다.
+- `StudyWithBeomseoPage`의 관리자 폼은 `datetime-local` 값을 학교 현지 시각으로 보고 `+09:00` offset을 붙여 전송합니다.
+- 예약 목록 카운트다운은 `serverNow`를 초기 기준으로 삼고, 화면에서는 1초 간격으로 로컬 갱신합니다.
+
 ### 2.9 `src/api/lostFound.js` (`lostFoundApi`)
 
 | 메서드 | HTTP/Endpoint | 오류 처리 | 비고 |
@@ -410,6 +431,7 @@ Field Trip 추가 계약 요약:
 | `src/pages/Community/SurveyExchange/*` | `surveyApi` |
 | `src/pages/Community/Vote/*` | `voteApi` |
 | `src/pages/Community/Bospi/BospiPage.jsx` | `bospiApi` |
+| `src/pages/Community/StudyWithBeomseo/StudyWithBeomseoPage.jsx` | `studyWithBeomseoApi` |
 | `src/pages/Notices/LostFound/*` | `lostFoundApi` |
 | `src/pages/Community/GomsolMarket/*` | `gomsolMarketApi` |
 | `src/pages/SchoolLifeInfo/Meal/MealPage.jsx` | `mealsApi`, `mealNotificationsApi` |

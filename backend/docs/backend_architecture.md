@@ -338,7 +338,7 @@ sequenceDiagram
 5. 직렬화 계약:
    - 프론트 계약 안정화를 위해 camelCase 중심 응답 유지
 
-감사 메타데이터는 `users`, `notices`, `free_posts`, `value_pick_posts`, `club_recruits`, `subject_changes`, `petitions`, `surveys`, `votes`, `bospi_records`, `bospi_pending_predictions`, `bospi_predictions`, `lost_found_*`, `gomsol_market_*` 및 관련 댓글/반응/이미지/응답 엔티티에 적용됩니다.
+감사 메타데이터는 `users`, `notices`, `free_posts`, `value_pick_posts`, `club_recruits`, `subject_changes`, `petitions`, `surveys`, `votes`, `bospi_records`, `bospi_pending_predictions`, `bospi_predictions`, `study_with_beomseo_score_updates`, `lost_found_*`, `gomsol_market_*` 및 관련 댓글/반응/이미지/응답 엔티티에 적용됩니다.
 
 ### 예산 공개 공지 확장
 
@@ -393,6 +393,8 @@ erDiagram
     USERS ||--o{ BOSPI_PREDICTIONS : owns
     USERS ||--|| BOSPI_USER_SCORES : scores
 
+    USERS ||--o{ STUDY_WITH_BEOMSEO_SCORE_UPDATES : schedules
+
     SPORTS_LEAGUE_CATEGORIES ||--o{ SPORTS_LEAGUE_TEAMS : has
     SPORTS_LEAGUE_CATEGORIES ||--o{ SPORTS_LEAGUE_MATCHES : has
     SPORTS_LEAGUE_CATEGORIES ||--o{ SPORTS_LEAGUE_PLAYERS : has
@@ -426,6 +428,21 @@ BOSPI는 고정 운영일 설정을 두지 않고 공식 기록이 시간순으�
 - 새 공식 기록이 들어오면 대기 예측을 해당 날짜의 `BospiPrediction`으로 확정하고, 이전 공식 기록과 비교해 `increase|decrease|tie` 결과를 평가합니다.
 - 점수는 매 요청마다 합산하지 않고 `BospiUserScore` 집계 테이블에 반영합니다. 재평가 대상 날짜가 바뀌면 영향받은 사용자만 다시 계산합니다.
 - 랭킹은 `total_score desc`, `correct_count desc`, `incorrect_count asc`, 닉네임, 사용자 ID 순으로 안정화하며, 같은 총점은 같은 표시 순위를 공유합니다.
+
+### 9.1B 스터디 윗 범서 순위판 도메인
+
+스터디 윗 범서는 Flask 커뮤니티 API에서 반별 최종 총점 snapshot을 예약 공개하는 단순 순위판입니다.
+
+- `StudyWithBeomseoScoreUpdate`는 반, 최종 총점, 공개 예정 시각, 입력자 역할을 append-only로 저장합니다.
+- 공개 순위는 현재 KST 시간 이하인 최신 기록만 반영하며, 미래 예약은 `admin | student_council`에게만 노출합니다.
+- 순위판 응답은 항상 30개 반을 반환하고, 아직 공개 기록이 없는 반은 0점으로 표시합니다.
+- `services/study_with_beomseo.py`가 classId/점수/시각 검증, 최신 snapshot 선택, 동점 순위 계산을 담당합니다.
+- `effective_at`은 DB에 KST 기준 naive datetime으로 저장하고, 응답 직렬화 시 `+09:00` offset을 붙여 브라우저가 명확한 시각으로 파싱하게 합니다.
+- 최신 공개 점수 조회는 `class_id`, `effective_at desc`, `id desc` 정렬에서 첫 행을 고르는 방식이며, 동일 공개 시각에 여러 입력이 있어도 더 나중에 저장된 행이 우선합니다.
+- 동점 순위는 competition ranking 방식으로 계산합니다. 예를 들어 두 반이 공동 1위면 다음 반은 3위입니다.
+- 미래 예약 목록은 `joinedload(created_by)`로 입력자 표시 정보를 함께 가져오며, 일반 사용자 응답에는 빈 배열로 유지합니다.
+- 이 엔드포인트는 공개 시각 경계에서 결과가 바뀌므로 response cache를 사용하지 않습니다.
+- 신규 score update 행은 공통 `before_flush` 요청 메타데이터 훅의 대상이므로 `ip_address`, `user_agent` 감사 필드가 자동 보강될 수 있습니다.
 
 ### 9.2 스포츠리그 문자중계 도메인
 
@@ -605,6 +622,7 @@ sequenceDiagram
 | `surveys` | `Survey`, `SurveyResponse`, `SurveyCredit` | `surveys` | 공통 write limit |
 | `votes` | `Vote`, `VoteOption`, `VoteResponse` | `votes` | 공통 write limit |
 | `bospi` | `BospiRecord`, `BospiPendingPrediction`, `BospiPrediction`, `BospiUserScore` | `bospi` | 공통 write limit |
+| `study_with_beomseo` | `StudyWithBeomseoScoreUpdate` | (없음) | 공통 write limit |
 | `sports_league` (FastAPI) | `SportsLeagueCategory`, `SportsLeagueMatch`, `SportsLeaguePlayer`, `SportsLeagueEvent`, `SportsLeagueStandingOverride` | `sports_league` | route별 limiter/SSE 정책 |
 | `field_trip` (FastAPI) | `FieldTripClass`, `FieldTripPost`, `FieldTripPostAttachment` | (별도 response cache 없음) | FastAPI route별 권한/CSRF |
 | `school_meals` (FastAPI) | `SchoolMeal`, `SchoolMealRating`, `SchoolMealNotificationSubscription` | (별도 response cache 없음) | 익명 평점 쿠키 + installationId 구독 |
@@ -625,14 +643,16 @@ sequenceDiagram
 10. `routes/notices.py`
 11. `routes/value_pick.py`
 12. `routes/bospi.py`
-13. `fastapi_app/routes/sports_league.py`
-14. `fastapi_app/services/sports_league.py`
-15. `fastapi_app/services/sports_league_players.py`
-16. `fastapi_app/services/sports_league_realtime.py`
-17. `fastapi_app/routes/field_trip.py`
-18. `fastapi_app/services/field_trip.py`
-19. `fastapi_app/routes/meals.py`
-20. `fastapi_app/services/meals.py`
+13. `routes/study_with_beomseo.py`
+14. `services/study_with_beomseo.py`
+15. `fastapi_app/routes/sports_league.py`
+16. `fastapi_app/services/sports_league.py`
+17. `fastapi_app/services/sports_league_players.py`
+18. `fastapi_app/services/sports_league_realtime.py`
+19. `fastapi_app/routes/field_trip.py`
+20. `fastapi_app/services/field_trip.py`
+21. `fastapi_app/routes/meals.py`
+22. `fastapi_app/services/meals.py`
 
 ## 14. 변경 시 아키텍처 체크리스트
 
