@@ -606,6 +606,48 @@ class SchoolMealRating(Base):
     )
 
 
+# FastAPI uses this pure SQLAlchemy model for moderated comment reads and writes.
+class SchoolMealComment(Base):
+    __tablename__ = 'school_meal_comments'
+
+    id = Column(MEAL_ID_TYPE, primary_key=True, autoincrement=True)
+    meal_date = Column(Date, nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'), nullable=False, index=True)
+    body = Column(Text, nullable=False)
+    approval_status = Column(String(16), nullable=False, default='pending', index=True)
+    approved_by_id = Column(Integer, ForeignKey('users.id', ondelete='SET NULL'), nullable=True, index=True)
+    approved_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    deleted_at = Column(DateTime, nullable=True, index=True)
+    ip_address = Column(String(64), nullable=True)
+    user_agent = Column(String(255), nullable=True)
+
+    user = relationship('User', foreign_keys=[user_id])
+    approved_by = relationship('User', foreign_keys=[approved_by_id])
+
+    __table_args__ = (
+        CheckConstraint(
+            "approval_status IN ('pending', 'approved')",
+            name='ck_school_meal_comments_approval_status',
+        ),
+        # Date/status serves public and admin lists; date/user/status serves author-visible pending rows.
+        Index(
+            'ix_school_meal_comments_date_status_created',
+            'meal_date',
+            'approval_status',
+            'deleted_at',
+            'created_at',
+        ),
+        Index(
+            'ix_school_meal_comments_date_user_status',
+            'meal_date',
+            'user_id',
+            'approval_status',
+        ),
+    )
+
+
 class SchoolMealNotificationSubscription(Base):
     __tablename__ = 'school_meal_notification_subscriptions'
 

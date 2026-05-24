@@ -6,10 +6,14 @@ from __future__ import annotations
 import secrets
 from datetime import date
 
-from fastapi import APIRouter, Query, Request, Response
+from fastapi import APIRouter, Depends, Query, Request, Response
 
-from ..deps import DbSession, OptionalCurrentUser, SettingsDep
+from ..deps import CurrentUser, DbSession, OptionalCurrentUser, SettingsDep, get_client_ip, require_role
 from ..schemas import (
+    MealCommentApprovalRequest,
+    MealCommentCreateRequest,
+    MealCommentResponse,
+    MealCommentsResponse,
     MealRangeQuery,
     MealRangeResponse,
     MealNotificationSubscriptionResponse,
@@ -24,8 +28,11 @@ from ..services.meal_notifications import (
     upsert_subscription,
 )
 from ..services.meals import (
+    create_meal_comment,
     get_meal_range_payload,
     get_today_meal_payload,
+    list_meal_comments,
+    set_meal_comment_approval,
     submit_meal_rating,
 )
 
@@ -118,6 +125,64 @@ async def post_school_meal_rating(
         score=body.score,
         current_user=current_user,
         anonymous_token=anonymous_token,
+    )
+
+
+@router.get('/{meal_date}/comments', response_model=MealCommentsResponse)
+async def get_school_meal_comments(
+    meal_date: date,
+    db: DbSession,
+    current_user: OptionalCurrentUser,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=50, alias='pageSize', ge=1, le=100),
+    order: str = Query(default='asc', pattern='^(asc|desc)$'),
+):
+    # The service applies role-aware visibility so anonymous, author, and admin totals stay consistent.
+    return await list_meal_comments(
+        db,
+        target_date=meal_date,
+        current_user=current_user,
+        page=page,
+        page_size=page_size,
+        order=order,
+    )
+
+
+@router.post('/{meal_date}/comments', response_model=MealCommentResponse, status_code=201)
+async def post_school_meal_comment(
+    meal_date: date,
+    body: MealCommentCreateRequest,
+    request: Request,
+    db: DbSession,
+    settings: SettingsDep,
+    current_user: CurrentUser,
+):
+    # Request metadata is stored with the pending row for later moderation review.
+    return await create_meal_comment(
+        db,
+        target_date=meal_date,
+        body=body.body,
+        current_user=current_user,
+        ip_address=get_client_ip(request, settings),
+        user_agent=request.headers.get('user-agent'),
+    )
+
+
+@router.patch('/{meal_date}/comments/{comment_id}/approval', response_model=MealCommentResponse)
+async def patch_school_meal_comment_approval(
+    meal_date: date,
+    comment_id: int,
+    body: MealCommentApprovalRequest,
+    db: DbSession,
+    current_user=Depends(require_role('admin')),
+):
+    # Approval is date-scoped to avoid toggling a comment attached to another meal.
+    return await set_meal_comment_approval(
+        db,
+        target_date=meal_date,
+        comment_id=comment_id,
+        approved=body.approved,
+        current_user=current_user,
     )
 
 

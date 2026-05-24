@@ -23,9 +23,13 @@ function buildEmptyRatingSummary() {
 
 function normalizeRatingSummary(summary) {
   // The backend usually sends a complete distribution, but the UI still
-  // backfills missing buckets so charts and summaries remain structurally stable.
+  // backfills missing buckets so admin charts remain structurally stable.
+  // When the backend explicitly sends an empty distribution, that is a privacy
+  // boundary for non-admin readers and must stay empty.
+  const rawDistribution = Array.isArray(summary?.distribution) ? summary.distribution : null;
+  const shouldExposeDistribution = rawDistribution === null || rawDistribution.length > 0;
   const bucketsByScore = new Map(
-    (Array.isArray(summary?.distribution) ? summary.distribution : []).map((bucket) => {
+    (shouldExposeDistribution ? rawDistribution || [] : []).map((bucket) => {
       const score = Number(bucket?.score);
       const count = Number(bucket?.count || 0);
       const ratio = Number(bucket?.ratio || 0);
@@ -41,11 +45,13 @@ function normalizeRatingSummary(summary) {
     }),
   );
 
-  const distribution = MEAL_RATING_SCORES.map((score) => bucketsByScore.get(score) || {
-    score,
-    count: 0,
-    ratio: 0,
-  });
+  const distribution = shouldExposeDistribution
+    ? MEAL_RATING_SCORES.map((score) => bucketsByScore.get(score) || {
+        score,
+        count: 0,
+        ratio: 0,
+      })
+    : [];
   const derivedTotalCount = distribution.reduce((sum, bucket) => sum + bucket.count, 0);
   const providedTotalCount = Number(summary?.totalCount);
   const totalCount = Number.isFinite(providedTotalCount) && providedTotalCount >= 0
@@ -54,7 +60,7 @@ function normalizeRatingSummary(summary) {
   const providedAverageScore = Number(summary?.averageScore);
   const averageScore = Number.isFinite(providedAverageScore)
     ? providedAverageScore
-    : totalCount > 0
+    : totalCount > 0 && distribution.length > 0
       ? Number(
           (
             distribution.reduce((sum, bucket) => sum + (bucket.score * bucket.count), 0) / totalCount
@@ -125,12 +131,53 @@ function getMealErrorMessage(error, fallbackMessage) {
     return serverMessage.trim();
   }
 
+  const detail = error?.response?.data?.detail;
+  if (typeof detail === 'string' && detail.trim()) {
+    return detail.trim();
+  }
+  if (typeof detail?.error === 'string' && detail.error.trim()) {
+    return detail.error.trim();
+  }
+
   const directMessage = error?.message;
   if (typeof directMessage === 'string' && directMessage.trim()) {
     return directMessage.trim();
   }
 
   return fallbackMessage;
+}
+
+function normalizeCommentAuthor(author) {
+  return {
+    id: Number.isFinite(Number(author?.id)) ? Number(author.id) : 0,
+    name: typeof author?.name === 'string' && author.name ? author.name : '탈퇴한 사용자',
+    role: typeof author?.role === 'string' && author.role ? author.role : 'student',
+  };
+}
+
+function normalizeMealComment(comment) {
+  return {
+    id: Number.isFinite(Number(comment?.id)) ? Number(comment.id) : 0,
+    mealDate: typeof comment?.mealDate === 'string' ? comment.mealDate : '',
+    body: typeof comment?.body === 'string' ? comment.body : '',
+    approvalStatus: comment?.approvalStatus === 'approved' ? 'approved' : 'pending',
+    author: normalizeCommentAuthor(comment?.author),
+    approvedBy: comment?.approvedBy ? normalizeCommentAuthor(comment.approvedBy) : null,
+    approvedAt: typeof comment?.approvedAt === 'string' ? comment.approvedAt : null,
+    createdAt: typeof comment?.createdAt === 'string' ? comment.createdAt : null,
+    updatedAt: typeof comment?.updatedAt === 'string' ? comment.updatedAt : null,
+  };
+}
+
+function normalizeMealCommentsResponse(payload) {
+  // The API exposes both page_size and pageSize; normalize to one client-facing key.
+  const pageSize = Number(payload?.pageSize || payload?.page_size || 50);
+  return {
+    items: Array.isArray(payload?.items) ? payload.items.map(normalizeMealComment) : [],
+    total: Number.isFinite(Number(payload?.total)) ? Number(payload.total) : 0,
+    page: Number.isFinite(Number(payload?.page)) ? Number(payload.page) : 1,
+    pageSize: Number.isFinite(pageSize) && pageSize > 0 ? pageSize : 50,
+  };
 }
 
 export const mealsApi = {
@@ -173,6 +220,47 @@ export const mealsApi = {
       return normalizeMealRatings(response.data?.ratings);
     } catch (error) {
       throw new Error(getMealErrorMessage(error, '급식 평점을 저장하지 못했어요.'));
+    }
+  },
+
+  async listComments(dateKey, { page = 1, pageSize = 50, order = 'asc' } = {}) {
+    try {
+      const response = await fastapiApi.get(`/api/school-info/meals/${dateKey}/comments`, {
+        params: {
+          page,
+          pageSize,
+          order,
+        },
+      });
+      // Visibility is resolved server-side, so the client renders exactly the returned page.
+      return normalizeMealCommentsResponse(response.data);
+    } catch (error) {
+      throw new Error(getMealErrorMessage(error, '급식 댓글을 불러오지 못했어요.'));
+    }
+  },
+
+  async createComment(dateKey, body) {
+    try {
+      const response = await fastapiApi.post(`/api/school-info/meals/${dateKey}/comments`, {
+        body,
+      });
+      // Created comments may still be pending, so keep the full normalized record.
+      return normalizeMealComment(response.data);
+    } catch (error) {
+      throw new Error(getMealErrorMessage(error, '급식 댓글을 저장하지 못했어요.'));
+    }
+  },
+
+  async setCommentApproval(dateKey, commentId, approved) {
+    try {
+      const response = await fastapiApi.patch(
+        `/api/school-info/meals/${dateKey}/comments/${commentId}/approval`,
+        { approved },
+      );
+      // Admin moderation returns the updated row, allowing in-place list replacement.
+      return normalizeMealComment(response.data);
+    } catch (error) {
+      throw new Error(getMealErrorMessage(error, '댓글 승인 상태를 변경하지 못했어요.'));
     }
   },
 };

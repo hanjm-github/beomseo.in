@@ -91,6 +91,7 @@ from .field_trip import (
 )
 from .school_meal import SchoolMeal
 from .school_meal_rating import SchoolMealRating
+from .school_meal_comment import SchoolMealComment
 from .school_meal_notification_subscription import SchoolMealNotificationSubscription
 from .study_with_beomseo import StudyWithBeomseoScoreUpdate
 
@@ -164,6 +165,7 @@ __all__ = [
     'FieldTripPostAttachment',
     'SchoolMeal',
     'SchoolMealRating',
+    'SchoolMealComment',
     'SchoolMealNotificationSubscription',
     'StudyWithBeomseoScoreUpdate',
     'db',

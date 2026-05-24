@@ -14,7 +14,6 @@ import {
   Download,
   Info,
   Smartphone,
-  Star,
   Soup,
 } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
@@ -23,6 +22,7 @@ import SEO from '../../../components/SEO';
 
 import { mealNotificationsApi } from '../../../api/mealNotifications';
 import { mealsApi } from '../../../api/meals';
+import { useAuth } from '../../../context/AuthContext';
 import { usePwaInstall } from '../../../context/PwaInstallContext';
 import MealNotificationTimePicker from '../../../features/meals/components/MealNotificationTimePicker';
 import {
@@ -60,6 +60,7 @@ import {
 } from '../../../pwa/firebaseMessaging';
 import { getMealNotificationInstallationId } from '../../../pwa/mealNotificationInstallationId';
 import '../../page-shell.css';
+import MealCommentsPanel from './MealCommentsPanel';
 import styles from './MealPage.module.css';
 
 const WEEKDAY_LABELS = ['월', '화', '수', '목', '금'];
@@ -225,6 +226,8 @@ function normalizeMealNotificationItem(item, installationId) {
 export default function MealPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { isInstalled, isIosManualInstall, promptInstall } = usePwaInstall();
+  const { user, isAuthenticated } = useAuth();
+  const isAdmin = user?.role === 'admin';
   const referenceDate = useMemo(() => getReferenceDate(), []);
   const mealNotificationInstallationId = useMemo(
     () => getMealNotificationInstallationId(),
@@ -241,6 +244,7 @@ export default function MealPage() {
   const [mealLoadError, setMealLoadError] = useState('');
   const [ratingError, setRatingError] = useState('');
   const [submittingRatingKey, setSubmittingRatingKey] = useState('');
+  const [ratingDrafts, setRatingDrafts] = useState({});
   const visibleMonthKeys = useMemo(
     () => new Set(monthOptions.map((option) => option.key)),
     [monthOptions],
@@ -457,6 +461,7 @@ export default function MealPage() {
   useEffect(() => {
     setRatingError('');
     setSubmittingRatingKey('');
+    setRatingDrafts({});
   }, [routeState.dateKey]);
 
   useEffect(() => {
@@ -731,6 +736,7 @@ export default function MealPage() {
   };
 
   const handleRatingSelect = async (category, score) => {
+    const normalizedScore = Number(score);
     const availability = getRatingAvailability(category, selectedDate, referenceDate, selectedEntry);
 
     if (!availability.canRate) {
@@ -738,16 +744,21 @@ export default function MealPage() {
       return;
     }
 
-    if (!selectedEntry || selectedEntry.isNoMeal) {
+    if (!selectedEntry || selectedEntry.isNoMeal || !RATING_SCORES.includes(normalizedScore)) {
       return;
     }
 
-    const requestKey = `${selectedEntry.date}:${category}:${score}`;
+    const requestKey = `${selectedEntry.date}:${category}:${normalizedScore}`;
+    const draftKey = `${selectedEntry.date}:${category}`;
     setRatingError('');
     setSubmittingRatingKey(requestKey);
+    setRatingDrafts((previous) => ({
+      ...previous,
+      [draftKey]: normalizedScore,
+    }));
 
     try {
-      const ratings = await mealsApi.submitRating(selectedEntry.date, category, score);
+      const ratings = await mealsApi.submitRating(selectedEntry.date, category, normalizedScore);
       setMealEntriesByDate((previous) => {
         const currentEntry = previous[selectedEntry.date];
         if (!currentEntry) {
@@ -766,6 +777,11 @@ export default function MealPage() {
       setRatingError(error instanceof Error ? error.message : '급식 평점을 저장하지 못했어요.');
     } finally {
       setSubmittingRatingKey('');
+      setRatingDrafts((previous) => {
+        const nextDrafts = { ...previous };
+        delete nextDrafts[draftKey];
+        return nextDrafts;
+      });
     }
   };
 
@@ -1013,9 +1029,8 @@ export default function MealPage() {
               role="tab"
               aria-selected={routeState.tab === tab.id}
               aria-controls={`meal-panel-${tab.id}`}
-              className={`${styles.tabButton} ${
-                routeState.tab === tab.id ? styles.tabButtonActive : ''
-              }`}
+              className={`${styles.tabButton} ${routeState.tab === tab.id ? styles.tabButtonActive : ''
+                }`}
               onClick={() => handleTabChange(tab.id)}
             >
               {tab.label}
@@ -1098,9 +1113,8 @@ export default function MealPage() {
                 <button
                   key={option.key}
                   type="button"
-                  className={`${styles.monthChip} ${
-                    routeState.monthKey === option.key ? styles.monthChipActive : ''
-                  }`}
+                  className={`${styles.monthChip} ${routeState.monthKey === option.key ? styles.monthChipActive : ''
+                    }`}
                   onClick={() => handleMonthChange(option.key)}
                 >
                   <span>{option.label}</span>
@@ -1125,11 +1139,9 @@ export default function MealPage() {
                     <button
                       key={cell.key}
                       type="button"
-                      className={`${styles.dayCell} ${
-                        cell.isCurrentMonth ? '' : styles.dayCellMuted
-                      } ${cell.isToday ? styles.dayCellToday : ''} ${
-                        isSelected ? styles.dayCellSelected : ''
-                      }`}
+                      className={`${styles.dayCell} ${cell.isCurrentMonth ? '' : styles.dayCellMuted
+                        } ${cell.isToday ? styles.dayCellToday : ''} ${isSelected ? styles.dayCellSelected : ''
+                        }`}
                       onClick={() => isSelectable && handleCalendarDateSelect(cell.dateKey)}
                       disabled={!isSelectable}
                       aria-pressed={isSelected}
@@ -1211,7 +1223,7 @@ export default function MealPage() {
             <h2 className={styles.sectionTitle}>선택한 급식을 1점부터 5점까지 평가해보세요</h2>
           </div>
           <p className={styles.sectionDescription}>
-            같은 항목은 다시 눌러 점수를 바꿀 수 있어요.
+            같은 항목은 다시 선택해 점수를 바꿀 수 있어요.
           </p>
         </div>
 
@@ -1232,6 +1244,11 @@ export default function MealPage() {
               const summary = selectedRatings[group.key] || createEmptyRatingSummary();
               const availability = ratingAvailabilityByKey[group.key]
                 || getRatingAvailability(group.key, selectedDate, referenceDate, selectedEntry);
+              const draftKey = `${selectedEntry?.date || routeState.dateKey}:${group.key}`;
+              const selectedScore = ratingDrafts[draftKey] ?? summary.myScore ?? '';
+              const isSavingThisGroup = submittingRatingKey.startsWith(
+                `${selectedEntry?.date || routeState.dateKey}:${group.key}:`,
+              );
 
               return (
                 <article key={group.key} className={styles.reactionCard}>
@@ -1246,43 +1263,48 @@ export default function MealPage() {
                     </div>
                   </div>
 
-                  <div className={styles.scoreButtonGroup} role="group" aria-label={`${group.title} 평점 선택`}>
-                    {RATING_SCORES.map((score) => {
-                      const isActive = summary.myScore === score;
-                      const isSubmitting = Boolean(submittingRatingKey);
+                  {availability.canRate ? (
+                    <label className={styles.ratingSelectWrap} htmlFor={`meal-rating-${group.key}`}>
+                      <span className={styles.ratingSelectLabel}>점수 선택</span>
+                      <select
+                        id={`meal-rating-${group.key}`}
+                        className={styles.ratingSelect}
+                        value={selectedScore ? String(selectedScore) : ''}
+                        onChange={(event) => handleRatingSelect(group.key, Number(event.target.value))}
+                        disabled={Boolean(submittingRatingKey)}
+                        aria-describedby={`meal-rating-${group.key}-state`}
+                      >
+                        <option value="">점수 선택</option>
+                        {RATING_SCORES.map((score) => (
+                          <option key={`${group.key}-${score}`} value={score}>
+                            {score}점
+                          </option>
+                        ))}
+                      </select>
+                      <span id={`meal-rating-${group.key}-state`} className={styles.ratingSelectMeta}>
+                        {isSavingThisGroup ? '저장 중...' : '선택하면 바로 저장됩니다.'}
+                      </span>
+                    </label>
+                  ) : null}
 
-                      return (
-                        <button
-                          key={`${group.key}-${score}`}
-                          type="button"
-                          className={`${styles.scoreButton} ${isActive ? styles.scoreButtonActive : ''}`}
-                          onClick={() => handleRatingSelect(group.key, score)}
-                          disabled={isSubmitting || !availability.canRate}
-                          aria-pressed={isActive}
-                        >
-                          <Star size={14} className={styles.scoreIcon} />
-                          {score}점
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  <div className={styles.scoreDistribution}>
-                    {summary.distribution.map((bucket) => (
-                      <div key={`${group.key}-${bucket.score}`} className={styles.scoreRow}>
-                        <span className={styles.scoreRowLabel}>{bucket.score}점</span>
-                        <div className={styles.reactionBar} aria-hidden="true">
-                          <div
-                            className={styles.reactionFill}
-                            style={{ width: `${bucket.ratio}%` }}
-                          />
+                  {isAdmin ? (
+                    <div className={styles.scoreDistribution}>
+                      {summary.distribution.map((bucket) => (
+                        <div key={`${group.key}-${bucket.score}`} className={styles.scoreRow}>
+                          <span className={styles.scoreRowLabel}>{bucket.score}점</span>
+                          <div className={styles.reactionBar} aria-hidden="true">
+                            <div
+                              className={styles.reactionFill}
+                              style={{ width: `${bucket.ratio}%` }}
+                            />
+                          </div>
+                          <span className={styles.scoreRowMeta}>
+                            {bucket.count}명 · {bucket.ratio}%
+                          </span>
                         </div>
-                        <span className={styles.scoreRowMeta}>
-                          {bucket.count}명 · {bucket.ratio}%
-                        </span>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  ) : null}
 
                   {!availability.canRate ? (
                     <p className={styles.ratingLockedReason}>{availability.reason}</p>
@@ -1297,6 +1319,14 @@ export default function MealPage() {
           </div>
         )}
       </section>
+
+      {/* Comments follow the selected real meal; synthetic empty days disable posting and loading. */}
+      <MealCommentsPanel
+        dateKey={selectedEntry?.date || routeState.dateKey}
+        disabled={!selectedEntry || selectedEntry.isNoMeal}
+        currentUser={user}
+        isAuthenticated={isAuthenticated}
+      />
 
       <section className={styles.supportSection}>
         <article className={styles.detailCard}>

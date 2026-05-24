@@ -2,6 +2,7 @@
 .notificationCard,
 .tabSection,
 .detailCard,
+.commentsPanel,
 .reactionCard,
 .calendarCard {
   position: relative;
@@ -42,6 +43,7 @@
 .notificationCard::before,
 .tabSection::before,
 .detailCard::before,
+.commentsPanel::before,
 .reactionCard::before,
 .calendarCard::before {
   content: '';
@@ -63,6 +65,7 @@
 .notificationCard,
 .tabSection,
 .detailCard,
+.commentsPanel,
 .reactionCard {
   padding: var(--space-5);
 }
@@ -71,6 +74,7 @@
 .notificationCard,
 .panel,
 .detailCard,
+.commentsPanel,
 .reactionCard {
   position: relative;
   z-index: 1;
@@ -728,6 +732,54 @@
   color: var(--color-text-primary);
 }
 
+.ratingSelectWrap {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.ratingSelectLabel,
+.commentFieldLabel {
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  color: var(--color-text-primary);
+}
+
+.ratingSelect {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-card-border-muted);
+  background: color-mix(in srgb, var(--color-surface) 94%, transparent);
+  color: var(--color-text-primary);
+  font: inherit;
+  font-weight: var(--font-semibold);
+  cursor: pointer;
+  transition:
+    border-color var(--transition-base),
+    box-shadow var(--transition-base),
+    background-color var(--transition-base);
+}
+
+.ratingSelect:focus-visible,
+.commentTextarea:focus-visible,
+.commentApprovalToggle input:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-primary-500) 42%, transparent);
+  outline-offset: 2px;
+}
+
+.ratingSelect:disabled {
+  cursor: not-allowed;
+  opacity: 0.68;
+}
+
+.ratingSelectMeta {
+  min-height: 22px;
+  color: var(--color-text-secondary);
+  line-height: var(--leading-normal);
+  font-size: var(--text-sm);
+}
+
 .scoreButtonGroup,
 .scoreDistribution {
   display: flex;
@@ -812,6 +864,187 @@
   background: color-mix(in srgb, var(--color-alert-warning-bg) 88%, var(--color-card-bg) 12%);
   color: var(--color-alert-warning-text);
   line-height: var(--leading-relaxed);
+}
+
+.commentsSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.commentsPanel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.commentCountBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: fit-content;
+  min-height: 36px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-full);
+  border: 1px solid color-mix(in srgb, var(--color-chip-border) 68%, transparent);
+  background: var(--color-chip-bg);
+  color: var(--color-chip-text);
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+}
+
+.commentForm {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.commentTextarea {
+  width: 100%;
+  min-height: 112px;
+  resize: vertical;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-card-border-muted);
+  background: color-mix(in srgb, var(--color-surface) 94%, transparent);
+  color: var(--color-text-primary);
+  font: inherit;
+  line-height: var(--leading-relaxed);
+  transition:
+    border-color var(--transition-base),
+    box-shadow var(--transition-base),
+    background-color var(--transition-base);
+}
+
+.commentTextarea:disabled {
+  cursor: not-allowed;
+  opacity: 0.72;
+}
+
+.commentFormFooter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.commentFormFooter button {
+  min-height: 44px;
+}
+
+.commentFormState,
+.commentCounter {
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+}
+
+.commentCounter {
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.commentList {
+  display: grid;
+  gap: var(--space-3);
+  min-height: 72px;
+}
+
+.commentItem,
+.commentEmptyState {
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-card-border-muted);
+  background: color-mix(in srgb, var(--color-surface) 90%, transparent);
+}
+
+.commentItem {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+}
+
+.commentHeader,
+.commentFooter {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.commentHeader {
+  justify-content: space-between;
+}
+
+.commentHeader time {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.commentBody {
+  color: var(--color-text-primary);
+  line-height: var(--leading-relaxed);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.commentFooter {
+  justify-content: space-between;
+  padding-top: var(--space-2);
+  border-top: 1px solid color-mix(in srgb, var(--color-card-border-muted) 80%, transparent);
+}
+
+.commentPendingBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: var(--font-semibold);
+}
+
+.commentPendingBadge {
+  border: 1px solid color-mix(in srgb, var(--color-alert-warning-border) 76%, transparent);
+  background: color-mix(in srgb, var(--color-alert-warning-bg) 88%, var(--color-card-bg) 12%);
+  color: var(--color-alert-warning-text);
+}
+
+.commentApprovalToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-card-border-muted);
+  background: color-mix(in srgb, var(--color-card-bg) 82%, var(--color-surface) 18%);
+  color: var(--color-text-primary);
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+}
+
+.commentApprovalToggle input {
+  width: 22px;
+  height: 22px;
+  accent-color: var(--color-primary-500);
+}
+
+.commentEmptyState {
+  min-height: 72px;
+  padding: var(--space-4);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-text-secondary);
+}
+
+.spinIcon {
+  animation: meal-spin 0.8s linear infinite;
+}
+
+@keyframes meal-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .nutritionPanel {
@@ -1003,6 +1236,7 @@
   .notificationCard,
   .tabSection,
   .detailCard,
+  .commentsPanel,
   .reactionCard,
   .calendarCard {
     padding: var(--space-4);
@@ -1025,13 +1259,16 @@
   }
 
   .notificationToggleRow,
-  .notificationActionRow {
+  .notificationActionRow,
+  .commentFormFooter,
+  .commentFooter {
     grid-template-columns: 1fr;
     flex-direction: column;
+    align-items: stretch;
   }
 
-  .scoreButtonGroup {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+  .commentCounter {
+    margin-left: 0;
   }
 
   .dayCell {
@@ -1062,7 +1299,13 @@
   .monthChip,
   .dayCell,
   .reactionButton,
-  .scoreButton {
+  .scoreButton,
+  .ratingSelect,
+  .commentTextarea {
     transition: none;
+  }
+
+  .spinIcon {
+    animation: none;
   }
 }

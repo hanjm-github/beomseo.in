@@ -29,6 +29,7 @@ from models import sports_league  # noqa: F401 ensure models are registered
 from models import field_trip  # noqa: F401 ensure models are registered
 from models import school_meal  # noqa: F401 ensure models are registered
 from models import school_meal_rating  # noqa: F401 ensure models are registered
+from models import school_meal_comment  # noqa: F401 ensure models are registered
 from models import school_meal_notification_subscription  # noqa: F401 ensure models are registered
 from models import study_with_beomseo  # noqa: F401 ensure models are registered
 from utils.cache import init_cache
