@@ -3,7 +3,7 @@
  * @description 천상고등학교 소개 페이지
  */
 import SEO from '../../../components/SEO';
-import schoolEmblem from './cshs-emblem.png';
+import schoolEmblem from './cscord.png';
 import '../../page-shell.css';
 import styles from './CSHSInfoPage.module.css';
 

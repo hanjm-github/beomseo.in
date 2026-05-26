@@ -95,7 +95,7 @@
 #### 3.2.3 학교 소개 라우트 (`src/pages/Notices/SchoolInfo/index.jsx`)
 | 경로 | 요소 |
 |---|---|
-| `/notices/cshs-info` | `CSHSInfoPage` |
+| `/notices/school-info/cshs-info` | `CSHSInfoPage` |
 
 ### 3.3 커뮤니티 라우트 (`src/pages/Community/index.jsx`)
 
