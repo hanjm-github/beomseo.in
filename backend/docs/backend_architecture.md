@@ -449,6 +449,7 @@ BOSPI는 고정 운영일 설정을 두지 않고 공식 기록이 시간순으�
 스포츠리그는 일반 게시판과 달리 `카테고리 → 팀/경기 → 이벤트 → snapshot` 계층으로 동작합니다.
 
 - 기준 read 모델은 `build_snapshot(category_id)`가 만드는 단일 snapshot입니다.
+- 카테고리 전환용 목록은 seed registry를 기준으로 만들고, bootstrap된 DB row가 있으면 DB metadata가 seed summary를 덮어씁니다.
 - `SportsLeagueMatch`의 스코어/상태는 독립 입력값이 아니라 **최신 active event를 다시 계산한 projection**입니다.
 - 예선 순위는 완료 경기만으로 자동 계산하고, `SportsLeagueStandingOverride`가 있으면 운영진 확정 순위가 자동 계산을 완전히 덮어씁니다.
 - 선수 라인업/개인 순위는 `SportsLeaguePlayer` + `services/sports_league_players.py`가 별도 CRUD로 관리하며, snapshot/SSE 응답에는 포함하지 않습니다.
@@ -475,9 +476,10 @@ sequenceDiagram
 현재 구현 기준으로:
 
 1. snapshot 조회(`GET /categories/:id`)만 `60 per minute` limiter가 직접 연결되어 있습니다.
-2. SSE route는 pub/sub 신호가 없어도 `updatedAt` 변화를 감지하기 위해 유휴 시 snapshot을 다시 읽습니다.
-3. `RATELIMIT_SPORTS_LEAGUE_STREAM_CONNECT`, `SPORTS_LEAGUE_MAX_STREAMS_PER_CLIENT`는 config/helper에 존재하지만 route-level enforcement는 아직 연결되지 않았습니다.
-4. 선수 라인업 탭은 `GET/POST/DELETE/PATCH /players` 엔드포인트를 사용하고, 실시간 중계와는 별도 상태 흐름으로 유지됩니다.
+2. `GET /categories`는 기본 2학년 카테고리와 이전 3학년 카테고리를 함께 노출합니다.
+3. SSE route는 pub/sub 신호가 없어도 `updatedAt` 변화를 감지하기 위해 유휴 시 snapshot을 다시 읽습니다.
+4. `RATELIMIT_SPORTS_LEAGUE_STREAM_CONNECT`, `SPORTS_LEAGUE_MAX_STREAMS_PER_CLIENT`는 config/helper에 존재하지만 route-level enforcement는 아직 연결되지 않았습니다.
+5. 선수 라인업 탭은 `GET/POST/DELETE/PATCH /players` 엔드포인트를 사용하고, 실시간 중계와는 별도 상태 흐름으로 유지됩니다.
 
 ### 9.3 수학여행 게시판 도메인
 

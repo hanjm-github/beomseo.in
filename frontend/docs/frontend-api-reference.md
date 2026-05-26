@@ -269,6 +269,7 @@ Value Pick 계약 요약:
 
 | 메서드 | HTTP/Endpoint | 오류 처리 | 비고 |
 |---|---|---|---|
+| `getCategories()` | `GET /api/sports-league/categories` | 예 | 스포츠리그 전환 UI용 카테고리 목록 |
 | `getCategory(categoryId)` | `GET /api/sports-league/categories/:categoryId` | 예 | 캐시된 snapshot이 있으면 즉시 반환 후 백그라운드 refresh |
 | `getPlayers(categoryId)` | `GET /api/sports-league/categories/:categoryId/players` | 예 | 선수 라인업/개인 순위용 별도 읽기 계약 |
 | `createPlayer(categoryId, teamId, payload)` | `POST /api/sports-league/categories/:categoryId/teams/:teamId/players` | 예 | 학생회/admin만 선수 추가 |
@@ -284,14 +285,20 @@ Value Pick 계약 요약:
 
 - `managerRoles`
 - 클라이언트 동작:
+  - `getCategories()`는 `defaultCategoryId`와 `items[]`를 반환하며, 스포츠리그 화면의 리그 선택 select를 구성합니다.
+  - API 카테고리 목록을 불러오기 전에는 `SPORTS_LEAGUE_CATEGORY_OPTIONS`의 2학년/3학년 대체 목록을 먼저 사용합니다.
+  - 리그 선택을 바꾸면 현재 `tab` 쿼리만 유지하고, 새 카테고리의 선택 경기는 snapshot 기준으로 다시 결정합니다.
   - category별 transport 상태를 공유해 여러 listener가 있어도 EventSource는 1개만 유지
   - `getCategory()`는 memory/`localStorage` 캐시를 먼저 읽고 stale-while-revalidate로 최신 snapshot을 다시 가져옴
+  - category가 바뀌면 `useSportsLeagueLive()`가 이전 snapshot을 즉시 비워 다른 리그 데이터가 잠시 남아 보이지 않게 합니다.
   - 선수 라인업/개인 순위는 `getPlayers()`와 mutation 응답으로만 갱신되며, snapshot/SSE에는 포함되지 않음
   - `createPlayer()/deletePlayer()/adjustPlayerStat()`는 응답에 포함된 `players` 배열 전체로 로컬 store를 교체
   - `subscribe()`는 `BroadcastChannel` 우선, 미지원 브라우저에서는 `storage` 이벤트로 탭 간 동기화
   - SSE 오류 시 5초 polling + 3초 재연결을 시도
 - 백엔드 계약 요약:
   - snapshot/SSE는 익명 조회 가능
+  - `GET /api/sports-league/categories`는 seed registry 순서의 카테고리 요약을 반환하고, bootstrap된 row가 있으면 DB 값을 우선합니다.
+  - 기본 카테고리는 `2026-spring-grade2-boys-soccer`이고, 이전 카테고리로 `2026-spring-grade3-boys-soccer`가 함께 노출됩니다.
   - 이벤트 `author` payload는 `{ nickname }`만 노출
   - backend는 active event를 최대 `250`개까지만 유지
   - 코드 기준 route-level limiter는 snapshot 조회(`60 per minute`)에만 직접 연결되어 있음

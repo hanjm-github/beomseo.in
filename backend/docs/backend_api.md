@@ -1283,7 +1283,39 @@ flowchart TD
 - 선수 라인업/개인 순위 데이터는 snapshot에 포함되지 않으며, 별도 `/players` 엔드포인트로 읽고 씁니다.
 - `liveEvents[].author`는 `{ nickname }`만 노출합니다.
 - active event는 최신 `250`개까지만 유지되고, 오래된 항목은 soft delete 됩니다.
+- 등록된 seed 카테고리는 기본 `2026-spring-grade2-boys-soccer`와 이전 `2026-spring-grade3-boys-soccer`입니다.
 - `RATELIMIT_SPORTS_LEAGUE_STREAM_CONNECT`, client/category 동시 연결 제한 helper는 현재 코드에 정의되어 있지만 stream route에는 직접 연결되지 않았습니다.
+
+### 12A.0 `GET /api/sports-league/categories`
+
+- 권한: 없음
+- 반환: `defaultCategoryId`, `items[]`
+- `items[]`: `id`, `title`, `seasonLabel`, `gradeLabel`, `sportLabel`, `scheduleWindowLabel`, `updatedAt`, `storageVersion`
+- 용도: 프론트 스포츠리그 전환 UI와 기본 카테고리 진입점
+- 동작:
+  - seed registry 순서로 카테고리 목록을 반환합니다.
+  - DB에 bootstrap된 row가 있으면 제목/학기/학년/종목/일정/버전/갱신 시각은 DB 값을 우선 사용합니다.
+  - 아직 bootstrap 전인 카테고리도 seed metadata로 목록에 노출될 수 있습니다.
+
+응답 예시:
+
+```json
+{
+  "defaultCategoryId": "2026-spring-grade2-boys-soccer",
+  "items": [
+    {
+      "id": "2026-spring-grade2-boys-soccer",
+      "title": "2026 1학기 2학년 남자 축구",
+      "seasonLabel": "2026 1학기",
+      "gradeLabel": "2학년",
+      "sportLabel": "남자 축구",
+      "scheduleWindowLabel": "2026.05.26 ~ 2026.06.08",
+      "updatedAt": "2026-05-26T02:45:00Z",
+      "storageVersion": "2026.05.26"
+    }
+  ]
+}
+```
 
 ### 12A.1 `GET /api/sports-league/categories/{category_id}`
 
@@ -1296,8 +1328,8 @@ flowchart TD
 ```json
 {
   "category": {
-    "id": "2026-spring-grade3-boys-soccer",
-    "title": "2026 1학기 3학년 남자 축구"
+    "id": "2026-spring-grade2-boys-soccer",
+    "title": "2026 1학기 2학년 남자 축구"
   },
   "teams": [],
   "matches": [],
@@ -1312,8 +1344,8 @@ flowchart TD
     "A": null,
     "B": null
   },
-  "updatedAt": "2026-03-15T12:00:00Z",
-  "storageVersion": "2026.03.15"
+  "updatedAt": "2026-05-26T02:45:00Z",
+  "storageVersion": "2026.05.26"
 }
 ```
 
@@ -1334,8 +1366,8 @@ flowchart TD
   "players": [
     {
       "id": "sports-player-3f2b6d8d7f5b4c37b8a2b0ef5d92e44f",
-      "categoryId": "2026-spring-grade3-boys-soccer",
-      "teamId": "class-3-1",
+      "categoryId": "2026-spring-grade2-boys-soccer",
+      "teamId": "g2-team-2-1-2-7",
       "name": "김민준",
       "goals": 2,
       "assists": 1,
@@ -1448,7 +1480,12 @@ flowchart TD
 - 동작:
   - 카테고리/팀/경기 seed를 upsert
   - 기존 live event와 standings override는 유지
+  - category별 `storageVersion`을 seed 값으로 반영
   - 최신 snapshot을 `201`과 함께 반환
+- 운영 스크립트:
+  - `python scripts/bootstrap_sports_league.py --list`: 등록 seed 목록만 출력
+  - `python scripts/bootstrap_sports_league.py`: 등록된 모든 스포츠리그 카테고리 bootstrap
+  - `python scripts/bootstrap_sports_league.py --category-id <category_id>`: 특정 카테고리만 bootstrap
 
 ---
 

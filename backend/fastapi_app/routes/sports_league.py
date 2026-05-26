@@ -38,6 +38,7 @@ from ..services.sports_league import (
     clear_standings_overrides,
     create_event,
     delete_event,
+    list_categories,
     save_standings_overrides,
     update_match_participants,
     update_event,
@@ -87,6 +88,14 @@ async def get_category(
     except SportsLeagueError as e:
         return _error_response(e)
     return snapshot
+
+
+# Category summaries power the league switcher without loading full snapshots.
+@router.get('/categories')
+async def get_categories(
+    db: DbSession,
+):
+    return await list_categories(db)
 
 
 # Player roster endpoints intentionally stay outside the snapshot payload so the live feed remains lightweight.

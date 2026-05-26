@@ -61,6 +61,31 @@
   max-width: 68ch;
 }
 
+/* Header category switcher stays compact beside the page title. */
+.leagueSwitcher {
+  display: grid;
+  gap: 8px;
+  min-width: min(100%, 280px);
+  align-self: start;
+}
+
+.leagueSwitcherLabel {
+  color: var(--color-text-secondary);
+  font-size: 0.84rem;
+  font-weight: var(--font-semibold);
+}
+
+.leagueSelect {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 40px 0 var(--space-3);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-form-border);
+  background: var(--color-form-bg);
+  color: var(--color-form-text);
+  font-weight: var(--font-medium);
+}
+
 .tabBarShell {
   position: sticky;
   top: calc(var(--header-height) + var(--space-2));
@@ -965,6 +990,7 @@
 .syncButton:focus-visible,
 .inputField:focus-visible,
 .selectField:focus-visible,
+.leagueSelect:focus-visible,
 .textareaField:focus-visible {
   outline: none;
   box-shadow: 0 0 0 3px var(--color-focus-ring);

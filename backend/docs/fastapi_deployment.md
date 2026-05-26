@@ -145,11 +145,14 @@ VITE_SPORTS_LEAGUE_API_URL=https://sports-api.beomseo.in
 # 헬스 체크
 curl http://127.0.0.1:8000/api/health
 
+# 스포츠리그 카테고리 목록 조회
+curl http://127.0.0.1:8000/api/sports-league/categories
+
 # 스포츠리그 카테고리 스냅샷 조회
-curl http://127.0.0.1:8000/api/sports-league/categories/2026-spring-grade3-boys-soccer
+curl http://127.0.0.1:8000/api/sports-league/categories/2026-spring-grade2-boys-soccer
 
 # SSE 스트림 테스트 (Ctrl+C로 종료)
-curl -N http://127.0.0.1:8000/api/sports-league/categories/2026-spring-grade3-boys-soccer/stream
+curl -N http://127.0.0.1:8000/api/sports-league/categories/2026-spring-grade2-boys-soccer/stream
 
 # 수학여행 반 목록 조회
 curl http://127.0.0.1:8000/api/community/field-trip/classes

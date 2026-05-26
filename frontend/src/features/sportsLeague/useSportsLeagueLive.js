@@ -15,6 +15,11 @@ export default function useSportsLeagueLive(categoryId) {
     let active = true;
     let unsubscribe = () => {};
 
+    // Drop the previous category immediately so navigation never shows a stale league.
+    setLoading(true);
+    setError('');
+    setSnapshot(null);
+
     // Load the current snapshot first so the page can render even if the stream handshake is delayed.
     sportsLeagueApi
       .getCategory(categoryId)

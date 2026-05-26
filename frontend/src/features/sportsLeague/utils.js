@@ -3,7 +3,7 @@
  * @description Supplies pure helpers for sports league live text pages.
  */
 
-import { SPORTS_EVENT_TEMPLATES, SPORTS_LEAGUE_CATEGORY_ID, SPORTS_LEAGUE_SEED } from './data';
+import { SPORTS_EVENT_TEMPLATES } from './data';
 
 const DISPLAY_TIME_ZONE = 'Asia/Seoul';
 const MATCH_HALF_DURATION_MINUTES = 20;
@@ -59,9 +59,9 @@ export function cloneSportsLeagueSnapshot(snapshot) {
   return JSON.parse(JSON.stringify(snapshot));
 }
 
-export function getSportsLeagueSeed(categoryId) {
-  if (categoryId !== SPORTS_LEAGUE_CATEGORY_ID) return null;
-  return cloneSportsLeagueSnapshot(SPORTS_LEAGUE_SEED);
+export function getSportsLeagueSeed() {
+  // Live snapshots now come from FastAPI; this legacy hook stays as a null fallback.
+  return null;
 }
 
 export function getSportsLeagueEventTemplate(eventType) {
@@ -268,6 +268,13 @@ export function computeStandings(snapshot, groupId) {
     (match) => match.group === groupId && match.status === 'completed'
   );
   const overrides = snapshot?.standingsOverrides?.[groupId];
+  const rankingRules = snapshot?.rules?.ranking || [];
+  // Different categories publish different tie-break policies in their rule payload.
+  const usesHeadToHead = rankingRules.some((rule) => String(rule).includes('맞대결'));
+  const usesOfficialTieBreak = rankingRules.some((rule) => {
+    const text = String(rule);
+    return text.includes('승부차기') || text.includes('운영진');
+  });
 
   if (Array.isArray(overrides) && overrides.length) {
     // Official override rows replace the derived table verbatim and can carry operator notes.
@@ -355,19 +362,22 @@ export function computeStandings(snapshot, groupId) {
     }
     if (right.goalsFor !== left.goalsFor) return right.goalsFor - left.goalsFor;
 
-    const headToHead = completedMatches.find(
-      (match) =>
-        (match.teamAId === left.team.id && match.teamBId === right.team.id) ||
-        (match.teamAId === right.team.id && match.teamBId === left.team.id)
-    );
+    // Only apply head-to-head when the selected category explicitly lists it as a ranking rule.
+    if (usesHeadToHead) {
+      const headToHead = completedMatches.find(
+        (match) =>
+          (match.teamAId === left.team.id && match.teamBId === right.team.id) ||
+          (match.teamAId === right.team.id && match.teamBId === left.team.id)
+      );
 
-    if (headToHead) {
-      const leftScore = headToHead.teamAId === left.team.id ? headToHead.score.teamA : headToHead.score.teamB;
-      const rightScore =
-        headToHead.teamAId === right.team.id ? headToHead.score.teamA : headToHead.score.teamB;
+      if (headToHead) {
+        const leftScore = headToHead.teamAId === left.team.id ? headToHead.score.teamA : headToHead.score.teamB;
+        const rightScore =
+          headToHead.teamAId === right.team.id ? headToHead.score.teamA : headToHead.score.teamB;
 
-      if (leftScore !== rightScore) {
-        return rightScore - leftScore;
+        if (leftScore !== rightScore) {
+          return rightScore - leftScore;
+        }
       }
     }
 
@@ -388,7 +398,11 @@ export function computeStandings(snapshot, groupId) {
 
   Object.values(unresolvedTieGroups).forEach((groupRows) => {
     if (groupRows.length >= 3) {
-      warnings.push('3팀 이상 동률 구간은 운영진 공식 순위 확정이 필요합니다.');
+      warnings.push(
+        usesOfficialTieBreak
+          ? '3팀 이상 동률 구간은 승부차기 또는 운영진 확정 순위가 필요합니다.'
+          : '3팀 이상 동률 구간은 운영진 공식 순위 확정이 필요합니다.'
+      );
       return;
     }
 
@@ -400,8 +414,12 @@ export function computeStandings(snapshot, groupId) {
           (match.teamAId === right.team.id && match.teamBId === left.team.id)
       );
 
-      if (!headToHead || headToHead.score.teamA === headToHead.score.teamB) {
-        warnings.push(`${left.team.shortName} / ${right.team.shortName} 순위는 운영진 최종 확정이 필요합니다.`);
+      if (!usesHeadToHead || !headToHead || headToHead.score.teamA === headToHead.score.teamB) {
+        warnings.push(
+          usesOfficialTieBreak
+            ? `${left.team.shortName} / ${right.team.shortName} 순위는 승부차기 또는 운영진 확정이 필요합니다.`
+            : `${left.team.shortName} / ${right.team.shortName} 순위는 운영진 최종 확정이 필요합니다.`
+        );
       }
     }
   });

@@ -88,7 +88,14 @@ curl http://127.0.0.1:5000/api/health
 스포츠리그 시드 반영:
 
 ```bash
+# 등록된 카테고리 확인
+python scripts/bootstrap_sports_league.py --list
+
+# 등록된 모든 카테고리 upsert
 python scripts/bootstrap_sports_league.py
+
+# 특정 카테고리만 upsert
+python scripts/bootstrap_sports_league.py --category-id 2026-spring-grade2-boys-soccer
 ```
 
 수학여행 기본 반/비밀번호 시드 반영:
@@ -235,7 +242,7 @@ backend/
 ├─ services/               # 도메인 서비스/실시간 보조 로직
 │  ├─ sports_league.py     #   snapshot 계산, 이벤트 검증, seed upsert
 │  ├─ sports_league_players.py # 선수 라인업/개인기록 CRUD
-│  ├─ sports_league_seed.py    #   1차 카테고리 seed 데이터
+│  ├─ sports_league_seed.py    #   등록 스포츠리그 카테고리 seed 데이터
 │  └─ sports_league_realtime.py # Redis pub/sub + in-process fallback
 ├─ scripts/
 │  ├─ bootstrap_sports_league.py # 스포츠리그 seed 반영 스크립트
