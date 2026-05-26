@@ -150,6 +150,8 @@ flowchart TD
 ```mermaid
 flowchart TD
     A["SportsLeagueCategoryPage"] --> B["useSportsLeagueLive(categoryId)"]
+    A --> Z["sportsLeagueApi.getCategories()"]
+    Z --> ZA["리그 선택 select"]
     B --> C["sportsLeagueApi.getCategory()"]
     C --> D["memory/localStorage hydrate"]
     C --> E["sportsApi: GET /api/sports-league/categories/:categoryId"]
@@ -165,6 +167,8 @@ flowchart TD
 
 핵심 포인트:
 
+- 리그 선택 목록은 `GET /api/sports-league/categories`를 우선 사용하고, 응답 전에는 정적 대체 목록으로 렌더링합니다.
+- category가 바뀌면 이전 snapshot을 즉시 비워 다른 리그의 경기/중계가 남아 보이지 않게 합니다.
 - category별 구독 상태를 공유해 컴포넌트가 여러 개여도 EventSource는 1개만 유지됩니다.
 - 최초 진입은 캐시된 snapshot을 먼저 보여주고, 백그라운드 refresh로 최신 값을 덮어씁니다.
 - SSE가 끊기면 즉시 실패 처리하지 않고 polling/reconnect로 복구를 시도합니다.

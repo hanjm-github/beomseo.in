@@ -111,6 +111,12 @@ async function fetchCategorySnapshot(categoryId) {
   return response.data;
 }
 
+async function fetchCategoryList() {
+  // Category summaries are intentionally separate from the heavier live snapshots.
+  const response = await sportsApi.get('/api/sports-league/categories');
+  return response.data;
+}
+
 function clearTimers(state) {
   if (state.reconnectTimer) {
     window.clearTimeout(state.reconnectTimer);
@@ -242,6 +248,10 @@ function initializeSync() {
 
 export const sportsLeagueApi = {
   managerRoles: SPORTS_LEAGUE_MANAGER_ROLES,
+
+  async getCategories() {
+    return fetchCategoryList();
+  },
 
   async getCategory(categoryId) {
     initializeSync();

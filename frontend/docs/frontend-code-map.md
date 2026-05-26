@@ -217,7 +217,7 @@ graph TD
 | `/school-info/evaluation-plans` | `EvaluationPlansPage` |
 | `/school-info/meal` | `MealPage` |
 | `/school-info/calendar` | `AcademicCalendarPage` |
-| `/school-info/sports-league` | `Navigate` → `/school-info/sports-league/2026-spring-grade3-boys-soccer` |
+| `/school-info/sports-league` | `Navigate` → `/school-info/sports-league/2026-spring-grade2-boys-soccer` |
 | `/school-info/sports-league/:categoryId` | `SportsLeagueCategoryPage` |
 | `/school-info/*` (invalid path) | `NotFoundPage` |
 
@@ -265,8 +265,8 @@ graph TD
 
 | 파일 | 역할 |
 |---|---|
-| `data.js` | 카테고리 ID, 탭/이벤트 템플릿, 운영진 역할 상수 |
-| `useSportsLeagueLive.js` | snapshot 조회 + SSE 구독 + 이벤트 CRUD orchestration |
+| `data.js` | 기본/이전 카테고리 ID, API 로딩 전 대체 카테고리 목록, 이벤트 템플릿, 운영진 역할 상수 |
+| `useSportsLeagueLive.js` | category 변경 시 기존 snapshot 초기화 + snapshot 조회 + SSE 구독 + 이벤트 CRUD orchestration |
 | `usePlayersStore.js` | 선수 라인업/개인 순위 전용 상태 훅 (`getPlayers`, add/remove/stat) |
 | `TeamLineupPanel.jsx` | 팀별 라인업 탭 UI, 팀 선택/선수 추가·삭제 |
 | `PlayerRankingPanel.jsx` | 개인별 순위 탭 UI, 득점/어시스트 정렬 및 inline +/- 조정 |

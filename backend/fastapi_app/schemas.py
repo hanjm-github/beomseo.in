@@ -150,6 +150,49 @@ class MealRatingSubmitResponse(BaseModel):
     ratings: MealRatingsResponse
 
 
+class MealCommentCreateRequest(BaseModel):
+    body: str = Field(min_length=1, max_length=1000)
+
+    @field_validator('body')
+    @classmethod
+    def validate_body(cls, value: str) -> str:
+        # Bounds reject oversized payloads; this catches whitespace-only bodies before service sanitization.
+        if not value.strip():
+            raise ValueError('body must not be blank')
+        return value
+
+
+class MealCommentApprovalRequest(BaseModel):
+    approved: bool
+
+
+class MealCommentAuthorResponse(BaseModel):
+    id: int
+    name: str
+    role: str
+
+
+class MealCommentResponse(BaseModel):
+    id: int
+    mealDate: str
+    body: str
+    approvalStatus: Literal['pending', 'approved']
+    author: MealCommentAuthorResponse
+    approvedBy: MealCommentAuthorResponse | None = None
+    approvedAt: str | None = None
+    createdAt: str | None = None
+    updatedAt: str | None = None
+
+
+class MealCommentsResponse(BaseModel):
+    items: list[MealCommentResponse]
+    total: int = Field(default=0, ge=0)
+    page: int = Field(default=1, ge=1)
+    # Keep both names while clients migrate between Pydantic and JavaScript casing conventions.
+    page_size: int = Field(default=50, ge=1)
+    pageSize: int = Field(default=50, ge=1)
+
+
 TIMEZONE_FALLBACK_ALLOWLIST = {'Asia/Seoul', 'UTC'}
 MEAL_NOTIFICATION_INTERVAL_MINUTES = 5
 

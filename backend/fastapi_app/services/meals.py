@@ -16,12 +16,13 @@ from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation
 
 import httpx
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from ..config import Settings
-from ..models import SchoolMeal, SchoolMealRating, User
+from ..models import SchoolMeal, SchoolMealComment, SchoolMealRating, User
 from ..utils import sanitize_plain_text
 
 
@@ -34,6 +35,9 @@ EMPTY_PREVIEW_TEXT = '급식 정보가 없습니다.'
 EMPTY_NOTE_TEXT = '주말, 휴일 또는 미제공일입니다.'
 DEFAULT_NOTE_TEXT = '원산지/영양 정보 제공'
 MEAL_RATING_CATEGORIES = ('taste', 'anticipation')
+MEAL_COMMENT_PENDING = 'pending'
+MEAL_COMMENT_APPROVED = 'approved'
+MEAL_COMMENT_MAX_LENGTH = 1000
 BR_TAG_RE = re.compile(r'<br\s*/?>', re.IGNORECASE)
 HTML_TAG_RE = re.compile(r'<[^>]+>')
 CALORIE_RE = re.compile(r'(\d+(?:\.\d+)?)')
@@ -67,6 +71,25 @@ def _utc_now_naive() -> datetime:
 
 def _kst_today() -> date:
     return datetime.now(KST).date()
+
+
+def _user_role(current_user: User | None) -> str:
+    if current_user is None:
+        return ''
+    return str(getattr(current_user, '_jwt_role', None) or getattr(current_user, 'role', '') or '')
+
+
+def _user_id(current_user: User | None) -> int | None:
+    if current_user is None:
+        return None
+    try:
+        return int(current_user.id)
+    except (TypeError, ValueError):
+        return None
+
+
+def is_meal_admin(current_user: User | None) -> bool:
+    return _user_role(current_user) == 'admin'
 
 
 def _iso_utc(value: datetime | None) -> str | None:
@@ -168,7 +191,7 @@ def _viewer_rating_key(
     return hashlib.sha256(f'{secret}|meal-rating|{seed}'.encode('utf-8')).hexdigest()
 
 
-def _finalize_rating_summary(summary: dict) -> dict:
+def _finalize_rating_summary(summary: dict, *, include_distribution: bool) -> dict:
     total_count = int(summary.get('totalCount') or 0)
     weighted_total = int(summary.pop('_weightedTotal', 0))
     if total_count > 0:
@@ -177,12 +200,16 @@ def _finalize_rating_summary(summary: dict) -> dict:
             bucket['ratio'] = round((int(bucket['count']) / total_count) * 100)
     else:
         summary['averageScore'] = None
+    if not include_distribution:
+        summary['distribution'] = []
     return summary
 
 
 def _build_ratings_payload(
     aggregate_rows: list[tuple[date, str, int, int]],
     viewer_rows: list[tuple[date, str, int]],
+    *,
+    include_distribution: bool = True,
 ) -> dict[date, dict]:
     ratings_by_date: dict[date, dict] = {}
 
@@ -198,7 +225,10 @@ def _build_ratings_payload(
 
     for meal_date, ratings in ratings_by_date.items():
         for category in MEAL_RATING_CATEGORIES:
-            ratings[category] = _finalize_rating_summary(ratings[category])
+            ratings[category] = _finalize_rating_summary(
+                ratings[category],
+                include_distribution=include_distribution,
+            )
 
     for meal_date, category, score in viewer_rows:
         if category not in MEAL_RATING_CATEGORIES:
@@ -206,7 +236,20 @@ def _build_ratings_payload(
         ratings = ratings_by_date.setdefault(meal_date, _empty_ratings())
         ratings[category]['myScore'] = int(score)
 
+    if not include_distribution:
+        for ratings in ratings_by_date.values():
+            for summary in ratings.values():
+                summary['distribution'] = []
+
     return ratings_by_date
+
+
+def _empty_ratings_for_view(*, include_distribution: bool) -> dict[str, dict]:
+    ratings = _empty_ratings()
+    if not include_distribution:
+        for summary in ratings.values():
+            summary['distribution'] = []
+    return ratings
 
 
 async def get_meal_ratings_payload(
@@ -215,6 +258,7 @@ async def get_meal_ratings_payload(
     start_date: date,
     end_date: date,
     viewer_key: str | None,
+    include_distribution: bool = True,
 ) -> dict[date, dict]:
     try:
         aggregate_result = await session.execute(
@@ -259,7 +303,11 @@ async def get_meal_ratings_payload(
     except SQLAlchemyError as exc:
         raise SchoolMealError('급식 평점 데이터를 읽지 못했습니다.', 500) from exc
 
-    return _build_ratings_payload(aggregate_rows, viewer_rows)
+    return _build_ratings_payload(
+        aggregate_rows,
+        viewer_rows,
+        include_distribution=include_distribution,
+    )
 
 
 def _build_empty_entry(target_date: date, reference_date: date) -> dict:
@@ -670,6 +718,7 @@ async def get_today_meal_payload(
         current_user=current_user,
         anonymous_token=anonymous_token,
     )
+    include_distribution = is_meal_admin(current_user)
     meal = await get_school_meal_for_date(session, target_date=reference_date)
     item = _serialize_meal_entry(meal, reference_date) if meal else _build_empty_entry(reference_date, reference_date)
     ratings_by_date = await get_meal_ratings_payload(
@@ -677,8 +726,12 @@ async def get_today_meal_payload(
         start_date=reference_date,
         end_date=reference_date,
         viewer_key=viewer_key,
+        include_distribution=include_distribution,
     )
-    item['ratings'] = ratings_by_date.get(reference_date, _empty_ratings())
+    item['ratings'] = ratings_by_date.get(
+        reference_date,
+        _empty_ratings_for_view(include_distribution=include_distribution),
+    )
     return {
         'item': item,
         'meta': {
@@ -707,6 +760,7 @@ async def get_meal_range_payload(
         current_user=current_user,
         anonymous_token=anonymous_token,
     )
+    include_distribution = is_meal_admin(current_user)
 
     try:
         result = await session.execute(
@@ -725,6 +779,7 @@ async def get_meal_range_payload(
         start_date=start_date,
         end_date=end_date,
         viewer_key=viewer_key,
+        include_distribution=include_distribution,
     )
 
     items = []
@@ -734,7 +789,10 @@ async def get_meal_range_payload(
             item = _build_empty_entry(current_date, reference_date)
         else:
             item = _serialize_meal_entry(row, reference_date)
-        item['ratings'] = ratings_by_date.get(current_date, _empty_ratings())
+        item['ratings'] = ratings_by_date.get(
+            current_date,
+            _empty_ratings_for_view(include_distribution=include_distribution),
+        )
         items.append(item)
 
     return {
@@ -815,8 +873,215 @@ async def submit_meal_rating(
         start_date=target_date,
         end_date=target_date,
         viewer_key=viewer_key,
+        include_distribution=is_meal_admin(current_user),
     )
     return {
         'date': target_date.isoformat(),
-        'ratings': ratings_by_date.get(target_date, _empty_ratings()),
+        'ratings': ratings_by_date.get(
+            target_date,
+            _empty_ratings_for_view(include_distribution=is_meal_admin(current_user)),
+        ),
     }
+
+
+def can_view_meal_comment(comment: SchoolMealComment, current_user: User | None) -> bool:
+    """Mirror the SQL visibility rules for callers that already hold a comment row."""
+    if getattr(comment, 'approval_status', None) == MEAL_COMMENT_APPROVED:
+        return True
+    if is_meal_admin(current_user):
+        return True
+    viewer_id = _user_id(current_user)
+    return viewer_id is not None and viewer_id == int(comment.user_id)
+
+
+def _serialize_comment_author(user: User | None, fallback_id: int | None = None) -> dict:
+    return {
+        'id': int(getattr(user, 'id', fallback_id or 0) or 0),
+        'name': str(getattr(user, 'nickname', None) or '탈퇴한 사용자'),
+        'role': str(getattr(user, 'role', None) or 'student'),
+    }
+
+
+def _serialize_meal_comment(comment: SchoolMealComment) -> dict:
+    return {
+        'id': int(comment.id),
+        'mealDate': comment.meal_date.isoformat(),
+        'body': comment.body,
+        'approvalStatus': comment.approval_status,
+        'author': _serialize_comment_author(comment.user, comment.user_id),
+        'approvedBy': (
+            _serialize_comment_author(comment.approved_by, comment.approved_by_id)
+            if comment.approved_by_id
+            else None
+        ),
+        'approvedAt': _iso_utc(comment.approved_at),
+        'createdAt': _iso_utc(comment.created_at),
+        'updatedAt': _iso_utc(comment.updated_at),
+    }
+
+
+def _comment_visibility_filters(current_user: User | None) -> list:
+    # Keep visibility in SQL so pagination totals match the exact rows the viewer can read.
+    if is_meal_admin(current_user):
+        return []
+    viewer_id = _user_id(current_user)
+    if viewer_id is None:
+        return [SchoolMealComment.approval_status == MEAL_COMMENT_APPROVED]
+    return [
+        or_(
+            SchoolMealComment.approval_status == MEAL_COMMENT_APPROVED,
+            SchoolMealComment.user_id == viewer_id,
+        )
+    ]
+
+
+async def list_meal_comments(
+    session: AsyncSession,
+    *,
+    target_date: date,
+    current_user: User | None,
+    page: int = 1,
+    page_size: int = 50,
+    order: str = 'asc',
+) -> dict:
+    page = max(1, int(page or 1))
+    page_size = min(100, max(1, int(page_size or 50)))
+    direction = str(order or 'asc').lower()
+    sort_column = SchoolMealComment.created_at.desc() if direction == 'desc' else SchoolMealComment.created_at.asc()
+    # Build the date and viewer filters once so the count query and page query cannot drift.
+    filters = [
+        SchoolMealComment.meal_date == target_date,
+        SchoolMealComment.deleted_at.is_(None),
+        *_comment_visibility_filters(current_user),
+    ]
+
+    try:
+        count_result = await session.execute(
+            select(func.count(SchoolMealComment.id)).where(*filters)
+        )
+        total = int(count_result.scalar_one() or 0)
+        result = await session.execute(
+            select(SchoolMealComment)
+            .options(
+                selectinload(SchoolMealComment.user),
+                selectinload(SchoolMealComment.approved_by),
+            )
+            .where(*filters)
+            .order_by(sort_column, SchoolMealComment.id.asc())
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+        )
+    except SQLAlchemyError as exc:
+        raise SchoolMealError('급식 댓글을 읽지 못했습니다.', 500) from exc
+
+    return {
+        'items': [_serialize_meal_comment(comment) for comment in result.scalars().all()],
+        'total': total,
+        'page': page,
+        'page_size': page_size,
+        'pageSize': page_size,
+    }
+
+
+def _validate_comment_body(body: str) -> str:
+    normalized = sanitize_plain_text(body, max_length=MEAL_COMMENT_MAX_LENGTH)
+    if not normalized:
+        raise SchoolMealError('댓글 내용을 입력해 주세요.', 422)
+    return normalized
+
+
+async def create_meal_comment(
+    session: AsyncSession,
+    *,
+    target_date: date,
+    body: str,
+    current_user: User,
+    ip_address: str | None,
+    user_agent: str | None,
+) -> dict:
+    meal = await get_school_meal_for_date(session, target_date=target_date)
+    if meal is None:
+        raise SchoolMealError('운영되는 급식이 없는 날짜에는 댓글을 남길 수 없습니다.', 404)
+
+    normalized_body = _validate_comment_body(body)
+    # Moderation is uniform: every new comment starts pending until explicitly approved.
+    comment = SchoolMealComment(
+        meal_date=target_date,
+        user_id=int(current_user.id),
+        body=normalized_body,
+        approval_status=MEAL_COMMENT_PENDING,
+        ip_address=sanitize_plain_text(ip_address, max_length=64) or None,
+        user_agent=sanitize_plain_text(user_agent, max_length=255) or None,
+    )
+
+    try:
+        session.add(comment)
+        await session.commit()
+        refreshed = await session.execute(
+            select(SchoolMealComment)
+            .options(
+                selectinload(SchoolMealComment.user),
+                selectinload(SchoolMealComment.approved_by),
+            )
+            .where(SchoolMealComment.id == comment.id)
+        )
+        comment = refreshed.scalar_one()
+    except SQLAlchemyError as exc:
+        await session.rollback()
+        raise SchoolMealError('급식 댓글을 저장하지 못했습니다.', 500) from exc
+
+    return _serialize_meal_comment(comment)
+
+
+async def set_meal_comment_approval(
+    session: AsyncSession,
+    *,
+    target_date: date,
+    comment_id: int,
+    approved: bool,
+    current_user: User,
+) -> dict:
+    try:
+        result = await session.execute(
+            select(SchoolMealComment)
+            .options(
+                selectinload(SchoolMealComment.user),
+                selectinload(SchoolMealComment.approved_by),
+            )
+            .where(
+                SchoolMealComment.id == comment_id,
+                SchoolMealComment.meal_date == target_date,
+                SchoolMealComment.deleted_at.is_(None),
+            )
+        )
+        comment = result.scalar_one_or_none()
+        if comment is None:
+            raise SchoolMealError('댓글을 찾을 수 없습니다.', 404)
+
+        if approved:
+            comment.approval_status = MEAL_COMMENT_APPROVED
+            comment.approved_by_id = int(current_user.id)
+            comment.approved_at = _utc_now_naive()
+        else:
+            comment.approval_status = MEAL_COMMENT_PENDING
+            # Reverting approval clears moderator metadata so pending rows do not look approved.
+            comment.approved_by_id = None
+            comment.approved_at = None
+
+        await session.commit()
+        refreshed = await session.execute(
+            select(SchoolMealComment)
+            .options(
+                selectinload(SchoolMealComment.user),
+                selectinload(SchoolMealComment.approved_by),
+            )
+            .where(SchoolMealComment.id == comment_id)
+        )
+        comment = refreshed.scalar_one()
+    except SchoolMealError:
+        raise
+    except SQLAlchemyError as exc:
+        await session.rollback()
+        raise SchoolMealError('급식 댓글 승인 상태를 변경하지 못했습니다.', 500) from exc
+
+    return _serialize_meal_comment(comment)

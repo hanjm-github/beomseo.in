@@ -53,6 +53,7 @@ const VoteListView = lazy(() => import('./Vote/VoteListView'));
 const VoteDetailView = lazy(() => import('./Vote/VoteDetailView'));
 const VoteComposeView = lazy(() => import('./Vote/VoteComposeView'));
 const BospiPage = lazy(() => import('./Bospi/BospiPage'));
+const StudyWithBeomseoPage = lazy(() => import('./StudyWithBeomseo/StudyWithBeomseoPage'));
 const FieldTripPage = lazy(() => import('./FieldTrip/FieldTripPage'));
 const FieldTripClassBoardPage = lazy(() => import('./FieldTrip/FieldTripClassBoardPage'));
 const FieldTripPostDetailPage = lazy(() => import('./FieldTrip/FieldTripPostDetailPage'));
@@ -128,6 +129,7 @@ export default function CommunityRouter() {
       <Route path="vote" element={lazyRoute(VoteListView)} />
       <Route path="vote/new" element={lazyRoute(VoteComposeView)} />
       <Route path="bospi" element={lazyRoute(BospiPage)} />
+      <Route path="study-with-beomseo" element={lazyRoute(StudyWithBeomseoPage)} />
       {FIELD_TRIP_BOARD_ENABLED ? (
         <>
           <Route path="field-trip" element={lazyRoute(FieldTripPage)} />

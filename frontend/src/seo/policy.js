@@ -389,6 +389,20 @@ function createStaticRouteEntries(date = new Date()) {
       ],
     },
     {
+      path: '/community/study-with-beomseo',
+      title: '스터디 윗 범서 순위판',
+      description:
+        '범서고 스터디 윗 범서 반별 순위와 예약 공개된 최종 점수를 확인하세요.',
+      indexable: true,
+      prerender: true,
+      sitemap: true,
+      breadcrumbs: [
+        { name: '홈', url: '/' },
+        { name: '커뮤니티', url: '/community/study-with-beomseo' },
+        { name: '스터디 윗 범서', url: '/community/study-with-beomseo' },
+      ],
+    },
+    {
       path: '/community/field-trip',
       title: '수학여행 허브',
       description:

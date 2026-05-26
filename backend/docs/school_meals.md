@@ -7,8 +7,11 @@
 - 읽기 엔드포인트:
   - `GET /api/school-info/meals/today`
   - `GET /api/school-info/meals?from=YYYY-MM-DD&to=YYYY-MM-DD`
+  - `GET /api/school-info/meals/{meal_date}/comments?page=1&pageSize=50&order=asc`
 - 쓰기 엔드포인트:
   - `POST /api/school-info/meals/{meal_date}/ratings`
+  - `POST /api/school-info/meals/{meal_date}/comments`
+  - `PATCH /api/school-info/meals/{meal_date}/comments/{comment_id}/approval`
   - `GET /api/school-info/meals/notifications/subscription?installationId=...`
   - `PUT /api/school-info/meals/notifications/subscription`
   - `DELETE /api/school-info/meals/notifications/subscription?installationId=...`
@@ -18,7 +21,9 @@
 1. 요청 경로는 MySQL에 저장된 급식 데이터만 읽습니다.
 2. 실제 NEIS 호출은 동기화 스크립트에서만 수행합니다.
 3. 급식 읽기/평점 요청은 브라우저별 익명 평점 쿠키를 공유합니다.
-4. 알림 구독은 사용자 계정이 아니라 `installationId` 기준의 기기 단위 레코드입니다.
+4. 평점 분포(`distribution`)는 `admin`에게만 내려주고, 일반/비로그인 응답은 빈 배열을 반환합니다.
+5. 댓글은 로그인 사용자만 작성할 수 있고, 새 댓글은 항상 승인 대기 상태로 저장됩니다.
+6. 알림 구독은 사용자 계정이 아니라 `installationId` 기준의 기기 단위 레코드입니다.
 
 ## 응답 구조
 
@@ -50,6 +55,8 @@
 - `totalCount`
 - `myScore`
 - `distribution[]`
+
+`distribution[]`은 관리자 응답에서만 실제 버킷을 포함합니다. 비로그인/일반 사용자 응답은 평균(`averageScore`), 참여자 수(`totalCount`), 내 점수(`myScore`)만 포함하고 `distribution: []`을 반환합니다.
 
 예시:
 
@@ -120,6 +127,97 @@
 - `anticipation`: 오늘 또는 미래 급식에만 허용
 - 과거 날짜는 `422`
 - 실제 급식 row가 없는 날짜는 `404`
+
+## 급식 댓글 계약
+
+댓글은 `school_meal_comments` 테이블에 저장됩니다. 주요 컬럼은 `id`, `meal_date`, `user_id`, `body`, `approval_status`, `approved_by_id`, `approved_at`, `created_at`, `updated_at`, `deleted_at`, `ip_address`, `user_agent`입니다.
+
+### 모델 및 인덱스
+
+- Flask 앱은 `backend/models/school_meal_comment.py` 모델을 등록해 기존 `db.create_all()` 개발 흐름과 같은 테이블 정의를 공유합니다.
+- FastAPI 앱은 `backend/fastapi_app/models.py`의 순수 SQLAlchemy 모델로 같은 테이블을 읽고 씁니다.
+- `ix_school_meal_comments_date_status_created`는 날짜별 공개 목록과 관리자 목록 조회를 빠르게 하기 위한 인덱스입니다.
+- `ix_school_meal_comments_date_user_status`는 로그인 사용자가 본인의 승인 대기 댓글을 함께 보는 조회 조건을 위한 인덱스입니다.
+- `approval_status`는 `pending`, `approved`만 허용하며, soft delete는 `deleted_at`으로 표현합니다.
+
+### 조회
+
+`GET /api/school-info/meals/{meal_date}/comments?page=1&pageSize=50&order=asc`
+
+공개 범위:
+
+- 비로그인: 승인된 댓글만
+- 로그인 일반 사용자: 승인된 댓글 + 본인이 쓴 승인 대기 댓글
+- 관리자: 삭제되지 않은 모든 댓글
+
+응답:
+
+```json
+{
+  "items": [
+    {
+      "id": 1,
+      "mealDate": "2026-05-24",
+      "body": "오늘 메뉴 좋아요.",
+      "approvalStatus": "pending",
+      "author": { "id": 7, "name": "학생", "role": "student" },
+      "approvedBy": null,
+      "approvedAt": null,
+      "createdAt": "2026-05-24T02:30:00Z",
+      "updatedAt": "2026-05-24T02:30:00Z"
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "page_size": 50,
+  "pageSize": 50
+}
+```
+
+### 작성
+
+`POST /api/school-info/meals/{meal_date}/comments`
+
+요청 본문:
+
+```json
+{
+  "body": "오늘 메뉴 좋아요."
+}
+```
+
+정책:
+
+- 로그인 사용자만 작성할 수 있습니다.
+- 새 댓글은 관리자 작성분을 포함해 항상 `approval_status=pending`으로 생성됩니다.
+- 실제 급식 row가 없는 날짜는 `404`입니다.
+- 댓글 본문은 공백 제거 후 최대 1000자로 제한합니다.
+
+### 승인 상태 변경
+
+`PATCH /api/school-info/meals/{meal_date}/comments/{comment_id}/approval`
+
+요청 본문:
+
+```json
+{
+  "approved": true
+}
+```
+
+정책:
+
+- `admin`만 호출할 수 있습니다.
+- `approved=true`면 `approval_status=approved`, `approved_by_id`, `approved_at`을 저장합니다.
+- `approved=false`면 다시 `pending`으로 되돌리고 승인자 정보를 비웁니다.
+
+### 프론트엔드 표시 흐름
+
+- 급식 상세 화면은 선택된 날짜가 바뀌거나 로그인 사용자·역할이 바뀌면 댓글을 다시 조회합니다.
+- 저장된 급식이 없는 synthetic entry에서는 댓글 조회와 작성을 비활성화합니다.
+- 작성 성공 시 서버가 반환한 `pending` 댓글을 즉시 목록에 추가해 작성자가 본인 댓글을 바로 확인할 수 있습니다.
+- 일반 사용자는 승인 대기 상태인 본인 댓글에만 `미승인` 배지를 봅니다.
+- 관리자는 같은 목록에서 승인 토글을 사용해 `pending`과 `approved` 상태를 전환합니다.
 
 ## 급식 알림 구독 계약
 

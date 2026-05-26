@@ -30,7 +30,9 @@ from .sports_league_seed import (
     SPORTS_EVENT_DEFAULT_STATUS,
     SPORTS_LEAGUE_CATEGORY_ID,
     SPORTS_LEAGUE_STORAGE_VERSION,
+    get_default_sports_league_category_id,
     get_sports_league_seed,
+    list_sports_league_seed_summaries,
 )
 
 
@@ -55,6 +57,13 @@ def _parse_kickoff(value):
 
 def _json_dump(value):
     return json.dumps(value, ensure_ascii=False)
+
+
+def _to_utc_iso(value):
+    if value is None:
+        return None
+    # Database timestamps are stored as naive UTC; API payloads expose explicit UTC.
+    return value.replace(tzinfo=timezone.utc).isoformat().replace('+00:00', 'Z')
 
 
 def _safe_int(value, *, minimum=0, allow_none=False, field_name='value'):
@@ -276,11 +285,43 @@ async def build_snapshot(session: AsyncSession, category_id: str) -> dict:
         'rules': category.rules_dict(),
         'liveEvents': [event.to_dict() for event in events],
         'standingsOverrides': _serialize_overrides(overrides),
-        'updatedAt': (
-            category.updated_at.replace(tzinfo=timezone.utc).isoformat().replace('+00:00', 'Z')
-            if category.updated_at else None
-        ),
+        'updatedAt': _to_utc_iso(category.updated_at),
         'storageVersion': category.storage_version,
+    }
+
+
+async def list_categories(session: AsyncSession) -> dict:
+    # Seed summaries define the public category order even before a seed is bootstrapped.
+    seed_summaries = list_sports_league_seed_summaries()
+    category_ids = [item['id'] for item in seed_summaries]
+
+    rows_by_id = {}
+    if category_ids:
+        result = await session.execute(
+            select(SportsLeagueCategory).where(SportsLeagueCategory.id.in_(category_ids))
+        )
+        rows_by_id = {row.id: row for row in result.scalars().all()}
+
+    items = []
+    for seed_summary in seed_summaries:
+        row = rows_by_id.get(seed_summary['id'])
+        # Prefer database labels after bootstrap, but keep seed metadata as a safe fallback.
+        items.append({
+            'id': seed_summary['id'],
+            'title': row.title if row else seed_summary['title'],
+            'seasonLabel': row.season_label if row else seed_summary['seasonLabel'],
+            'gradeLabel': row.grade_label if row else seed_summary['gradeLabel'],
+            'sportLabel': row.sport_label if row else seed_summary['sportLabel'],
+            'scheduleWindowLabel': (
+                row.schedule_window_label if row else seed_summary['scheduleWindowLabel']
+            ),
+            'updatedAt': _to_utc_iso(row.updated_at) if row else None,
+            'storageVersion': row.storage_version if row else seed_summary['storageVersion'],
+        })
+
+    return {
+        'defaultCategoryId': get_default_sports_league_category_id(),
+        'items': items,
     }
 
 
@@ -805,7 +846,8 @@ async def bootstrap_sports_league_category(
     category.rules_points_json = _json_dump(seed['rules']['points'])
     category.rules_ranking_json = _json_dump(seed['rules']['ranking'])
     category.rules_notes_json = _json_dump(seed['rules']['notes'])
-    category.storage_version = SPORTS_LEAGUE_STORAGE_VERSION
+    # Each registered category can retain its own version while sharing bootstrap logic.
+    category.storage_version = seed.get('storageVersion') or SPORTS_LEAGUE_STORAGE_VERSION
     category.updated_at = datetime.utcnow()
 
     existing_teams_result = await session.execute(

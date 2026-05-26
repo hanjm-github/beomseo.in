@@ -204,6 +204,27 @@ Value Pick 계약 요약:
 - `myPrediction`은 날짜 없는 대기 예측이고, `myPredictions[]`는 기록 날짜로 확정된 평가 이력입니다.
 - `rankings[]`는 `rank`, `totalScore`, `correctCount`, `incorrectCount`, `nextPrediction`, `isCurrentUser`를 포함합니다.
 
+### 2.8B `src/api/studyWithBeomseo.js` (`studyWithBeomseoApi`)
+
+| 메서드 | HTTP/Endpoint | 오류 처리 | 비고 |
+|---|---|---|---|
+| `getScoreboard()` | `GET /api/community/study-with-beomseo/scoreboard` | 아니오 | 30개 반 순위, 서버 시간, 공개 반영 시각, 관리 권한을 정규화 |
+| `scheduleScoreUpdate(payload)` | `POST /api/community/study-with-beomseo/score-updates` | 아니오 | `classId`, 최종 `totalScore`, 공개 예정 `effectiveAt` 저장 |
+| `canManage(user)` | - | - | `admin`, `student_council` 역할 확인 |
+
+정규화 계약:
+
+- `items[]`는 항상 `1-1`부터 `3-10`까지 30개 반을 포함합니다.
+- 공개 시간이 지난 최신 점수만 일반 사용자 순위에 반영됩니다.
+- `pendingUpdates[]`는 학생회 이상에게만 내려오는 미래 예약 목록입니다.
+- `serverNow`, `updatedThrough`, `lastPublishedAt`, `effectiveAt`은 backend의 `+09:00` offset 포함 ISO 값을 사용합니다.
+- `scheduleScoreUpdate()`는 점수 증감이 아니라 최종 총점 snapshot을 저장합니다.
+- `classOptions`는 프론트가 즉시 렌더링할 수 있도록 `1-1`부터 `3-10`까지 고정 생성하며, backend의 `CLASS_OPTIONS`와 같은 범위를 전제로 합니다.
+- 응답 정규화는 camelCase와 snake_case를 모두 허용합니다. `classId/class_id`, `totalScore/total_score`, `pendingUpdates/pending_updates`가 대표 예입니다.
+- `canManage(user)`는 클라이언트 표시용 보조 판정이며, 실제 저장 권한은 `POST /score-updates`의 서버 권한 검사가 결정합니다.
+- `StudyWithBeomseoPage`의 관리자 폼은 `datetime-local` 값을 학교 현지 시각으로 보고 `+09:00` offset을 붙여 전송합니다.
+- 예약 목록 카운트다운은 `serverNow`를 초기 기준으로 삼고, 화면에서는 1초 간격으로 로컬 갱신합니다.
+
 ### 2.9 `src/api/lostFound.js` (`lostFoundApi`)
 
 | 메서드 | HTTP/Endpoint | 오류 처리 | 비고 |
@@ -248,6 +269,7 @@ Value Pick 계약 요약:
 
 | 메서드 | HTTP/Endpoint | 오류 처리 | 비고 |
 |---|---|---|---|
+| `getCategories()` | `GET /api/sports-league/categories` | 예 | 스포츠리그 전환 UI용 카테고리 목록 |
 | `getCategory(categoryId)` | `GET /api/sports-league/categories/:categoryId` | 예 | 캐시된 snapshot이 있으면 즉시 반환 후 백그라운드 refresh |
 | `getPlayers(categoryId)` | `GET /api/sports-league/categories/:categoryId/players` | 예 | 선수 라인업/개인 순위용 별도 읽기 계약 |
 | `createPlayer(categoryId, teamId, payload)` | `POST /api/sports-league/categories/:categoryId/teams/:teamId/players` | 예 | 학생회/admin만 선수 추가 |
@@ -263,14 +285,20 @@ Value Pick 계약 요약:
 
 - `managerRoles`
 - 클라이언트 동작:
+  - `getCategories()`는 `defaultCategoryId`와 `items[]`를 반환하며, 스포츠리그 화면의 리그 선택 select를 구성합니다.
+  - API 카테고리 목록을 불러오기 전에는 `SPORTS_LEAGUE_CATEGORY_OPTIONS`의 2학년/3학년 대체 목록을 먼저 사용합니다.
+  - 리그 선택을 바꾸면 현재 `tab` 쿼리만 유지하고, 새 카테고리의 선택 경기는 snapshot 기준으로 다시 결정합니다.
   - category별 transport 상태를 공유해 여러 listener가 있어도 EventSource는 1개만 유지
   - `getCategory()`는 memory/`localStorage` 캐시를 먼저 읽고 stale-while-revalidate로 최신 snapshot을 다시 가져옴
+  - category가 바뀌면 `useSportsLeagueLive()`가 이전 snapshot을 즉시 비워 다른 리그 데이터가 잠시 남아 보이지 않게 합니다.
   - 선수 라인업/개인 순위는 `getPlayers()`와 mutation 응답으로만 갱신되며, snapshot/SSE에는 포함되지 않음
   - `createPlayer()/deletePlayer()/adjustPlayerStat()`는 응답에 포함된 `players` 배열 전체로 로컬 store를 교체
   - `subscribe()`는 `BroadcastChannel` 우선, 미지원 브라우저에서는 `storage` 이벤트로 탭 간 동기화
   - SSE 오류 시 5초 polling + 3초 재연결을 시도
 - 백엔드 계약 요약:
   - snapshot/SSE는 익명 조회 가능
+  - `GET /api/sports-league/categories`는 seed registry 순서의 카테고리 요약을 반환하고, bootstrap된 row가 있으면 DB 값을 우선합니다.
+  - 기본 카테고리는 `2026-spring-grade2-boys-soccer`이고, 이전 카테고리로 `2026-spring-grade3-boys-soccer`가 함께 노출됩니다.
   - 이벤트 `author` payload는 `{ nickname }`만 노출
   - backend는 active event를 최대 `250`개까지만 유지
   - 코드 기준 route-level limiter는 snapshot 조회(`60 per minute`)에만 직접 연결되어 있음
@@ -410,6 +438,7 @@ Field Trip 추가 계약 요약:
 | `src/pages/Community/SurveyExchange/*` | `surveyApi` |
 | `src/pages/Community/Vote/*` | `voteApi` |
 | `src/pages/Community/Bospi/BospiPage.jsx` | `bospiApi` |
+| `src/pages/Community/StudyWithBeomseo/StudyWithBeomseoPage.jsx` | `studyWithBeomseoApi` |
 | `src/pages/Notices/LostFound/*` | `lostFoundApi` |
 | `src/pages/Community/GomsolMarket/*` | `gomsolMarketApi` |
 | `src/pages/SchoolLifeInfo/Meal/MealPage.jsx` | `mealsApi`, `mealNotificationsApi` |

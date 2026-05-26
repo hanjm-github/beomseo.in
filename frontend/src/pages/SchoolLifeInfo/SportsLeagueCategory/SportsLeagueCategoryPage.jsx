@@ -7,14 +7,14 @@ import {
   Settings2,
   Trophy,
 } from 'lucide-react';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import SEO from '../../../components/SEO';
 import { sportsLeagueApi } from '../../../api/sportsLeague';
 import { useAuth } from '../../../context/AuthContext';
 import {
   SPORTS_EVENT_TEMPLATES,
-  SPORTS_LEAGUE_CATEGORY_ID,
+  SPORTS_LEAGUE_CATEGORY_OPTIONS,
 } from '../../../features/sportsLeague/data';
 import useSportsLeagueLive from '../../../features/sportsLeague/useSportsLeagueLive';
 import usePlayersStore from '../../../features/sportsLeague/usePlayersStore';
@@ -39,7 +39,6 @@ import {
   groupMatchesByWeek,
   sortMatchesByKickoff,
 } from '../../../features/sportsLeague/utils';
-import NotFoundPage from '../../NotFoundPage';
 import '../../page-shell.css';
 import styles from './SportsLeagueCategoryPage.module.css';
 
@@ -217,6 +216,7 @@ function MatchCard({
 
 export default function SportsLeagueCategoryPage() {
   const { categoryId = '' } = useParams();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
   const {
@@ -249,6 +249,11 @@ export default function SportsLeagueCategoryPage() {
   const [knockoutError, setKnockoutError] = useState('');
   const [isUpdatingKnockout, setIsUpdatingKnockout] = useState(false);
   const [now, setNow] = useState(() => new Date());
+  // The API list replaces this fallback after load, but the select can render immediately.
+  const [categoryList, setCategoryList] = useState({
+    defaultCategoryId: SPORTS_LEAGUE_CATEGORY_OPTIONS[0]?.id || '',
+    items: SPORTS_LEAGUE_CATEGORY_OPTIONS,
+  });
   const matchPickerRailRef = useRef(null);
   const matchPickerButtonRefs = useRef(new Map());
   const [draft, setDraft] = useState({
@@ -269,6 +274,27 @@ export default function SportsLeagueCategoryPage() {
 
     return () => {
       window.clearInterval(timer);
+    };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+
+    sportsLeagueApi
+      .getCategories()
+      .then((payload) => {
+        if (!active) return;
+        if (Array.isArray(payload?.items) && payload.items.length) {
+          setCategoryList({
+            defaultCategoryId: payload.defaultCategoryId || payload.items[0].id,
+            items: payload.items,
+          });
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      active = false;
     };
   }, []);
 
@@ -350,6 +376,17 @@ export default function SportsLeagueCategoryPage() {
     snapshot?.category?.matchTimeLabel,
     snapshot?.category?.locationLabel,
   ].filter(Boolean);
+
+  const rawCategoryOptions = categoryList.items?.length
+    ? categoryList.items
+    : SPORTS_LEAGUE_CATEGORY_OPTIONS;
+  const selectedCategoryOption =
+    rawCategoryOptions.find((item) => item.id === categoryId) || snapshot?.category || null;
+  const categoryOptions =
+    // Keep an already-loaded snapshot selectable if it is missing from the summary endpoint.
+    selectedCategoryOption && !rawCategoryOptions.some((item) => item.id === selectedCategoryOption.id)
+      ? [selectedCategoryOption, ...rawCategoryOptions]
+      : rawCategoryOptions;
 
   const buildDraftForMatch = (match, overrides = {}) => ({
     matchId: match?.id || '',
@@ -480,6 +517,16 @@ export default function SportsLeagueCategoryPage() {
     }
 
     navigateLeague({ matchId, tabKey });
+  };
+
+  const handleCategoryChange = (event) => {
+    const nextCategoryId = event.target.value;
+    if (!nextCategoryId || nextCategoryId === categoryId) return;
+
+    // Preserve the current tab, but let the new category choose its own focused match.
+    const next = new URLSearchParams();
+    next.set('tab', activeTab);
+    navigate(`/school-info/sports-league/${nextCategoryId}?${next.toString()}`);
   };
 
   const syncDraftScore = (match) => {
@@ -646,23 +693,6 @@ export default function SportsLeagueCategoryPage() {
     }
   };
 
-  if (categoryId !== SPORTS_LEAGUE_CATEGORY_ID) {
-    return (
-      <NotFoundPage
-        eyebrow="학교 생활 정보"
-        title="지원하지 않는 스포츠리그 카테고리입니다."
-        description="현재는 2026 1학기 3학년 남자 축구 문자중계만 제공하고 있습니다."
-        primaryAction={{ label: '학교 생활 정보 홈', to: '/school-info' }}
-        secondaryActions={[
-          {
-            label: '문자중계 홈',
-            to: `/school-info/sports-league/${SPORTS_LEAGUE_CATEGORY_ID}`,
-          },
-        ]}
-      />
-    );
-  }
-
   return (
     <div className={`page-shell ${styles.page}`}>
       <SEO
@@ -672,7 +702,7 @@ export default function SportsLeagueCategoryPage() {
           snapshot?.category?.subtitle ||
           '범서고 스포츠리그 실시간 중계, 예선 순위판, 주차별 대진표를 확인하세요.'
         }
-        noindex={categoryId !== SPORTS_LEAGUE_CATEGORY_ID}
+        noindex={false}
       />
       <div className="page-header">
         <div>
@@ -691,6 +721,23 @@ export default function SportsLeagueCategoryPage() {
           {!loading && !error && snapshot?.category?.statusNote ? (
             <p className={styles.statusNote}>{snapshot.category.statusNote}</p>
           ) : null}
+        </div>
+        <div className={styles.leagueSwitcher}>
+          <label className={styles.leagueSwitcherLabel} htmlFor="sports-league-category">
+            리그 선택
+          </label>
+          <select
+            id="sports-league-category"
+            className={styles.leagueSelect}
+            value={selectedCategoryOption?.id || categoryId}
+            onChange={handleCategoryChange}
+          >
+            {categoryOptions.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.title}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 

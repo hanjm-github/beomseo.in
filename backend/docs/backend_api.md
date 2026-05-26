@@ -139,7 +139,7 @@ JWT 공통 에러 코드:
 
 - 사용자/인증: `users`, `auth_tokens`
 - 공지/자유게시판/인성 가치 PICK!/댓글/반응/북마크
-- 청원/설문/투표/BOSPI/분실물/곰솔마켓/동아리모집/과목변경 관련 쓰기 엔티티
+- 청원/설문/투표/BOSPI/스터디 윗 범서/분실물/곰솔마켓/동아리모집/과목변경 관련 쓰기 엔티티
 
 ## 2. 엔드포인트 인덱스
 
@@ -157,6 +157,7 @@ flowchart TD
     API --> Survey["/api/surveys/*"]
     API --> Vote["/api/community/votes/*"]
     API --> Bospi["/api/community/bospi/*"]
+    API --> StudyWithBeomseo["/api/community/study-with-beomseo/*"]
     API --> SportsLeague["/api/sports-league/*"]
     API --> FieldTrip["/api/community/field-trip/*"]
     API --> SchoolMeals["/api/school-info/meals*"]
@@ -175,6 +176,8 @@ flowchart TD
     Survey --> S2["credits / summary"]
     Bospi --> B1["상태 / 예측"]
     Bospi --> B2["공식 기록 / 랭킹"]
+    StudyWithBeomseo --> SWB1["반별 순위판"]
+    StudyWithBeomseo --> SWB2["예약 점수 입력"]
     FieldTrip --> FT1["class unlock / posts / uploads"]
     FieldTrip --> FT2["scoreboard / admin board settings"]
     SchoolMeals --> SM1["today / range / ratings"]
@@ -191,6 +194,7 @@ flowchart TD
 - Surveys: `/api/surveys/*`
 - Votes: `/api/community/votes/*`
 - BOSPI: `/api/community/bospi/*`
+- Study With Beomseo: `/api/community/study-with-beomseo/*`
 - Sports League: `/api/sports-league/*`
 - Field Trip: `/api/community/field-trip/*`
 - 급식: `/api/school-info/meals*`
@@ -1116,6 +1120,95 @@ flowchart TD
 
 ---
 
+## 11B. Study With Beomseo API (`/api/community/study-with-beomseo`)
+
+### 11B.1 규약
+
+- 순위판은 `1-1`부터 `3-10`까지 30개 반을 항상 반환합니다.
+- 점수 입력은 증감값이 아니라 특정 반의 최종 총점 snapshot입니다.
+- 저장 테이블은 `study_with_beomseo_score_updates`이며 기존 행을 수정/삭제하지 않고 append-only로 이력을 누적합니다.
+- `effectiveAt`이 현재 KST 시간 이하인 최신 기록만 일반 사용자 순위에 반영됩니다.
+- 같은 반에 공개 가능한 기록이 여러 개 있으면 `effectiveAt desc`, `id desc` 기준으로 가장 최신 snapshot을 사용합니다.
+- `effectiveAt`이 미래인 예약 기록은 `admin | student_council`에게만 `pendingUpdates`로 노출됩니다.
+- 응답 날짜시간(`serverNow`, `updatedThrough`, `lastPublishedAt`, `effectiveAt`)은 `+09:00` offset을 포함합니다.
+- 서버 저장값은 KST 기준 naive datetime이고, API 직렬화 시 `+09:00` offset을 붙여 프론트가 명시적인 시각으로 해석하게 합니다.
+- 이 순위판은 공개 시간이 지나면 즉시 결과가 달라져야 하므로 응답 캐시를 사용하지 않습니다.
+- 쓰기 행에는 공통 요청 메타데이터 훅으로 `ip_address`, `user_agent`가 best-effort로 채워질 수 있습니다.
+
+### 11B.2 `GET /api/community/study-with-beomseo/scoreboard`
+
+- 권한: 선택 인증
+- 성공 `200` 주요 필드:
+
+```json
+{
+  "serverNow": "2026-05-19T22:00:00+09:00",
+  "updatedThrough": "2026-05-19T22:00:00+09:00",
+  "canManage": false,
+  "items": [
+    {
+      "classId": "2-7",
+      "grade": 2,
+      "classNumber": 7,
+      "label": "2-7",
+      "rank": 1,
+      "totalScore": 1650,
+      "lastPublishedAt": "2026-05-19T22:00:00+09:00"
+    }
+  ],
+  "pendingUpdates": []
+}
+```
+
+- 순위 정렬: `totalScore desc`, 학년, 반 번호 순서
+- 동점: 같은 총점은 같은 표시 순위 공유
+- 공개된 점수가 없는 반: `totalScore=0`, `lastPublishedAt=null`
+- 관리자 응답: `canManage=true`이고 `pendingUpdates[]`에 미래 예약 점수 포함
+- `updatedThrough`: 현재 응답에 반영된 공개 snapshot 중 가장 늦은 `effectiveAt`
+- `pendingUpdates[]`: `id`, `classId`, `grade`, `classNumber`, `label`, `totalScore`, `effectiveAt`, `createdAt`, `createdBy` 포함
+
+### 11B.3 `POST /api/community/study-with-beomseo/score-updates`
+
+- 권한: `admin | student_council`
+- Body:
+  - `classId`: `1-1`부터 `3-10`
+  - `totalScore`: 정수 `0..1000000`
+  - `effectiveAt`: ISO 날짜시간, timezone 없으면 KST로 해석
+- 동작:
+  - 과거/현재 `effectiveAt`은 즉시 공개 점수로 반영됩니다.
+  - 미래 `effectiveAt`은 예약 대기 점수로 저장됩니다.
+  - 같은 반의 기존 기록은 삭제하지 않고 append-only 이력으로 보존합니다.
+- 입력자 기록:
+  - `created_by_id`: 현재 로그인 사용자 ID
+  - `created_by_role`: 요청 당시 사용자 역할 문자열
+- 오류:
+  - `400`: 요청 본문 없음 또는 JSON object가 아님
+  - `401`: 인증 누락/실패
+  - `403`: `admin | student_council` 권한 없음
+  - `422`: `classId`, `totalScore`, `effectiveAt` 유효성 오류
+  - `500`: DB 저장 실패
+- 성공 `201`:
+
+```json
+{
+  "id": 12,
+  "classId": "2-7",
+  "grade": 2,
+  "classNumber": 7,
+  "label": "2-7",
+  "totalScore": 1650,
+  "effectiveAt": "2026-05-19T22:00:00+09:00",
+  "createdAt": "2026-05-19T03:20:00",
+  "createdBy": {
+    "id": 3,
+    "nickname": "학생회",
+    "role": "student_council"
+  }
+}
+```
+
+---
+
 ## 12. Lost & Found API (`/api/community/lost-found`)
 
 ### 12.1 Enum/규약
@@ -1190,7 +1283,39 @@ flowchart TD
 - 선수 라인업/개인 순위 데이터는 snapshot에 포함되지 않으며, 별도 `/players` 엔드포인트로 읽고 씁니다.
 - `liveEvents[].author`는 `{ nickname }`만 노출합니다.
 - active event는 최신 `250`개까지만 유지되고, 오래된 항목은 soft delete 됩니다.
+- 등록된 seed 카테고리는 기본 `2026-spring-grade2-boys-soccer`와 이전 `2026-spring-grade3-boys-soccer`입니다.
 - `RATELIMIT_SPORTS_LEAGUE_STREAM_CONNECT`, client/category 동시 연결 제한 helper는 현재 코드에 정의되어 있지만 stream route에는 직접 연결되지 않았습니다.
+
+### 12A.0 `GET /api/sports-league/categories`
+
+- 권한: 없음
+- 반환: `defaultCategoryId`, `items[]`
+- `items[]`: `id`, `title`, `seasonLabel`, `gradeLabel`, `sportLabel`, `scheduleWindowLabel`, `updatedAt`, `storageVersion`
+- 용도: 프론트 스포츠리그 전환 UI와 기본 카테고리 진입점
+- 동작:
+  - seed registry 순서로 카테고리 목록을 반환합니다.
+  - DB에 bootstrap된 row가 있으면 제목/학기/학년/종목/일정/버전/갱신 시각은 DB 값을 우선 사용합니다.
+  - 아직 bootstrap 전인 카테고리도 seed metadata로 목록에 노출될 수 있습니다.
+
+응답 예시:
+
+```json
+{
+  "defaultCategoryId": "2026-spring-grade2-boys-soccer",
+  "items": [
+    {
+      "id": "2026-spring-grade2-boys-soccer",
+      "title": "2026 1학기 2학년 남자 축구",
+      "seasonLabel": "2026 1학기",
+      "gradeLabel": "2학년",
+      "sportLabel": "남자 축구",
+      "scheduleWindowLabel": "2026.05.26 ~ 2026.06.08",
+      "updatedAt": "2026-05-26T02:45:00Z",
+      "storageVersion": "2026.05.26"
+    }
+  ]
+}
+```
 
 ### 12A.1 `GET /api/sports-league/categories/{category_id}`
 
@@ -1203,8 +1328,8 @@ flowchart TD
 ```json
 {
   "category": {
-    "id": "2026-spring-grade3-boys-soccer",
-    "title": "2026 1학기 3학년 남자 축구"
+    "id": "2026-spring-grade2-boys-soccer",
+    "title": "2026 1학기 2학년 남자 축구"
   },
   "teams": [],
   "matches": [],
@@ -1219,8 +1344,8 @@ flowchart TD
     "A": null,
     "B": null
   },
-  "updatedAt": "2026-03-15T12:00:00Z",
-  "storageVersion": "2026.03.15"
+  "updatedAt": "2026-05-26T02:45:00Z",
+  "storageVersion": "2026.05.26"
 }
 ```
 
@@ -1241,8 +1366,8 @@ flowchart TD
   "players": [
     {
       "id": "sports-player-3f2b6d8d7f5b4c37b8a2b0ef5d92e44f",
-      "categoryId": "2026-spring-grade3-boys-soccer",
-      "teamId": "class-3-1",
+      "categoryId": "2026-spring-grade2-boys-soccer",
+      "teamId": "g2-team-2-1-2-7",
       "name": "김민준",
       "goals": 2,
       "assists": 1,
@@ -1355,7 +1480,12 @@ flowchart TD
 - 동작:
   - 카테고리/팀/경기 seed를 upsert
   - 기존 live event와 standings override는 유지
+  - category별 `storageVersion`을 seed 값으로 반영
   - 최신 snapshot을 `201`과 함께 반환
+- 운영 스크립트:
+  - `python scripts/bootstrap_sports_league.py --list`: 등록 seed 목록만 출력
+  - `python scripts/bootstrap_sports_league.py`: 등록된 모든 스포츠리그 카테고리 bootstrap
+  - `python scripts/bootstrap_sports_league.py --category-id <category_id>`: 특정 카테고리만 bootstrap
 
 ---
 
