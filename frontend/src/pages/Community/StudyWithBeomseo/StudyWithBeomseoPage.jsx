@@ -310,7 +310,11 @@ export default function StudyWithBeomseoPage() {
         <div className={styles.heroCopy}>
           <p className={styles.eyebrow}>소통하는 범서고</p>
           <h1>스터디 윗 범서</h1>
-          <p>스윗범</p>
+          <p className={styles.description}>
+            하루 동안 모인 점수는 바로 반영되지 않으며,<br />
+            다음날 낮 12시에 범서인 순위 게시판에 업데이트됩니다!<br />
+            예시) 5월 26일에 획득한 점수 → 5월 27일 낮 12시에 순위표 반영
+          </p>
         </div>
 
         <div className={styles.heroStats} aria-label="순위판 요약">
