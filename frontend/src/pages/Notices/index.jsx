@@ -23,6 +23,7 @@ const BudgetBoardPage = lazy(() => import('./BudgetBoard/BudgetBoardPage'));
 const LostFoundListView = lazy(() => import('./LostFound/LostFoundListView'));
 const LostFoundDetailView = lazy(() => import('./LostFound/LostFoundDetailView'));
 const LostFoundComposeView = lazy(() => import('./LostFound/LostFoundComposeView'));
+const SchoolInfoPage = lazy(() => import('./SchoolInfo/CSHSInfoPage'));
 
 const lazyRoute = (Component, props = {}) => (
   <Suspense fallback={<div className="route-fallback">페이지를 불러오는 중...</div>}>
@@ -40,6 +41,7 @@ export default function NoticesPage() {
       <Route path="budget/*" element={lazyRoute(BudgetBoardPage)} />
       <Route path="lost-found" element={lazyRoute(LostFoundListView)} />
       <Route path="lost-found/new" element={lazyRoute(LostFoundComposeView)} />
+      <Route path='school-info/cshs-info' element={lazyRoute(SchoolInfoPage)} />
       <Route
         element={
           <NumericParamBoundary
