@@ -18,7 +18,7 @@
 | `src/main.jsx` | React 앱 엔트리포인트. `#root`에 `<App />` 마운트 |
 | `src/App.jsx` | 전역 Provider(`ThemeProvider`, `NetworkStatusProvider`, `PwaInstallProvider`, `AuthProvider`) + 최상위 라우팅 구성 |
 | `src/layout/AppLayout.jsx` | 공통 레이아웃(접근성 skip-link, Header, main, Footer, OfflineGate) |
-| `src/components/Header/Header.jsx` | 전역 내비게이션/테마 토글/인증 상태 UI. 커뮤니티 보드 feature flag, 학교 생활 정보 유틸리티 링크(QR/샤니마스 카드/스포츠리그 등) 포함 |
+| `src/components/Header/Header.jsx` | 전역 내비게이션/테마 토글/인증 상태 UI. 공지 영역의 학교 소개 진입점, 커뮤니티 보드 feature flag, 학교 생활 정보 유틸리티 링크(QR/샤니마스 카드/스포츠리그 등) 포함 |
 | `src/components/Footer/Footer.jsx` | 외부 링크/법적 문서 링크/운영 정보 |
 | `src/components/pwa/OfflineGate.jsx` | 오프라인 시 전체 화면 오버레이와 재시도 흐름 제공 |
 | `src/pages/CommunityPage.jsx` | 커뮤니티 허브 페이지. 모든 보드 카드를 그리드로 나열하며, 현재 활성 보드를 하이라이트 |
@@ -62,7 +62,11 @@
 |---|---|
 | `/notices` | `Navigate -> /notices/school` |
 | `/notices/budget/*` | `BudgetBoardPage` |
-| `/notices/*` (`budget` 외 경로) | `NoticeCenterPage` |
+| `/notices/lost-found` | `LostFoundListView` |
+| `/notices/lost-found/new` | `LostFoundComposeView` |
+| `/notices/lost-found/:id` | `LostFoundDetailView` (`id` 숫자 경로만 허용) |
+| `/notices/school-info/*` | `SchoolInfoRouter` |
+| `/notices/*` (`budget`, `lost-found`, `school-info` 외 경로) | `NoticeCenterPage` |
 
 #### 3.2.1 학교/학생회 공지 서브라우트 (`src/pages/Notices/NoticeCenter/NoticeCenterPage.jsx`)
 
@@ -95,7 +99,16 @@
 #### 3.2.3 학교 소개 라우트 (`src/pages/Notices/SchoolInfo/index.jsx`)
 | 경로 | 요소 |
 |---|---|
+| `/notices/school-info` | `Navigate -> /notices/school-info/bshs-info` |
+| `/notices/school-info/bshs-info` | `BeomseoInfoPage` |
 | `/notices/school-info/cshs-info` | `CSHSInfoPage` |
+| `/notices/school-info/*` (invalid path) | `NotFoundPage` |
+
+학교 소개 라우트 메모:
+
+- `SchoolInfoTabs`가 범서고·천상고 소개 탭의 라벨, 경로, 활성 상태 판정을 한곳에서 관리합니다.
+- `BeomseoInfoPage`는 공식 홈페이지의 교육 방향, 학교상징, 학교현황, 연혁, 오시는 길을 정적 콘텐츠로 보여주고 각 원문 출처 링크를 제공합니다.
+- 두 학교 소개 페이지는 백엔드 API를 호출하지 않으며, 정적 SEO/prerender 정보는 `src/seo/policy.js`에서 관리합니다.
 
 ### 3.3 커뮤니티 라우트 (`src/pages/Community/index.jsx`)
 
@@ -226,6 +239,7 @@ graph TD
 | 기능 | 페이지 레이어 | 컴포넌트 레이어 | API 레이어 |
 |---|---|---|---|
 | 공지/예산 공개 | `src/pages/Notices/*` | `src/components/notices/*` | `src/api/notices.js` |
+| 공지(학교 소개) | `src/pages/Notices/SchoolInfo/*` | `SchoolInfoTabs`, 페이지별 CSS Module | 없음 (정적 학교 소개 콘텐츠 + 공식 출처 링크) |
 | 자유게시판 | `src/pages/Community/FreeBoard/*` | `src/components/freeboard/*` | `src/api/community.js` |
 | 인성 가치 PICK! | `src/pages/Community/ValuePick/*` | `src/components/Community/ValuePick/*` | `src/api/valuePick.js` |
 | 동아리 모집 | `src/pages/Community/ClubRecruit/*` | `src/components/clubRecruit/*` | `src/api/clubRecruit.js` |
@@ -256,6 +270,10 @@ graph TD
 | `src/pages/Notices/BudgetBoard/BudgetDetailView.jsx` | 예산 공개 상세, 댓글/반응/첨부 재사용 |
 | `src/pages/Notices/BudgetBoard/BudgetComposeView.jsx` | 경로 기반 회계연도/월을 고정한 작성·수정 화면 |
 | `src/pages/Notices/BudgetBoard/budgetUtils.js` | `03`~`02` 회계 사이클 계산 및 라벨/경로 유틸 |
+| `src/pages/Notices/SchoolInfo/index.jsx` | `/notices/school-info/*` 하위 학교 소개 라우터와 잘못된 학교 소개 경로 404 처리 |
+| `src/pages/Notices/SchoolInfo/SchoolInfoTabs.jsx` | 범서고·천상고 소개 탭과 활성 경로 판정 |
+| `src/pages/Notices/SchoolInfo/BeomseoInfoPage.jsx` | 범서고 교육 방향, 상징, 현황, 연혁, 위치, 공식 출처 링크를 정적 렌더링 |
+| `src/pages/Notices/SchoolInfo/CSHSInfoPage.jsx` | 천상고 소개 카드와 다음 학교 행사 D-Day 렌더링 |
 | `src/components/notices/NoticeToolbar.jsx` | `showAttributeFilters`, `sortOptions`, `searchPlaceholder`로 budget 보드 확장 |
 | `src/components/notices/NoticeList.jsx` | `emptyStateProps`, `cardProps`로 budget 전용 비어 있음/카드 렌더링 재사용 |
 | `src/components/notices/NoticeCard.jsx` | `hideBadges`, `hideTags`로 예산 공개 카드 표현 단순화 |
@@ -430,6 +448,24 @@ graph TD
 - `ensureShanyCardFontElements()`를 페이지 마운트 시 호출해 미리보기와 export 이미지의 폰트 표현을 맞춥니다.
 - 파일명은 카드 이름을 기반으로 만들되 파일 시스템에서 문제가 되는 문자를 `-`로 치환합니다.
 - 출력 배율, 캡처 배율, 이름 배율은 UI에서는 0~500% 범위를 제공하지만 실제 렌더링에는 0 크기 이미지가 생기지 않도록 최소 양수 배율로 보정합니다.
+
+## 11.5 공지 영역 학교 소개 모듈
+
+`공지사항 > 학교 소개`는 공지 CRUD와 별개로 운영되는 정적 소개 화면입니다. 공지 드롭다운에서는 `/notices/school-info`로 진입하고, 라우터는 기본값을 범서고 소개(`/notices/school-info/bshs-info`)로 이동시킵니다.
+
+| 파일 | 역할 |
+|---|---|
+| `src/pages/Notices/SchoolInfo/index.jsx` | 기본 경로 리다이렉트, 범서고/천상고 소개 라우트, 학교 소개 전용 404 구성 |
+| `src/pages/Notices/SchoolInfo/SchoolInfoTabs.jsx` | 범서고와 천상고 탭의 단일 경로 목록과 활성 판정 |
+| `src/pages/Notices/SchoolInfo/BeomseoInfoPage.jsx` | 범서고 공식 자료를 학생용 섹션으로 재구성하고 원문 출처 링크 제공 |
+| `src/pages/Notices/SchoolInfo/CSHSInfoPage.jsx` | 천상고 소개 문구, 핵심 가치 카드, 다음 학교 행사 D-Day 제공 |
+| `src/seo/policy.js` | 두 소개 경로의 title, description, breadcrumbs, sitemap/prerender 설정과 범서고 `HighSchool` JSON-LD |
+
+동작 메모:
+
+- 이 모듈은 백엔드 API를 호출하지 않으므로 배포 전 정적 콘텐츠와 공식 출처 링크를 코드 리뷰에서 함께 확인합니다.
+- `main.jsx`의 prerender preload 목록에 학교 소개 라우터와 두 페이지가 포함되어 Suspense 경계를 정적 HTML 생성 시 해소합니다.
+- 운영 Nginx allowlist에는 `/notices/school-info`, `/notices/school-info/bshs-info`, `/notices/school-info/cshs-info`를 추가해야 직접 URL 진입이 404로 오판되지 않습니다.
 
 ## 12. 유틸리티 & 설정 파일
 

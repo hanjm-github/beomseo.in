@@ -210,7 +210,7 @@ flowchart TD
 
 - 최상위 라우트는 `src/App.jsx`에서만 정의
 - 세부 기능 라우트는 기능별 라우터(`src/pages/Community/index.jsx`, `src/pages/Notices/index.jsx`, `src/pages/SchoolLifeInfo/index.jsx`)로 위임
-- `src/pages/Notices/index.jsx`는 다시 `NoticeCenterPage`(학교/학생회 공지)와 `BudgetBoardPage`(예산 공개)로 분기합니다.
+- `src/pages/Notices/index.jsx`는 다시 `NoticeCenterPage`(학교/학생회 공지), `BudgetBoardPage`(예산 공개), `LostFound` 화면, `SchoolInfoRouter`(학교 소개)로 분기합니다.
 - 페이지 컴포넌트는 가능한 한 API 호출 orchestration에 집중
 - 표시 로직은 `src/components/*`로 분리
 - data-dense 기능은 `src/features/<feature>/*`에 hook/data/utils를 묶어 페이지와 공용 API 사이를 정리
@@ -220,6 +220,7 @@ flowchart TD
 
 - `Header`는 공지, 커뮤니티, 학교 생활 정보를 전역 내비게이션으로 노출합니다.
 - 공지 드롭다운에는 `학교 공지`, `학생회 공지`, `분실물 센터`, `예산 공개`, `학교 소개` 5개 진입점이 있으며, 분실물 센터, 예산 공개와 학교 소개는 별도 페이지(`/notices/lost-found/*`, `/notices/budget/*`, `/notices/school-info/*`)로 연결됩니다.
+- 학교 소개 진입점은 `/notices/school-info`를 사용하고, 라우터는 기본값을 `/notices/school-info/bshs-info`로 이동시킵니다.
 - 커뮤니티 드롭다운의 인성 가치 PICK! 링크는 `VALUE_PICK_BOARD_ENABLED` 플래그가 켜진 경우에만 렌더링됩니다.
 - 커뮤니티 드롭다운의 동아리 모집 링크는 `CLUB_RECRUIT_BOARD_ENABLED` 플래그가 켜진 경우에만 렌더링됩니다.
 - 커뮤니티 드롭다운의 수학여행 링크는 `FIELD_TRIP_BOARD_ENABLED` 플래그가 켜진 경우에만 렌더링됩니다.
@@ -366,6 +367,29 @@ flowchart LR
 - 업로드 이미지는 서버로 보내지 않고 `File` 객체로만 보관하며, `URL.createObjectURL()`로 실제 크기를 읽은 뒤 cleanup 시 object URL을 해제합니다.
 - 카드 합성 모드의 X/Y 위치는 업로드 이미지의 width/height를 기준으로 보정되어 렌더링 API에 범위 밖 좌표가 전달되지 않도록 합니다.
 - SEO 정책에는 별도 정적 route entry를 등록해 sitemap/prerender 산출물이 실제 라우트와 맞도록 유지합니다.
+
+## 6.6 공지 영역 학교 소개 흐름
+
+학교 소개 화면은 공지 API를 사용하지 않는 정적 콘텐츠 라우트입니다. 범서고 소개는 공식 홈페이지 자료의 핵심 정보를 학생용 섹션으로 재구성하고, 각 섹션 하단에 원문 출처 링크를 둡니다.
+
+```mermaid
+flowchart LR
+    A["/notices/school-info"] --> B["SchoolInfoRouter"]
+    B --> C["Navigate\n/bshs-info"]
+    B --> D["BeomseoInfoPage"]
+    B --> E["CSHSInfoPage"]
+    D --> F["SchoolInfoTabs"]
+    E --> F
+    D --> G["SEO 정책\nHighSchool JSON-LD"]
+```
+
+핵심 포인트:
+
+- `SchoolInfoTabs`가 범서고와 천상고 탭의 경로 목록과 활성 상태 판정을 함께 관리합니다.
+- `BeomseoInfoPage`는 교육 방향, 학교상징, 학교현황, 연혁, 오시는 길, 공식 자료 출처를 한 화면에 제공합니다.
+- `CSHSInfoPage`는 기존 소개 카드 위에 같은 탭 UI를 공유하고, 학교 행사 D-Day 계산은 지나간 날짜를 다음 해로 넘겨 항상 다음 행사를 표시합니다.
+- `main.jsx`의 prerender preload 목록은 학교 소개 라우터와 두 페이지를 포함해 정적 HTML 생성 시 Suspense fallback이 남지 않도록 합니다.
+- `src/seo/policy.js`는 범서고·천상고 소개의 breadcrumbs, sitemap/prerender 등록, 범서고 `HighSchool` JSON-LD를 관리합니다.
 
 ## 7. 기능 확장 규칙 (새 보드 추가 기준)
 

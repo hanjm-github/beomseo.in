@@ -21,6 +21,7 @@
 - 수학여행 추가 CSRF 헤더: `X-Field-Trip-CSRF` (`field_trip_csrf_token` 쿠키와 쌍으로 사용)
 - 날짜 문자열 정규화: timezone 없는 ISO 문자열에 `Z` 보정
 - 인증 클라이언트 transport 실패: `app:network-request-failed` 이벤트 발행 → `NetworkStatusContext` → `OfflineGate`
+- 공지 영역의 학교 소개(`src/pages/Notices/SchoolInfo/*`)는 백엔드 API를 호출하지 않고 정적 콘텐츠, 공식 출처 링크, 정적 SEO 정책만 사용합니다.
 
 ## 2. 모듈별 엔드포인트 요약
 
@@ -430,6 +431,7 @@ Field Trip 추가 계약 요약:
 | 화면 그룹 | API 모듈 |
 |---|---|
 | `src/pages/Notices/*` | `noticesApi` |
+| `src/pages/Notices/SchoolInfo/*` | 없음 (정적 학교 소개 콘텐츠 + 공식 출처 링크) |
 | `src/pages/Community/FreeBoard/*` | `communityApi` |
 | `src/pages/Community/ValuePick/*` | `valuePickApi` |
 | `src/pages/Community/ClubRecruit/*` | `clubRecruitApi` |

@@ -35,6 +35,28 @@ export const HOME_JSON_LD = [
   },
 ];
 
+const BEOMSEO_SCHOOL_INFO_PATH = '/notices/school-info/bshs-info';
+const CSHS_SCHOOL_INFO_PATH = '/notices/school-info/cshs-info';
+
+// Static school-profile routes author SEO metadata here because they do not load API data.
+const BEOMSEO_SCHOOL_JSON_LD = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'HighSchool',
+    name: '범서고등학교',
+    url: 'https://school.use.go.kr/beomseo-h',
+    address: {
+      '@type': 'PostalAddress',
+      postalCode: '44920',
+      addressRegion: '울산광역시',
+      addressLocality: '울주군',
+      streetAddress: '범서읍 대리로 69',
+      addressCountry: 'KR',
+    },
+    sameAs: ['https://school.use.go.kr/beomseo-h'],
+  },
+];
+
 const TRUTHY_ENV_VALUES = new Set(['1', 'true', 'yes', 'on']);
 
 const BOARD_FEATURE_FLAGS = [
@@ -160,6 +182,37 @@ function createStaticRouteEntries(date = new Date()) {
         { name: '홈', url: '/' },
         { name: '공지사항', url: '/notices/school' },
         { name: '예산 공개', url: currentBudgetPath },
+      ],
+    },
+    {
+      path: BEOMSEO_SCHOOL_INFO_PATH,
+      title: '범서고등학교 소개',
+      description:
+        '범서고등학교의 교육 방향, 학교상징, 연혁, 학교현황, 오시는 길을 한눈에 확인하세요.',
+      indexable: true,
+      prerender: true,
+      sitemap: true,
+      breadcrumbs: [
+        { name: '홈', url: '/' },
+        { name: '공지사항', url: '/notices/school' },
+        { name: '학교 소개', url: BEOMSEO_SCHOOL_INFO_PATH },
+        { name: '범서고', url: BEOMSEO_SCHOOL_INFO_PATH },
+      ],
+      jsonLd: BEOMSEO_SCHOOL_JSON_LD,
+    },
+    {
+      path: CSHS_SCHOOL_INFO_PATH,
+      title: '천상고등학교 소개',
+      description:
+        '천상고등학교 소개와 학교 행사 D-Day 정보를 확인하세요.',
+      indexable: true,
+      prerender: true,
+      sitemap: true,
+      breadcrumbs: [
+        { name: '홈', url: '/' },
+        { name: '공지사항', url: '/notices/school' },
+        { name: '학교 소개', url: BEOMSEO_SCHOOL_INFO_PATH },
+        { name: '천상고', url: CSHS_SCHOOL_INFO_PATH },
       ],
     },
     {

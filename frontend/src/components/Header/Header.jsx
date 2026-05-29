@@ -55,9 +55,16 @@ const communityNavigationItems = [
 ].filter(Boolean);
 
 const noticeNavigationItems = [
+  // School profiles live under their own nested notice router, outside NoticeCenter.
+  { label: '학교 소개', path: '/notices/school-info' },
   { label: '분실물 센터', path: LOST_FOUND_NOTICE_BASE_PATH },
   { label: '예산 공개', path: '/notices/budget' },
 ];
+
+function isNavigationPathActive(pathname, itemPath) {
+  // Prefix matching keeps child routes highlighted in dropdown navigation.
+  return pathname === itemPath || pathname.startsWith(`${itemPath}/`);
+}
 
 const navigationItems = [
   {
@@ -159,7 +166,7 @@ export default function Header() {
               {item.children ? (
                 <>
                   <button
-                    className={`${styles.navLink} ${location.pathname.startsWith(item.path) ? styles.active : ''
+                    className={`${styles.navLink} ${isNavigationPathActive(location.pathname, item.path) ? styles.active : ''
                       }`}
                     onClick={() => handleDropdownToggle(index)}
                     aria-expanded={activeDropdown === index}
@@ -179,7 +186,7 @@ export default function Header() {
                           <Link
                             key={child.path}
                             to={child.path}
-                            className={`${styles.dropdownItem} ${location.pathname.startsWith(child.path) ? styles.active : ''
+                            className={`${styles.dropdownItem} ${isNavigationPathActive(location.pathname, child.path) ? styles.active : ''
                               }`}
                           >
                             {child.label}
@@ -192,7 +199,7 @@ export default function Header() {
               ) : (
                 <Link
                   to={item.path}
-                  className={`${styles.navLink} ${location.pathname.startsWith(item.path) ? styles.active : ''
+                  className={`${styles.navLink} ${isNavigationPathActive(location.pathname, item.path) ? styles.active : ''
                     }`}
                 >
                   {item.label}

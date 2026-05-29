@@ -32,6 +32,10 @@ async function preloadPrerenderModules() {
     import('./pages/Notices/NoticeCenter/NoticeCenterPage'),
     import('./pages/Notices/BudgetBoard/BudgetBoardPage'),
     import('./pages/Notices/LostFound/LostFoundListView'),
+    // Include nested school profile modules so prerender can resolve their lazy routes.
+    import('./pages/Notices/SchoolInfo'),
+    import('./pages/Notices/SchoolInfo/BeomseoInfoPage'),
+    import('./pages/Notices/SchoolInfo/CSHSInfoPage'),
     import('./pages/Community'),
     import('./pages/Community/FreeBoard/FreeBoardListView'),
     VALUE_PICK_BOARD_ENABLED ? import('./pages/Community/ValuePick/ValuePickListView') : null,

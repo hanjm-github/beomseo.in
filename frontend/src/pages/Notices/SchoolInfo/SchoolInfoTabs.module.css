@@ -1,0 +1,55 @@
+/* Flexible tabs preserve touch targets when more school profile pages are added. */
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding: var(--space-1);
+  border: 1px solid var(--color-card-border-muted);
+  border-radius: var(--radius-xl);
+  background:
+    linear-gradient(135deg, rgba(46, 125, 92, 0.1), rgba(194, 24, 91, 0.08)),
+    var(--color-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 140px;
+  min-height: 44px;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-lg);
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  letter-spacing: 0;
+  text-decoration: none;
+  transition:
+    color var(--transition-fast),
+    background-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.tab:hover {
+  color: var(--color-text-primary);
+  background: var(--color-interactive-ghost-bg-hover);
+}
+
+.tab:focus-visible {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+.tab.active {
+  color: #ffffff;
+  background: linear-gradient(135deg, var(--color-primary-600), var(--color-accent-600));
+  box-shadow: var(--shadow-md);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tab {
+    transition: none;
+  }
+}

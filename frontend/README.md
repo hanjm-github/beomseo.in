@@ -2,7 +2,7 @@
 # beomseo.in Frontend
 
 범서고 커뮤니티 서비스 `beomseo.in`의 React/Vite 프론트엔드입니다.  
-공지(학교/학생회/예산 공개), 커뮤니티(자유/인성 가치 PICK!/동아리/청원/설문/투표/분실물/곰솔마켓/수학여행), 학교 생활 정보(QR 코드 생성기/샤니마스 카드 생성기/시간표/평가계획서/학사 캘린더/급식 조회/평점/PWA 알림/스포츠리그 문자중계/팀별 라인업/개인별 순위), 인증, 분석 트래킹을 단일 SPA로 제공합니다.
+공지(학교/학생회/학교 소개/예산 공개), 커뮤니티(자유/인성 가치 PICK!/동아리/청원/설문/투표/분실물/곰솔마켓/수학여행), 학교 생활 정보(QR 코드 생성기/샤니마스 카드 생성기/시간표/평가계획서/학사 캘린더/급식 조회/평점/PWA 알림/스포츠리그 문자중계/팀별 라인업/개인별 순위), 인증, 분석 트래킹을 단일 SPA로 제공합니다.
 
 ## 프로젝트 개요
 
@@ -153,6 +153,7 @@ graph TD
     N --> N2["/notices/:category/new"]
     N --> N3["/notices/:category/:id"]
     N --> N4["/notices/:category/:id/edit"]
+    N --> N5["/notices/school-info/*"]
     N --> NB1["/notices/budget"]
     N --> NB2["/notices/budget/:budgetYear/:budgetMonth"]
     N --> NB3["/notices/budget/:budgetYear/:budgetMonth/:id"]
@@ -179,14 +180,18 @@ graph TD
 
 세부 라우트/기능별 연결은 [frontend-code-map.md](docs/frontend-code-map.md)에서 확인할 수 있습니다.
 
-### 공지/예산 공개 라우팅 메모
+### 공지/학교 소개/예산 공개 라우팅 메모
 
 - `/notices/*`는 학교/학생회 공지용 `NoticeCenterPage`와 예산 공개용 `BudgetBoardPage`로 분기됩니다.
+- `/notices/school-info`는 `/notices/school-info/bshs-info`로 이동하며, 하위 탭에서 범서고와 천상고 소개를 전환합니다.
+- 범서고 소개는 공식 홈페이지의 교육 방향, 학교상징, 학교현황, 연혁, 오시는 길을 정적 콘텐츠와 출처 링크로 제공합니다.
+- 학교 소개 경로는 `src/seo/policy.js`의 정적 SEO/sitemap/prerender 메타데이터와 함께 관리합니다.
 - `/notices/budget` 진입 시 `GET /api/notices/budget/settings` 응답의 `defaultBudgetYear`, `defaultBudgetMonth`를 사용해 기본 월 화면으로 이동합니다.
 - 예산 공개 보드는 고정된 회계 사이클(`03`~`12`, `01`, `02`)을 기준으로 월 탭을 만들며, 공유 `NoticeToolbar`/`NoticeList`/`NoticeCard`를 재사용하되 공지 전용 배지·태그·속성 필터는 숨깁니다.
 
 ### 헤더와 정적 법적 페이지
 
+- `Header`의 공지사항 메뉴는 `학교 소개` 진입점을 `/notices/school-info`로 노출하며, 하위 소개 경로에서도 활성 상태를 유지합니다.
 - `Header`의 커뮤니티 메뉴는 `VALUE_PICK_BOARD_ENABLED` 환경변수에 따라 인성 가치 PICK! 링크를 조건부로 노출합니다.
 - `Header`와 커뮤니티 허브는 `BOSPI` 링크를 `/community/bospi`로 노출합니다.
 - `Header`의 커뮤니티 메뉴는 `CLUB_RECRUIT_BOARD_ENABLED` 환경변수에 따라 동아리 모집 링크를 조건부로 노출합니다.
@@ -271,6 +276,8 @@ map $uri $spa_route_ok {
     ~^/notices/budget/[0-9]{4}/(0[1-9]|1[0-2])/?$ 1;
     ~^/notices/budget/[0-9]{4}/(0[1-9]|1[0-2])/[0-9]+/?$ 1;
     ~^/notices/budget/[0-9]{4}/(0[1-9]|1[0-2])/[0-9]+/edit/?$ 1;
+    ~^/notices/school-info/?$ 1;
+    ~^/notices/school-info/(bshs-info|cshs-info)/?$ 1;
     ~^/community/?$ 1;
     ~^/community/(free|value-pick|club-recruit|subjects|petition|survey|vote|lost-found|gomsol-market)/?$ 1;
     ~^/community/(free|value-pick|club-recruit|subjects|petition|survey|vote|lost-found|gomsol-market)/new/?$ 1;

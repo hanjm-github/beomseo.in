@@ -4,6 +4,7 @@
  */
 import SEO from '../../../components/SEO';
 import '../../page-shell.css';
+import SchoolInfoTabs from './SchoolInfoTabs';
 import styles from './CSHSInfoPage.module.css';
 
 const SCHOOL_INFO = {
@@ -88,7 +89,8 @@ export default function CSHSInfoPage() {
 
   return (
     <div className="page-shell">
-      <SEO path="/school-info/intro" />
+      <SEO path="/notices/school-info/cshs-info" />
+      <SchoolInfoTabs />
 
       <div className="page-header">
         <div>
