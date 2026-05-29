@@ -3,14 +3,12 @@
  * @description 천상고등학교 소개 페이지
  */
 import SEO from '../../../components/SEO';
-import schoolEmblem from './cscord.png';
 import '../../page-shell.css';
 import styles from './CSHSInfoPage.module.css';
 
 const SCHOOL_INFO = {
   name: '천상고등학교',
   motto: '배움을 실천하고 선을 행하여 더불어 행복한 사람이 되자',
-  emblemAlt: '천상고등학교 교표',
   description: '천상고등학교 창체동아리 \'코드랩\'에서 제작하였습니다.',
 };
 
@@ -101,14 +99,6 @@ export default function CSHSInfoPage() {
       </div>
 
       <section className={styles.heroCard}>
-        <div className={styles.emblemBox}>
-          <img
-            src={schoolEmblem}
-            alt={SCHOOL_INFO.emblemAlt}
-            className={styles.emblemImage}
-          />
-        </div>
-
         <div className={styles.heroCopy}>
           <p className={styles.heroKicker}>School Motto</p>
           <h2 className={styles.schoolName}>{SCHOOL_INFO.name}</h2>
