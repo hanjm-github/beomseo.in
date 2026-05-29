@@ -63,10 +63,28 @@ export const CLUB_RECRUIT_BOARD_ENABLED = readBooleanEnv(
   'VITE_CLUB_RECRUIT_BOARD_ENABLED',
   true
 );
+export const SUBJECT_CHANGES_BOARD_ENABLED = readBooleanEnv(
+  'VITE_SUBJECT_CHANGES_BOARD_ENABLED',
+  true
+);
+export const BOSPI_BOARD_ENABLED = readBooleanEnv('VITE_BOSPI_BOARD_ENABLED', true);
+export const STUDY_WITH_BEOMSEO_BOARD_ENABLED = readBooleanEnv(
+  'VITE_STUDY_WITH_BEOMSEO_BOARD_ENABLED',
+  true
+);
 export const FIELD_TRIP_BOARD_ENABLED = readBooleanEnv(
   'VITE_FIELD_TRIP_BOARD_ENABLED',
   true
 );
+// Route slugs are shared keys for navigation, routing, prerender, and SEO filters.
+export const COMMUNITY_BOARD_FEATURE_FLAGS = Object.freeze({
+  'value-pick': VALUE_PICK_BOARD_ENABLED,
+  'club-recruit': CLUB_RECRUIT_BOARD_ENABLED,
+  subjects: SUBJECT_CHANGES_BOARD_ENABLED,
+  bospi: BOSPI_BOARD_ENABLED,
+  'study-with-beomseo': STUDY_WITH_BEOMSEO_BOARD_ENABLED,
+  'field-trip': FIELD_TRIP_BOARD_ENABLED,
+});
 // Web Push is considered configured only when every required Firebase key exists.
 export const FIREBASE_API_KEY = readStringEnv('VITE_FIREBASE_API_KEY', '');
 export const FIREBASE_AUTH_DOMAIN = readStringEnv('VITE_FIREBASE_AUTH_DOMAIN', '');

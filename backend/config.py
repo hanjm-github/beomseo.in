@@ -223,6 +223,18 @@ class Config:
         os.getenv('CLUB_RECRUIT_BOARD_ENABLED', 'true'),
         default=True,
     )
+    SUBJECT_CHANGES_BOARD_ENABLED = _parse_bool(
+        os.getenv('SUBJECT_CHANGES_BOARD_ENABLED', 'true'),
+        default=True,
+    )
+    BOSPI_BOARD_ENABLED = _parse_bool(
+        os.getenv('BOSPI_BOARD_ENABLED', 'true'),
+        default=True,
+    )
+    STUDY_WITH_BEOMSEO_BOARD_ENABLED = _parse_bool(
+        os.getenv('STUDY_WITH_BEOMSEO_BOARD_ENABLED', 'true'),
+        default=True,
+    )
 
     # Budget disclosure board
     BUDGET_BOARD_CURRENT_CYCLE_YEAR = _current_kst_budget_cycle_year()

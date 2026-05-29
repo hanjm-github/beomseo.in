@@ -240,51 +240,77 @@ def create_app(config_name=None):
     from routes.gomsol_market import gomsol_market_bp
     from routes.study_with_beomseo import study_with_beomseo_bp
 
-    value_pick_board_enabled = bool(app.config.get('VALUE_PICK_BOARD_ENABLED', True))
-    club_recruit_board_enabled = bool(app.config.get('CLUB_RECRUIT_BOARD_ENABLED', True))
+    # Keep board gates in one table so write limits and blueprint registration
+    # cannot drift when a board is enabled or disabled.
+    community_blueprint_entries = [
+        {
+            'label': 'Value Pick',
+            'config_key': 'VALUE_PICK_BOARD_ENABLED',
+            'blueprint': value_pick_bp,
+            'url_prefix': '/api/community/value-pick',
+        },
+        {
+            'label': 'Club recruit',
+            'config_key': 'CLUB_RECRUIT_BOARD_ENABLED',
+            'blueprint': club_recruit_bp,
+            'url_prefix': '/api/club-recruit',
+        },
+        {
+            'label': 'Subject changes',
+            'config_key': 'SUBJECT_CHANGES_BOARD_ENABLED',
+            'blueprint': subject_changes_bp,
+            'url_prefix': '/api/subject-changes',
+        },
+        {'blueprint': petitions_bp},
+        {'blueprint': surveys_bp},
+        {'blueprint': votes_bp},
+        {
+            'label': 'BOSPI',
+            'config_key': 'BOSPI_BOARD_ENABLED',
+            'blueprint': bospi_bp,
+            'url_prefix': '/api/community/bospi',
+        },
+        {'blueprint': lost_found_bp},
+        {'blueprint': gomsol_market_bp},
+        {
+            'label': 'Study With Beomseo',
+            'config_key': 'STUDY_WITH_BEOMSEO_BOARD_ENABLED',
+            'blueprint': study_with_beomseo_bp,
+            'url_prefix': '/api/community/study-with-beomseo',
+        },
+    ]
+
+    def is_blueprint_entry_enabled(entry):
+        """Return whether a community blueprint should be wired for this deployment."""
+        config_key = entry.get('config_key')
+        if not config_key:
+            return True
+        value = app.config.get(config_key, True)
+        if isinstance(value, str):
+            # Config may be injected as raw strings in tests or CLI contexts.
+            return value.strip().lower() in TRUTHY_VALUES
+        return bool(value)
 
     # Apply shared write throttling before blueprint registration.
     write_limit = app.config.get('RATELIMIT_WRITE_LIMIT', '120 per minute')
     apply_blueprint_write_limit(notices_bp, write_limit)
     apply_blueprint_write_limit(free_bp, write_limit)
-    if value_pick_board_enabled:
-        apply_blueprint_write_limit(value_pick_bp, write_limit)
-    if club_recruit_board_enabled:
-        apply_blueprint_write_limit(club_recruit_bp, write_limit)
-    apply_blueprint_write_limit(subject_changes_bp, write_limit)
-    apply_blueprint_write_limit(petitions_bp, write_limit)
-    apply_blueprint_write_limit(surveys_bp, write_limit)
-    apply_blueprint_write_limit(votes_bp, write_limit)
-    apply_blueprint_write_limit(bospi_bp, write_limit)
-    apply_blueprint_write_limit(lost_found_bp, write_limit)
-    apply_blueprint_write_limit(gomsol_market_bp, write_limit)
-    apply_blueprint_write_limit(study_with_beomseo_bp, write_limit)
+    for entry in community_blueprint_entries:
+        if is_blueprint_entry_enabled(entry):
+            apply_blueprint_write_limit(entry['blueprint'], write_limit)
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(notices_bp)
     app.register_blueprint(free_bp)
-    # The value-pick board can be disabled at config level without changing the rest of the app shell.
-    if value_pick_board_enabled:
-        app.register_blueprint(value_pick_bp)
-    else:
+    for entry in community_blueprint_entries:
+        if is_blueprint_entry_enabled(entry):
+            app.register_blueprint(entry['blueprint'])
+            continue
         app.logger.info(
-            'Value Pick board is disabled; skipping /api/community/value-pick blueprint registration.'
+            '%s board is disabled; skipping %s blueprint registration.',
+            entry['label'],
+            entry['url_prefix'],
         )
-    # The club recruit board can be disabled at config level without changing the rest of the app shell.
-    if club_recruit_board_enabled:
-        app.register_blueprint(club_recruit_bp)
-    else:
-        app.logger.info(
-            'Club recruit board is disabled; skipping /api/club-recruit blueprint registration.'
-        )
-    app.register_blueprint(subject_changes_bp)
-    app.register_blueprint(petitions_bp)
-    app.register_blueprint(surveys_bp)
-    app.register_blueprint(votes_bp)
-    app.register_blueprint(bospi_bp)
-    app.register_blueprint(lost_found_bp)
-    app.register_blueprint(gomsol_market_bp)
-    app.register_blueprint(study_with_beomseo_bp)
 
     # Health check endpoint
     @app.route('/api/health')

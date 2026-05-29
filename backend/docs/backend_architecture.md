@@ -66,6 +66,8 @@ sequenceDiagram
     App-->>Runtime: Flask app 반환
 ```
 
+커뮤니티 보드 중 인성 가치 PICK!, 동아리 모집, 선택과목 변경, BOSPI, 스터디 윗 범서는 `*_BOARD_ENABLED=false`일 때 Flask 블루프린트 등록과 공통 쓰기 제한 적용을 함께 건너뜁니다. 수학여행은 FastAPI에서 같은 의미의 `FIELD_TRIP_BOARD_ENABLED`로 라우터 등록을 제어합니다.
+
 ## 3. 계층 구조와 책임
 
 | 계층 | 주요 파일 | 책임 |

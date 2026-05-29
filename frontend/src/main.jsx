@@ -16,14 +16,11 @@
 import { StrictMode } from 'react'
 import { createRoot, hydrateRoot } from 'react-dom/client'
 import App from './App.jsx'
-import {
-  CLUB_RECRUIT_BOARD_ENABLED,
-  FIELD_TRIP_BOARD_ENABLED,
-  VALUE_PICK_BOARD_ENABLED,
-} from './config/env'
+import { COMMUNITY_BOARD_FEATURE_FLAGS } from './config/env'
 import { startFirebaseForegroundMessageListener } from './pwa/firebaseMessaging'
 
 async function preloadPrerenderModules() {
+  // Only preload board modules that remain visible in this build.
   await Promise.all([
     import('./pages/MainPage'),
     import('./pages/LoginPage'),
@@ -38,14 +35,26 @@ async function preloadPrerenderModules() {
     import('./pages/Notices/SchoolInfo/CSHSInfoPage'),
     import('./pages/Community'),
     import('./pages/Community/FreeBoard/FreeBoardListView'),
-    VALUE_PICK_BOARD_ENABLED ? import('./pages/Community/ValuePick/ValuePickListView') : null,
-    CLUB_RECRUIT_BOARD_ENABLED ? import('./pages/Community/ClubRecruit/ClubRecruitListPage') : null,
-    import('./pages/Community/Subjects/SubjectsListPage'),
+    COMMUNITY_BOARD_FEATURE_FLAGS['value-pick']
+      ? import('./pages/Community/ValuePick/ValuePickListView')
+      : null,
+    COMMUNITY_BOARD_FEATURE_FLAGS['club-recruit']
+      ? import('./pages/Community/ClubRecruit/ClubRecruitListPage')
+      : null,
+    COMMUNITY_BOARD_FEATURE_FLAGS['subjects']
+      ? import('./pages/Community/Subjects/SubjectsListPage')
+      : null,
     import('./pages/Community/Petition/PetitionListView'),
     import('./pages/Community/SurveyExchange/SurveyExchangeListView'),
     import('./pages/Community/Vote/VoteListView'),
+    COMMUNITY_BOARD_FEATURE_FLAGS['bospi'] ? import('./pages/Community/Bospi/BospiPage') : null,
+    COMMUNITY_BOARD_FEATURE_FLAGS['study-with-beomseo']
+      ? import('./pages/Community/StudyWithBeomseo/StudyWithBeomseoPage')
+      : null,
     import('./pages/Community/GomsolMarket/GomsolMarketListView'),
-    FIELD_TRIP_BOARD_ENABLED ? import('./pages/Community/FieldTrip/FieldTripPage') : null,
+    COMMUNITY_BOARD_FEATURE_FLAGS['field-trip']
+      ? import('./pages/Community/FieldTrip/FieldTripPage')
+      : null,
     import('./pages/SchoolLifeInfo'),
     import('./pages/SchoolLifeInfo/SchoolInfoHub/SchoolInfoHub'),
     import('./pages/SchoolLifeInfo/TimetableDownload/TimetableDownloadPage'),

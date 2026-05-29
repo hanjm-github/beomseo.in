@@ -121,8 +121,11 @@ npm run preview
 | `VITE_ANALYTICS_BLOCKED_KEYS` | `nickname,password,email,token,refresh_token,access_token` | 트래킹 payload에서 제거할 민감 키 |
 | `VITE_APP_NAME` | `beomseo.in` | 헤더/푸터 앱 표시 이름 |
 | `VITE_VALUE_PICK_BOARD_ENABLED` | `1` | 인성 가치 PICK! 보드 UI/라우트/SEO 산출물 노출 여부 |
-| `VITE_CLUB_RECRUIT_BOARD_ENABLED` | `1` | 동아리 모집 보드 UI/라우트 노출 여부 |
-| `VITE_FIELD_TRIP_BOARD_ENABLED` | `1` | 수학여행 보드 UI/라우트 노출 여부 |
+| `VITE_CLUB_RECRUIT_BOARD_ENABLED` | `1` | 동아리 모집 보드 UI/라우트/SEO 산출물 노출 여부 |
+| `VITE_SUBJECT_CHANGES_BOARD_ENABLED` | `1` | 선택과목 변경 보드 UI/라우트/SEO 산출물 노출 여부 |
+| `VITE_BOSPI_BOARD_ENABLED` | `1` | BOSPI 보드 UI/라우트/SEO 산출물 노출 여부 |
+| `VITE_STUDY_WITH_BEOMSEO_BOARD_ENABLED` | `1` | 스터디 윗 범서 보드 UI/라우트/SEO 산출물 노출 여부 |
+| `VITE_FIELD_TRIP_BOARD_ENABLED` | `1` | 수학여행 보드 UI/라우트/SEO 산출물 노출 여부 |
 | `VITE_ALLOWED_ASSET_HOSTS` | `""` | 외부 에셋 허용 host 목록 (비어 있으면 모두 허용) |
 | `VITE_UPLOAD_MAX_ATTACHMENTS` | `5` | 첨부 파일 최대 개수 |
 | `VITE_UPLOAD_MAX_IMAGES` | `5` | 이미지 최대 개수 |
@@ -131,6 +134,9 @@ npm run preview
 | `VITE_PETITION_THRESHOLD_DEFAULT` | `50` | 청원 기본 임계치 |
 | `VITE_SPORTS_LEAGUE_API_URL` | `VITE_API_URL` | 스포츠리그 + 수학여행 FastAPI 서버 URL (미설정 시 Flask fallback) |
 | `VITE_FIREBASE_*` | 빈 문자열 | 급식 PWA 알림용 Firebase Web Push 설정 |
+
+`VITE_*_BOARD_ENABLED` 값은 Vite 빌드 시점에 반영되므로 운영 환경에서 값을 바꾸면 프론트엔드를 다시 빌드해야 합니다.
+`COMMUNITY_BOARD_FEATURE_FLAGS`는 `src/config/env.js`에서 보드 slug별 값을 묶고, `Header`, `CommunityRouter`, prerender preload, `src/seo/policy.js`가 같은 기준을 사용합니다.
 
 ## 라우팅 개요
 
@@ -166,6 +172,7 @@ graph TD
     C --> CSV["survey/*"]
     C --> CV["vote/*"]
     C --> CB["bospi"]
+    C --> CSWB["study-with-beomseo"]
     C --> CFT["field-trip/*"]
     C --> CL["lost-found/*"]
     C --> CG["gomsol-market/*"]
@@ -192,10 +199,8 @@ graph TD
 ### 헤더와 정적 법적 페이지
 
 - `Header`의 공지사항 메뉴는 `학교 소개` 진입점을 `/notices/school-info`로 노출하며, 하위 소개 경로에서도 활성 상태를 유지합니다.
-- `Header`의 커뮤니티 메뉴는 `VALUE_PICK_BOARD_ENABLED` 환경변수에 따라 인성 가치 PICK! 링크를 조건부로 노출합니다.
-- `Header`와 커뮤니티 허브는 `BOSPI` 링크를 `/community/bospi`로 노출합니다.
-- `Header`의 커뮤니티 메뉴는 `CLUB_RECRUIT_BOARD_ENABLED` 환경변수에 따라 동아리 모집 링크를 조건부로 노출합니다.
-- `Header`의 커뮤니티 메뉴는 `FIELD_TRIP_BOARD_ENABLED` 환경변수에 따라 수학여행 링크를 조건부로 노출합니다.
+- `Header`의 커뮤니티 메뉴는 보드별 `VITE_*_BOARD_ENABLED` 환경변수에 따라 인성 가치 PICK!, 동아리 모집, 선택과목 변경, BOSPI, 스터디 윗 범서, 수학여행 링크를 조건부로 노출합니다.
+- 같은 플래그가 꺼진 보드는 커뮤니티 라우트와 정적 SEO/sitemap/prerender 산출물에서도 제외됩니다.
 - 학교 생활 정보 메뉴는 QR 코드 생성기, 샤니마스 카드 생성기, 시간표 다운로드, 평가계획서 다운로드, 급식, 학사 캘린더, 스포츠리그를 노출하며 스포츠리그 링크는 기본 카테고리 ID로 바로 연결됩니다.
 - `/privacy`, `/terms` 페이지는 정적 법적 문서이며, 페이지 내부 목차(anchor)와 `맨 위로` 스크롤 헬퍼를 직접 렌더링합니다.
 
@@ -279,7 +284,7 @@ map $uri $spa_route_ok {
     ~^/notices/school-info/?$ 1;
     ~^/notices/school-info/(bshs-info|cshs-info)/?$ 1;
     ~^/community/?$ 1;
-    ~^/community/(free|value-pick|club-recruit|subjects|petition|survey|vote|lost-found|gomsol-market)/?$ 1;
+    ~^/community/(free|value-pick|club-recruit|subjects|petition|survey|vote|bospi|study-with-beomseo|lost-found|gomsol-market)/?$ 1;
     ~^/community/(free|value-pick|club-recruit|subjects|petition|survey|vote|lost-found|gomsol-market)/new/?$ 1;
     ~^/community/(free|value-pick|club-recruit|subjects|petition|survey|vote|lost-found|gomsol-market)/[0-9]+/?$ 1;
     ~^/community/value-pick/[0-9]+/edit/?$ 1;

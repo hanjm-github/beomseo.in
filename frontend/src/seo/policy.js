@@ -59,6 +59,7 @@ const BEOMSEO_SCHOOL_JSON_LD = [
 
 const TRUTHY_ENV_VALUES = new Set(['1', 'true', 'yes', 'on']);
 
+// Mirrors COMMUNITY_BOARD_FEATURE_FLAGS so disabled boards leave every static SEO artifact together.
 const BOARD_FEATURE_FLAGS = [
   {
     envKey: 'VITE_VALUE_PICK_BOARD_ENABLED',
@@ -69,6 +70,21 @@ const BOARD_FEATURE_FLAGS = [
     envKey: 'VITE_CLUB_RECRUIT_BOARD_ENABLED',
     flagKey: 'clubRecruitBoardEnabled',
     pathPrefix: '/community/club-recruit',
+  },
+  {
+    envKey: 'VITE_SUBJECT_CHANGES_BOARD_ENABLED',
+    flagKey: 'subjectChangesBoardEnabled',
+    pathPrefix: '/community/subjects',
+  },
+  {
+    envKey: 'VITE_BOSPI_BOARD_ENABLED',
+    flagKey: 'bospiBoardEnabled',
+    pathPrefix: '/community/bospi',
+  },
+  {
+    envKey: 'VITE_STUDY_WITH_BEOMSEO_BOARD_ENABLED',
+    flagKey: 'studyWithBeomseoBoardEnabled',
+    pathPrefix: '/community/study-with-beomseo',
   },
   {
     envKey: 'VITE_FIELD_TRIP_BOARD_ENABLED',
@@ -425,6 +441,20 @@ function createStaticRouteEntries(date = new Date()) {
         { name: '홈', url: '/' },
         { name: '커뮤니티', url: '/community/vote' },
         { name: '실시간 투표', url: '/community/vote' },
+      ],
+    },
+    {
+      path: '/community/bospi',
+      title: 'BOSPI',
+      description:
+        '범서고 BOSPI 교복 착용 비율 그래프, 다음 지수 예측, 예측 랭킹을 확인하세요.',
+      indexable: true,
+      prerender: true,
+      sitemap: true,
+      breadcrumbs: [
+        { name: '홈', url: '/' },
+        { name: '커뮤니티', url: '/community/bospi' },
+        { name: 'BOSPI', url: '/community/bospi' },
       ],
     },
     {

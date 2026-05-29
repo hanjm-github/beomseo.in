@@ -31,6 +31,7 @@ pip install -r requirements_fastapi.txt
 | `CORS_ORIGINS` | 허용 Origin (쉼표 구분) | `http://localhost:5173` |
 | `REDIS_URL` | Redis 주소 | `redis://localhost:6379/0` |
 | `SPORTS_LEAGUE_SSE_HEARTBEAT_SECONDS` | SSE 하트비트 간격 | `15` |
+| `FIELD_TRIP_BOARD_ENABLED` | `false`면 FastAPI 수학여행 라우터 등록을 건너뛰어 API가 404 처리됨 | `true` |
 | `FIELD_TRIP_UNLOCK_COOKIE_NAME` | 수학여행 잠금 해제 쿠키 이름 | `field_trip_unlock_token` |
 | `FIELD_TRIP_CSRF_COOKIE_NAME` | 수학여행 쓰기용 CSRF 쿠키 이름 | `field_trip_csrf_token` |
 | `FIELD_TRIP_CSRF_HEADER_NAME` | 수학여행 쓰기용 CSRF 헤더 이름 | `X-Field-Trip-CSRF` |

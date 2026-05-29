@@ -221,9 +221,8 @@ flowchart TD
 - `Header`는 공지, 커뮤니티, 학교 생활 정보를 전역 내비게이션으로 노출합니다.
 - 공지 드롭다운에는 `학교 공지`, `학생회 공지`, `분실물 센터`, `예산 공개`, `학교 소개` 5개 진입점이 있으며, 분실물 센터, 예산 공개와 학교 소개는 별도 페이지(`/notices/lost-found/*`, `/notices/budget/*`, `/notices/school-info/*`)로 연결됩니다.
 - 학교 소개 진입점은 `/notices/school-info`를 사용하고, 라우터는 기본값을 `/notices/school-info/bshs-info`로 이동시킵니다.
-- 커뮤니티 드롭다운의 인성 가치 PICK! 링크는 `VALUE_PICK_BOARD_ENABLED` 플래그가 켜진 경우에만 렌더링됩니다.
-- 커뮤니티 드롭다운의 동아리 모집 링크는 `CLUB_RECRUIT_BOARD_ENABLED` 플래그가 켜진 경우에만 렌더링됩니다.
-- 커뮤니티 드롭다운의 수학여행 링크는 `FIELD_TRIP_BOARD_ENABLED` 플래그가 켜진 경우에만 렌더링됩니다.
+- 커뮤니티 드롭다운의 인성 가치 PICK!, 동아리 모집, 선택과목 변경, BOSPI, 스터디 윗 범서, 수학여행 링크는 `COMMUNITY_BOARD_FEATURE_FLAGS`에 묶인 `VITE_*_BOARD_ENABLED` 플래그가 켜진 경우에만 렌더링됩니다.
+- 보드 플래그는 Vite 빌드 시점에 반영되므로 운영 환경에서 값을 바꾸면 프론트엔드를 다시 빌드해야 합니다.
 - 학교 생활 정보 드롭다운은 QR 코드 생성기, 샤니마스 카드 생성기, 시간표 다운로드, 평가계획서 다운로드, 급식, 학사 캘린더, 스포츠리그를 노출하며 스포츠리그 링크는 현재 기본 카테고리 ID로 직접 연결됩니다.
 - `/privacy`, `/terms`는 정적 법적 문서 페이지이며, 서버 데이터 fetch 없이 목차(anchor)와 `맨 위로` 스크롤 헬퍼만 제공합니다.
 
@@ -441,8 +440,8 @@ flowchart TD
 
 ## 9. 커뮤니티 라우트 트리
 
-`CommunityRouter`는 자유게시판, 인성 가치 PICK!, 동아리 모집, 선택과목 변경, 청원, 설문, 투표, BOSPI, 수학여행, 분실물 리다이렉트, 곰솔마켓 경로를 함께 위임합니다.
-인성 가치 PICK!, 동아리 모집, 수학여행 라우트는 각각의 feature flag가 꺼진 배포에서는 등록되지 않습니다.
+`CommunityRouter`는 자유게시판, 인성 가치 PICK!, 동아리 모집, 선택과목 변경, 청원, 설문, 투표, BOSPI, 스터디 윗 범서, 수학여행, 분실물 리다이렉트, 곰솔마켓 경로를 함께 위임합니다.
+인성 가치 PICK!, 동아리 모집, 선택과목 변경, BOSPI, 스터디 윗 범서, 수학여행 라우트는 각각의 feature flag가 꺼진 배포에서는 등록되지 않습니다.
 
 ```mermaid
 graph LR
@@ -454,6 +453,7 @@ graph LR
     CR --> SUR["survey/*\n(List/Detail/Compose/Edit/Results)"]
     CR --> VOTE["vote/*\n(List/Detail/Compose)"]
     CR --> BOSPI["bospi\n(그래프/예측/랭킹)"]
+    CR --> SWB["study-with-beomseo\n(순위/점수 공개)"]
     CR --> FT["field-trip\n(Hub + class board routes)"]
     CR --> LF["lost-found/*\n(List/Detail/Compose)"]
     CR --> GM["gomsol-market/*\n(List/Detail/Compose)"]
@@ -462,6 +462,7 @@ graph LR
 `survey` 보드만 `/:id/edit`과 `/:id/results` 추가 라우트가 존재합니다.  
 `value-pick` 보드는 자유게시판과 유사하게 list/detail/compose/edit 흐름을 가지지만, `competency + pledge + rich body` 전용 입력 모델을 사용합니다.  
 `bospi`는 단일 화면에서 `src/api/bospi.js` 상태 응답을 받아 현재 지수, 다음 예측, 랭킹, 날짜별 지수보드를 함께 렌더링합니다.
+`study-with-beomseo`는 단일 화면에서 `src/api/studyWithBeomseo.js`의 반별 점수판과 예약 공개 상태를 렌더링합니다.
 `field-trip`은 허브(`/community/field-trip`), 반 게시판(`/community/field-trip/classes/:classId`), 상세(`/posts/:postId`), 수정(`/posts/:postId/edit`)으로 분리되며,
 허브에서는 `tab` 쿼리만 유지하고 게시글 상태는 개별 라우트로 표현합니다.  
 전체 경로 매핑은 [frontend-code-map.md §3.3](./frontend-code-map.md)을 참고합니다.

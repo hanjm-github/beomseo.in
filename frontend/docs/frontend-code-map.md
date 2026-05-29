@@ -112,7 +112,7 @@
 
 ### 3.3 커뮤니티 라우트 (`src/pages/Community/index.jsx`)
 
-인성 가치 PICK!, 동아리 모집, 수학여행 라우트는 각 보드 feature flag가 켜진 배포에서만 등록됩니다.
+인성 가치 PICK!, 동아리 모집, 선택과목 변경, BOSPI, 스터디 윗 범서, 수학여행 라우트는 각 보드 feature flag가 켜진 배포에서만 등록됩니다.
 
 ```mermaid
 graph TD
@@ -125,6 +125,7 @@ graph TD
     CR --> SUR["survey/*"]
     CR --> VOT["vote/*"]
     CR --> BOS["bospi"]
+    CR --> SWB["study-with-beomseo"]
     CR --> FT["field-trip"]
     CR --> LF["lost-found/*"]
     CR --> GM["gomsol-market/*"]
@@ -163,6 +164,8 @@ graph TD
     VOT --> VOT3["VoteDetailView"]
 
     BOS --> BOS1["BospiPage"]
+
+    SWB --> SWB1["StudyWithBeomseoPage"]
 
     FT --> FT1["FieldTripPage (Hub)"]
     FT --> FT2["FieldTripClassBoardPage"]
@@ -206,6 +209,7 @@ graph TD
 | `/community/vote/new` | `VoteComposeView` |
 | `/community/vote/:id` | `VoteDetailView` (`id` 숫자 경로만 허용) |
 | `/community/bospi` | `BospiPage` |
+| `/community/study-with-beomseo` | `StudyWithBeomseoPage` |
 | `/community/field-trip` | `FieldTripPage` (`FieldTripHubPage` re-export) |
 | `/community/field-trip/classes/:classId` | `FieldTripClassBoardPage` |
 | `/community/field-trip/classes/:classId/new` | `FieldTripClassBoardPage` |
@@ -248,6 +252,7 @@ graph TD
 | 설문 품앗이 | `src/pages/Community/SurveyExchange/*` | `src/components/survey/*` | `src/api/survey.js` |
 | 투표 | `src/pages/Community/Vote/*` | `src/components/vote/*` | `src/api/vote.js` |
 | BOSPI | `src/pages/Community/Bospi/BospiPage.jsx` | `BospiPage.module.css`의 현재 지수/예측/랭킹/지수보드 섹션 | `src/api/bospi.js` |
+| 스터디 윗 범서 | `src/pages/Community/StudyWithBeomseo/StudyWithBeomseoPage.jsx` | `StudyWithBeomseoPage.module.css`의 점수판/예약 공개 섹션 | `src/api/studyWithBeomseo.js` |
 | 수학여행 이벤트 | `src/pages/Community/FieldTrip/*` (`FieldTripHubPage`, `FieldTripClassBoardPage`, `FieldTripPostDetailPage`) | `src/components/fieldTrip/*`, `src/features/fieldTrip/*` | `src/api/fieldTrip.js` |
 | 분실물 | `src/pages/Notices/LostFound/*` | `src/components/lostfound/*` | `src/api/lostFound.js` |
 | 곰솔마켓 | `src/pages/Community/GomsolMarket/*` | `src/components/gomsolmarket/*` | `src/api/gomsolMarket.js` |
@@ -480,7 +485,11 @@ graph TD
 | `FASTAPI_BASE_URL` | `VITE_SPORTS_LEAGUE_API_URL` | `string` | `API_BASE_URL` fallback |
 | `VALUE_PICK_BOARD_ENABLED` | `VITE_VALUE_PICK_BOARD_ENABLED` | `boolean` | `true` |
 | `CLUB_RECRUIT_BOARD_ENABLED` | `VITE_CLUB_RECRUIT_BOARD_ENABLED` | `boolean` | `true` |
+| `SUBJECT_CHANGES_BOARD_ENABLED` | `VITE_SUBJECT_CHANGES_BOARD_ENABLED` | `boolean` | `true` |
+| `BOSPI_BOARD_ENABLED` | `VITE_BOSPI_BOARD_ENABLED` | `boolean` | `true` |
+| `STUDY_WITH_BEOMSEO_BOARD_ENABLED` | `VITE_STUDY_WITH_BEOMSEO_BOARD_ENABLED` | `boolean` | `true` |
 | `FIELD_TRIP_BOARD_ENABLED` | `VITE_FIELD_TRIP_BOARD_ENABLED` | `boolean` | `true` |
+| `COMMUNITY_BOARD_FEATURE_FLAGS` | (위 보드 플래그 묶음) | `Readonly<Record<string, boolean>>` | 모두 `true` |
 | `UPLOAD_MAX_ATTACHMENTS` | `VITE_UPLOAD_MAX_ATTACHMENTS` | `number` | `5` |
 | `UPLOAD_MAX_IMAGES` | `VITE_UPLOAD_MAX_IMAGES` | `number` | `5` |
 | `UPLOAD_MAX_FILE_SIZE_MB` | `VITE_UPLOAD_MAX_FILE_SIZE_MB` | `number` | `10` |

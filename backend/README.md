@@ -383,7 +383,12 @@ CSRF 쿠키/헤더 이름:
 |---|---|---|
 | `VALUE_PICK_BOARD_ENABLED` | `true` | `false`면 인성 가치 PICK! Flask 블루프린트 등록을 건너뛰어 API가 404 처리됨 |
 | `CLUB_RECRUIT_BOARD_ENABLED` | `true` | `false`면 동아리 모집 Flask 블루프린트 등록을 건너뛰어 API가 404 처리됨 |
+| `SUBJECT_CHANGES_BOARD_ENABLED` | `true` | `false`면 선택과목 변경 Flask 블루프린트 등록을 건너뛰어 API가 404 처리됨 |
+| `BOSPI_BOARD_ENABLED` | `true` | `false`면 BOSPI Flask 블루프린트 등록을 건너뛰어 API가 404 처리됨 |
+| `STUDY_WITH_BEOMSEO_BOARD_ENABLED` | `true` | `false`면 스터디 윗 범서 Flask 블루프린트 등록을 건너뛰어 API가 404 처리됨 |
 | `FIELD_TRIP_BOARD_ENABLED` | `true` | `false`면 FastAPI 수학여행 라우터 등록을 건너뛰어 API가 404 처리됨 |
+
+Flask 보드 플래그가 `false`이면 `app.py`의 공통 보드 등록 목록에서 write rate limit 적용과 블루프린트 등록을 함께 건너뜁니다. 따라서 API는 별도 핸들러 없이 404로 떨어지며, 프론트엔드의 대응 `VITE_*_BOARD_ENABLED` 값도 함께 꺼야 메뉴/라우트/SEO 노출이 맞습니다.
 
 ### 스포츠리그 문자중계
 

@@ -16,10 +16,7 @@
 import { createElement, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { MessageCircle, Users, Shuffle, Vote, PlugZap, ShieldCheck, Package, Store, Droplets, TrendingUp } from 'lucide-react';
-import {
-  CLUB_RECRUIT_BOARD_ENABLED,
-  VALUE_PICK_BOARD_ENABLED,
-} from '../../../config/env';
+import { COMMUNITY_BOARD_FEATURE_FLAGS } from '../../../config/env';
 import '../../page-shell.css';
 
 const allBoards = [
@@ -96,10 +93,13 @@ const allBoards = [
 ];
 
 const boardFeatureFlags = {
-  'value-pick': VALUE_PICK_BOARD_ENABLED,
-  'club-recruit': CLUB_RECRUIT_BOARD_ENABLED,
+  'value-pick': COMMUNITY_BOARD_FEATURE_FLAGS['value-pick'],
+  'club-recruit': COMMUNITY_BOARD_FEATURE_FLAGS['club-recruit'],
+  'subjects': COMMUNITY_BOARD_FEATURE_FLAGS['subjects'],
+  'bospi': COMMUNITY_BOARD_FEATURE_FLAGS['bospi'],
 };
 
+// Boards without an explicit flag here stay visible in the community hub.
 const boards = allBoards.filter((board) => boardFeatureFlags[board.key] ?? true);
 
 /**

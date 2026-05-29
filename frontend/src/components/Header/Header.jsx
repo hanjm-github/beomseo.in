@@ -29,9 +29,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import {
   APP_NAME,
-  CLUB_RECRUIT_BOARD_ENABLED,
-  FIELD_TRIP_BOARD_ENABLED,
-  VALUE_PICK_BOARD_ENABLED,
+  COMMUNITY_BOARD_FEATURE_FLAGS,
 } from '../../config/env';
 import { buildAuthRedirectState, resolveAuthRedirectTarget } from '../../utils/authRedirect';
 import { SPORTS_LEAGUE_CATEGORY_ID } from '../../features/sportsLeague/data';
@@ -42,15 +40,25 @@ import RoleName from '../RoleName/RoleName';
 // Feature-flagged board links are built once so both desktop and mobile menus stay in sync.
 const communityNavigationItems = [
   { label: '자유 게시판', path: '/community/free' },
-  VALUE_PICK_BOARD_ENABLED ? { label: '인성 가치 PICK!', path: '/community/value-pick' } : null,
-  CLUB_RECRUIT_BOARD_ENABLED ? { label: '동아리 모집', path: '/community/club-recruit' } : null,
-  { label: '선택과목 변경', path: '/community/subjects' },
+  COMMUNITY_BOARD_FEATURE_FLAGS['value-pick']
+    ? { label: '인성 가치 PICK!', path: '/community/value-pick' }
+    : null,
+  COMMUNITY_BOARD_FEATURE_FLAGS['club-recruit']
+    ? { label: '동아리 모집', path: '/community/club-recruit' }
+    : null,
+  COMMUNITY_BOARD_FEATURE_FLAGS['subjects']
+    ? { label: '선택과목 변경', path: '/community/subjects' }
+    : null,
   { label: '학생 청원', path: '/community/petition' },
   { label: '설문 품앗이', path: '/community/survey' },
   { label: '실시간 투표', path: '/community/vote' },
-  { label: 'BOSPI', path: '/community/bospi' },
-  { label: '스터디 윗 범서', path: '/community/study-with-beomseo' },
-  FIELD_TRIP_BOARD_ENABLED ? { label: '수학여행', path: '/community/field-trip' } : null,
+  COMMUNITY_BOARD_FEATURE_FLAGS['bospi'] ? { label: 'BOSPI', path: '/community/bospi' } : null,
+  COMMUNITY_BOARD_FEATURE_FLAGS['study-with-beomseo']
+    ? { label: '스터디 윗 범서', path: '/community/study-with-beomseo' }
+    : null,
+  COMMUNITY_BOARD_FEATURE_FLAGS['field-trip']
+    ? { label: '수학여행', path: '/community/field-trip' }
+    : null,
   { label: '곰솔마켓', path: '/community/gomsol-market' },
 ].filter(Boolean);
 

@@ -13,11 +13,7 @@
  */
 import { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import {
-  CLUB_RECRUIT_BOARD_ENABLED,
-  FIELD_TRIP_BOARD_ENABLED,
-  VALUE_PICK_BOARD_ENABLED,
-} from '../../config/env';
+import { COMMUNITY_BOARD_FEATURE_FLAGS } from '../../config/env';
 import NotFoundPage from '../NotFoundPage';
 import { NumericParamBoundary } from '../RouteBoundaries';
 import {
@@ -79,13 +75,21 @@ const lazyRoute = (Component, props = {}) => (
   </Suspense>
 );
 
+// Resolve feature-gated route switches once because Vite inlines VITE_* values at build time.
+const isValuePickBoardEnabled = COMMUNITY_BOARD_FEATURE_FLAGS['value-pick'];
+const isClubRecruitBoardEnabled = COMMUNITY_BOARD_FEATURE_FLAGS['club-recruit'];
+const isSubjectChangesBoardEnabled = COMMUNITY_BOARD_FEATURE_FLAGS['subjects'];
+const isBospiBoardEnabled = COMMUNITY_BOARD_FEATURE_FLAGS['bospi'];
+const isStudyWithBeomseoBoardEnabled = COMMUNITY_BOARD_FEATURE_FLAGS['study-with-beomseo'];
+const isFieldTripBoardEnabled = COMMUNITY_BOARD_FEATURE_FLAGS['field-trip'];
+
 const numericBoundarySecondaryActions = [
-  CLUB_RECRUIT_BOARD_ENABLED ? { label: '동아리 모집', to: '/community/club-recruit' } : null,
-  { label: '선택과목 변경', to: '/community/subjects' },
+  isClubRecruitBoardEnabled ? { label: '동아리 모집', to: '/community/club-recruit' } : null,
+  isSubjectChangesBoardEnabled ? { label: '선택과목 변경', to: '/community/subjects' } : null,
 ].filter(Boolean);
 
 const notFoundSecondaryActions = [
-  CLUB_RECRUIT_BOARD_ENABLED ? { label: '동아리 모집', to: '/community/club-recruit' } : null,
+  isClubRecruitBoardEnabled ? { label: '동아리 모집', to: '/community/club-recruit' } : null,
   { label: '설문 품앗이', to: '/community/survey' },
 ].filter(Boolean);
 
@@ -98,7 +102,7 @@ export default function CommunityRouter() {
       <Route index element={<Navigate to="/community/free" replace />} />
       <Route path="free" element={lazyRoute(FreeBoardListView)} />
       <Route path="free/new" element={lazyRoute(FreeBoardComposeView, { mode: 'create' })} />
-      {VALUE_PICK_BOARD_ENABLED ? (
+      {isValuePickBoardEnabled ? (
         <>
           <Route path="value-pick" element={lazyRoute(ValuePickListView)} />
           <Route
@@ -110,15 +114,19 @@ export default function CommunityRouter() {
 
       {/* Feature flags hide both navigation and direct route access for boards
           that the deployment has not enabled yet. */}
-      {CLUB_RECRUIT_BOARD_ENABLED ? (
+      {isClubRecruitBoardEnabled ? (
         <>
           <Route path="club-recruit" element={lazyRoute(ClubRecruitListPage)} />
           <Route path="club-recruit/new" element={lazyRoute(ClubRecruitComposePage)} />
         </>
       ) : null}
 
-      <Route path="subjects" element={lazyRoute(SubjectsListPage)} />
-      <Route path="subjects/new" element={lazyRoute(SubjectComposePage)} />
+      {isSubjectChangesBoardEnabled ? (
+        <>
+          <Route path="subjects" element={lazyRoute(SubjectsListPage)} />
+          <Route path="subjects/new" element={lazyRoute(SubjectComposePage)} />
+        </>
+      ) : null}
 
       <Route path="petition" element={lazyRoute(PetitionListView)} />
       <Route path="petition/new" element={lazyRoute(PetitionComposeView)} />
@@ -128,9 +136,11 @@ export default function CommunityRouter() {
 
       <Route path="vote" element={lazyRoute(VoteListView)} />
       <Route path="vote/new" element={lazyRoute(VoteComposeView)} />
-      <Route path="bospi" element={lazyRoute(BospiPage)} />
-      <Route path="study-with-beomseo" element={lazyRoute(StudyWithBeomseoPage)} />
-      {FIELD_TRIP_BOARD_ENABLED ? (
+      {isBospiBoardEnabled ? <Route path="bospi" element={lazyRoute(BospiPage)} /> : null}
+      {isStudyWithBeomseoBoardEnabled ? (
+        <Route path="study-with-beomseo" element={lazyRoute(StudyWithBeomseoPage)} />
+      ) : null}
+      {isFieldTripBoardEnabled ? (
         <>
           <Route path="field-trip" element={lazyRoute(FieldTripPage)} />
           <Route path="field-trip/classes/:classId" element={lazyRoute(FieldTripClassBoardPage)} />
@@ -169,7 +179,7 @@ export default function CommunityRouter() {
       >
         <Route path="free/:id" element={lazyRoute(FreeBoardDetailView)} />
         <Route path="free/:id/edit" element={lazyRoute(FreeBoardComposeView, { mode: 'edit' })} />
-        {VALUE_PICK_BOARD_ENABLED ? (
+        {isValuePickBoardEnabled ? (
           <>
             <Route path="value-pick/:id" element={lazyRoute(ValuePickDetailView)} />
             <Route
@@ -178,10 +188,12 @@ export default function CommunityRouter() {
             />
           </>
         ) : null}
-        {CLUB_RECRUIT_BOARD_ENABLED ? (
+        {isClubRecruitBoardEnabled ? (
           <Route path="club-recruit/:id" element={lazyRoute(ClubRecruitDetailPage)} />
         ) : null}
-        <Route path="subjects/:id" element={lazyRoute(SubjectDetailPage)} />
+        {isSubjectChangesBoardEnabled ? (
+          <Route path="subjects/:id" element={lazyRoute(SubjectDetailPage)} />
+        ) : null}
         <Route path="petition/:id" element={lazyRoute(PetitionDetailView)} />
         <Route path="survey/:id" element={lazyRoute(SurveyExchangeDetailView)} />
         <Route path="survey/:id/edit" element={lazyRoute(SurveyExchangeComposePage)} />
