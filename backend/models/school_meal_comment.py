@@ -1,4 +1,4 @@
-"""Flask-SQLAlchemy model for moderated school meal comments."""
+"""Flask-SQLAlchemy model for private school meal opinions."""
 from datetime import datetime
 
 from .user import db
@@ -14,7 +14,8 @@ class SchoolMealComment(db.Model):
     meal_date = db.Column(db.Date, nullable=False, index=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False, index=True)
     body = db.Column(db.Text, nullable=False)
-    # New rows start pending so moderation policy is consistent across all authors.
+    # Unused legacy moderation columns are retained for schema compatibility only.
+    # Private meal opinions no longer use approval status for visibility or workflow.
     approval_status = db.Column(db.String(16), nullable=False, default='pending', index=True)
     approved_by_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='SET NULL'), nullable=True, index=True)
     approved_at = db.Column(db.DateTime, nullable=True)
@@ -36,7 +37,7 @@ class SchoolMealComment(db.Model):
             "approval_status IN ('pending', 'approved')",
             name='ck_school_meal_comments_approval_status',
         ),
-        # Date/status accelerates public lists; date/user/status accelerates author pending visibility.
+        # Legacy indexes are retained with the unchanged schema; current reads key on date/deleted rows.
         db.Index(
             'ix_school_meal_comments_date_status_created',
             'meal_date',
@@ -57,10 +58,7 @@ class SchoolMealComment(db.Model):
             'id': self.id,
             'mealDate': self.meal_date.isoformat() if self.meal_date else None,
             'body': self.body,
-            'approvalStatus': self.approval_status,
             'userId': self.user_id,
-            'approvedById': self.approved_by_id,
-            'approvedAt': self.approved_at.isoformat() if self.approved_at else None,
             'createdAt': self.created_at.isoformat() if self.created_at else None,
             'updatedAt': self.updated_at.isoformat() if self.updated_at else None,
         }

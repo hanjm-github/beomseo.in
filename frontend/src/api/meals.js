@@ -156,14 +156,12 @@ function normalizeCommentAuthor(author) {
 }
 
 function normalizeMealComment(comment) {
+  // Legacy moderation fields are deliberately ignored because comments now model private opinions.
   return {
     id: Number.isFinite(Number(comment?.id)) ? Number(comment.id) : 0,
     mealDate: typeof comment?.mealDate === 'string' ? comment.mealDate : '',
     body: typeof comment?.body === 'string' ? comment.body : '',
-    approvalStatus: comment?.approvalStatus === 'approved' ? 'approved' : 'pending',
     author: normalizeCommentAuthor(comment?.author),
-    approvedBy: comment?.approvedBy ? normalizeCommentAuthor(comment.approvedBy) : null,
-    approvedAt: typeof comment?.approvedAt === 'string' ? comment.approvedAt : null,
     createdAt: typeof comment?.createdAt === 'string' ? comment.createdAt : null,
     updatedAt: typeof comment?.updatedAt === 'string' ? comment.updatedAt : null,
   };
@@ -232,10 +230,10 @@ export const mealsApi = {
           order,
         },
       });
-      // Visibility is resolved server-side, so the client renders exactly the returned page.
+      // Private opinion visibility is resolved server-side for student council/admin readers.
       return normalizeMealCommentsResponse(response.data);
     } catch (error) {
-      throw new Error(getMealErrorMessage(error, '급식 댓글을 불러오지 못했어요.'));
+      throw new Error(getMealErrorMessage(error, '비공개 급식 의견을 불러오지 못했어요.'));
     }
   },
 
@@ -244,23 +242,10 @@ export const mealsApi = {
       const response = await fastapiApi.post(`/api/school-info/meals/${dateKey}/comments`, {
         body,
       });
-      // Created comments may still be pending, so keep the full normalized record.
+      // Created opinions are private and only visible in the manager inbox.
       return normalizeMealComment(response.data);
     } catch (error) {
-      throw new Error(getMealErrorMessage(error, '급식 댓글을 저장하지 못했어요.'));
-    }
-  },
-
-  async setCommentApproval(dateKey, commentId, approved) {
-    try {
-      const response = await fastapiApi.patch(
-        `/api/school-info/meals/${dateKey}/comments/${commentId}/approval`,
-        { approved },
-      );
-      // Admin moderation returns the updated row, allowing in-place list replacement.
-      return normalizeMealComment(response.data);
-    } catch (error) {
-      throw new Error(getMealErrorMessage(error, '댓글 승인 상태를 변경하지 못했어요.'));
+      throw new Error(getMealErrorMessage(error, '비공개 급식 의견을 저장하지 못했어요.'));
     }
   },
 };

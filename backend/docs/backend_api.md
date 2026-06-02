@@ -1627,7 +1627,8 @@ flowchart TD
 
 ## 12C. 급식 API (`/api/school-info/meals`)
 
-- 읽기 엔드포인트는 공개 접근을 허용합니다.
+- 급식 메뉴 읽기 엔드포인트는 공개 접근을 허용합니다.
+- 비공개 급식 의견 목록은 `admin | student_council` 전용입니다.
 - 요청 경로는 MySQL에 저장된 급식 데이터만 읽고, NEIS 호출은 동기화 스크립트에서만 수행합니다.
 - 읽기/평점 요청은 `MEAL_RATING_COOKIE_NAME` 쿠키를 보장해 비로그인 브라우저도 날짜/카테고리별 1개의 평점을 유지합니다.
 - 알림 구독은 계정 단위가 아니라 `installationId` 기준의 기기 단위 레코드입니다.
@@ -1700,7 +1701,52 @@ flowchart TD
 }
 ```
 
-### 12C.4 `GET /api/school-info/meals/notifications/subscription?installationId=...`
+### 12C.4 `GET|POST /api/school-info/meals/{meal_date}/comments`
+
+- 제품 의미: 공개 댓글이 아니라 비공개 급식 의견 전달함입니다.
+- `GET` 권한: `admin | student_council`
+  - `require_role('student_council')` 의존성은 `admin`을 항상 통과시키므로 두 역할 모두 조회할 수 있습니다.
+  - `page` 기본값은 `1`, `pageSize` 기본값은 `50`, 최대값은 `100`입니다.
+  - `order`는 `asc | desc`이며, 정렬 기준은 `created_at`입니다.
+- `GET` 성공 응답:
+
+```json
+{
+  "items": [
+    {
+      "id": 1,
+      "mealDate": "2026-05-24",
+      "body": "오늘 메뉴 좋아요.",
+      "author": { "id": 7, "name": "학생", "role": "student" },
+      "createdAt": "2026-05-24T02:30:00Z",
+      "updatedAt": "2026-05-24T02:30:00Z"
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "page_size": 50,
+  "pageSize": 50
+}
+```
+
+- `POST` 권한: 로그인 사용자
+- `POST` Body:
+
+```json
+{
+  "body": "오늘 메뉴 좋아요."
+}
+```
+
+- 비고:
+  - 의견 본문은 plain text로 정규화하며 최대 `1000`자입니다.
+  - 실제 급식 row가 없는 날짜에는 작성할 수 없습니다.
+  - 작성 시 서버가 `ip_address`, `user_agent`를 저장해 학생회/관리자 검토용 메타데이터를 남깁니다.
+  - 일반 사용자는 제출 후 완료 안내만 보고 의견 목록은 조회하지 않습니다.
+  - `approval_status`, `approved_by_id`, `approved_at`은 unused legacy DB 컬럼이며 응답 필드와 공개 정책에 사용하지 않습니다.
+  - 승인 상태 변경 PATCH API는 제거되었습니다.
+
+### 12C.5 `GET /api/school-info/meals/notifications/subscription?installationId=...`
 
 - 권한: 없음
 - Query:
@@ -1708,7 +1754,7 @@ flowchart TD
 - 응답:
   - `item` (`null` 가능)
 
-### 12C.5 `PUT /api/school-info/meals/notifications/subscription`
+### 12C.6 `PUT /api/school-info/meals/notifications/subscription`
 
 - 권한: 없음
 - Body:
@@ -1721,7 +1767,7 @@ flowchart TD
   - installationId 기준으로 upsert합니다.
   - 로그인 사용자가 있으면 소유자 FK를 연결할 수 있지만, 기본 식별자는 기기입니다.
 
-### 12C.6 `DELETE /api/school-info/meals/notifications/subscription?installationId=...`
+### 12C.7 `DELETE /api/school-info/meals/notifications/subscription?installationId=...`
 
 - 권한: 없음
 - Query:

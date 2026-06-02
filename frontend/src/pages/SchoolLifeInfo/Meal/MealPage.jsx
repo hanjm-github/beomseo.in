@@ -1320,7 +1320,7 @@ export default function MealPage() {
         )}
       </section>
 
-      {/* Comments follow the selected real meal; synthetic empty days disable posting and loading. */}
+      {/* Private opinions follow the selected real meal; synthetic empty days disable posting and loading. */}
       <MealCommentsPanel
         dateKey={selectedEntry?.date || routeState.dateKey}
         disabled={!selectedEntry || selectedEntry.isNoMeal}

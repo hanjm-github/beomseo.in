@@ -162,10 +162,6 @@ class MealCommentCreateRequest(BaseModel):
         return value
 
 
-class MealCommentApprovalRequest(BaseModel):
-    approved: bool
-
-
 class MealCommentAuthorResponse(BaseModel):
     id: int
     name: str
@@ -176,10 +172,7 @@ class MealCommentResponse(BaseModel):
     id: int
     mealDate: str
     body: str
-    approvalStatus: Literal['pending', 'approved']
     author: MealCommentAuthorResponse
-    approvedBy: MealCommentAuthorResponse | None = None
-    approvedAt: str | None = None
     createdAt: str | None = None
     updatedAt: str | None = None
 

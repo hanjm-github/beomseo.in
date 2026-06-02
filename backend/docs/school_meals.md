@@ -11,7 +11,6 @@
 - 쓰기 엔드포인트:
   - `POST /api/school-info/meals/{meal_date}/ratings`
   - `POST /api/school-info/meals/{meal_date}/comments`
-  - `PATCH /api/school-info/meals/{meal_date}/comments/{comment_id}/approval`
   - `GET /api/school-info/meals/notifications/subscription?installationId=...`
   - `PUT /api/school-info/meals/notifications/subscription`
   - `DELETE /api/school-info/meals/notifications/subscription?installationId=...`
@@ -22,7 +21,7 @@
 2. 실제 NEIS 호출은 동기화 스크립트에서만 수행합니다.
 3. 급식 읽기/평점 요청은 브라우저별 익명 평점 쿠키를 공유합니다.
 4. 평점 분포(`distribution`)는 `admin`에게만 내려주고, 일반/비로그인 응답은 빈 배열을 반환합니다.
-5. 댓글은 로그인 사용자만 작성할 수 있고, 새 댓글은 항상 승인 대기 상태로 저장됩니다.
+5. 비공개 급식 의견은 로그인 사용자만 제출할 수 있고, 목록 조회는 `admin | student_council`만 가능합니다.
 6. 알림 구독은 사용자 계정이 아니라 `installationId` 기준의 기기 단위 레코드입니다.
 
 ## 응답 구조
@@ -128,27 +127,30 @@
 - 과거 날짜는 `422`
 - 실제 급식 row가 없는 날짜는 `404`
 
-## 급식 댓글 계약
+## 비공개 급식 의견 전달함 계약
 
-댓글은 `school_meal_comments` 테이블에 저장됩니다. 주요 컬럼은 `id`, `meal_date`, `user_id`, `body`, `approval_status`, `approved_by_id`, `approved_at`, `created_at`, `updated_at`, `deleted_at`, `ip_address`, `user_agent`입니다.
+의견은 기존 `school_meal_comments` 테이블에 저장됩니다. HTTP 경로도 기존 연동 호환을 위해 `/comments`를 유지하지만, 제품 의미는 공개 댓글이 아니라 비공개 의견 전달함입니다.
+
+주요 컬럼은 `id`, `meal_date`, `user_id`, `body`, `created_at`, `updated_at`, `deleted_at`, `ip_address`, `user_agent`입니다. `approval_status`, `approved_by_id`, `approved_at`은 DB 스키마 호환을 위해 남겨둔 unused legacy 컬럼이며, 공개 여부·조회 권한·화면 표시·승인 워크플로에 사용하지 않습니다.
 
 ### 모델 및 인덱스
 
 - Flask 앱은 `backend/models/school_meal_comment.py` 모델을 등록해 기존 `db.create_all()` 개발 흐름과 같은 테이블 정의를 공유합니다.
 - FastAPI 앱은 `backend/fastapi_app/models.py`의 순수 SQLAlchemy 모델로 같은 테이블을 읽고 씁니다.
-- `ix_school_meal_comments_date_status_created`는 날짜별 공개 목록과 관리자 목록 조회를 빠르게 하기 위한 인덱스입니다.
-- `ix_school_meal_comments_date_user_status`는 로그인 사용자가 본인의 승인 대기 댓글을 함께 보는 조회 조건을 위한 인덱스입니다.
-- `approval_status`는 `pending`, `approved`만 허용하며, soft delete는 `deleted_at`으로 표현합니다.
+- 기존 승인 관련 인덱스와 제약 조건은 DB 변경 없이 유지하지만 현재 기능의 조회 정책에는 사용하지 않습니다.
+- soft delete는 `deleted_at`으로 표현합니다.
 
 ### 조회
 
 `GET /api/school-info/meals/{meal_date}/comments?page=1&pageSize=50&order=asc`
 
-공개 범위:
+권한:
 
-- 비로그인: 승인된 댓글만
-- 로그인 일반 사용자: 승인된 댓글 + 본인이 쓴 승인 대기 댓글
-- 관리자: 삭제되지 않은 모든 댓글
+- `admin | student_council`
+- 비로그인 사용자와 일반 학생은 목록을 조회할 수 없습니다.
+- 기존 DB에 `approval_status=approved`인 행이 있어도 공개 댓글로 취급하지 않고, 학생회/관리자 전용 의견 목록에만 포함합니다.
+- `deleted_at`이 있는 행은 제외합니다.
+- `pageSize`는 최대 100이며, `order=asc|desc`는 생성 시각 기준으로 적용됩니다.
 
 응답:
 
@@ -159,10 +161,7 @@
       "id": 1,
       "mealDate": "2026-05-24",
       "body": "오늘 메뉴 좋아요.",
-      "approvalStatus": "pending",
       "author": { "id": 7, "name": "학생", "role": "student" },
-      "approvedBy": null,
-      "approvedAt": null,
       "createdAt": "2026-05-24T02:30:00Z",
       "updatedAt": "2026-05-24T02:30:00Z"
     }
@@ -189,35 +188,21 @@
 정책:
 
 - 로그인 사용자만 작성할 수 있습니다.
-- 새 댓글은 관리자 작성분을 포함해 항상 `approval_status=pending`으로 생성됩니다.
+- 제출된 의견은 외부에 공개되지 않고 학생회와 관리자만 확인합니다.
 - 실제 급식 row가 없는 날짜는 `404`입니다.
-- 댓글 본문은 공백 제거 후 최대 1000자로 제한합니다.
-
-### 승인 상태 변경
-
-`PATCH /api/school-info/meals/{meal_date}/comments/{comment_id}/approval`
-
-요청 본문:
-
-```json
-{
-  "approved": true
-}
-```
-
-정책:
-
-- `admin`만 호출할 수 있습니다.
-- `approved=true`면 `approval_status=approved`, `approved_by_id`, `approved_at`을 저장합니다.
-- `approved=false`면 다시 `pending`으로 되돌리고 승인자 정보를 비웁니다.
+- 의견 본문은 공백 제거 후 최대 1000자로 제한합니다.
+- 서버는 요청의 `ip_address`, `user_agent`를 함께 저장하지만 클라이언트 응답에는 포함하지 않습니다.
+- DB 기본값 때문에 신규 행의 `approval_status`는 남아 있을 수 있으나, 기능 의미상 승인 상태가 아닙니다.
+- 승인 상태 변경 API는 제거되었습니다.
 
 ### 프론트엔드 표시 흐름
 
-- 급식 상세 화면은 선택된 날짜가 바뀌거나 로그인 사용자·역할이 바뀌면 댓글을 다시 조회합니다.
-- 저장된 급식이 없는 synthetic entry에서는 댓글 조회와 작성을 비활성화합니다.
-- 작성 성공 시 서버가 반환한 `pending` 댓글을 즉시 목록에 추가해 작성자가 본인 댓글을 바로 확인할 수 있습니다.
-- 일반 사용자는 승인 대기 상태인 본인 댓글에만 `미승인` 배지를 봅니다.
-- 관리자는 같은 목록에서 승인 토글을 사용해 `pending`과 `approved` 상태를 전환합니다.
+- 일반 사용자는 제출 폼과 완료 안내만 보고, 본인 제출 기록을 포함한 목록은 보지 않습니다.
+- `admin | student_council`은 선택된 날짜가 바뀌거나 사용자 역할이 바뀌면 접수 의견 목록을 다시 조회합니다.
+- `admin | student_council`이 직접 의견을 제출하면 화면은 반환된 의견을 현재 목록에 즉시 추가합니다.
+- 저장된 급식이 없는 synthetic entry에서는 의견 조회와 제출을 비활성화합니다.
+- 비로그인 사용자가 입력창이나 버튼을 누르면 로그인 화면으로 이동하며, 복귀 경로를 유지합니다.
+- 승인/미승인 배지와 승인 토글은 표시하지 않습니다.
 
 ## 급식 알림 구독 계약
 

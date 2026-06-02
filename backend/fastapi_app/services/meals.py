@@ -16,7 +16,7 @@ from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation
 
 import httpx
-from sqlalchemy import func, or_, select
+from sqlalchemy import func, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -35,9 +35,8 @@ EMPTY_PREVIEW_TEXT = '급식 정보가 없습니다.'
 EMPTY_NOTE_TEXT = '주말, 휴일 또는 미제공일입니다.'
 DEFAULT_NOTE_TEXT = '원산지/영양 정보 제공'
 MEAL_RATING_CATEGORIES = ('taste', 'anticipation')
-MEAL_COMMENT_PENDING = 'pending'
-MEAL_COMMENT_APPROVED = 'approved'
 MEAL_COMMENT_MAX_LENGTH = 1000
+MEAL_OPINION_MANAGER_ROLES = {'admin', 'student_council'}
 BR_TAG_RE = re.compile(r'<br\s*/?>', re.IGNORECASE)
 HTML_TAG_RE = re.compile(r'<[^>]+>')
 CALORIE_RE = re.compile(r'(\d+(?:\.\d+)?)')
@@ -79,17 +78,13 @@ def _user_role(current_user: User | None) -> str:
     return str(getattr(current_user, '_jwt_role', None) or getattr(current_user, 'role', '') or '')
 
 
-def _user_id(current_user: User | None) -> int | None:
-    if current_user is None:
-        return None
-    try:
-        return int(current_user.id)
-    except (TypeError, ValueError):
-        return None
-
-
 def is_meal_admin(current_user: User | None) -> bool:
     return _user_role(current_user) == 'admin'
+
+
+def can_manage_meal_opinions(current_user: User | None) -> bool:
+    # Keep the service-level guard aligned with the route so direct callers cannot bypass the private inbox boundary.
+    return _user_role(current_user) in MEAL_OPINION_MANAGER_ROLES
 
 
 def _iso_utc(value: datetime | None) -> str | None:
@@ -884,16 +879,6 @@ async def submit_meal_rating(
     }
 
 
-def can_view_meal_comment(comment: SchoolMealComment, current_user: User | None) -> bool:
-    """Mirror the SQL visibility rules for callers that already hold a comment row."""
-    if getattr(comment, 'approval_status', None) == MEAL_COMMENT_APPROVED:
-        return True
-    if is_meal_admin(current_user):
-        return True
-    viewer_id = _user_id(current_user)
-    return viewer_id is not None and viewer_id == int(comment.user_id)
-
-
 def _serialize_comment_author(user: User | None, fallback_id: int | None = None) -> dict:
     return {
         'id': int(getattr(user, 'id', fallback_id or 0) or 0),
@@ -903,36 +888,15 @@ def _serialize_comment_author(user: User | None, fallback_id: int | None = None)
 
 
 def _serialize_meal_comment(comment: SchoolMealComment) -> dict:
+    # Legacy approval fields are intentionally omitted; visibility is role-based, not status-based.
     return {
         'id': int(comment.id),
         'mealDate': comment.meal_date.isoformat(),
         'body': comment.body,
-        'approvalStatus': comment.approval_status,
         'author': _serialize_comment_author(comment.user, comment.user_id),
-        'approvedBy': (
-            _serialize_comment_author(comment.approved_by, comment.approved_by_id)
-            if comment.approved_by_id
-            else None
-        ),
-        'approvedAt': _iso_utc(comment.approved_at),
         'createdAt': _iso_utc(comment.created_at),
         'updatedAt': _iso_utc(comment.updated_at),
     }
-
-
-def _comment_visibility_filters(current_user: User | None) -> list:
-    # Keep visibility in SQL so pagination totals match the exact rows the viewer can read.
-    if is_meal_admin(current_user):
-        return []
-    viewer_id = _user_id(current_user)
-    if viewer_id is None:
-        return [SchoolMealComment.approval_status == MEAL_COMMENT_APPROVED]
-    return [
-        or_(
-            SchoolMealComment.approval_status == MEAL_COMMENT_APPROVED,
-            SchoolMealComment.user_id == viewer_id,
-        )
-    ]
 
 
 async def list_meal_comments(
@@ -944,15 +908,18 @@ async def list_meal_comments(
     page_size: int = 50,
     order: str = 'asc',
 ) -> dict:
+    # Route dependencies protect HTTP callers, while this guard protects tests, scripts, and future service callers.
+    if not can_manage_meal_opinions(current_user):
+        raise SchoolMealError('비공개 급식 의견을 확인할 권한이 없습니다.', 403)
+
     page = max(1, int(page or 1))
     page_size = min(100, max(1, int(page_size or 50)))
     direction = str(order or 'asc').lower()
     sort_column = SchoolMealComment.created_at.desc() if direction == 'desc' else SchoolMealComment.created_at.asc()
-    # Build the date and viewer filters once so the count query and page query cannot drift.
+    # Student council and admins see all non-deleted opinions for the date.
     filters = [
         SchoolMealComment.meal_date == target_date,
         SchoolMealComment.deleted_at.is_(None),
-        *_comment_visibility_filters(current_user),
     ]
 
     try:
@@ -964,7 +931,6 @@ async def list_meal_comments(
             select(SchoolMealComment)
             .options(
                 selectinload(SchoolMealComment.user),
-                selectinload(SchoolMealComment.approved_by),
             )
             .where(*filters)
             .order_by(sort_column, SchoolMealComment.id.asc())
@@ -972,7 +938,7 @@ async def list_meal_comments(
             .limit(page_size)
         )
     except SQLAlchemyError as exc:
-        raise SchoolMealError('급식 댓글을 읽지 못했습니다.', 500) from exc
+        raise SchoolMealError('비공개 급식 의견을 읽지 못했습니다.', 500) from exc
 
     return {
         'items': [_serialize_meal_comment(comment) for comment in result.scalars().all()],
@@ -986,7 +952,7 @@ async def list_meal_comments(
 def _validate_comment_body(body: str) -> str:
     normalized = sanitize_plain_text(body, max_length=MEAL_COMMENT_MAX_LENGTH)
     if not normalized:
-        raise SchoolMealError('댓글 내용을 입력해 주세요.', 422)
+        raise SchoolMealError('의견 내용을 입력해 주세요.', 422)
     return normalized
 
 
@@ -1001,15 +967,14 @@ async def create_meal_comment(
 ) -> dict:
     meal = await get_school_meal_for_date(session, target_date=target_date)
     if meal is None:
-        raise SchoolMealError('운영되는 급식이 없는 날짜에는 댓글을 남길 수 없습니다.', 404)
+        raise SchoolMealError('운영되는 급식이 없는 날짜에는 의견을 보낼 수 없습니다.', 404)
 
     normalized_body = _validate_comment_body(body)
-    # Moderation is uniform: every new comment starts pending until explicitly approved.
+    # Do not set approval_status; the database default is only a legacy placeholder now.
     comment = SchoolMealComment(
         meal_date=target_date,
         user_id=int(current_user.id),
         body=normalized_body,
-        approval_status=MEAL_COMMENT_PENDING,
         ip_address=sanitize_plain_text(ip_address, max_length=64) or None,
         user_agent=sanitize_plain_text(user_agent, max_length=255) or None,
     )
@@ -1021,67 +986,12 @@ async def create_meal_comment(
             select(SchoolMealComment)
             .options(
                 selectinload(SchoolMealComment.user),
-                selectinload(SchoolMealComment.approved_by),
             )
             .where(SchoolMealComment.id == comment.id)
         )
         comment = refreshed.scalar_one()
     except SQLAlchemyError as exc:
         await session.rollback()
-        raise SchoolMealError('급식 댓글을 저장하지 못했습니다.', 500) from exc
-
-    return _serialize_meal_comment(comment)
-
-
-async def set_meal_comment_approval(
-    session: AsyncSession,
-    *,
-    target_date: date,
-    comment_id: int,
-    approved: bool,
-    current_user: User,
-) -> dict:
-    try:
-        result = await session.execute(
-            select(SchoolMealComment)
-            .options(
-                selectinload(SchoolMealComment.user),
-                selectinload(SchoolMealComment.approved_by),
-            )
-            .where(
-                SchoolMealComment.id == comment_id,
-                SchoolMealComment.meal_date == target_date,
-                SchoolMealComment.deleted_at.is_(None),
-            )
-        )
-        comment = result.scalar_one_or_none()
-        if comment is None:
-            raise SchoolMealError('댓글을 찾을 수 없습니다.', 404)
-
-        if approved:
-            comment.approval_status = MEAL_COMMENT_APPROVED
-            comment.approved_by_id = int(current_user.id)
-            comment.approved_at = _utc_now_naive()
-        else:
-            comment.approval_status = MEAL_COMMENT_PENDING
-            # Reverting approval clears moderator metadata so pending rows do not look approved.
-            comment.approved_by_id = None
-            comment.approved_at = None
-
-        await session.commit()
-        refreshed = await session.execute(
-            select(SchoolMealComment)
-            .options(
-                selectinload(SchoolMealComment.user),
-                selectinload(SchoolMealComment.approved_by),
-            )
-            .where(SchoolMealComment.id == comment_id)
-        )
-        comment = refreshed.scalar_one()
-    except SchoolMealError:
-        raise
-    except SQLAlchemyError as exc:
-        await session.rollback()
-        raise SchoolMealError('급식 댓글 승인 상태를 변경하지 못했습니다.', 500) from exc
+        raise SchoolMealError('비공개 급식 의견을 저장하지 못했습니다.', 500) from exc
 
     return _serialize_meal_comment(comment)
