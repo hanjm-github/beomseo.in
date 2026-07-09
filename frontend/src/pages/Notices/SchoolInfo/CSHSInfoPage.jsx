@@ -52,9 +52,9 @@ const SYMBOLS = [
     title: '교표',
     subtitle: '高, 역사의 터전에서 높고 훌륭한 인재를 배출하는 요람',
     items: [
-      '천상의 “ㅊ”자와 한자의 “大”자와 동일한 형상으로 대(大)자는 크다, 높다, 훌륭하다, 뛰어나다 등으로 “ㅊ”은 높은 창의력을 가진 천상고를 뜻합니다.',
-      '천상의 “ㅅ”자와 한자의 “人”자와 동일한 형상으로 인(人)자는 사람, 인격, 명예, 품격 등으로 “ㅅ”은 명예와 품격을 가진 사람, “천상인”을 뜻합니다.',
-      '고등학교“고”자와 한자의 “口”자와 동일한 형상으로 구(口)자 는 입, 관문 등의 의미를 지닙니다.',
+      '천상의 "ㅊ"자와 한자의 "大"자와 동일한 형상으로 대(大)자는 크다, 높다, 훌륭하다, 뛰어나다 등으로 "ㅊ"은 높은 창의력을 가진 천상고를 뜻합니다.',
+      '천상의 "ㅅ"자와 한자의 "人"자와 동일한 형상으로 인(人)자는 사람, 인격, 명예, 품격 등으로 "ㅅ"은 명예와 품격을 가진 사람, "천상인"을 뜻합니다.',
+      '고등학교"고"자와 한자의 "口"자와 동일한 형상으로 구(口)자 는 입, 관문 등의 의미를 지닙니다.',
     ],
     icon: BadgeCheck,    
   },
@@ -112,6 +112,28 @@ const SCHOOL_EVENTS = { // 1학기 일정
     [15, '수업량유연화주간'],
     [21, '방학식'],
   ],
+  8: [
+    [16, '개학식'],
+  ],
+  9: [
+    [2, '9월 모의고사'],
+  ],
+  10: [
+    [12, '중간고사'],
+    [20, '10월 모의고사'],
+    [23, '창의체험행사(1,2학년)'],
+    [30, '합동소방훈련']
+  ],
+  11: [
+    [6, '동아리학술제'],
+    [19, '대학수학능력시험'],
+    [23, '3학년 현장체험'],
+  ],
+  12: [
+    [10, '기말고사'],
+    [24, '축제'],
+    [30, '방학식'],
+  ]
 };
 
 const HISTORY = [
@@ -135,7 +157,7 @@ const HISTORY = [
     date: '2026.02.05',
     title: '제7회 졸업식, 350명 졸업 / 총 졸업생 2,076명'
   }, {
-    date: '2025.03.04',
+    date: '2026.03.03',
     title: '제10회 입학식, 신입생 347명 입학'
   },
 ];
@@ -144,11 +166,11 @@ const HISTORY = [
 // 섹션 헤더 컴포넌트
 function SectionHeader({ eyebrow, title, description }) {
   return (
-    <header className={styles.sectionHeader}>
+    <div className={styles.sectionHeader}>
       <p className={styles.eyebrow}>{eyebrow}</p>
       <h2 className={styles.title}>{title}</h2>
       <p className={styles.description}>{description}</p>
-    </header>
+    </div>
   );
 }
 
@@ -211,10 +233,10 @@ export default function CSHSInfoPage() {
 
       {/* 메인 카드 */}
       <div className={styles.page}>
-        <section className={styles.hero} aria-label="cheonsang-title">
+        <section className={styles.hero} aria-labelledby="cshs-title">
           <div className={styles.heroCopy}>
             <p className={styles.kicker}>Cheonsang High School</p>
-            <h1 className="beomseo-title">천상고등학교</h1>
+            <h1 id="cshs-title">천상고등학교</h1>
             <p className={styles.heroStatement}>
               <strong>배움</strong>을 실천하고
               <br />
@@ -227,17 +249,31 @@ export default function CSHSInfoPage() {
             </div>
           </div>
 
-        {/* 다음 학교 행사 D-day 카드 */}
-          <div className={styles.heroWidget}>
+          <div className={styles.heroVisual} aria-label="천상고 핵심 현황">
+            <div className={styles.heroWidget}>
               <p className={styles.heroKicker}>Upcoming School Event</p>
               <h2 className={styles.ddayTitle}>{nextSchoolEvent.title}</h2>
               <p className={styles.ddayDate}>
                 {nextSchoolEvent.year}년 {nextSchoolEvent.month}월 {nextSchoolEvent.day}일
               </p>
+              <strong className={styles.ddayBadge}>{nextSchoolEvent.label}</strong>
+            </div>
+
+            <div className={styles.heroFactGrid}>
+              <div>
+                <span>개교</span>
+                <strong>2017</strong>
+              </div>
+              <div>
+                <span>재학생</span>
+                <strong>984</strong>
+              </div>
+              <div>
+                <span>학급</span>
+                <strong>34</strong>
+              </div>
+            </div>
           </div>
-          <strong className={styles.ddayBadge}>
-            {nextSchoolEvent.label}
-          </strong>
         </section>
 
 
@@ -284,8 +320,8 @@ export default function CSHSInfoPage() {
               const Icon = symbol.icon;
               return (
                 <article key={symbol.title} className={styles.symbolCard}>
-                  <div className={styles.iconBadge}>
-                    <Icon size={24} aria-hidden="true" />
+                  <div className={styles.symbolLabel}>
+                    <Icon size={20} aria-hidden="true" />
                     <span>{symbol.title}</span>
                   </div>
                   <h3>{symbol.subtitle}</h3>
@@ -324,14 +360,14 @@ export default function CSHSInfoPage() {
             eyebrow="History"
             title="학교 역사"
           />
-          <div className={styles.timeline}>
+          <ol className={styles.timeline}>
             {HISTORY.map((item) => (
               <li key={`${item.date}-${item.title}`}>
                 <time>{item.date}</time>
                 <h3>{item.title}</h3>
               </li>
             ))}
-          </div>
+          </ol>
         </section>
 
       </div>
