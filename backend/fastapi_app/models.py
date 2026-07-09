@@ -606,7 +606,7 @@ class SchoolMealRating(Base):
     )
 
 
-# FastAPI uses this pure SQLAlchemy model for moderated comment reads and writes.
+# FastAPI uses this pure SQLAlchemy model for private meal-opinion reads and writes.
 class SchoolMealComment(Base):
     __tablename__ = 'school_meal_comments'
 
@@ -614,6 +614,8 @@ class SchoolMealComment(Base):
     meal_date = Column(Date, nullable=False, index=True)
     user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'), nullable=False, index=True)
     body = Column(Text, nullable=False)
+    # Unused legacy moderation columns are retained for schema compatibility only.
+    # Private meal opinions no longer use approval status for visibility or workflow.
     approval_status = Column(String(16), nullable=False, default='pending', index=True)
     approved_by_id = Column(Integer, ForeignKey('users.id', ondelete='SET NULL'), nullable=True, index=True)
     approved_at = Column(DateTime, nullable=True)
@@ -631,7 +633,7 @@ class SchoolMealComment(Base):
             "approval_status IN ('pending', 'approved')",
             name='ck_school_meal_comments_approval_status',
         ),
-        # Date/status serves public and admin lists; date/user/status serves author-visible pending rows.
+        # Legacy indexes are retained with the unchanged schema; current reads key on date/deleted rows.
         Index(
             'ix_school_meal_comments_date_status_created',
             'meal_date',

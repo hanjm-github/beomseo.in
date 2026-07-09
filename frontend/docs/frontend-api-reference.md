@@ -376,12 +376,20 @@ Field Trip 추가 계약 요약:
 | `getToday()` | `GET /api/school-info/meals/today` | 예 | 오늘 급식 단건 조회 |
 | `listRange(fromDateKey, toDateKey)` | `GET /api/school-info/meals?from=...&to=...` | 예 | 범위 급식 조회, 주말/휴일 empty entry 포함 |
 | `submitRating(dateKey, category, score)` | `POST /api/school-info/meals/:date/ratings` | 아니오 | 급식 평점 1~5점 저장 |
+| `listComments(dateKey, params)` | `GET /api/school-info/meals/:date/comments` | 예 | 학생회/관리자 전용 비공개 의견 목록 |
+| `createComment(dateKey, body)` | `POST /api/school-info/meals/:date/comments` | 예 | 로그인 사용자의 비공개 의견 제출 |
 
 급식 계약 요약:
 
 - `MealEntry = { id, date, status, service, serviceLabel, menuItems, previewText, note, isNoMeal, calorieText, caloriesKcal, originItems, nutritionItems, ratings, syncedAt }`
 - `ratings = { taste: { averageScore, totalCount, myScore, distribution[] }, anticipation: { ...same } }`
 - `previewText`는 계속 내려오지만, 급식 페이지 UI는 `menuItems` 전체 노출을 우선 사용합니다.
+- `/comments` 경로는 유지하지만 급식 페이지에서는 공개 댓글이 아니라 비공개 의견 전달함으로 사용합니다.
+- `listComments()`는 `admin | student_council`에게만 허용되고, 일반 사용자는 의견 제출 후 완료 안내만 봅니다.
+- 의견 응답은 `approvalStatus`, `approvedBy`, `approvedAt`을 사용하지 않습니다.
+- `MealComment = { id, mealDate, body, author, createdAt, updatedAt }` 형태로 정규화합니다.
+- `listComments()`는 `page_size`와 `pageSize`를 모두 읽고 프론트에서는 `pageSize`로 통일합니다.
+- `createComment()`는 생성된 의견 객체를 반환하지만, 급식 화면은 일반 사용자에게 목록을 노출하지 않고 운영 역할에서만 즉시 목록에 추가합니다.
 - `submitRating()` 정책:
   - `taste`: 오늘(KST) 급식만 저장 가능
   - `anticipation`: 오늘 또는 예정 급식만 저장 가능

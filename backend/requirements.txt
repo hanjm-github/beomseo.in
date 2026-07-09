@@ -7,12 +7,12 @@ Flask-Limiter==3.11.0
 
 # Database
 PyMySQL==1.1.1
-cryptography==46.0.6
+cryptography==48.0.0
 
 # Security
 bcrypt==4.2.1
 
 # Utils
-python-dotenv==1.0.1
+python-dotenv==1.2.2
 Flask-Caching==2.3.0
 redis==5.2.1

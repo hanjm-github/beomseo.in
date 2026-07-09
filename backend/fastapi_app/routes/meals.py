@@ -10,7 +10,6 @@ from fastapi import APIRouter, Depends, Query, Request, Response
 
 from ..deps import CurrentUser, DbSession, OptionalCurrentUser, SettingsDep, get_client_ip, require_role
 from ..schemas import (
-    MealCommentApprovalRequest,
     MealCommentCreateRequest,
     MealCommentResponse,
     MealCommentsResponse,
@@ -32,7 +31,6 @@ from ..services.meals import (
     get_meal_range_payload,
     get_today_meal_payload,
     list_meal_comments,
-    set_meal_comment_approval,
     submit_meal_rating,
 )
 
@@ -132,12 +130,13 @@ async def post_school_meal_rating(
 async def get_school_meal_comments(
     meal_date: date,
     db: DbSession,
-    current_user: OptionalCurrentUser,
+    current_user=Depends(require_role('student_council')),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=50, alias='pageSize', ge=1, le=100),
     order: str = Query(default='asc', pattern='^(asc|desc)$'),
 ):
-    # The service applies role-aware visibility so anonymous, author, and admin totals stay consistent.
+    # require_role allows admins through any role gate, so this covers both opinion managers.
+    # Private meal opinions are visible only to student council and admins.
     return await list_meal_comments(
         db,
         target_date=meal_date,
@@ -157,7 +156,7 @@ async def post_school_meal_comment(
     settings: SettingsDep,
     current_user: CurrentUser,
 ):
-    # Request metadata is stored with the pending row for later moderation review.
+    # Request metadata is stored with the private opinion for student council/admin review.
     return await create_meal_comment(
         db,
         target_date=meal_date,
@@ -165,24 +164,6 @@ async def post_school_meal_comment(
         current_user=current_user,
         ip_address=get_client_ip(request, settings),
         user_agent=request.headers.get('user-agent'),
-    )
-
-
-@router.patch('/{meal_date}/comments/{comment_id}/approval', response_model=MealCommentResponse)
-async def patch_school_meal_comment_approval(
-    meal_date: date,
-    comment_id: int,
-    body: MealCommentApprovalRequest,
-    db: DbSession,
-    current_user=Depends(require_role('admin')),
-):
-    # Approval is date-scoped to avoid toggling a comment attached to another meal.
-    return await set_meal_comment_approval(
-        db,
-        target_date=meal_date,
-        comment_id=comment_id,
-        approved=body.approved,
-        current_user=current_user,
     )
 
 

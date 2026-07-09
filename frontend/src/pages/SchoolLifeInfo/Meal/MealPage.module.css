@@ -762,8 +762,7 @@
 }
 
 .ratingSelect:focus-visible,
-.commentTextarea:focus-visible,
-.commentApprovalToggle input:focus-visible {
+.commentTextarea:focus-visible {
   outline: 3px solid color-mix(in srgb, var(--color-primary-500) 42%, transparent);
   outline-offset: 2px;
 }
@@ -920,6 +919,16 @@
   opacity: 0.72;
 }
 
+/* Signed-out users can click the read-only field to enter the login redirect flow. */
+.commentTextarea[readonly]:not(:disabled) {
+  cursor: pointer;
+}
+
+.commentTextarea[readonly]:not(:disabled):hover {
+  border-color: color-mix(in srgb, var(--color-primary-500) 36%, var(--color-card-border-muted));
+  background: color-mix(in srgb, var(--color-primary-50) 34%, var(--color-surface));
+}
+
 .commentFormFooter {
   display: flex;
   flex-wrap: wrap;
@@ -961,15 +970,11 @@
   padding: var(--space-4);
 }
 
-.commentHeader,
-.commentFooter {
+.commentHeader {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: var(--space-3);
-}
-
-.commentHeader {
   justify-content: space-between;
 }
 
@@ -983,49 +988,6 @@
   line-height: var(--leading-relaxed);
   white-space: pre-wrap;
   word-break: break-word;
-}
-
-.commentFooter {
-  justify-content: space-between;
-  padding-top: var(--space-2);
-  border-top: 1px solid color-mix(in srgb, var(--color-card-border-muted) 80%, transparent);
-}
-
-.commentPendingBadge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 30px;
-  padding: 0 var(--space-3);
-  border-radius: var(--radius-full);
-  font-size: 0.75rem;
-  font-weight: var(--font-semibold);
-}
-
-.commentPendingBadge {
-  border: 1px solid color-mix(in srgb, var(--color-alert-warning-border) 76%, transparent);
-  background: color-mix(in srgb, var(--color-alert-warning-bg) 88%, var(--color-card-bg) 12%);
-  color: var(--color-alert-warning-text);
-}
-
-.commentApprovalToggle {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  min-height: 44px;
-  padding: 0 var(--space-3);
-  border-radius: var(--radius-full);
-  border: 1px solid var(--color-card-border-muted);
-  background: color-mix(in srgb, var(--color-card-bg) 82%, var(--color-surface) 18%);
-  color: var(--color-text-primary);
-  font-size: var(--text-sm);
-  font-weight: var(--font-semibold);
-}
-
-.commentApprovalToggle input {
-  width: 22px;
-  height: 22px;
-  accent-color: var(--color-primary-500);
 }
 
 .commentEmptyState {
@@ -1260,8 +1222,7 @@
 
   .notificationToggleRow,
   .notificationActionRow,
-  .commentFormFooter,
-  .commentFooter {
+  .commentFormFooter {
     grid-template-columns: 1fr;
     flex-direction: column;
     align-items: stretch;
