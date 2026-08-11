@@ -1,11 +1,15 @@
-import { AlertCircle, CheckCircle2, Download, GraduationCap, PenLine } from 'lucide-react';
+import { Download, PenLine } from 'lucide-react';
 import {
   GRADE_OPTIONS,
   RECOMMENDED_ROOM_LENGTH,
   RECOMMENDED_SUBJECT_LENGTH,
   formatMissingFieldLabel,
   getDraftEntry,
+  getSubjectCandidates,
+  getRoomCandidates,
+  isRoomInputRequired,
 } from './timetableUtils';
+import { THEME_OPTIONS } from './timetableTheme';
 import styles from './timetable.module.css';
 
 function tokenLabel(token) {
@@ -31,6 +35,13 @@ export default function TimetableControls({
   onClassChange,
   onDraftChange,
   onDownload,
+  isCatMode,
+  customImageUrl,
+  onCustomImageChange,
+  bgOpacity,
+  onBgOpacityChange,
+  colorTheme,
+  onColorThemeChange,
 }) {
   const isDownloadDisabled = !validation.canDownload || isDownloading || !activeTemplate;
 
@@ -40,13 +51,6 @@ export default function TimetableControls({
         <div className={styles.sectionHeader}>
           <div>
             <h2>시간표 선택</h2>
-            <p>학년과 반을 고르면 해당 양식 또는 편집 템플릿이 열립니다.</p>
-          </div>
-          <div className={styles.statusRow}>
-            <span className={styles.statusPill}>
-              <GraduationCap size={16} />
-              학교 생활 정보
-            </span>
           </div>
         </div>
 
@@ -93,21 +97,10 @@ export default function TimetableControls({
       {activeTemplate && requiredTokens.length > 0 ? (
         <div className={styles.section}>
           <div className={styles.sectionHeader}>
-            <div>
-              <h3>선택과목 입력</h3>
-              <p>과목명과 교실을 모두 채워야 다운로드 버튼이 활성화됩니다.</p>
-            </div>
-            <div className={styles.statusRow}>
-              <span
-                className={`${styles.statusPill} ${
-                  validation.canDownload ? styles.statusReady : styles.statusBlocked
-                }`}
-              >
-                {validation.canDownload ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
-                {validation.canDownload ? '다운로드 가능' : '입력 필요'}
-              </span>
-            </div>
+          <div>
+            <h3>선택과목 입력</h3>
           </div>
+        </div>
 
           <div className={styles.tokenSummary}>
             {requiredTokens.map((token) => (
@@ -144,47 +137,112 @@ export default function TimetableControls({
                   <div className={styles.subFieldStack}>
                     <div className={styles.subField}>
                       <span className={styles.subFieldLabel}>과목명</span>
-                      {token === '음/미' ? (
-                        <select
-                          id={`timetable-token-${token}`}
-                          value={draftEntry.subject}
-                          onChange={(event) => onDraftChange(token, 'subject', event.target.value)}
-                        >
-                          <option value="">음악 / 미술 선택</option>
-                          <option value="음악">음악</option>
-                          <option value="미술">미술</option>
-                        </select>
-                      ) : (
-                        <input
-                          id={`timetable-token-${token}`}
-                          type="text"
-                          value={draftEntry.subject}
-                          onChange={(event) => onDraftChange(token, 'subject', event.target.value)}
-                          placeholder="예: 일본어"
-                          maxLength={12}
-                        />
-                      )}
-                      <p className={styles.fieldHint}>권장 길이 {RECOMMENDED_SUBJECT_LENGTH}자 이내</p>
+                      {(() => {
+                        const candidates = getSubjectCandidates(selectedGrade, token);
+                        if (candidates) {
+                          return (
+                            <select
+                              id={`timetable-token-${token}`}
+                              value={draftEntry.subject}
+                              onChange={(event) =>
+                                onDraftChange(token, 'subject', event.target.value)
+                              }
+                            >
+                              <option value="">과목 선택</option>
+                              {candidates.map(({ label, abbrev }) => (
+                                <option key={abbrev} value={abbrev}>
+                                  {label} ({abbrev})
+                                </option>
+                              ))}
+                            </select>
+                          );
+                        }
+                        if (token === '음/미') {
+                          return (
+                            <select
+                              id={`timetable-token-${token}`}
+                              value={draftEntry.subject}
+                              onChange={(event) =>
+                                onDraftChange(token, 'subject', event.target.value)
+                              }
+                            >
+                              <option value="">음악 / 미술 선택</option>
+                              <option value="음악">음악</option>
+                              <option value="미술">미술</option>
+                            </select>
+                          );
+                        }
+                        return (
+                          <input
+                            id={`timetable-token-${token}`}
+                            type="text"
+                            value={draftEntry.subject}
+                            onChange={(event) =>
+                              onDraftChange(token, 'subject', event.target.value)
+                            }
+                            placeholder="예: 일본어"
+                            maxLength={12}
+                          />
+                        );
+                      })()}
+                      {token !== '음/미' && !getSubjectCandidates(selectedGrade, token) ? (
+                        <p className={styles.fieldHint}>권장 길이 {RECOMMENDED_SUBJECT_LENGTH}자 이내</p>
+                      ) : null}
                       {subjectOverflow ? (
                         <p className={styles.errorText}>과목명이 셀 너비를 초과했습니다.</p>
                       ) : null}
                     </div>
 
-                    <div className={styles.subField}>
-                      <span className={styles.subFieldLabel}>교실</span>
-                      <input
-                        id={`timetable-room-${token}`}
-                        type="text"
-                        value={draftEntry.room}
-                        onChange={(event) => onDraftChange(token, 'room', event.target.value)}
-                        placeholder="예: 영어3실"
-                        maxLength={18}
-                      />
-                      <p className={styles.fieldHint}>권장 길이 {RECOMMENDED_ROOM_LENGTH}자 이내</p>
-                      {roomOverflow ? (
-                        <p className={styles.errorText}>교실명이 셀 너비를 초과했습니다.</p>
-                      ) : null}
-                    </div>
+                    {isRoomInputRequired(token, draftEntry.subject) ? (
+                      <div className={styles.subField}>
+                        <span className={styles.subFieldLabel}>교실</span>
+                        {(() => {
+                          const roomCandidates = getRoomCandidates(
+                            selectedGrade,
+                            token,
+                            draftEntry.subject
+                          );
+                          if (roomCandidates) {
+                            return (
+                              <select
+                                id={`timetable-room-${token}`}
+                                value={draftEntry.room}
+                                onChange={(event) =>
+                                  onDraftChange(token, 'room', event.target.value)
+                                }
+                              >
+                                <option value="">교실 선택</option>
+                                {roomCandidates.map((room) => (
+                                  <option key={room} value={room}>
+                                    {room}
+                                  </option>
+                                ))}
+                              </select>
+                            );
+                          }
+                          return (
+                            <input
+                              id={`timetable-room-${token}`}
+                              type="text"
+                              value={draftEntry.room}
+                              onChange={(event) =>
+                                onDraftChange(token, 'room', event.target.value)
+                              }
+                              placeholder="예: 영어3실"
+                              maxLength={18}
+                            />
+                          );
+                        })()}
+                        {!getRoomCandidates(selectedGrade, token, draftEntry.subject) ? (
+                          <p className={styles.fieldHint}>
+                            권장 길이 {RECOMMENDED_ROOM_LENGTH}자 이내
+                          </p>
+                        ) : null}
+                        {roomOverflow ? (
+                          <p className={styles.errorText}>교실명이 셀 너비를 초과했습니다.</p>
+                        ) : null}
+                      </div>
+                    ) : null}
                   </div>
                 </div>
               );
@@ -203,6 +261,47 @@ export default function TimetableControls({
           </div>
         </div>
       ) : null}
+
+      {/* Background Options */}
+      <div className={styles.section}>
+        <div className={styles.sectionHeader}>
+          <div>
+            <h3>배경 이미지</h3>
+          </div>
+        </div>
+        <div className={styles.fieldGrid}>
+          <div className={styles.field}>
+            <label htmlFor="timetable-bg-upload">사진 설정</label>
+            {isCatMode ? (
+              <p className={styles.helperText} style={{ marginTop: 0 }}>
+                🐱 고양이 모드 적용 중입니다.
+              </p>
+            ) : (
+              <input
+                id="timetable-bg-upload"
+                type="file"
+                accept="image/*"
+                onChange={onCustomImageChange}
+              />
+            )}
+          </div>
+          <div className={styles.field}>
+            <label htmlFor="timetable-bg-opacity">
+              투명도 ({Math.round((1 - bgOpacity) * 100)}%)
+            </label>
+            <input
+              id="timetable-bg-opacity"
+              type="range"
+              min="0"
+              max="1"
+              step="0.01"
+              value={1 - bgOpacity}
+              onChange={onBgOpacityChange}
+              style={{ width: '100%' }}
+            />
+          </div>
+        </div>
+      </div>
 
       <div className={styles.section}>
         <div className={styles.actions}>

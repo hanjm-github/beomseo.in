@@ -1,14 +1,157 @@
 import timetableTemplates from './timetableTemplates.json';
 
-export const SUBJECT_FONT_FAMILY = '"Nanum Gothic", sans-serif';
-export const TIMETABLE_FONT_STYLESHEET_ID = 'timetable-font-nanum-gothic';
-export const TIMETABLE_FONT_STYLESHEET_HREF =
-  'https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700;800&display=swap';
+export const SUBJECT_FONT_FAMILY = '"S-CoreDream", sans-serif';
+export const LABEL_FONT_FAMILY = '"Cafe24Surround", sans-serif';
+export const TIMETABLE_FONT_STYLESHEET_ID = 'timetable-font-custom';
 export const REQUIRED_TOKENS_BY_GRADE = {
   '1': [],
-  '2': ['A', 'B', 'C'],
-  '3': ['A', 'B', 'C', 'D', 'E', '음/미'],
+  '2': ['D', 'E', 'F'],
+  '3': ['A', 'B', 'C', 'D', '음/미'],
 };
+
+const GRADE2_DEF_CANDIDATES = [
+  { label: '언어 생활 탐구', abbrev: '언생탐' },
+  { label: '확률과 통계', abbrev: '확통' },
+  { label: '정치', abbrev: '정치' },
+  { label: '경제', abbrev: '경제' },
+  { label: '윤리와 사상', abbrev: '윤사' },
+  { label: '역학과 에너지', abbrev: '물리' },
+  { label: '화학 반응의 세계', abbrev: '화학' },
+  { label: '세포와 물질대사', abbrev: '생명' },
+];
+
+const GRADE3_ABC_CANDIDATES = [
+  { label: '고전읽기', abbrev: '고전읽기' },
+  { label: '현대문학감상', abbrev: '현문감' },
+  { label: '수학적 사고와 통계', abbrev: '수사통' },
+  { label: '수학적 사고와 적분', abbrev: '수사적' },
+  { label: '진로영어', abbrev: '진로영어' },
+  { label: '사회문화', abbrev: '사회문화' },
+  { label: '현대 사회의 윤리적 쟁점', abbrev: '현사윤쟁' },
+  { label: '여행지리', abbrev: '여행지리' },
+  { label: '생활과 과학', abbrev: '생과' },
+];
+
+const GRADE3_D_CANDIDATES = [
+  { label: '심화수학 I', abbrev: '심수' },
+  { label: '도덕 윤리 과제연구', abbrev: '도윤과' },
+  { label: '현대세계의 변화', abbrev: '현세변' },
+  { label: '사회과제연구', abbrev: '사과연' },
+  { label: '융합과학', abbrev: '융과' },
+  { label: '융합과학탐구', abbrev: '융과탐' },
+];
+
+export const SUBJECT_CANDIDATES = {
+  '2': { D: GRADE2_DEF_CANDIDATES, E: GRADE2_DEF_CANDIDATES, F: GRADE2_DEF_CANDIDATES },
+  '3': { A: GRADE3_ABC_CANDIDATES, B: GRADE3_ABC_CANDIDATES, C: GRADE3_ABC_CANDIDATES, D: GRADE3_D_CANDIDATES },
+};
+
+export function getSubjectCandidates(grade, token) {
+  return SUBJECT_CANDIDATES[grade]?.[token] ?? null;
+}
+
+export const GRADE2_ROOM_CANDIDATES = {
+  D: {
+    '생명': ['2-3'],
+    '언생탐': ['2-9'],
+    '물리': ['2-6'],
+    '윤사': ['2-8'],
+    '정치': ['2-10'],
+    '화학': ['2-2', '2-5'],
+    '확통': ['2-1', '2-4', '2-7', '5층중강'],
+  },
+  E: {
+    '생명': ['2-4'],
+    '언생탐': ['2-1'],
+    '물리': ['2-7', '2-10'],
+    '윤사': ['2-9'],
+    '화학': ['2-3', '2-6'],
+    '확통': ['2-2', '2-5', '2-8'],
+  },
+  F: {
+    '경제': ['2-2'],
+    '생명': ['2-5'],
+    '물리': ['2-8'],
+    '윤사': ['2-10'],
+    '정치': ['2-1'],
+    '화학': ['2-4', '2-7'],
+    '확통': ['2-3', '2-6', '2-9'],
+  },
+};
+
+export const GRADE3_ROOM_CANDIDATES = {
+  A: {
+    '고전읽기': ['3-8'],
+    '생과': ['3-3', '3-6'],
+    '수사적': ['3-10'],
+    '수사통': ['3-1'],
+    '여행지리': ['3-2', '3-5'],
+    '현문감': ['3-9'],
+    '현사윤쟁': ['3-4', '3-7'],
+  },
+  B: {
+    '고전읽기': ['3-9'],
+    '사회문화': ['3-2'],
+    '생과': ['3-4', '3-7'],
+    '수사통': ['3-1'],
+    '여행지리': ['3-3', '3-6', '3-8'],
+    '현문감': ['3-10'],
+    '현사윤쟁': ['3-5'],
+  },
+  C: {
+    '생과': ['3-5', '3-8', '3-10'],
+    '수사통': ['3-1'],
+    '여행지리': ['3-4', '3-7', '3-9'],
+    '진로영어': ['2층중강'],
+    '현사윤쟁': ['3-3', '3-6'],
+  },
+  D: {
+    '도윤과': ['3-3', '3-4'],
+    '사과연': ['3-5', '3-6'],
+    '심수': ['3-1', '3-2'],
+    '융과': ['3-8'],
+    '융과탐': ['3-9', '3-10'],
+    '현세변': ['3-7', '2층중강'],
+  },
+};
+
+export const TOKEN_ROOM_CANDIDATES = {
+  '2': {
+    D: ['2-1', '2-2', '2-3', '2-4', '2-5', '2-6', '2-7', '2-8', '2-9', '2-10', '5층중강'],
+    E: ['2-1', '2-2', '2-3', '2-4', '2-5', '2-6', '2-7', '2-8', '2-9', '2-10'],
+    F: ['2-1', '2-2', '2-3', '2-4', '2-5', '2-6', '2-7', '2-8', '2-9', '2-10'],
+  },
+  '3': {
+    A: ['3-1', '3-2', '3-3', '3-4', '3-5', '3-6', '3-7', '3-8', '3-9', '3-10'],
+    B: ['3-1', '3-2', '3-3', '3-4', '3-5', '3-6', '3-7', '3-8', '3-9', '3-10'],
+    C: ['3-1', '3-3', '3-4', '3-5', '3-6', '3-7', '3-8', '3-9', '3-10', '2층중강'],
+    D: ['3-1', '3-2', '3-3', '3-4', '3-5', '3-6', '3-7', '3-8', '3-9', '3-10', '2층중강'],
+  },
+};
+
+export const DEFAULT_GRADE_ROOM_CANDIDATES = {
+  '2': ['2-1', '2-2', '2-3', '2-4', '2-5', '2-6', '2-7', '2-8', '2-9', '2-10', '5층중강'],
+  '3': ['3-1', '3-2', '3-3', '3-4', '3-5', '3-6', '3-7', '3-8', '3-9', '3-10', '2층중강'],
+};
+
+export function getRoomCandidates(grade, token, subject) {
+  const gradeStr = String(grade);
+  const subjectMap =
+    gradeStr === '2'
+      ? GRADE2_ROOM_CANDIDATES[token]
+      : gradeStr === '3'
+      ? GRADE3_ROOM_CANDIDATES[token]
+      : null;
+
+  if (subjectMap && subject && subjectMap[subject]) {
+    return subjectMap[subject];
+  }
+  const tokenRooms = TOKEN_ROOM_CANDIDATES[gradeStr]?.[token];
+  if (tokenRooms) {
+    return tokenRooms;
+  }
+  return DEFAULT_GRADE_ROOM_CANDIDATES[gradeStr] ?? null;
+}
 export const GRADE_OPTIONS = [
   { value: '1', label: '1학년' },
   { value: '2', label: '2학년' },
@@ -226,6 +369,12 @@ export function fitElectiveText({
   };
 }
 
+export function isRoomInputRequired(token, subject) {
+  if (token === '음/미') return false;
+  if (subject === '음악' || subject === '미술') return false;
+  return true;
+}
+
 export function validateDraft({ grade, draftValues, template }) {
   const requiredTokens = getRequiredTokens(grade);
   const missingFields = [];
@@ -264,7 +413,7 @@ export function validateDraft({ grade, draftValues, template }) {
     if (!subjectValue) {
       missingFields.push({ token, field: 'subject' });
     }
-    if (!roomValue) {
+    if (!roomValue && isRoomInputRequired(token, subjectValue)) {
       missingFields.push({ token, field: 'room' });
     }
 
@@ -311,36 +460,60 @@ export function formatMissingFieldLabel(token, field) {
   return `${token} ${field === 'subject' ? '과목명' : '교실'}`;
 }
 
-function ensureTimetableFontLink() {
+const TIMETABLE_FONT_FACE_CSS = `
+@font-face {
+  font-family: 'S-CoreDream';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_six@1.2/S-CoreDream-5Medium.woff') format('woff');
+  font-weight: 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'S-CoreDream';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_six@1.2/S-CoreDream-6Bold.woff') format('woff');
+  font-weight: 600;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Cafe24Surround';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2105_2@1.0/Cafe24Ssurround.woff') format('woff');
+  font-weight: normal;
+  font-display: swap;
+}
+`;
+
+function ensureTimetableFontStyle() {
   if (typeof document === 'undefined') return null;
 
-  let link = document.getElementById(TIMETABLE_FONT_STYLESHEET_ID);
+  let style = document.getElementById(TIMETABLE_FONT_STYLESHEET_ID);
   let created = false;
 
-  if (!link) {
-    link = document.createElement('link');
-    link.id = TIMETABLE_FONT_STYLESHEET_ID;
-    link.rel = 'stylesheet';
-    link.href = TIMETABLE_FONT_STYLESHEET_HREF;
-    document.head.append(link);
+  if (!style) {
+    style = document.createElement('style');
+    style.id = TIMETABLE_FONT_STYLESHEET_ID;
+    style.textContent = TIMETABLE_FONT_FACE_CSS;
+    document.head.append(style);
     created = true;
   }
 
-  return { link, created };
+  return { style, created };
 }
 
 export function mountTimetableFontStylesheet() {
-  const result = ensureTimetableFontLink();
+  const result = ensureTimetableFontStyle();
   return () => {
     if (result?.created) {
-      result.link.remove();
+      result.style.remove();
     }
   };
 }
 
 export async function ensureTimetableFontReady() {
-  ensureTimetableFontLink();
+  ensureTimetableFontStyle();
   if (typeof document === 'undefined' || !document.fonts) return;
-  await document.fonts.load('16px "Nanum Gothic"');
+  await Promise.all([
+    document.fonts.load('500 16px "S-CoreDream"'),
+    document.fonts.load('600 16px "S-CoreDream"'),
+    document.fonts.load('16px "Cafe24Surround"'),
+  ]);
   await document.fonts.ready;
 }
