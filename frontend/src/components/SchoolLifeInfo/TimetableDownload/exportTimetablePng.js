@@ -1,4 +1,4 @@
-import { ensureTimetableFontReady, TIMETABLE_FONT_STYLESHEET_ID, timetableMeta } from './timetableUtils';
+import { ensureTimetableFontReady, TIMETABLE_FONT_STYLESHEET_ID } from './timetableUtils';
 import { applyTheme } from './timetableTheme';
 
 function ensureSvgNamespaces(svgMarkup) {
@@ -33,7 +33,7 @@ const fontDataUrlCache = new Map();
  */
 async function getEmbeddedFontCss(css) {
   let embeddedCss = css;
-  const urlRegex = /url\(['"]?(https:\/\/[^'"]+)['"]?\)/g;
+  const urlRegex = /url\(['\"]?(https:\/\/[^'"]+)['\"]?\)/g;
   const matches = [...css.matchAll(urlRegex)];
 
   await Promise.all(
@@ -89,41 +89,27 @@ async function inlineFontsIntoSvg(clonedSvg) {
 }
 
 /**
- * SVG 내 <image> 태그를 처리하고 폰트를 인라인한다.
- *
- * 배경 합성 전략:
- * - Canvas에 배경 이미지를 먼저 그린다.
- * - SVG의 초기 흰 전체배경 <rect>를 투명하게 만들어 Canvas 배경이 보이도록 한다.
- * - 각 셀의 fill-opacity는 SVG 원본 그대로 유지 (bgOpacity를 이미 반영 중).
- * - 배경 <image> 태그(blob:/http:/https:)는 Canvas에서 처리하므로 제거.
+ * URL(blob:, http:, https:, 상대경로)을 fetch하여 data URL로 변환한다.
  */
-async function prepareSvgForExport(svgElement) {
-  const clonedSvg = svgElement.cloneNode(true);
+async function urlToDataUrl(url) {
+  const fetchUrl = url.startsWith('http') || url.startsWith('blob:')
+    ? url
+    : new URL(url, window.location.href).toString();
 
-  // 폰트 CSS 인라인 (Blob 컨텍스트에서 외부 URL 차단 우회)
-  await inlineFontsIntoSvg(clonedSvg);
+  const response = await fetch(fetchUrl);
+  if (!response.ok) throw new Error(`이미지를 불러오지 못했습니다: ${url}`);
+  const blob = await response.blob();
+  return blobToDataUrl(blob);
+}
 
-  // 초기 전체배경 <rect>를 투명하게 변경
-  // Canvas에서 이미 배경색 + 배경 이미지를 그리므로 SVG의 배경 rect가 가리면 안 됨
-  const allRects = Array.from(clonedSvg.querySelectorAll('rect'));
-  for (const rect of allRects) {
-    const x = rect.getAttribute('x') ?? '0';
-    const y = rect.getAttribute('y') ?? '0';
-    const w = rect.getAttribute('width') ?? '';
-    const h = rect.getAttribute('height') ?? '';
-    // 전체를 덮는 배경 rect 판별: x=0, y=0, 크기가 viewBox와 동일
-    if (
-      (x === '0' || x === '') &&
-      (y === '0' || y === '') &&
-      String(Math.round(Number(w))) === String(Math.round(timetableMeta.viewBoxWidth)) &&
-      String(Math.round(Number(h))) === String(Math.round(timetableMeta.viewBoxHeight))
-    ) {
-      rect.setAttribute('fill-opacity', '0');
-      break; // 첫 번째 전체배경 rect만 투명화
-    }
-  }
-
-  // 배경 이미지 <image> 태그 처리
+/**
+ * SVG 내 모든 <image> 태그의 외부 URL(blob:/http:/https:/상대경로)을
+ * data URL로 변환하여 SVG를 완전히 자급자족(self-contained)하게 만든다.
+ *
+ * 이 방식을 쓰면 미리보기 SVG와 동일한 렌더 경로를 사용하므로
+ * 다운로드 결과가 미리보기와 항상 일치한다.
+ */
+async function inlineImagesIntoSvg(clonedSvg) {
   const imageNodes = Array.from(clonedSvg.querySelectorAll('image'));
 
   await Promise.all(
@@ -134,35 +120,40 @@ async function prepareSvgForExport(svgElement) {
 
       if (!href) return;
 
-      // Canvas에서 직접 합성할 배경 이미지 — SVG에서 제거
-      if (
-        href.startsWith('blob:') ||
-        href.startsWith('http://') ||
-        href.startsWith('https://')
-      ) {
-        imageNode.remove();
-        return;
-      }
-
       // 이미 data URL이면 유지
       if (href.startsWith('data:')) return;
 
-      // 상대/절대 경로는 fetch 후 인라인화
+      // blob:, http:, https:, 상대경로 → data URL로 변환
       try {
-        const response = await fetch(new URL(href, window.location.href));
-        if (!response.ok) throw new Error('이미지를 불러오지 못했습니다.');
-        const dataUrl = await blobToDataUrl(await response.blob());
+        const dataUrl = await urlToDataUrl(href);
         imageNode.setAttribute('href', dataUrl);
         imageNode.setAttributeNS('http://www.w3.org/1999/xlink', 'href', dataUrl);
-      } catch {
+      } catch (err) {
+        console.warn('배경 이미지 인라인 실패, 제거합니다:', href, err);
         imageNode.remove();
       }
     })
   );
+}
+
+/**
+ * SVG를 다운로드용으로 준비한다:
+ * 1. 폰트 CSS를 data URL로 인라인
+ * 2. <image> 태그의 외부 URL을 data URL로 인라인
+ *
+ * 최종 SVG는 외부 리소스 의존이 없는 완전한 자급자족 문서가 된다.
+ */
+async function prepareSvgForExport(svgElement) {
+  const clonedSvg = svgElement.cloneNode(true);
+
+  // 폰트 CSS 인라인 (Blob 컨텍스트에서 외부 URL 차단 우회)
+  await inlineFontsIntoSvg(clonedSvg);
+
+  // 배경 이미지 인라인 (blob:/http:/https: → data URL)
+  await inlineImagesIntoSvg(clonedSvg);
 
   return clonedSvg;
 }
-
 
 function svgToImage(svgMarkup) {
   return new Promise((resolve, reject) => {
@@ -180,61 +171,6 @@ function svgToImage(svgMarkup) {
     };
     img.src = objectUrl;
   });
-}
-
-/**
- * 배경 이미지를 로드한다.
- * - blob URL: 직접 사용 (same-origin, canvas 오염 없음)
- * - 외부 URL: fetch → data URL 변환으로 CORS & canvas 오염 우회
- */
-async function loadBackgroundImage(url) {
-  let src = url;
-
-  if (url.startsWith('http://') || url.startsWith('https://')) {
-    try {
-      const response = await fetch(url);
-      if (!response.ok) throw new Error('fetch failed');
-      const blob = await response.blob();
-      src = await blobToDataUrl(blob);
-    } catch {
-      // fetch 실패 시 data URL 변환 포기 — 직접 로드 시도 (canvas 오염 위험 있음)
-      src = url;
-    }
-  }
-
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error('배경 이미지를 불러오지 못했습니다.'));
-    img.src = src;
-  });
-}
-
-/**
- * Canvas에 "xMidYMid slice" (object-fit: cover) 방식으로 이미지를 그린다.
- */
-function drawBackgroundCover(context, img, canvasWidth, canvasHeight, opacity) {
-  const imgAspect = img.naturalWidth / img.naturalHeight;
-  const canvasAspect = canvasWidth / canvasHeight;
-
-  let sx, sy, sw, sh;
-
-  if (imgAspect > canvasAspect) {
-    sh = img.naturalHeight;
-    sw = sh * canvasAspect;
-    sx = (img.naturalWidth - sw) / 2;
-    sy = 0;
-  } else {
-    sw = img.naturalWidth;
-    sh = sw / canvasAspect;
-    sx = 0;
-    sy = (img.naturalHeight - sh) / 2;
-  }
-
-  const prevAlpha = context.globalAlpha;
-  context.globalAlpha = opacity;
-  context.drawImage(img, sx, sy, sw, sh, 0, 0, canvasWidth, canvasHeight);
-  context.globalAlpha = prevAlpha;
 }
 
 function canvasToBlob(canvas) {
@@ -263,20 +199,21 @@ function downloadBlob(blob, fileName) {
 /**
  * @param {SVGSVGElement} svgElement
  * @param {string} fileName
- * @param {{ backgroundUrl?: string, bgOpacity?: number }} options
+ * @param {{ backgroundUrl?: string, bgOpacity?: number, colorTheme?: string }} options
  */
 export async function exportTimetablePng(svgElement, fileName, options = {}) {
   if (!svgElement) {
     throw new Error('다운로드할 시간표를 찾지 못했습니다.');
   }
 
-  const { backgroundUrl, bgOpacity = 1, colorTheme = 'light' } = options;
+  const { colorTheme = 'light' } = options;
   const theme = applyTheme(colorTheme === 'dark');
 
   // 1) 폰트 로드 대기
   await ensureTimetableFontReady();
 
-  // 2) SVG 준비: 폰트 인라인, 배경 이미지 제거, rect fill-opacity 복원
+  // 2) SVG 준비: 폰트 인라인 + 배경 이미지 data URL 인라인
+  //    미리보기와 동일한 SVG 구조를 그대로 사용하므로 결과가 항상 일치한다.
   const preparedSvg = await prepareSvgForExport(svgElement);
 
   const viewBox = svgElement.viewBox.baseVal;
@@ -298,26 +235,15 @@ export async function exportTimetablePng(svgElement, fileName, options = {}) {
     throw new Error('PNG 변환용 캔버스를 준비하지 못했습니다.');
   }
 
-  // 4) 배경색 (테마에 따라)
+  // 4) 기본 배경색 (SVG가 투명 영역을 가질 경우 대비)
   context.fillStyle = theme.slideBg;
   context.fillRect(0, 0, width, height);
 
-  // 5) 배경 이미지를 Canvas에서 직접 합성 (xMidYMid slice)
-  if (backgroundUrl) {
-    try {
-      const bgImg = await loadBackgroundImage(backgroundUrl);
-      // 배경 이미지는 항상 100% 선명하게 합성
-      drawBackgroundCover(context, bgImg, width, height, 1);
-    } catch {
-      // 배경 이미지 실패 시 흰 배경으로 유지
-    }
-  }
-
-  // 6) 시간표 SVG를 배경 위에 합성
+  // 5) SVG 합성 (배경 이미지가 SVG 내에 data URL로 인라인되어 있음)
   const svgImage = await svgToImage(svgMarkup);
   context.drawImage(svgImage, 0, 0, width, height);
 
-  // 7) PNG 다운로드
+  // 6) PNG 다운로드
   const blob = await canvasToBlob(canvas);
   downloadBlob(blob, fileName);
 }
