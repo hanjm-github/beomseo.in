@@ -37,7 +37,7 @@ const schoolInfoCards = [
     key: 'evaluation-plans',
     to: '/school-info/evaluation-plans',
     title: '평가계획서 다운로드',
-    description: '2026학년도 1학기 학년별 평가계획서 HWP 원본 파일을 바로 내려받을 수 있습니다.',
+    description: '학년별 평가계획서 HWP 원본 파일을 바로 내려받을 수 있습니다.',
     icon: FileText,
     active: true,
   },

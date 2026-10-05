@@ -207,7 +207,7 @@ graph TD
 ### 평가계획서 정적 자료와 라이선스
 
 - `/school-info/evaluation-plans`는 백엔드 API 없이 `public/evaluation-plans/`의 HWP 원본 파일을 직접 다운로드합니다.
-- 평가계획서 HWP 3개와 `public/kogl/img_opentype03.jpg`는 GPL-3.0 코드 라이선스가 아니라 공공누리 제3유형 조건으로 제공되는 별도 자료입니다.
+- 평가계획서 HWP 6개와 `public/kogl/img_opentype03.jpg`는 GPL-3.0 코드 라이선스가 아니라 공공누리 제3유형 조건으로 제공되는 별도 자료입니다.
 - 출처와 조건은 루트의 [`../THIRD_PARTY_NOTICES.md`](../THIRD_PARTY_NOTICES.md)에 기록합니다.
 
 ### QR 코드 생성기 흐름

@@ -401,13 +401,13 @@ graph TD
 
 ## 11.2 평가계획서 다운로드 모듈
 
-`학교 생활 정보 > 평가계획서 다운로드` 기능은 백엔드 API 없이 `frontend/public/evaluation-plans/`의 HWP 원본 파일을 직접 제공합니다.
+`학교 생활 정보 > 평가계획서 다운로드` 기능은 백엔드 API 없이 `frontend/public/evaluation-plans/`의 최신 학기와 이전 학기 HWP 원본 파일을 직접 제공합니다. 최신 학기 파일은 큰 카드 영역에, 이전 학기 파일은 하단의 목록에 표시합니다.
 
 | 파일 | 역할 |
 |---|---|
-| `src/pages/SchoolLifeInfo/EvaluationPlans/EvaluationPlansPage.jsx` | 학년별 다운로드 카드와 공공누리 제3유형 고지 렌더링 |
-| `src/pages/SchoolLifeInfo/EvaluationPlans/EvaluationPlansPage.module.css` | 다운로드 카드, 공공누리 고지, 반응형 레이아웃 |
-| `public/evaluation-plans/*.hwp` | 학교알리미 원본 평가계획서 파일 |
+| `src/pages/SchoolLifeInfo/EvaluationPlans/EvaluationPlansPage.jsx` | 최신 학기 다운로드 카드, 이전 학기 목록, 공공누리 제3유형 고지 렌더링 |
+| `src/pages/SchoolLifeInfo/EvaluationPlans/EvaluationPlansPage.module.css` | 다운로드 카드·이전 파일 목록·공공누리 고지의 반응형 레이아웃 |
+| `public/evaluation-plans/*.hwp` | 최신 학기와 이전 학기의 학교알리미 원본 평가계획서 파일 |
 | `public/kogl/img_opentype03.jpg` | 공공누리 제3유형 표시 마크 |
 
 평가계획서 HWP 파일과 공공누리 마크는 GPL-3.0 코드 라이선스가 아니라 루트의 `THIRD_PARTY_NOTICES.md`에 명시한 공공누리 제3유형 조건을 따릅니다.

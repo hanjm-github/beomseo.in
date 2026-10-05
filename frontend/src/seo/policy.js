@@ -290,7 +290,7 @@ function createStaticRouteEntries(date = new Date()) {
       path: '/school-info/evaluation-plans',
       title: '평가계획서 다운로드',
       description:
-        '범서고 2026학년도 1학기 학년별 평가계획서 HWP 원본 파일을 다운로드할 수 있습니다.',
+        '범서고 학년별 평가계획서 HWP 원본 파일을 다운로드할 수 있습니다.',
       indexable: true,
       prerender: true,
       sitemap: true,

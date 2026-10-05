@@ -34,6 +34,15 @@
   line-height: var(--leading-relaxed);
 }
 
+.sectionHeading {
+  margin-bottom: var(--space-4);
+}
+
+.sectionHeading h2 {
+  font-size: var(--text-2xl);
+  line-height: var(--leading-tight);
+}
+
 .documentGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
@@ -79,18 +88,14 @@
   font-size: var(--text-sm);
 }
 
-.fileMeta {
-  color: var(--color-text-muted);
-  font-size: var(--text-sm);
-}
-
 .documentBody {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
 }
 
-.documentBody h2 {
+.documentBody h2,
+.documentBody h3 {
   font-size: var(--text-xl);
   line-height: var(--leading-tight);
 }
@@ -101,7 +106,7 @@
 
 .fileName {
   color: var(--color-text-primary);
-  font-size: var(--text-sm);
+  font-size: var(--text-base);
   line-height: var(--leading-relaxed);
   overflow-wrap: anywhere;
 }
@@ -125,6 +130,66 @@
 .downloadButton:hover {
   background: var(--color-interactive-primary-bg-hover);
   box-shadow: var(--shadow-lg);
+}
+
+.previousSection {
+  display: flex;
+  flex-direction: column;
+}
+
+.previousFileTableWrapper {
+  min-width: 0;
+  overflow-x: auto;
+  border: 1px solid var(--color-card-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-card-bg);
+}
+
+.previousFileTable {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.previousFileTable tr + tr td {
+  border-top: 1px solid var(--color-card-border);
+}
+
+.previousFileName {
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  color: var(--color-text-primary);
+  font-size: var(--text-sm);
+  line-height: var(--leading-relaxed);
+  overflow-wrap: anywhere;
+}
+
+.previousDownloadCell {
+  width: 120px;
+  padding: var(--space-3) var(--space-4);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.previousDownloadButton {
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-interactive-secondary-border);
+  border-radius: var(--radius-md);
+  color: var(--color-interactive-secondary-text);
+  background: var(--color-interactive-secondary-bg);
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  text-decoration: none;
+  transition: background-color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.previousDownloadButton:hover {
+  border-color: var(--color-card-border-hover);
+  background: var(--color-interactive-secondary-bg-hover);
 }
 
 .licensePanel {
@@ -216,5 +281,12 @@
   .licensePanel {
     grid-template-columns: minmax(180px, 260px) minmax(0, 1fr);
     align-items: center;
+  }
+}
+
+@media (max-width: 639px) {
+  .previousDownloadCell {
+    width: 104px;
+    padding-inline: var(--space-3);
   }
 }
